@@ -28,44 +28,66 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
     }
 
     @PostMapping("bindBack")
-    fun newBind(@RequestParam("code") refreshToken: String?): BindResponse {
-        var user = BindUser(refreshToken)
+    fun bindFromOauth(@RequestParam("code") refreshToken: String?): BindResponse {
+        val tokenOnly = BindUser(refreshToken)
 
-        var result: BindResponse
-
-        try {
-            userApiService.refreshUserTokenFirst(user)
-
-            val oldUser = bindDao.getBindUser(user.userID)
-
-            if (oldUser == null) {
-                user = bindDao.saveBind(user)
-            } else {
-                oldUser.username = user.username
-                oldUser.accessToken = user.accessToken
-                oldUser.refreshToken = user.refreshToken
-                oldUser.time = user.time
-                user = bindDao.saveBind(oldUser)
-            }
-
-            result = BindResponse(
-                user.baseID!!,
-                user.userID,
-                user.username,
-                user.mode.shortName,
-                "绑定成功!"
-            )
-        } catch (e: Exception) {
-            log.error("绑定时异常", e)
-            result = BindResponse(
+        val bindFailed by lazy {
+            BindResponse(
                 -1,
                 -1,
                 "",
                 "",
-                "绑定失败, 请重试, 如果一直失败请联系开发者."
+                "绑定失败, 请重试。如果一直失败，请联系开发者。"
             )
         }
-        return result
+
+        val synchronized: BindUser = runCatching {
+            userApiService.syncUserToken(tokenOnly, isFirstTime = true)
+            tokenOnly
+        }.getOrElse { e ->
+            log.warn("绑定异常：无法刷新玩家令牌", e)
+            return bindFailed
+        }
+
+        val detailed: BindUser = runCatching {
+            userApiService.applyBindUserDetails(synchronized)
+            synchronized
+        }.getOrElse { e ->
+            log.warn("绑定异常：无法添加玩家信息", e)
+            return bindFailed
+        }
+
+        val recorded = bindDao.getBindUserFromConstructor(detailed)
+
+        val user: BindUser = runCatching {
+            if (recorded == null) {
+                bindDao.saveBind(detailed)
+            } else {
+                val app = detailed.apply {
+                    this.baseID = recorded.baseID
+                }
+
+                bindDao.updateBind(app)
+
+                app
+            }
+        }.getOrElse { e ->
+            log.warn("绑定异常：无法保存绑定信息", e)
+            return bindFailed
+        }
+
+        if (user.userID == 0L || user.baseID == null || user.baseID == -1L) {
+            log.warn("绑定异常：玩家数据异常：$user")
+            return bindFailed
+        }
+
+        return BindResponse(
+            user.baseID!!,
+            user.userID,
+            user.username,
+            user.mode.shortName,
+            "绑定成功!"
+        )
     }
 
     @GetMapping("bindCode")
@@ -128,7 +150,7 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
         try {
             val bd = BindUser(code)
 
-            userApiService.refreshUserTokenFirst(bd)
+            userApiService.syncUserToken(bd)
 
             val qqBind = bindDao.bindQQ(msg.qq, bd)
             removeBind(key)

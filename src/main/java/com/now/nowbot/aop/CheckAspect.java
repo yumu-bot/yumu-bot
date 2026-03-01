@@ -86,8 +86,11 @@ public class CheckAspect {
     public Object userSaveLogger(JoinPoint point) {
         Object[] args = point.getArgs();
         if (args.length > 0 && args[0] instanceof OsuBindUserLite u) {
-            // var dobj = point.getSignature();
-            log.info("新增用户：{} ({})", u.getOsuID(), u.getOsuName());
+            if (u.getOsuID() != 0) {
+                log.info("新增用户：{} ({})", u.getOsuID(), u.getOsuName());
+            } else {
+                log.info("新增绑定关系 ({})", Objects.requireNonNullElse(u.getAccessToken(), "null").substring(0, 10));
+            }
         }
         return args;
     }

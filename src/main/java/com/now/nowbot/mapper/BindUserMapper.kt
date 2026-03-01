@@ -5,11 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 
 interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
     @Query("select u from OsuBindUserLite u where u.osuID = :osuID order by u.id limit 1")
     fun getByOsuID(osuID: Long?): OsuBindUserLite?
+
+    @Query("select u from OsuBindUserLite u where u.refreshToken = :refreshToken order by u.id limit 1")
+    fun getByRefreshToken(refreshToken: String?): OsuBindUserLite?
 
     @Query(
         """
@@ -20,24 +24,37 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     )
     fun getFirstByOsuID(osuID: Long?): OsuBindUserLite?
 
-    @Query("select u from OsuBindUserLite u where u.name ILIKE CONCAT('%', :osuName, '%') order by u.name asc")
-    fun getByOsuNameLike(osuName: String?): List<OsuBindUserLite>
+    @Query("select u from OsuBindUserLite u where u.osuName ILIKE CONCAT('%', :username, '%') order by u.osuName asc")
+    fun getByOsuNameLike(username: String?): List<OsuBindUserLite>
 
     @Modifying @Transactional @Query(
         value = """
             with del as (
                 select id, row_number() over (partition by osu_id=:osuID order by id desc ) as row_num
                 from osu_bind_user
-                where osu_id=:osuID
+                where osu_id= :userID
             )
             delete from osu_bind_user using del where osu_bind_user.id = del.id and del.row_num >1;
             """, nativeQuery = true
     )
-    fun deleteOutdatedByOsuID(osuID: Long?)
+    fun deleteOutdatedByOsuID(userID: Long?)
 
     @Modifying @Transactional
-    @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.osuID=:osuID")
-    fun updateToken(osuID: Long?, accessToken: String?, refreshToken: String?, time: Long?)
+    @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.osuID=:userID")
+    fun updateToken(userID: Long?, accessToken: String?, refreshToken: String?, time: Long?)
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+    UPDATE osu_bind_user
+    SET osu_id = :#{#user.osuID}, 
+        osu_name = :#{#user.osuName}, 
+        access_token = :#{#user.accessToken}, 
+        refresh_token = :#{#user.refreshToken}, 
+        time = :#{#user.time} 
+    WHERE id = :#{#user.id}
+""", nativeQuery = true)
+    fun update(@Param("user") user: OsuBindUserLite)
 
     @Modifying @Transactional @Query("update OsuBindUserLite o set o.modeValue = :modeValue where o.osuID = :osuID ")
     fun updateMode(osuID: Long?, modeValue: Byte?)

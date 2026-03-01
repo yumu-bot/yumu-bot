@@ -133,6 +133,14 @@ class BindDao(
         return fromLite(lite)!!
     }
 
+    fun updateBind(user: BindUser): Boolean {
+        bindUserMapper.update(
+            fromModel(user) ?: return false
+        )
+
+        return true
+    }
+
     fun getBindUserFromOsuID(userID: Long?): BindUser {
         if (userID == null) throw IllegalQQ()
 
@@ -224,6 +232,17 @@ class BindDao(
         discordBind.id = discordId
         discordBind.osuUser = user
         return bindDiscordMapper.save(discordBind)
+    }
+
+    /**
+     * 会先找 refreshToken 相同的那位
+     */
+    fun getBindUserFromConstructor(user: BindUser): BindUser? {
+        val fromToken = if (user.refreshToken != null) {
+            fromLite(bindUserMapper.getByRefreshToken(user.refreshToken))
+        } else null
+
+        return fromToken ?: getBindUser(user.userID)
     }
 
     fun getBindUser(name: String): BindUser? {
@@ -355,11 +374,11 @@ class BindDao(
         }
     }
 
-    fun updateToken(uid: Long?, accessToken: String?, refreshToken: String?, time: Long?) {
+    fun updateToken(user: BindUser) {
         if (nowUpdate.get()) {
-            updateUserSet.add(uid)
+            updateUserSet.add(user.userID)
         }
-        bindUserMapper.updateToken(uid, accessToken, refreshToken, time)
+        bindUserMapper.updateToken(user.userID, user.accessToken, user.refreshToken, user.time)
     }
 
     fun updateMode(uid: Long?, mode: OsuMode) {
@@ -702,7 +721,7 @@ class BindDao(
 
     private class RefreshException(var successCount: Int) : RuntimeException()
     companion object {
-        @JvmStatic
+
         fun fromLite(buLite: OsuBindUserLite?): BindUser? {
             if (buLite == null) return null
 

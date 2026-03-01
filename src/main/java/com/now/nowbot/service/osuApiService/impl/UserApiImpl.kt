@@ -89,7 +89,7 @@ import java.util.concurrent.ExecutionException
 
         if (user.isExpired) {
             try {
-                base.refreshUserToken(user, false)
+                base.syncUserToken(user, false)
             } catch (_: Exception) {
                 throw BindException.Oauth2Exception.NeedRefresh()
             }
@@ -107,23 +107,23 @@ import java.util.concurrent.ExecutionException
     override fun getUserTokenOrBotToken(user: BindUser): String? {
         // 这里需要有效的
         return if (user.hasToken) {
-            base.refreshUserToken(user, false)
+            base.syncUserToken(user, false)
         } else {
             base.getBotToken()
         }
     }
 
-    override fun refreshUserTokenFirst(user: BindUser) {
-        base.refreshUserToken(user, true)
-//        getOsuUser(user).apply {
-//            val uid = this.userID
-//            user.userID = uid
-//            user.username = this.username
-//            user.mode = this.currentOsuMode
-//        }
+    override fun syncUserToken(user: BindUser, isFirstTime: Boolean): String {
+        return base.syncUserToken(user, isFirstTime)
     }
 
-
+    override fun applyBindUserDetails(user: BindUser) {
+        getOsuUser(user).apply {
+            user.userID = this.userID
+            user.username = this.username
+            user.mode = this.currentOsuMode
+        }
+    }
 
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
         if (user.isTokenAvailable == null) return getOsuUser(user.userID, mode)

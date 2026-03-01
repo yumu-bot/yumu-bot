@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.days
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
@@ -68,6 +72,13 @@ class BindUser {
         setTimeToNow()
     }
 
+    constructor(userID: Long, accessToken: String, refreshToken: String, time: Long) {
+        this.userID = userID
+        this.accessToken = accessToken
+        this.refreshToken = refreshToken
+        this.time = time
+    }
+
     /**
      * 有 token 也可能是过期的，如果想判断是否过期，请使用 isTokenAvailable
      */
@@ -123,6 +134,23 @@ class BindUser {
     }
 
     override fun toString(): String {
-        return "BindUser(baseID=$baseID, username='$username', userID=$userID, accessToken=$accessToken, refreshToken=$refreshToken, time=$time, mode=$mode, hasToken=$hasToken, isTokenAvailable=$isTokenAvailable, isExpired=$isExpired)"
+        return "BindUser(baseID=$baseID, username='$username', userID=$userID, accessToken=${accessToken.take10()}, refreshToken=${refreshToken.take10()}, time=${time.toTime()}, mode=$mode, hasToken=$hasToken, isTokenAvailable=$isTokenAvailable, isExpired=$isExpired)"
+    }
+
+    private fun Long?.toTime(): String? {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+        return this?.let { t ->
+            LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(t),
+                ZoneId.systemDefault()
+            ).toString()
+        }?.format(formatter)
+    }
+
+    private fun String?.take10(): String? {
+        return this?.let { str ->
+            str.take(10) + "..."
+        }
     }
 }

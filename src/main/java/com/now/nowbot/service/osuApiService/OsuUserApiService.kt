@@ -8,41 +8,43 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.web.TeamInfo
 import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
-import com.now.nowbot.throwable.botRuntimeException.NetworkException
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 interface OsuUserApiService {
     fun getAvatarByte(user: OsuUser): ByteArray
 
     fun isPlayerExist(name: String): Boolean
 
-    @Throws(WebClientResponseException::class) fun getOauthUrl(state: String): String {
+fun getOauthUrl(state: String): String {
         return getOauthUrl(state, false)
     }
 
-    @Throws(WebClientResponseException::class) fun getOauthUrl(state: String, full: Boolean): String
+fun getOauthUrl(state: String, full: Boolean): String
 
-    @Throws(BindException::class) fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean = false): BindUser
+    @Throws(BindException::class)
+    fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean = false): BindUser
 
-    @CanIgnoreReturnValue @Throws(NetworkException.UserException::class) fun getUserTokenOrBotToken(user: BindUser): String?
+    @CanIgnoreReturnValue
+    fun getUserTokenOrBotToken(user: BindUser): String?
 
-    @Throws(WebClientResponseException::class) fun refreshUserTokenFirst(user: BindUser)
+    fun syncUserToken(user: BindUser, isFirstTime: Boolean = true): String
 
-    @Throws(WebClientResponseException::class) fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser
+    fun applyBindUserDetails(user: BindUser)
 
-    @Throws(WebClientResponseException::class) fun getOsuUser(name: String, mode: OsuMode): OsuUser
+    fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser
 
-    @Throws(WebClientResponseException::class) fun getOsuUser(id: Long, mode: OsuMode): OsuUser
+    fun getOsuUser(name: String, mode: OsuMode): OsuUser
 
-    @Throws(WebClientResponseException::class) fun getOsuUser(user: BindUser): OsuUser {
+    fun getOsuUser(id: Long, mode: OsuMode): OsuUser
+
+    fun getOsuUser(user: BindUser): OsuUser {
         return getOsuUser(user, user.mode)
     }
 
-    @Throws(WebClientResponseException::class) fun getOsuUser(name: String): OsuUser {
+    fun getOsuUser(name: String): OsuUser {
         return getOsuUser(name, OsuMode.DEFAULT)
     }
 
-    @Throws(WebClientResponseException::class) fun getOsuUser(id: Long): OsuUser {
+    fun getOsuUser(id: Long): OsuUser {
         return getOsuUser(id, OsuMode.DEFAULT)
     }
 

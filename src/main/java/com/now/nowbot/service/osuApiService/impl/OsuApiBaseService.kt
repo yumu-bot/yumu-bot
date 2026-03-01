@@ -543,7 +543,7 @@ class OsuApiBaseService(
         CLOSED, OPEN, // HALF_OPEN
     }
 
-    fun refreshUserToken(user: BindUser, firstBind: Boolean): String {
+    fun syncUserToken(user: BindUser, isFirstTime: Boolean): String {
         val token = user.refreshToken
 
         if (token.isNullOrBlank()) {
@@ -554,8 +554,8 @@ class OsuApiBaseService(
             "client_id" to oauthID.toString(),
             "client_secret" to oauthToken,
             "redirect_uri" to redirectUrl,
-            "grant_type" to if (firstBind) "authorization_code" else "refresh_token",
-            (if (firstBind) "code" else "refresh_token") to token
+            "grant_type" to if (isFirstTime) "authorization_code" else "refresh_token",
+            (if (isFirstTime) "code" else "refresh_token") to token
         )
 
         val body = MultiValueMap.fromSingleValue(b)
@@ -633,15 +633,12 @@ class OsuApiBaseService(
             throw RuntimeException("更新 Oauth 令牌, 接口格式错误")
         }
 
-        if (firstBind) {
-            bindDao.saveBind(BindUser().apply {
-                this.userID = user.userID
-                this.accessToken = accessToken
-                this.refreshToken = refreshToken
-                this.time = time
-            })
+        val result = BindUser(user.userID, accessToken, refreshToken, time)
+
+        if (isFirstTime) {
+            bindDao.saveBind(result)
         } else {
-            bindDao.updateToken(user.userID, accessToken, refreshToken, time)
+            bindDao.updateToken(result)
         }
 
         return accessToken
