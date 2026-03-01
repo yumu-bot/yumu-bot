@@ -109,6 +109,11 @@ class DailyStatisticsService(
                     "计算中..."
                 }
 
+                if (currentOffset > bindCount * 1.2) {
+                    log.error("偏移量 ($currentOffset) 远超总数 ($bindCount)，疑似死循环，强制退出")
+                    break
+                }
+
                 log.info("""
                     第 ${batch.get()} 批用户已更新完成：
                     需要更新：$t 人，总计 $currentCount 人。
@@ -118,13 +123,8 @@ class DailyStatisticsService(
                     """.trimIndent())
             } catch (e: Exception) {
                 log.error("第 ${batch.get()} 批次发生异常：", e)
-            }
-
-            batch.getAndIncrement()
-
-            if ((batch.get() * 5) * 50 > bindCount) {
-                log.error("超出了预期的批次，可能发生了死循环，强制结束。")
-                break
+            } finally {
+                batch.incrementAndGet()
             }
         }
 

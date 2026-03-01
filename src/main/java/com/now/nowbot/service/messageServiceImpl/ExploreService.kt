@@ -366,8 +366,8 @@ class ExploreService(
                 fun getType(string: String?): BeatmapType {
                     return when(string?.dropWhile { it.isWhitespace() }) {
                         "f", "fa", "fav", "favor", "favour", "favourite", "favorite", "收", "藏", "收藏" -> FAVOURITE
-                        "g", "gr", "gra", "grave", "graveyard", "坟", "坟场" -> GRAVEYARD
-                        "u", "gu", "gue", "guest", "map", "客", "客串" -> GUEST
+                        "v", "d", "y", "died", "grv", "gr", "gra", "grave", "graveyard", "坟", "坟场" -> GRAVEYARD
+                        "g", "u", "gu", "gue", "guest", "map", "客", "客串" -> GUEST
                         "l", "lv", "lvd", "love", "loved", "心", "心选", "社区喜爱" -> LOVED
                         "m", "mp", "pm", "mop", "most", "play", "played", "mostplay", "mostplayed" -> MOST_PLAYED
                         "n", "nm", "nom", "nominate", "nominated", "点", "提名" -> NOMINATED
