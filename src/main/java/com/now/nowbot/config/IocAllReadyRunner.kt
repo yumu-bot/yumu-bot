@@ -78,10 +78,8 @@ class IocAllReadyRunner(
 
         Runtime.getRuntime().addShutdownHook(Thread({
             APP_ALIVE = false
-            // check.doEnd()
-            (executor as ThreadPoolTaskExecutor).shutdown()
-            //MatchListenerServiceLegacy.stopAllListener()
             MatchListenerService.stopAllListenerFromReboot()
+            (executor as ThreadPoolTaskExecutor).shutdown()
         }, "endThread"))
 
         log.info("新人群配置: {}", env.getProperty("spring.datasource.newbie.enable", "false"))

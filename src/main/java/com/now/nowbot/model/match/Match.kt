@@ -20,11 +20,14 @@ data class Match(
     val isMatchEnd: Boolean
         get() = statistics.endTime != null
 
+    @get:JsonIgnore
+    val lastRound: MatchRound?
+        get() = events.lastOrNull { it.round != null }?.round
+
     @get:JsonProperty("current_game_id")
     val currentGameID: Long? by lazy {
-        val e = events.lastOrNull { it.round != null } ?: return@lazy null
-        if (e.round?.endTime == null) return@lazy e.round?.roundID
-        return@lazy null
+        val r = lastRound ?: return@lazy null
+        r.takeIf { it.endTime == null }?.roundID
     }
 
     val name by statistics::name
@@ -192,6 +195,20 @@ data class Match(
         val currentFirst = this.events.firstOrNull()?.eventID
         if (currentFirst != null) {
             this.firstEventID = minOf(this.firstEventID, currentFirst)
+        }
+    }
+
+    @JsonIgnore
+    fun getCurrentDetails(): String {
+        val r = lastRound
+        val beatmap = r?.beatmap
+
+        return when {
+            isMatchEnd -> "已经结束"
+            r == null -> "刚刚开始..."
+            beatmap == null -> "正在选图..."
+            r.endTime != null -> "已经结束: ${beatmap.previewName}，正在选图..."
+            else -> "正在进行: ${beatmap.previewName}"
         }
     }
 }
