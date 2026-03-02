@@ -94,7 +94,7 @@ class DailyStatisticsService(
                 val currentCount = count.addAndGet(t)
                 val currentOffset = offset.addAndGet(users.size)
                 val currentScore = score.addAndGet(s)
-                val progress = "%.2f".format((currentOffset.toDouble() / bindCount).coerceIn(0.0, 100.0))
+                val progress = "%.2f".format((currentOffset * 100.0 / bindCount).coerceIn(0.0, 100.0))
 
                 val now = System.currentTimeMillis()
                 val elapsed = now - startTime
