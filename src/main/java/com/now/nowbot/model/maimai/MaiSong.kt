@@ -56,15 +56,27 @@ class MaiSong {
     @JsonProperty("highlight") var highlight: Set<Int>? = null
     
     @JsonIgnore
-    fun updateHighlight(highlight: Set<Int>) {
-        val hil = highlight.isEmpty()
-        if (hil) return
+    fun updateHighlight(input: Set<Int>) {
+        // 1. 根据你的定义：空集合 [] 是满集。
+        // 在数学交集逻辑中，任何集合与满集的交集 = 集合本身。
+        // 所以如果传入的是空集合，直接 return，不改变现有存储。
+        if (input.isEmpty()) {
+            return
+        }
 
-        val nil = this.highlight.isNullOrEmpty()
-        if (nil) {
-            this.highlight = highlight
+        val current = this.highlight
+
+        // 2. 如果当前是 null (代表空集)，则直接接受传入的值
+        if (current == null) {
+            this.highlight = input
         } else {
-            val intersect = highlight.union(this.highlight!!)
+            // 3. 取交集：只保留两边都存在的元素
+            // 例如：[1,2,3] intersect [1,2,4] = [1,2]
+
+            // 注意：根据你的逻辑，如果交集变为空了，
+            // 你需要决定 this.highlight 是变成空 Set 还是变成 null。
+            // 这里建议转为可变 Set 存储。
+            val intersect = current.intersect(input)
 
             if (intersect.isNotEmpty()) {
                 this.highlight = intersect
