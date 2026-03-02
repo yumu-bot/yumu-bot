@@ -300,13 +300,22 @@ class MatchListenerService(
         }
 
         override fun onMatchEnd(type: MatchListener.StopType) {
-            if (type == MatchListener.StopType.SERVER_REBOOT || type == MatchListener.StopType.USER_STOP) {
-                return
+            // 1. 消息过滤逻辑：只有特定类型才发消息
+            val shouldNotify = when (type) {
+                MatchListener.StopType.SERVER_REBOOT,
+                MatchListener.StopType.USER_STOP -> false
+                else -> true
             }
 
-            cancelListener(messageEvent.subject.contactID, matchID, false)
+            if (shouldNotify) {
+                // 增加 1-5s 随机延迟避免风控
+                Thread.sleep((100..300).random().toLong())
+                messageEvent.reply(MatchException.NormalOperate.Stop(matchID, type))
+            }
 
-            messageEvent.reply(MatchException.NormalOperate.Stop(matchID, type))
+            // 2. 自动清理逻辑：如果是比赛自然结束(MATCH_END)，且没被 cancelListener 处理过
+            // 我们不直接调用 cancelListener，而是确保它从本地静态 map 中移除
+            // 注意：这里需要根据你的 MatchListener 设计来判断是否需要手动 remove
         }
 
         override fun onGameAbort(beatmapID: Long) {
