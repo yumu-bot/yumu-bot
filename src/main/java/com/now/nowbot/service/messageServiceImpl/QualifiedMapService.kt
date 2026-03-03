@@ -2,7 +2,6 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.BeatmapsetSearch
 import com.now.nowbot.qq.event.MessageEvent
@@ -77,17 +76,17 @@ import java.util.regex.Matcher
             val split = DataUtil.splitPage(search.beatmapsets, param.page, maxPerPage)
 
             // 后处理
-            AsyncMethodExecutor.awaitTripleCallableExecute(
+            AsyncMethodExecutor.awaitPairCallableExecute(
                 { beatmapApiService.applyBeatmapsetRankedTime(split.first) },
                 { userApiService.applyUserForBeatmapset(split.first) },
-                {
-                    if (maxPerPage == 12) {
-                        // 给完整面板整点头像
-                        userApiService.asyncDownloadAvatarFromBeatmapsets(split.first)
-                    } else {
-                        beatmapApiService.asyncDownloadCoverFromSets(split.first, CoverType.LIST_2X)
-                    }
-                }
+//                {
+//                    if (maxPerPage == 12) {
+//                        // 给完整面板整点头像
+//                        userApiService.asyncDownloadAvatarFromBeatmapsets(split.first)
+//                    } else {
+//                        beatmapApiService.asyncDownloadCoverFromSets(split.first, CoverType.LIST_2X)
+//                    }
+//                }
             )
 
             search.beatmapsets = split.first

@@ -29,6 +29,8 @@ class SkillLite(
         var id: Long,
         var mode: Byte,
     ) : Serializable {
+
+        @Suppress("UNUSED")
         constructor() : this(0, 0)
     }
 }

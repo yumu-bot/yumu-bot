@@ -879,7 +879,9 @@ enum class Instruction(val pattern: Pattern) {
 
     UPDATE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("update", "ut", "ue")
-        appendColonCaptureGroup(FLAG_ANY, REG_ANYTHING, contentLevel = MORE, prefixLevel = MAYBE)
+        appendColonCaptureGroup(FLAG_MODE, REG_ANYTHING_BUT_NO_SPACE, contentLevel = MORE, prefixLevel = MAYBE)
+        appendSpace()
+        appendCaptureGroup(FLAG_ANY, REG_ANYTHING, contentLevel = MORE)
     }),
 
     FETCH(CommandPatternBuilder.create {
@@ -988,7 +990,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.ECHO) continue
+        if (i != Instruction.UPDATE) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

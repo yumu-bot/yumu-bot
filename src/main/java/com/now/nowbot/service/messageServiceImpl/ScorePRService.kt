@@ -137,7 +137,7 @@ class ScorePRService(
     }
 
     override fun handleMessage(event: MessageEvent, param: ScorePRParam): ServiceCallStatistic? {
-        param.asyncImage()
+        // param.asyncImage()
         val messageChain: MessageChain = param.getMessageChain()
 
         try {
@@ -211,7 +211,7 @@ class ScorePRService(
     }
 
     override fun reply(event: MessageEvent, param: ScorePRParam): MessageChain? {
-        param.asyncImage()
+        // param.asyncImage()
         return param.getMessageChain()
     }
 
@@ -434,9 +434,9 @@ class ScorePRService(
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun ScorePRParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
-    }
+//    private fun ScorePRParam.asyncImage() = run {
+//        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+//    }
 
     private fun ScorePRParam.getMessageChain(): MessageChain {
         try {

@@ -2,14 +2,42 @@ package com.now.nowbot.util
 
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.throwable.TipsRuntimeException
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 object ASyncMessageUtil {
     private const val OFF_TIME = 60 * 60 * 1000L
     private val lockList: MutableSet<Lock?> = CopyOnWriteArraySet<Lock?>()
+
+    fun doubleCheck(
+        event: MessageEvent,
+        keyword: String = "OK",
+        onCheck: () -> Unit = { event.reply("是否要执行操作？回复 $keyword 确认。") },
+        onOverTime: () -> Unit = { throw TipsRuntimeException("超时了。") },
+        onWrong: () -> Unit = { throw TipsRuntimeException("已取消操作。") },
+        overtime: Duration = 30.seconds,
+        onSuccess: (MessageEvent) -> Unit = {}
+    ) {
+        onCheck()
+
+        val lock = getLock(event, overtime.inWholeMilliseconds)
+
+        val ev: MessageEvent = lock.get() ?: run {
+            onOverTime()
+            return
+        }
+
+        if (ev.rawMessage.contains(keyword, ignoreCase = true)) {
+            onSuccess(event)
+        } else {
+            onWrong()
+        }
+    }
 
     /**
      * 指定群聊跟发送人的锁

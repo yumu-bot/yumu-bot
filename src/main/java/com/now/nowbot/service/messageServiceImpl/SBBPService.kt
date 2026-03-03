@@ -295,9 +295,9 @@ class SBBPService(
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun BPParam.asyncImage() = run {
-        osuScoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
-    }
+//    private fun BPParam.asyncImage() = run {
+//        osuScoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+//    }
 
     private fun BPParam.getMessageChain(): MessageChain {
         return try {

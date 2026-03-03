@@ -195,9 +195,9 @@ class GuestDifficultyService(
             AsyncMethodExecutor.awaitCallableExecute(actions).flatten()
         }
 
-        AsyncMethodExecutor.asyncRunnableExecute {
-            userApiService.asyncDownloadAvatar(relatedUsers)
-        }
+//        AsyncMethodExecutor.asyncRunnableExecute {
+//            userApiService.asyncDownloadAvatar(relatedUsers)
+//        }
 
         val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten().toList()
 
@@ -231,8 +231,8 @@ class GuestDifficultyService(
         val split = DataUtil.splitPage(guestDifficultyOwners, this.page)
         val list = split.first
 
-        userApiService.asyncDownloadAvatar(list.map { it.user })
-        userApiService.asyncDownloadBackground(list.map { it.user })
+        // userApiService.asyncDownloadAvatar(list.map { it.user })
+        // userApiService.asyncDownloadBackground(list.map { it.user })
 
         return mapOf(
             "user" to user,

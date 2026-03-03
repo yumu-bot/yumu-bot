@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerScoreWithFcPP
@@ -207,7 +206,7 @@ class BPFixService(
 
         if (scores.isEmpty()) throw NoSuchElementException.BestScoreTheoretical()
 
-        scoreApiService.asyncDownloadBackgroundFromScores(scores, listOf(CoverType.LIST, CoverType.COVER))
+        // scoreApiService.asyncDownloadBackgroundFromScores(scores, listOf(CoverType.LIST, CoverType.COVER))
 
         return scores to newPlayerPP
     }

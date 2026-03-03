@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
@@ -341,7 +340,7 @@ import kotlin.time.Duration.Companion.seconds
         val scores: List<SkillScore> = if (isShowScores) {
             val s10 = bests.take(10)
 
-            scoreApiService.asyncDownloadBackgroundFromScores(s10, CoverType.LIST)
+            // scoreApiService.asyncDownloadBackgroundFromScores(s10, CoverType.LIST)
 
             calculateApiService.applyBeatmapChanges(s10)
             calculateApiService.applyStarToScores(s10)

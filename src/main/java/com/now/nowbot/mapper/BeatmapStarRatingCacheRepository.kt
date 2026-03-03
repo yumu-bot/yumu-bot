@@ -23,5 +23,10 @@ interface BeatmapStarRatingCacheRepository : JpaRepository<BeatmapStarRatingCach
     @Transactional
     @Modifying
     @Query("DELETE FROM BeatmapStarRatingCache s WHERE s.mode = :mode")
-    fun deleteByMode(mode: Byte)
+    fun deleteByMode(mode: Byte): Long
+
+    @Transactional
+    @Modifying
+    @Query(value = "TRUNCATE TABLE osu_beatmap_star CASCADE ", nativeQuery = true)
+    fun truncateTable()
 }

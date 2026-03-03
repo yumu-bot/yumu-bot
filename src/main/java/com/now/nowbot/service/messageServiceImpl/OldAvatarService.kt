@@ -4,7 +4,6 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.osu.OsuUser.Companion.toMicroUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -269,7 +268,7 @@ class OldAvatarService(
                 throw IllegalStateException.Fetch("玩家名")
             }
 
-            userApiService.asyncDownloadAvatar(users.map { it.toMicroUser() })
+            // userApiService.asyncDownloadAvatar(users.map { it.toMicroUser() })
 
             return users
         }

@@ -480,9 +480,9 @@ import kotlin.time.Duration.Companion.seconds
     }
 
 
-    private fun ScoreParam.asyncDownloadBackground() {
-        scoreApiService.asyncDownloadBackgroundFromScores(map, listOf(CoverType.COVER, CoverType.LIST))
-    }
+//    private fun ScoreParam.asyncDownloadBackground() {
+//        scoreApiService.asyncDownloadBackgroundFromScores(map, listOf(CoverType.COVER, CoverType.LIST))
+//    }
 
     private fun ScoreParam.getMessageChain(): MessageChain {
         return try {
@@ -490,7 +490,7 @@ import kotlin.time.Duration.Companion.seconds
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                 calculateApiService.applyStarToScores(scores)
 
-                asyncDownloadBackground()
+                // asyncDownloadBackground()
 
                 val body = mapOf(
                     "user" to user,
@@ -507,7 +507,7 @@ import kotlin.time.Duration.Companion.seconds
 
                 val e5Param = ScorePRService.getE5Param(user, null, score, map, null, "S", beatmapApiService, calculateApiService)
 
-                asyncDownloadBackground()
+                // asyncDownloadBackground()
 
                 MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
             }

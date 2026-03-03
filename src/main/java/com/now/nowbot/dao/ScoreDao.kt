@@ -50,8 +50,13 @@ class ScoreDao(
         }
     }
 
-    fun deleteByMode(mode: OsuMode) {
-        beatmapStarRatingCacheRepository.deleteByMode(mode.modeValue)
+    fun deleteByMode(mode: OsuMode): Long {
+        return if (mode == OsuMode.DEFAULT) {
+            beatmapStarRatingCacheRepository.truncateTable()
+            0L
+        } else {
+            beatmapStarRatingCacheRepository.deleteByMode(mode.modeValue)
+        }
     }
 
     fun getStarRatingCache(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>): Float? {
