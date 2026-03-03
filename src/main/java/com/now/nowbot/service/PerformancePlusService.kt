@@ -19,17 +19,15 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.springframework.web.util.UriBuilder
-import java.io.IOException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.pow
 
-@Service("PP_PLUS_SEV") class PerformancePlusService(
+@Service("PP_PLUS_SEV")
+class PerformancePlusService(
     config: FileConfig,
     private val performancePlusLiteRepository: PerformancePlusLiteRepository,
     private val webClient: WebClient,
@@ -39,240 +37,196 @@ import java.util.concurrent.ConcurrentHashMap
 
     fun getMapPerformancePlus(beatmapID: Long, modList: List<LazerMod?>?): PPPlus? {
         checkFile(beatmapID)
-        val mods: Optional<String>
-        if (modList.isNullOrEmpty()) {
-            mods = Optional.empty()
-        } else {
-            val s = JacksonUtil.toJson(modList)
-            mods = Optional.of(URLEncoder.encode(s, StandardCharsets.UTF_8))
+
+        val mods = modList?.takeIf { it.isNotEmpty() }?.let {
+            URLEncoder.encode(JacksonUtil.toJson(it), StandardCharsets.UTF_8)
         }
-        val p = performancePlusLiteRepository.findBeatmapPPPlusByBeatmapID(beatmapID)
-        if (p != null) {
-            val result = PPPlus()
-            result.difficulty = p.toStats()
-            return result
+
+        // 优先从本地库查找
+        performancePlusLiteRepository.findBeatmapPPPlusByBeatmapID(beatmapID)?.let {
+            return PPPlus().apply { difficulty = it.toStats() }
         }
-        return webClient.get().uri { u: UriBuilder ->
+
+        return webClient.get()
+            .uri { u ->
                 u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/calculation")
-                    .queryParam("BeatmapId", beatmapID).queryParamIfPresent("Mods", mods).build()
-            }.retrieve().bodyToMono(PPPlus::class.java).block()
+                    .queryParam("BeatmapId", beatmapID)
+                    .apply { if (mods != null) queryParam("Mods", mods) }
+                    .build()
+            }
+            .retrieve()
+            .bodyToMono(PPPlus::class.java)
+            .block()
     }
 
     fun clearCache(beatmapId: String?) {
-        val p = ProcessBuilder("pkill", "-9", "-f", "Difficulty.PerformancePlus")
         Thread.startVirtualThread {
-            try {
-                p.start()
-            } catch (e: IOException) {
-                log.error("", e)
-            }
+            runCatching {
+                ProcessBuilder("pkill", "-9", "-f", "Difficulty.PerformancePlus").start()
+            }.onFailure { log.error("清理缓存进程失败", it) }
         }
     }
 
-    @Throws(TipsException::class) fun calculateUserPerformance(bps: List<LazerScore>): PPPlus.Stats {
-        val ppPlus = getScorePerformancePlus(bps)
+    @Throws(TipsException::class)
+    fun calculateUserPerformance(bps: List<LazerScore>): PPPlus.Stats {
+        val ppPlusList = getScorePerformancePlus(bps)
+        val ppPlusMap = ConcurrentHashMap<String, List<Double>>()
 
-        var aim = 0.0
-        var jumpAim = 0.0
-        var flowAim = 0.0
-        var precision = 0.0
-        var speed = 0.0
-        var stamina = 0.0
-        var accuracy = 0.0
-        var total = 0.0
+        // 定义需要计算的所有属性引用
+        val statsProps = listOf(
+            "aim" to PPPlus.Stats::aim,
+            "jumpAim" to PPPlus.Stats::jumpAim,
+            "flowAim" to PPPlus.Stats::flowAim,
+            "precision" to PPPlus.Stats::precision,
+            "speed" to PPPlus.Stats::speed,
+            "stamina" to PPPlus.Stats::stamina,
+            "accuracy" to PPPlus.Stats::accuracy,
+            "total" to PPPlus.Stats::total
+        )
 
-        val callables: MutableList<Callable<String>> = ArrayList(7)
-        val ppPlusMap: MutableMap<String, List<Double>> = ConcurrentHashMap(7)
-
-
-        // 逐个排序
-        callables.add(createCallable("aim", ppPlusMap, ppPlus, PPPlus.Stats::aim))
-        callables.add(createCallable("jumpAim", ppPlusMap, ppPlus, PPPlus.Stats::jumpAim))
-        callables.add(createCallable("flowAim", ppPlusMap, ppPlus, PPPlus.Stats::flowAim))
-        callables.add(createCallable("precision", ppPlusMap, ppPlus, PPPlus.Stats::precision))
-        callables.add(createCallable("speed", ppPlusMap, ppPlus, PPPlus.Stats::speed))
-        callables.add(createCallable("stamina", ppPlusMap, ppPlus, PPPlus.Stats::stamina))
-        callables.add(createCallable("accuracy", ppPlusMap, ppPlus, PPPlus.Stats::accuracy))
-        callables.add(createCallable("total", ppPlusMap, ppPlus, PPPlus.Stats::total))
-
+        // 并行计算每个维度的排序列表
+        val callables = statsProps.map { (key, prop) ->
+            createCallable(key, ppPlusMap, ppPlusList, prop)
+        }
         AsyncMethodExecutor.awaitCallableExecute(callables)
 
-        // 计算加权和
-        var weight = 1.0 / 0.95
-
-        for (n in ppPlus.indices) {
-            weight *= 0.95
-
-            aim += ppPlusMap["aim"]!![n] * weight
-            jumpAim += ppPlusMap["jumpAim"]!![n] * weight
-            flowAim += ppPlusMap["flowAim"]!![n] * weight
-            precision += ppPlusMap["precision"]!![n] * weight
-            speed += ppPlusMap["speed"]!![n] * weight
-            stamina += ppPlusMap["stamina"]!![n] * weight
-            accuracy += ppPlusMap["accuracy"]!![n] * weight
-            total += ppPlusMap["total"]!![n] * weight
+        // 利用 pow 计算加权和：sum(value * 0.95^index)
+        fun calculateWeightedSum(key: String): Double {
+            return ppPlusMap[key]?.asSequence()?.mapIndexed { index, value ->
+                value * 0.95.pow(index)
+            }?.sum() ?: 0.0
         }
 
-        return PPPlus.Stats(aim, jumpAim, flowAim, precision, speed, stamina, accuracy, total)
+        return PPPlus.Stats(
+            calculateWeightedSum("aim"),
+            calculateWeightedSum("jumpAim"),
+            calculateWeightedSum("flowAim"),
+            calculateWeightedSum("precision"),
+            calculateWeightedSum("speed"),
+            calculateWeightedSum("stamina"),
+            calculateWeightedSum("accuracy"),
+            calculateWeightedSum("total")
+        )
     }
 
-    @Throws(TipsException::class) fun getScorePerformancePlus(scores: Iterable<LazerScore>): List<PPPlus> {
-        val scoreIDs = scores.map { it.scoreID }
-        val ppPlusList = performancePlusLiteRepository.findScorePPPlus(scoreIDs)
-        val ppPlusMap = ppPlusList.associateBy { it.id }
+    @Throws(TipsException::class)
+    fun getScorePerformancePlus(scores: Iterable<LazerScore>): List<PPPlus> {
+        val allScoreIDs = scores.map { it.scoreID }
+        val cachedMap = performancePlusLiteRepository.findScorePPPlus(allScoreIDs).associateBy { it.id }
 
-        // 挑选出没有记录的 score
-        val body: MutableList<ScorePerformancePlus> = ArrayList()
-        val postDataID = LinkedList<Long>()
-        val allScoreIDs = LinkedList<Long>()
-        for (score in scores) {
-            allScoreIDs.add(score.scoreID)
-            if (ppPlusMap.containsKey(score.scoreID)) {
-                continue
+        // 筛选出未缓存的部分
+        val (cachedScores, needFetchScores) = scores.partition { cachedMap.containsKey(it.scoreID) }
+
+        if (needFetchScores.isEmpty()) {
+            return allScoreIDs.map { id ->
+                PPPlus().apply { performance = cachedMap[id]?.toStats() }
             }
-            postDataID.add(score.scoreID)
+        }
+
+        val body = needFetchScores.map { score ->
             checkFile(score.beatmap.beatmapID)
-            val combo = score.maxCombo
-            val misses = score.statistics.miss
-            val meh = score.statistics.meh
-            val oks = score.statistics.ok
-            body.add(
-                ScorePerformancePlus(
-                    score.beatmap.beatmapID.toString() + "", score.mods, combo, misses, meh, oks
-                )
+            ScorePerformancePlus(
+                beatmapId = score.beatmap.beatmapID.toString(),
+                mods = score.mods,
+                combo = score.maxCombo,
+                misses = score.statistics.miss,
+                mehs = score.statistics.meh,
+                oks = score.statistics.ok
             )
         }
 
-        if (body.isEmpty()) {
-            return allScoreIDs.mapNotNull { key: Long -> ppPlusMap[key] }.map {
-                val p = PPPlus()
-                p.performance = it.toStats()
-                p
-            }
-        }
-        val result: List<PPPlus>?
-
-        try {
-            result = getScorePerformancePlus(body)
+        val fetchedResults = try {
+            getScorePerformancePlusFromApi(body)
         } catch (e: WebClientResponseException) {
-            val n = findErrorBid(body)
-            getMapPerformancePlus(n.toLong(), listOf<LazerMod>())
-            beatmapApiService.refreshBeatmapFileFromDirectory(n.toLong())
-            Thread.startVirtualThread { this.clearCache(n) }
-            throw IllegalStateException.Fetch("PP+：谱面编号 $n")
-        }
+            val errorBid = findErrorBid(body)
+            // 容错处理
+            getMapPerformancePlus(errorBid.toLong(), emptyList())
+            beatmapApiService.refreshBeatmapFileFromDirectory(errorBid.toLong())
+            clearCache(errorBid)
+            throw IllegalStateException.Fetch("PP+：谱面编号 $errorBid")
+        } ?: emptyList()
 
-        var i = 0
-        val data = ArrayList<PerformancePlusLite>(postDataID.size)
-        for (scoreId in postDataID) {
-            data.add(
-                PerformancePlusLite(
-                    scoreId, result!![i].performance, PerformancePlusLite.SCORE
-                )
-            )
-            i++
+        // 保存新获取的数据
+        val newData = needFetchScores.zip(fetchedResults).map { (score, result) ->
+            PerformancePlusLite(score.scoreID, result.performance, PerformancePlusLite.SCORE)
         }
+        performancePlusLiteRepository.saveAll(newData)
 
-        performancePlusLiteRepository.saveAll(data)
+        // 合并结果并保持原始顺序
+        val fetchedMap = needFetchScores.map { it.scoreID }.zip(fetchedResults).toMap()
 
-        val allPPPlus = ArrayList<PPPlus>(allScoreIDs.size)
-        i = 0
-        for (id in allScoreIDs) {
-            if (postDataID.contains(id)) {
-                allPPPlus.add(result!![i])
-                i++
-            } else {
-                val lite = ppPlusMap[id]
-                val ppp = PPPlus()
-                ppp.performance = lite!!.toStats()
-                allPPPlus.add(ppp)
-            }
+        return allScoreIDs.map { id ->
+            fetchedMap[id] ?: PPPlus().apply { performance = cachedMap[id]?.toStats() }
         }
-        return allPPPlus
     }
 
-    // beatmapId 居然要 String ??? [https://difficalcy.syrin.me/api-reference/difficalcy-osu/#post-apibatchcalculation](啥玩意)
-    @JvmRecord internal data class ScorePerformancePlus(
-        @field:JsonProperty("beatmapId") @param:JsonProperty(
-            "beatmapId"
-        ) val beatmapId: String, val mods: List<LazerMod>, val combo: Int, val misses: Int, val mehs: Int, val oks: Int
+    @JvmRecord
+    internal data class ScorePerformancePlus(
+        @field:JsonProperty("beatmapId") val beatmapId: String,
+        val mods: List<LazerMod>,
+        val combo: Int,
+        val misses: Int,
+        val mehs: Int,
+        val oks: Int
     )
 
-    private fun getScorePerformancePlus(body: List<ScorePerformancePlus>): List<PPPlus>? {
-        return webClient.post().uri { u: UriBuilder ->
-                u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build()
-            }.contentType(MediaType.APPLICATION_JSON).bodyValue(JacksonUtil.toJson(body)).retrieve()
-            .bodyToMono(JsonNode::class.java).map { node: JsonNode? ->
-                JacksonUtil.parseObjectList(
-                    node, PPPlus::class.java
-                )
-            }.block()
+    private fun getScorePerformancePlusFromApi(body: List<ScorePerformancePlus>): List<PPPlus>? {
+        return webClient.post().uri { u ->
+            u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build()
+        }
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(JacksonUtil.toJson(body))
+            .retrieve()
+            .bodyToMono(JsonNode::class.java)
+            .map { JacksonUtil.parseObjectList(it, PPPlus::class.java) }
+            .block()
     }
 
     private fun checkFile(beatmapId: Long) {
-        val beatmapFiles = osuPath.resolve("$beatmapId.osu")
-        if (!Files.isRegularFile(beatmapFiles)) {
-            try {
-                val fileStr = beatmapApiService.getBeatmapFileString(beatmapId) ?: throw RuntimeException()
+        val beatmapFile = osuPath.resolve("$beatmapId.osu")
+        if (Files.isRegularFile(beatmapFile)) return
 
-                Files.writeString(beatmapFiles, fileStr)
-            } catch (e: Throwable) {
-                log.error("下载谱面文件失败", e)
-                throw RuntimeException("下载谱面文件失败")
-            }
+        runCatching {
+            val fileStr = beatmapApiService.getBeatmapFileString(beatmapId) ?: throw RuntimeException()
+            Files.writeString(beatmapFile, fileStr)
+        }.onFailure {
+            log.error("下载谱面文件失败: $beatmapId", it)
+            throw RuntimeException("下载谱面文件失败")
         }
     }
 
-    private fun findErrorBid(x: List<ScorePerformancePlus>): String {
-        if (x.size > 2) {
-            val mid = x.size / 2
-            val left = x.subList(0, mid)
-            val right = x.subList(mid, x.size)
-            return if (testScorePerformancePlus(left)) {
-                findErrorBid(left)
-            } else {
-                findErrorBid(right)
-            }
-        } else if (x.size == 2) {
-            return if (testScorePerformancePlus(x.subList(0, 1))) {
-                x.first().beatmapId
-            } else {
-                x.last().beatmapId
-            }
-        } else {
-            return x.first().beatmapId
-        }
+    private fun findErrorBid(list: List<ScorePerformancePlus>): String {
+        if (list.size <= 1) return list.first().beatmapId
+
+        val mid = list.size / 2
+        val left = list.subList(0, mid)
+        val right = list.subList(mid, list.size)
+
+        // 二分法查找导致 API 报错的具体谱面
+        return if (testApiError(left)) findErrorBid(left) else findErrorBid(right)
     }
 
-    private fun testScorePerformancePlus(allPPP: List<ScorePerformancePlus>): Boolean {
-        try {
-            getScorePerformancePlus(allPPP)
-        } catch (e: Exception) {
-            return true
-        }
-        return false
-    }
+    private fun testApiError(allPPP: List<ScorePerformancePlus>): Boolean = runCatching {
+        getScorePerformancePlusFromApi(allPPP)
+    }.isFailure
 
     private fun createCallable(
-        key: String, ppPlusMap: MutableMap<String, List<Double>>, list: List<PPPlus>, function: (PPPlus.Stats) -> Double
-    ): Callable<String> {
-        return Callable {
-            ppPlusMap[key] = list
-                .mapNotNull { it.performance }
-                .map { function(it) }
-                .sortedDescending()
-
-            key
-        }
+        key: String,
+        ppPlusMap: MutableMap<String, List<Double>>,
+        list: List<PPPlus>,
+        extractor: (PPPlus.Stats) -> Double
+    ) = java.util.concurrent.Callable {
+        ppPlusMap[key] = list.mapNotNull { it.performance }.map(extractor).sortedDescending()
+        key
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(PerformancePlusService::class.java)
-        private var API_SCHEME = "http" // 不用改了
+        private var API_SCHEME = "http"
         private var API_HOST = "localhost"
-        private var API_PORT = "46880"
+        private var API_PORT = "5000"
 
-        @JvmStatic fun runDevelopment() {
+        fun runDevelopment() {
             API_SCHEME = "https"
             API_HOST = "ppp.365246692.xyz"
             API_PORT = "443"

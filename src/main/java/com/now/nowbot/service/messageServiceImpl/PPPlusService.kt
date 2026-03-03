@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
@@ -17,14 +18,16 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import kotlin.math.atan
 import kotlin.math.floor
 import kotlin.math.sqrt
 
-//@Service("PP_PLUS")
+@Service("PP_PLUS")
 class PPPlusService(
     private val userApiService: OsuUserApiService,
     private val scoreApiService: OsuScoreApiService,
@@ -40,24 +43,29 @@ class PPPlusService(
         val matcher = Instruction.PP_PLUS.matcher(messageText)
         if (!matcher.find()) return false
 
+        if (!Permission.isSuperAdmin(event)) return false
+
         val cmd = matcher.group("function")?.ifBlank { "pp" } ?: "pp"
         val a1 = matcher.group("area1")?.ifBlank { null }
         val a2 = matcher.group("area2")?.ifBlank { null }
 
-        val me = bindDao.getBindFromQQ(event.sender.contactID, true)
+        val me = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
         try {
             when (cmd.lowercase()) {
                 "pp", "ppp", "pp+", "p+", "ppplus", "plus" -> { // user 非vs
 
-                    if (event.hasAt()) setUser(null, null, bindDao.getBindFromQQ(event.target), false, data)
-                    else setUser(a1, a2, me, false, data)
+                    if (event.hasAt()) {
+                        setUser(null, null, bindDao.getBindFromQQ(event.target), false, data)
+                    } else {
+                        setUser(a1, a2, me, false, data)
+                    }
                 }
 
                 "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> { // user vs
                     if (event.hasAt()) {
                         setUser(
-                            null, bindDao.getBindFromQQ(event.target).username, me, true, data
+                            bindDao.getBindFromQQ(event.target).username, null, me, true, data
                         )
                     } else {
                         setUser(a1, a2, me, true, data)
@@ -79,57 +87,53 @@ class PPPlusService(
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PPPlusParam): ServiceCallStatistic? {
-        val dataMap = HashMap<String, Any>(6)
+    override fun handleMessage(event: MessageEvent, param: PPPlusParam): ServiceCallStatistic? {
+        val me = param.me as OsuUser
+        val other = param.other as? OsuUser
+        val isVs = other != null
 
-        // user 对比
-        dataMap["isUser"] = true
-        val u1 = param.me as OsuUser
-        dataMap["me"] = u1
-        dataMap["my"] = getUserPerformancePlus(u1.userID)
-
-        if (param.other is OsuUser) { // 包含另一个就是 vs, 直接判断了
-            val u2 = param.other
-            val pp2 = getUserPerformancePlus(u2.userID)
-
-            // beforePost(u2, pp2)
-
-            dataMap["other"] = u2
-            dataMap["others"] = pp2
-            dataMap["isVs"] = true
-        } else {
-            dataMap["isVs"] = false
+        val dataMap = mutableMapOf(
+            "isUser" to true,
+            "me" to me,
+            "my" to getUserPerformancePlus(me.userID),
+            "isVs" to isVs
+        ).apply {
+            other?.let {
+                put("other", it)
+                put("others", getUserPerformancePlus(it.userID))
+            }
         }
 
-        val image: ByteArray
-
-        try {
-            image = imageService.getPanel(dataMap, "B3")
-        } catch (e: Exception) {
+        val image = runCatching {
+            imageService.getPanel(dataMap, "B3")
+        }.getOrElse { e ->
             log.error("PP+ 渲染失败", e)
             throw IllegalStateException.Render("PP+")
         }
-        try {
+
+        runCatching {
             event.reply(image)
-        } catch (e: Exception) {
+        }.onFailure { e ->
             log.error("PP+ 发送失败", e)
             throw IllegalStateException.Send("PP+")
         }
 
-        return if (param.other is OsuUser) {
-            ServiceCallStatistic.builds(event,
-                userIDs = listOf(param.me.userID, param.other.userID),
-                modes = listOf(param.me.currentOsuMode)
+        // 使用 when 或 if 表达式直接返回，结构更清晰
+        return when (other) {
+            null -> ServiceCallStatistic.build(
+                event,
+                userID = me.userID,
+                mode = me.currentOsuMode
             )
-        } else {
-            ServiceCallStatistic.build(event,
-                userID = param.me.userID,
-                mode = param.me.currentOsuMode
+            else -> ServiceCallStatistic.builds(
+                event,
+                userIDs = listOf(me.userID, other.userID),
+                modes = listOf(me.currentOsuMode)
             )
         }
     }
 
-    // 把数据合并一下 。这个才是真传过去的 PP+
+    // 把数据合并一下。这个才是真传过去的 PP+
     private fun getUserPerformancePlus(uid: Long): PPPlus {
         val bests = scoreApiService.getBestScores(uid, OsuMode.OSU)
         val performance = performancePlusService.calculateUserPerformance(bests)
@@ -144,126 +148,119 @@ class PPPlusService(
     }
 
     private fun setUser(
-        a1: String?, a2: String?, me: BindUser?, isVs: Boolean, data: DataValue<PPPlusParam>
+        name1: String?, name2: String?, me: BindUser?, isVs: Boolean, data: DataValue<PPPlusParam>
     ) {
-        var p1: OsuUser?
-        var p2: OsuUser?
 
-        p1 = if (a1.isNullOrBlank().not()) {
-            userApiService.getOsuUser(a1, OsuMode.OSU)
+        val user1: OsuUser
+        val user2: OsuUser?
+
+        if (!name2.isNullOrBlank()) {
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                { userApiService.getOsuUser(
+                    name1 ?: me?.username ?: throw BindException.NotBindException.YouNotBind(), OsuMode.OSU)
+                },
+                { userApiService.getOsuUser(name2, OsuMode.OSU) }
+            )
+
+            user1 = async.first
+            user2 = async.second
+        } else if (isVs && !name1.isNullOrBlank() && me != null) {
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                { userApiService.getOsuUser(me.username, OsuMode.OSU) },
+                { userApiService.getOsuUser(name1, OsuMode.OSU) }
+            )
+
+            user1 = async.first
+            user2 = async.second
+        } else if (!name1.isNullOrBlank()) {
+            user1 = userApiService.getOsuUser(name1, OsuMode.OSU)
+            user2 = null
         } else {
-            userApiService.getOsuUser(me!!, OsuMode.OSU)
+            user1 = userApiService.getOsuUser(
+                me?.username ?: throw BindException.NotBindException.YouNotBind(),
+                OsuMode.OSU)
+            user2 = null
         }
 
-        p2 = if (a2.isNullOrBlank().not()) {
-            userApiService.getOsuUser(a2, OsuMode.OSU)
-        } else {
-            null
-        }
-
-        if (isVs && p2 == null) {
-            p2 = p1
-            p1 = userApiService.getOsuUser(me!!, OsuMode.OSU)
-        }
-
-        data.value = PPPlusParam(true, p1, p2)
+        data.value = PPPlusParam(true, user1, user2)
     }
 
-    // 计算进阶指数的等级
     private fun calculateLevel(value: Double, array: IntArray?): Double {
+        // 1. Guard Clause: 预校验，利用 ? 和 size 判断直接返回
         if (array == null || array.size < 13) return 0.0
 
-        var lv = 11
+        // 2. 核心逻辑：利用 indexOfFirst 代替 for 循环查找第一个不满足条件的索引
+        // 如果全部都满足，则说明等级到了最高的 11
+        val index = array.indexOfFirst { value < it }
+        val lv = if (index == -1) 11 else index - 2
 
-        for (i in 0..12) {
-            if (value < array[i]) {
-                lv = i - 2
-                break
-            }
+        // 3. 表达式化 when：直接返回计算结果，逻辑更紧凑
+        return when (lv) {
+            -2 -> 0.25 * value / array[0]
+
+            -1 -> 0.25 + 0.5 * (value - array[0]) / (array[1] - array[0])
+
+            0  -> 0.75 + 0.25 * (value - array[1]) / (array[2] - array[1])
+
+            else -> lv.toDouble()
         }
+    }
 
-        when (lv) {
-            -2 -> { // 0 - 25
-                return 0.25 * value / array[0]
-            }
+    companion object {
+        // 将静态常量数组提取出来，避免每次调用函数都重新创建对象
+        private val JUMP_ARRAY = intArrayOf(1300, 1700, 1975, 2250, 2525, 2800, 3075, 3365, 3800, 4400, 4900, 5900, 6900)
+        private val FLOW_ARRAY = intArrayOf(200, 450, 563, 675, 788, 900, 1013, 1225, 1500, 1825, 2245, 3200, 4400)
+        private val PRECISION_ARRAY = intArrayOf(200, 400, 463, 525, 588, 650, 713, 825, 950, 1350, 1650, 2300, 3050)
+        private val SPEED_ARRAY = intArrayOf(950, 1250, 1363, 1475, 1588, 1700, 1813, 1925, 2200, 2400, 2650, 3100, 3600)
+        private val STAMINA_ARRAY = intArrayOf(600, 1000, 1100, 1200, 1300, 1400, 1500, 1625, 1800, 2000, 2200, 2600, 3050)
+        private val ACCURACY_ARRAY = intArrayOf(600, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1750, 2100, 2550, 3400, 4400)
 
-            -1 -> { // 25 - 75
-                return 0.25 + 0.5 * (value - array[0]) / (array[1] - array[0])
-            }
-
-            0 -> { // 75 - 100
-                return 0.75 + 0.25 * (value - array[1]) / (array[2] - array[1])
-            }
-
-            else -> {
-                return lv.toDouble()
-            }
-        }
+        private val log: Logger = LoggerFactory.getLogger(PPPlusService::class.java)
     }
 
     private fun calculateUserAdvancedStats(performance: PPPlus.Stats?): AdvancedStats? {
-        if (performance == null) return null
+        // 1. 使用 ?.let 替代 if (null) return null，保持链式调用
+        return performance?.run {
+            // 2. 批量计算 Level
+            val jump = calculateLevel(jumpAim, JUMP_ARRAY)
+            val flow = calculateLevel(flowAim, FLOW_ARRAY)
+            val prec = calculateLevel(precision, PRECISION_ARRAY)
+            val spd = calculateLevel(speed, SPEED_ARRAY)
+            val sta = calculateLevel(stamina, STAMINA_ARRAY)
+            val acc = calculateLevel(accuracy, ACCURACY_ARRAY)
+            val aimLevel = calculateLevel(aim, JUMP_ARRAY)
 
-        // 第一个是 25%，第二个是 75%，第三个是LV1
-        val jumpArray = intArrayOf(
-            1300, 1700, 1975, 2250, 2525, 2800, 3075, 3365, 3800, 4400, 4900, 5900, 6900
-        )
-        val flowArray = intArrayOf(
-            200, 450, 563, 675, 788, 900, 1013, 1225, 1500, 1825, 2245, 3200, 4400
-        )
-        val precisionArray = intArrayOf(
-            200, 400, 463, 525, 588, 650, 713, 825, 950, 1350, 1650, 2300, 3050
-        )
-        val speedArray = intArrayOf(
-            950, 1250, 1363, 1475, 1588, 1700, 1813, 1925, 2200, 2400, 2650, 3100, 3600
-        )
-        val staminaArray = intArrayOf(
-            600, 1000, 1100, 1200, 1300, 1400, 1500, 1625, 1800, 2000, 2200, 2600, 3050
-        )
-        val accuracyArray = intArrayOf(
-            600, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1750, 2100, 2550, 3400, 4400
-        )
-        val advancedIndex: Double
+            // 3. 常规指数计算 (利用 math 函数简化视觉)
+            val generalIndex = (sqrt((getPiCent(jumpAim, 1300, 1700) + 8.0) * (getPiCent(flowAim, 200, 450) + 3.0)) * 10.0
+                    + getPiCent(precision, 200, 450)
+                    + getPiCent(speed, 950, 1250) * 7.0
+                    + getPiCent(stamina, 600, 1000) * 3.0
+                    + getPiCent(accuracy, 600, 1200) * 10.0)
 
-        val jumpAim = calculateLevel(performance.jumpAim, jumpArray)
-        val flowAim = calculateLevel(performance.flowAim, flowArray)
-        val precision = calculateLevel(performance.precision, precisionArray)
-        val speed = calculateLevel(performance.speed, speedArray)
-        val stamina = calculateLevel(performance.stamina, staminaArray)
-        val accuracy = calculateLevel(performance.accuracy, accuracyArray)
-        val aim = calculateLevel(performance.aim, jumpArray)
+            // 4. 进阶指数：通过映射和排序获取第二大值
+            // 这里的逻辑是将各个维度与其对应的数组配置“绑定”处理
+            val advancedIndex = listOf(
+                Triple(jumpAim, jump, JUMP_ARRAY),
+                Triple(flowAim, flow, FLOW_ARRAY),
+                Triple(precision, prec, PRECISION_ARRAY),
+                Triple(speed, spd, SPEED_ARRAY),
+                Triple(stamina, sta, STAMINA_ARRAY),
+                Triple(accuracy, acc, ACCURACY_ARRAY)
+            ).map { (value, lv, arr) ->
+                getDetail(value, lv, arr[1], arr.last())
+            }.sortedDescending()[1]
 
-        // 常规指数和进阶指数，进阶指数是以上情况的第二大的值，达标情况的目标是以上第二大值 * 6 - 4，
-        val generalIndex =
-            (sqrt(
-                (getPiCent(performance.jumpAim, 1300, 1700) + 8.0)
-                        * (getPiCent(performance.flowAim, 200, 450) + 3.0)
-            ) * 10.0
-                    + getPiCent(performance.precision, 200, 450)
-                    + getPiCent(performance.speed, 950, 1250) * 7.0
-                    + getPiCent(performance.stamina, 600, 1000) * 3.0
-                    + getPiCent(performance.accuracy, 600, 1200) * 10.0
-                    )
+            val levels = listOf(jump, flow, acc, sta, spd, prec, aimLevel)
 
-
-        advancedIndex = mutableListOf(
-            getDetail(
-                performance.jumpAim, jumpAim, jumpArray[1], jumpArray.last()
-            ), getDetail(
-                performance.flowAim, flowAim, flowArray[1], flowArray.last()
-            ), getDetail(
-                performance.precision, precision, precisionArray[1], precisionArray.last()
-            ), getDetail(performance.speed, speed, speedArray[1], speedArray.last()), getDetail(
-                performance.stamina, stamina, staminaArray[1], staminaArray.last()
-            ), getDetail(
-                performance.accuracy, accuracy, accuracyArray[1], accuracyArray.last()
+            // 5. 直接构造返回结果
+            AdvancedStats(
+                levels,
+                generalIndex,
+                advancedIndex,
+                levels.sum(),
+                advancedIndex * 6 - 4
             )
-        ).sorted().reversed().toList()[1] // 第二大
-
-        val index = listOf(jumpAim, flowAim, accuracy, stamina, speed, precision, aim)
-        val sum: Double = index.sum()
-
-        return AdvancedStats(index, generalIndex, advancedIndex, sum, advancedIndex * 6 - 4)
+        }
     }
 
     // 化学式进阶指数 获取百分比 * Pi（加权 1）
@@ -281,15 +278,10 @@ class PPPlusService(
             level
         }
     }
-
     
     private fun beforePost(user: OsuUser, plus: PPPlus) {
         if (user.id == 17064371L) {
             plus.performance = PPPlus.maxStats
         }
-    }
-
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(PPPlusService::class.java)
     }
 }

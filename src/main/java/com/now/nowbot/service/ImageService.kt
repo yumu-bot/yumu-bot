@@ -213,7 +213,7 @@ class ImageService(private val webClient: WebClient) {
 
         // 在这里封好可能出现的（已知原因的）错误，确保错误不会传递下去
         return try {
-            request.retrieve().bodyToMono(ByteArray::class.java).block()!!
+            request.retrieve().bodyToMono(ByteArray::class.java).block()
         } catch (e: Throwable) {
             if (e.findCauseOfType<SocketException>() != null) {
                 throw NetworkException.RenderModuleException.ServiceUnavailable()
@@ -239,7 +239,7 @@ class ImageService(private val webClient: WebClient) {
                 log.error("渲染模块：未识别的错误", e)
                 throw NetworkException.RenderModuleException.Undefined(e)
             }
-        }
+        } ?: throw NetworkException.RenderModuleException.NoContent()
     }
 
     companion object {

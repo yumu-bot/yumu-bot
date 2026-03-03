@@ -24,6 +24,14 @@ open class NetworkException(message: String?
     open class RenderModuleException(message: String): NetworkException(message) {
         override val code: Int = 0
 
+        class NoContent:
+            RenderModuleException("""
+                204 No Content
+                渲染模块返回了空数据。
+            """.trimIndent()) {
+            override val code = 204
+        }
+
         class BadRequest:
             RenderModuleException("""
                 400 Bad Request
