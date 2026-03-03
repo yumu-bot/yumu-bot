@@ -49,7 +49,7 @@ class PerformancePlusService(
 
         return webClient.get()
             .uri { u ->
-                u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/calculation")
+                u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).replacePath("/api/calculation")
                     .queryParam("BeatmapId", beatmapID)
                     .apply { if (mods != null) queryParam("Mods", mods) }
                     .build()
@@ -172,7 +172,7 @@ class PerformancePlusService(
 
     private fun getScorePerformancePlusFromApi(body: List<ScorePerformancePlus>): List<PPPlus>? {
         return webClient.post().uri { u ->
-            u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build()
+            u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).replacePath("/api/batch/calculation").build()
         }
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(JacksonUtil.toJson(body))
