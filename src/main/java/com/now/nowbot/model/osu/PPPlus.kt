@@ -5,21 +5,21 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlin.math.pow
 
-@JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 class PPPlus {
-    @JvmRecord
+
     data class Stats(
-        @JvmField val aim: Double = 0.0,
-        @JvmField @field:JsonProperty("jumpAim") val jumpAim: Double = 0.0,
-        @JvmField @field:JsonProperty("flowAim") val flowAim: Double = 0.0,
-        @JvmField val precision: Double = 0.0,
-        @JvmField val speed: Double = 0.0,
-        @JvmField val stamina: Double = 0.0,
-        @JvmField val accuracy: Double = 0.0,
-        @JvmField val total: Double = 0.0
+        val aim: Double = 0.0,
+        @field:JsonProperty("jumpAim") val jumpAim: Double = 0.0,
+        @field:JsonProperty("flowAim") val flowAim: Double = 0.0,
+        val precision: Double = 0.0,
+        val speed: Double = 0.0,
+        val stamina: Double = 0.0,
+        val accuracy: Double = 0.0,
+        val total: Double = 0.0
     )
 
-    @JvmRecord
     data class AdvancedStats(
         val index: List<Double>,
         val general: Double,
@@ -32,21 +32,21 @@ class PPPlus {
     var combo: Int? = null
     var difficulty: Stats? = null
     var performance: Stats? = null
-    var skill: Stats? = null
-        get() = if (field == null && difficulty != null) {
-            field = Stats(
-                calculateSkillValue(difficulty!!.aim),
-                calculateSkillValue(difficulty!!.jumpAim),
-                calculateSkillValue(difficulty!!.flowAim),
-                calculateSkillValue(difficulty!!.precision),
-                calculateSkillValue(difficulty!!.speed),
-                calculateSkillValue(difficulty!!.stamina),
-                calculateSkillValue(difficulty!!.accuracy),
-                calculateSkillValue(difficulty!!.total)
-            )
 
-            field
-        } else Stats()
+    val skill: Stats by lazy {
+        val d = difficulty ?: return@lazy Stats()
+
+        Stats(
+            calculateSkillValue(d.aim),
+            calculateSkillValue(d.jumpAim),
+            calculateSkillValue(d.flowAim),
+            calculateSkillValue(d.precision),
+            calculateSkillValue(d.speed),
+            calculateSkillValue(d.stamina),
+            calculateSkillValue(d.accuracy),
+            calculateSkillValue(d.total)
+        )
+    }
 
     var advancedStats: AdvancedStats? = null
 

@@ -23,6 +23,13 @@ interface OsuBeatmapApiService {
 
     fun getBeatmapFileByte(bid: Long): ByteArray?
 
+    /**
+     * 返回已经下好的谱面，没法下载的就不存在在这个list里了
+     */
+    fun downloadBeatmapFile(bids: Collection<Long>): List<Long>
+
+    fun deleteBeatmapFileFromDirectory(bid: Long): Boolean
+
     fun hasBeatmapFileFromDirectory(bid: Long): Boolean
 
     fun refreshBeatmapFileFromDirectory(bid: Long): Boolean

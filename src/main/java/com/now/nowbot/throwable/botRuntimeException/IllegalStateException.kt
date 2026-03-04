@@ -15,6 +15,9 @@ open class IllegalStateException(message: String?): TipsRuntimeException(message
     class Fetch(component: Any):
         IllegalStateException("$component：数据获取失败。")
 
+    class NotInProgress(component: Any):
+        IllegalStateException("$component：服务启动失败。")
+
     class ReadFile(component: Any):
         IllegalStateException("$component：文件读取失败。")
 

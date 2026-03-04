@@ -23,13 +23,8 @@ import com.now.nowbot.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.concurrent.Callable
-import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Matcher
-import kotlin.collections.forEach
-import kotlin.let
 import kotlin.math.sqrt
-import kotlin.time.Duration.Companion.seconds
 
 @Service("SKILL") class SkillService(
     private val scoreApiService: OsuScoreApiService,
@@ -254,44 +249,10 @@ import kotlin.time.Duration.Companion.seconds
         if (bests.isNullOrEmpty()) return mapOf()
 
         val scoreMap = bests.associateBy { it.beatmapID }
-        val allIDs = scoreMap.keys
 
-        // 1. 区分本地和在线
-        val exists = allIDs.filter { beatmapApiService.hasBeatmapFileFromDirectory(it) }
-        val notExists = allIDs.minus(exists.toSet())
+        val ids = beatmapApiService.downloadBeatmapFile(scoreMap.keys)
 
-        val fileMap = ConcurrentHashMap<Long, String>()
-
-        // 2. 分批下载缺失的谱面
-        notExists.chunked(15).forEach { ids ->
-            val actions = ids.map { id ->
-                Callable {
-                    // 返回 Pair，方便后面 toMap
-                    id to beatmapApiService.getBeatmapFileString(id)
-                }
-            }
-
-            // 每一组给 30 秒，防止网络波动
-            val result = AsyncMethodExecutor.awaitCallableExecute(actions, 30.seconds)
-
-            result.forEach { (id, fileString) ->
-                if (!fileString.isNullOrEmpty()) {
-                    fileMap[id] = fileString
-                } else {
-                    log.warn("谱面 $id 下载返回内容为空")
-                }
-            }
-        }
-
-        // 3. 读取本地已有的谱面 (建议也加个异常处理)
-        exists.forEach { id ->
-            try {
-                val file = beatmapApiService.getBeatmapFileFromDirectory(id)
-                if (!file.isNullOrEmpty()) fileMap[id] = file
-            } catch (e: Exception) {
-                log.error("读取本地谱面 $id 失败", e)
-            }
-        }
+        val fileMap = ids.associateWith { id -> beatmapApiService.getBeatmapFileString(id)}
 
         // 4. 统一解析 Skill (CPU密集型操作)
         // 注意：这里不需要用 !!，没下载到的图直接标记为 null 即可

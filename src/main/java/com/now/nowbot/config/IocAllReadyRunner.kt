@@ -5,7 +5,6 @@ import com.now.nowbot.listener.LocalCommandListener
 import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.service.messageServiceImpl.MatchListenerService
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -87,7 +86,7 @@ class IocAllReadyRunner(
         try {
             val debugging = ApplicationHome(NowbotConfig::class.java).source?.parentFile?.toString()?.contains("target") ?: false
             if (debugging) {
-                PerformancePlusService.runDevelopment()
+                //PerformancePlusAPIService.runDevelopment()
                 startCommandListener()
             }
         } catch (_: Exception) {
