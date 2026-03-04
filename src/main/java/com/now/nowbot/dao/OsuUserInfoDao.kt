@@ -38,6 +38,8 @@ class OsuUserInfoDao(
 
         log.info("已经获取到 ${users.size} 条数据，正在更新")
 
+        entityManager.clear()
+
         users.forEachIndexed { index, user ->
             upsert(user)
 
