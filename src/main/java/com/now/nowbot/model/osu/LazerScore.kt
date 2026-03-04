@@ -169,10 +169,21 @@ open class LazerScore(
         get() = buildID != null && buildID!! > 0L
 
     @field:JsonProperty("mods")
-    var mods: List<LazerMod> = listOf()
-        get() {
-            // 现在这里调用 this.isLazer 时，拿到的是最新的实时结果
-            return field.filterNot { it is LazerMod.Classic && !this.isLazer }
+    @get:JsonIgnore
+    @set:JsonProperty("mods")
+    private var rawMods: List<LazerMod> = listOf()
+
+    @get:JsonProperty("mods")
+    @set:JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    var mods: List<LazerMod>
+        get() = if (this.isLazer) {
+            rawMods
+        } else {
+            rawMods.filterNot { it.acronym == "CL" }
+        }
+
+        set(value) {
+            rawMods = value
         }
 
     @get:JsonProperty("legacy_rank")
