@@ -165,11 +165,13 @@ open class LazerScore(
 
     @get:JsonProperty("is_lazer")
     val isLazer: Boolean
-        get() = (buildID ?: 0L) > 0L
+        // 使用 get() 确保它是动态计算的
+        get() = buildID != null && buildID!! > 0L
 
     @field:JsonProperty("mods")
     var mods: List<LazerMod> = listOf()
-        get() { // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
+        get() {
+            // 现在这里调用 this.isLazer 时，拿到的是最新的实时结果
             return field.filterNot { it is LazerMod.Classic && !this.isLazer }
         }
 
