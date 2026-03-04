@@ -26,6 +26,8 @@ class OsuBeatmapMirrorApiService(
 
         if (url.isNullOrEmpty()) return null
 
+        return null
+
         return try {
             val str = webClient.get()
                 .uri(url) { it.path("/api/mirror/beatmap/osufile/{bid}").build(bid) }
