@@ -80,3 +80,4 @@
 - [diving-fish](https://www.diving-fish.com/maimaidx/prober/#Tutorial) 水鱼查分器：提供了 maimai、chunithm 的账号数据和成绩
 - [Lxns-Network](https://maimai.lxns.net/docs) 落雪咖啡屋：提供了部分 maimai、chunithm 的歌曲信息和外号库
 - [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect/) 哔哩哔哩 - API 收集整理：提供了 bilibili 的部分 API 信息
+- [PP+](https://github.com/Syriiin/difficalcy-performanceplus) PP+：提供了表现分加功能的算法

@@ -8,6 +8,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.PPPlus
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.FastPower095
 import org.slf4j.Logger
@@ -84,7 +85,7 @@ class PerformancePlusAPIService(
             return getMapPerformancePlus(beatmapID, mods, retryCount - 1)
         }
 
-        return null
+        throw NetworkException.ComponentException.RequestTimeout()
     }
 
     fun getMapPerformancePlus(beatmapIDs: Collection<Long>, mods: List<List<LazerMod>>): List<PPPlus> {
@@ -148,7 +149,7 @@ class PerformancePlusAPIService(
             return getScorePerformancePlus(score, retryCount - 1)
         }
 
-        return emptyList()
+        throw NetworkException.ComponentException.RequestTimeout()
     }
 
     fun getScoresPerformancePlus(scores: List<LazerScore>, retryCount: Int = 3): List<PPPlus> {
@@ -189,7 +190,7 @@ class PerformancePlusAPIService(
             }
         }
 
-        return emptyList()
+        throw NetworkException.ComponentException.RequestTimeout()
     }
 
     private fun getScoresPerformancePlusRaw(scores: List<LazerScore>): List<PPPlus> {

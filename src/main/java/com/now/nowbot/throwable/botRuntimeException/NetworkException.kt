@@ -12,12 +12,12 @@ open class NetworkException(message: String?
     open class ComponentException(message: String?): NetworkException(message) {
         override val code: Int = 0
 
-        class NoResponse:
+        class RequestTimeout:
             ComponentException("""
-                444 No Response
-                没有响应。
+                408 Request Timeout
+                模块超时，有可能是需要绘制的数据太多了。
             """.trimIndent()) {
-            override val code = 444
+            override val code = 408
         }
     }
 
