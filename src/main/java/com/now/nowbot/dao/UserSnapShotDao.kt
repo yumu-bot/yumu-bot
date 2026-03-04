@@ -2,6 +2,7 @@ package com.now.nowbot.dao
 
 import com.now.nowbot.entity.UserBestSnapshot
 import com.now.nowbot.mapper.UserBestSnapshotRepository
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import org.springframework.stereotype.Component
 import org.springframework.util.DigestUtils
@@ -19,9 +20,7 @@ class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository
         val latest = snapshotRepository.getLatest(f.userID, f.mode.modeValue)
 
         if (hash != latest?.contentHash && scores.size >= (latest?.scoreIDs?.size ?: 0)) {
-            Thread.startVirtualThread {
-                saveSnapshot(scores)
-            }
+            saveSnapshot(scores)
         }
     }
 
@@ -29,5 +28,9 @@ class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository
         val snapshot = UserBestSnapshot.fromBests(scores) ?: return
 
         snapshotRepository.save(snapshot)
+    }
+
+    fun getLatestSnapshot(userID: Long, mode: OsuMode): UserBestSnapshot? {
+        return snapshotRepository.getLatest(userID, mode.modeValue)
     }
 }

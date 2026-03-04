@@ -446,7 +446,7 @@ class BeatmapDao(
 
         fun fromBeatmapsetModel(mapSet: Beatmapset): BeatmapsetLite {
             val s = BeatmapsetLite()
-            s.id = Math.toIntExact(mapSet.beatmapsetID)
+            s.id = mapSet.beatmapsetID.toInt()
             s.card = mapSet.covers.card2x
             s.cover = mapSet.covers.cover2x
             s.list = mapSet.covers.list2x
