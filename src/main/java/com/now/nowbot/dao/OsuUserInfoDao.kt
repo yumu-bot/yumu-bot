@@ -47,7 +47,7 @@ class OsuUserInfoDao(
             if (index % 1000 == 0 && index > 0) {
                 entityManager.flush() // 确保 SQL 已经发给数据库
                 entityManager.clear() // 释放内存中的对象引用
-                log.info("已处理 $index 条...")
+                // log.info("已处理 $index 条...")
             }
         }
 

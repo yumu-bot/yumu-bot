@@ -8,6 +8,8 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import org.springframework.util.DigestUtils
 import java.time.LocalDateTime
 
@@ -31,10 +33,11 @@ class UserBestSnapshot(
     @Column(name = "mode")
     var mode: Byte,
 
-    // 使用 Hibernate 6+ 的注解或自定义 Type 处理数组
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "beatmap_ids", columnDefinition = "int8[]")
     var beatmapIDs: LongArray,
 
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "score_ids", columnDefinition = "int8[]")
     var scoreIDs: LongArray,
 

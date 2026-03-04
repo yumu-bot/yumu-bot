@@ -91,12 +91,16 @@ class PPPlusService(
         val dataMap = mutableMapOf(
             "isUser" to true,
             "me" to me,
-            "my" to getUserPerformancePlus(me.userID).beforePost(me.userID),
+            "my" to getUserPerformancePlus(me.userID).apply {
+                this.putSpringStats(me.userID)
+            },
             "isVs" to isVs
         ).apply {
             other?.let {
                 put("other", it)
-                put("others", getUserPerformancePlus(it.userID).beforePost(it.userID))
+                put("others", getUserPerformancePlus(it.userID).apply {
+                    this.putSpringStats(me.userID)
+                })
             }
         }
 
@@ -291,7 +295,7 @@ class PPPlusService(
             }
         }
 
-        private fun PPPlus.beforePost(userID: Long) {
+        private fun PPPlus.putSpringStats(userID: Long) {
             if (userID == 17064371L) {
                 this.performance = PPPlus.maxStats
             }
