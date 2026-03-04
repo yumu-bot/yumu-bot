@@ -69,10 +69,22 @@ public class NowbotConfig {
     @Bean
     @Primary
     public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
+//        ObjectMapper mapper = builder.createXmlMapper(false).build();
+//
+//        mapper.registerModule(new Jdk8Module()).setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+//              .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+//        return mapper;
+
         ObjectMapper mapper = builder.createXmlMapper(false).build();
-//        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        mapper.registerModule(new Jdk8Module()).setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
-              .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        mapper.registerModule(new Jdk8Module());
+        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule()); // 解决时间报错
+        mapper.registerModule(new com.fasterxml.jackson.module.kotlin.KotlinModule.Builder().build()); // 解决Kotlin适配
+
+        // 可选：注册 Afterburner 模块
+        // mapper.registerModule(new com.fasterxml.jackson.module.kotlin. .AfterburnerModule());
+
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         return mapper;
     }
 

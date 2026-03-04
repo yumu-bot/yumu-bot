@@ -33,8 +33,16 @@ class ScoreDao(
     /**
      * 使用外界的星数
      */
-    fun saveStarRatingCache(score: LazerScore, star: Float) {
-        saveStarRatingCache(score.beatmapID, score.mode, score.mods, star, score.beatmap.hasLeaderBoard)
+    fun saveStarRatingCacheAsync(score: LazerScore, star: Float) {
+        Thread.startVirtualThread {
+            saveStarRatingCache(score.beatmapID, score.mode, score.mods, star, score.beatmap.hasLeaderBoard)
+        }
+    }
+
+    fun saveStarRatingCacheAsync(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, star: Float, hasLeaderBoard: Boolean = false) {
+        Thread.startVirtualThread {
+            saveStarRatingCache(beatmapID, mode, mods, star, hasLeaderBoard)
+        }
     }
 
     fun saveStarRatingCache(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, star: Float, hasLeaderBoard: Boolean = false) {

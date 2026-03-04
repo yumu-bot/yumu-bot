@@ -117,7 +117,7 @@ class LazerScoreLite(
         }
 
         return LazerScore().apply {
-            this.isLazer = lite.legacyScoreId == 0L
+            this.buildID = if (lite.legacyScoreId == 0L) 1 else null
             this.scoreID = lite.id
             this.legacyScoreID = lite.legacyScoreId
             this.userID = lite.userId

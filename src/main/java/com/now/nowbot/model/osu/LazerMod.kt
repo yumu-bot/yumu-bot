@@ -2651,6 +2651,7 @@ sealed class LazerMod {
                     is WindUp,
                     is WindDown,
 
+                    is Hidden,
                     is Flashlight,
 
                     is TouchDevice,

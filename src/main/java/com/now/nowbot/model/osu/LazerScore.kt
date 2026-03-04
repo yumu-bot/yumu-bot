@@ -1,6 +1,8 @@
 package com.now.nowbot.model.osu
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
@@ -13,6 +15,14 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 // 这是 API v2 version header is 20240529 or higher 会返回的成绩数据。
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonAutoDetect(
+    fieldVisibility = JsonAutoDetect.Visibility.ANY,
+    getterVisibility = JsonAutoDetect.Visibility.NONE, // 禁用自动扫描 getter
+    isGetterVisibility = JsonAutoDetect.Visibility.NONE,
+    setterVisibility = JsonAutoDetect.Visibility.ANY
+)
+
 open class LazerScore(
     @field:JsonProperty("classic_total_score")
     var classicScore: Long = 0L,
@@ -60,7 +70,7 @@ open class LazerScore(
     var lazerAccuracy: Double = 0.0,
 
     @field:JsonProperty("build_id")
-    val buildID: Long? = 0L,
+    var buildID: Long? = 0L,
 
     @set:JsonProperty("ended_at")
     @get:JsonIgnore
@@ -154,7 +164,8 @@ open class LazerScore(
     }
 
     @get:JsonProperty("is_lazer")
-    var isLazer: Boolean = buildID != null && buildID > 0L
+    val isLazer: Boolean
+        get() = (buildID ?: 0L) > 0L
 
     @field:JsonProperty("mods")
     var mods: List<LazerMod> = listOf()
@@ -163,6 +174,7 @@ open class LazerScore(
         }
 
     @get:JsonProperty("legacy_rank")
+    @set:JsonIgnore
     var rank: String = ""
         get() = field.ifBlank { getStableRank(this) }
 
@@ -179,7 +191,8 @@ open class LazerScore(
     /**
      * 如果要设置，请设置 ruleset
      */
-    @get:JsonProperty("mode")
+    @get:JsonProperty("mode", access = JsonProperty.Access.READ_ONLY)
+    @set:JsonProperty(access = JsonProperty.Access.READ_ONLY)
     var mode: OsuMode = DEFAULT
         get() = when (this.ruleset.toInt()) {
             0 -> OSU

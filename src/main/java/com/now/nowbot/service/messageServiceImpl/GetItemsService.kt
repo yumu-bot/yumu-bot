@@ -9,10 +9,10 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.BeatmapDetailsUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.command.FLAG_ID
@@ -222,18 +222,18 @@ class GetItemsService(
         )
 
         val a = beatmapApiService.getAttributes(beatmapID, b.mode, mods)
-        val newTotalLength = CalculateApiImpl.applyLength(b.totalLength, mods).toFloat()
+        val newTotalLength = BeatmapDetailsUtil.applyLength(b.totalLength, mods).toFloat()
 
         sb.append(String.format("%.2f", a.starRating)).append(',')
-            .append(String.format("%d", CalculateApiImpl.applyBPM(b.bpm, mods).roundToInt())).append(',')
+            .append(String.format("%d", BeatmapDetailsUtil.applyBPM(b.bpm, mods).roundToInt())).append(',')
             .append(String.format("%d", floor((newTotalLength / 60.0)).roundToInt()))
             .append(':')
             .append(String.format("%02d", (newTotalLength % 60.0).roundToInt()))
             .append(',')
         sb.append(a.maxCombo).append(',')
-            .append(String.format("%.2f", CalculateApiImpl.applyCS(b.cs!!, mods))).append(',')
-            .append(String.format("%.2f", CalculateApiImpl.applyAR(b.ar!!, mods))).append(',')
-            .append(String.format("%.2f", CalculateApiImpl.applyOD(b.od!!, mods, b.mode)))
+            .append(String.format("%.2f", BeatmapDetailsUtil.applyCS(b.cs!!, mods))).append(',')
+            .append(String.format("%.2f", BeatmapDetailsUtil.applyAR(b.ar!!, mods))).append(',')
+            .append(String.format("%.2f", BeatmapDetailsUtil.applyOD(b.od!!, mods, b.mode)))
 
         return sb.toString()
     }

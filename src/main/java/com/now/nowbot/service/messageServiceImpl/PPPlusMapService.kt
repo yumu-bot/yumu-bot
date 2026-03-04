@@ -11,11 +11,11 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.PerformancePlusAPIService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.util.BeatmapDetailsUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
@@ -87,10 +87,10 @@ class PPPlusMapService(
     private fun Beatmap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
         starRating = pp.difficulty?.total ?: 0.0
         if (mods.isNotEmpty()) {
-            cs = CalculateApiImpl.applyCS(cs!!, mods)
-            ar = CalculateApiImpl.applyAR(ar!!, mods)
-            od = CalculateApiImpl.applyOD(od!!, mods, OsuMode.OSU)
-            hp = CalculateApiImpl.applyHP(hp!!, mods)
+            cs = BeatmapDetailsUtil.applyCS(cs!!, mods)
+            ar = BeatmapDetailsUtil.applyAR(ar!!, mods)
+            od = BeatmapDetailsUtil.applyOD(od!!, mods, OsuMode.OSU)
+            hp = BeatmapDetailsUtil.applyHP(hp!!, mods)
         }
     }
 

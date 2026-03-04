@@ -2,16 +2,21 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.lxnsApiService.LxMaiApiService
+import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.util.StopWatch
+import java.nio.file.Files
+import java.nio.file.Path
 
 @Service("TEST")
 class TestService(
-    private val lxMaiApiService: LxMaiApiService
+    imageService: ImageService
 ): MessageService<String> {
     override fun isHandle(
         event: MessageEvent,
@@ -29,44 +34,22 @@ class TestService(
     }
 
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
+        val sw = StopWatch()
 
-        lxMaiApiService.saveLxMaiCollections()
+        sw.start("json")
 
-        /*
-        val ids = DataUtil.splitString(param)!!
+        val json = Files.readAllBytes(Path.of("E:/Apps/IDEA/Projects/osu-api-v2/best.json")).toString(Charsets.UTF_8)
 
-        var username: List<OsuUser> = listOf()
+        sw.stop()
+        sw.start("parse")
 
-        val thread = Thread.startVirtualThread {
-            username = ids.map {
-                val u = try {
-                    userApiService.getOsuUser(it.toLong())
-                } catch (_: Exception) {
-                    OsuUser(-1)
-                }
+        val parse = JacksonUtil.parseObjectList(json, LazerScore::class.java)
 
-                log.info("记录用户 ${u.userID}")
+        sw.stop()
 
-                Thread.sleep(1000)
-                u
-            }
-        }
 
-        thread.join()
 
-        Files.write(Path.of("D://users.csv"),
-            username.joinToString(",\n") {
-                "${it.userID},${
-                    (it.previousNames ?: listOf()).joinToString(
-                        ",",
-                        "[",
-                        "]"
-                    )
-                }"
-            }.toByteArray(StandardCharsets.UTF_8)
-        )
-
-         */
+        log.info(sw.prettyPrint())
 
         return null
     }
