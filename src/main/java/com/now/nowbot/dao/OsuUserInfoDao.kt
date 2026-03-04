@@ -10,6 +10,8 @@ import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
 import com.now.nowbot.util.JacksonUtil
+import jakarta.persistence.EntityManager
+import jakarta.persistence.PersistenceContext
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -21,9 +23,12 @@ class OsuUserInfoDao(
     private val infoRepository: OsuUserInfoRepository,
     private val percentileRepository: OsuUserInfoPercentilesLiteRepository
 ) {
+    @PersistenceContext
+    lateinit var entityManager: EntityManager
 
     fun percentilesDailyUpsert(): Int {
         log.info("正在更新玩家百分比")
+        entityManager.clear()
 
         val now = LocalDateTime.now()
 
@@ -31,7 +36,18 @@ class OsuUserInfoDao(
 
         log.info("已经获取到 ${users.size} 条数据，正在更新")
 
-        users.forEach { upsert(it) }
+        users.forEachIndexed { index, user ->
+            upsert(user)
+
+            // 每处理 1000 条数据，强制同步并清空一次缓存
+            if (index % 1000 == 0 && index > 0) {
+                entityManager.flush() // 确保 SQL 已经发给数据库
+                entityManager.clear() // 释放内存中的对象引用
+                log.info("已处理 $index 条...")
+            }
+        }
+
+        log.info("更新完成、")
 
         return users.size
     }
@@ -204,7 +220,7 @@ class OsuUserInfoDao(
         }
 
         val lite = fromModel(user, mode)
-        infoRepository.save(lite)
+        infoRepository.saveAndFlush(lite)
     }
 
     fun saveUsersToday(users: List<MicroUser>) {

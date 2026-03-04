@@ -1,9 +1,7 @@
 package com.now.nowbot.dao
 
 import com.now.nowbot.entity.PerformancePlusStatsLite
-import com.now.nowbot.entity.UserBestSnapshot
 import com.now.nowbot.mapper.PerformancePlusLiteRepository
-import com.now.nowbot.mapper.UserBestSnapshotRepository
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
@@ -12,12 +10,11 @@ import com.now.nowbot.service.PerformancePlusAPIService
 import com.now.nowbot.service.messageServiceImpl.PPPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import org.springframework.util.DigestUtils
 
 @Component
 class PerformancePlusDao(
     private val plusRepository: PerformancePlusLiteRepository,
-    private val snapshotRepository: UserBestSnapshotRepository,
+    private val snapshotDao: UserSnapShotDao,
     private val plusAPIService: PerformancePlusAPIService
 ) {
     /**
@@ -50,17 +47,7 @@ class PerformancePlusDao(
         // 没数据你创个吊差
         val f = bests.firstOrNull() ?: return null
 
-        val currentDataString = bests.joinToString(",") { "${it.beatmapID}:${it.scoreID}" }
-
-        val hash = DigestUtils.md5DigestAsHex(currentDataString.toByteArray())
-
-        val latest = snapshotRepository.getLatest(f.userID, f.mode.modeValue)
-
-        if (hash != latest?.contentHash && bests.size >= (latest?.scoreIDs?.size ?: 0)) {
-            Thread.startVirtualThread {
-                saveSnapshot(bests)
-            }
-        }
+        snapshotDao.upsertSnapshot(bests)
 
         val exists = bests.mapNotNull { b ->
             val d = plusRepository.findDetailsByScoreID(b.scoreID, f.userID)
@@ -96,12 +83,6 @@ class PerformancePlusDao(
         }
 
         return plus
-    }
-
-    fun saveSnapshot(scores: Collection<LazerScore>) {
-        val snapshot = UserBestSnapshot.fromBests(scores) ?: return
-
-        snapshotRepository.save(snapshot)
     }
 
     fun saveScorePerformancePlus(score: LazerScore, performance: PPPlus.Stats?) {
