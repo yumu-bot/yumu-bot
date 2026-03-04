@@ -224,27 +224,7 @@ class PerformancePlusAPIService(
     fun getUserPerformancePlusStats(bests: List<LazerScore>): PPPlus.Stats {
         val results = getScoresPerformancePlus(bests)
 
-        fun calculateIndependentDimension(selector: (PPPlus.Stats) -> Double): Double {
-            return results
-                .map { plus -> plus.performance?.let(selector) ?: 0.0 } // 1. 提取该维度数值
-                .sortedDescending()                                    // 2. 独立降序排列
-                .mapIndexed { index, value ->
-                    value * FastPower095.pow(index)                   // 3. 按该维度的排名加权
-                }
-                .sum()                                                 // 4. 求和
-        }
-
-        // 每一个维度都会触发一次独立的 map + sort
-        return PPPlus.Stats(
-            aim = calculateIndependentDimension { it.aim },
-            jumpAim = calculateIndependentDimension { it.jumpAim },
-            flowAim = calculateIndependentDimension { it.flowAim },
-            precision = calculateIndependentDimension { it.precision },
-            speed = calculateIndependentDimension { it.speed },
-            stamina = calculateIndependentDimension { it.stamina },
-            accuracy = calculateIndependentDimension { it.accuracy },
-            total = calculateIndependentDimension { it.total }
-        )
+        return collect(results.map { it.performance })
     }
 
     fun findBadBeatmapIDs(scores: List<LazerScore>): List<Long> {
@@ -307,5 +287,29 @@ class PerformancePlusAPIService(
         private const val API_PORT = "5000"
 
         private val log: Logger = LoggerFactory.getLogger(PerformancePlusAPIService::class.java)
+
+        fun collect(stats: List<PPPlus.Stats?>): PPPlus.Stats {
+            fun sortSum(selector: (PPPlus.Stats) -> Double): Double {
+                return (stats)
+                    .mapNotNull { plus -> plus?.let(selector) }
+                    .sortedDescending()
+                    .mapIndexed { index, value ->
+                        value * FastPower095.pow(index)
+                    }
+                    .sum()
+            }
+
+            // 每一个维度都会触发一次独立的 map + sort
+            return PPPlus.Stats(
+                aim = sortSum { it.aim },
+                jumpAim = sortSum { it.jumpAim },
+                flowAim = sortSum { it.flowAim },
+                precision = sortSum { it.precision },
+                speed = sortSum { it.speed },
+                stamina = sortSum { it.stamina },
+                accuracy = sortSum { it.accuracy },
+                total = sortSum { it.total }
+            )
+        }
     }
 }

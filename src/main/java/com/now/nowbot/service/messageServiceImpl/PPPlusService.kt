@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.PerformancePlusDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
@@ -11,7 +12,6 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.service.PerformancePlusAPIService
 import com.now.nowbot.service.messageServiceImpl.PPPlusService.PPPlusParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -31,8 +31,8 @@ class PPPlusService(
     private val userApiService: OsuUserApiService,
     private val scoreApiService: OsuScoreApiService,
     private val bindDao: BindDao,
-    private val performancePlusAPIService: PerformancePlusAPIService,
     private val imageService: ImageService,
+    private val plusDao: PerformancePlusDao
 ) : MessageService<PPPlusParam> {
     data class PPPlusParam(val isUser: Boolean, val me: Any?, val other: Any?)
 
@@ -91,12 +91,12 @@ class PPPlusService(
         val dataMap = mutableMapOf(
             "isUser" to true,
             "me" to me,
-            "my" to getUserPerformancePlus(me.userID),
+            "my" to getUserPerformancePlus(me.userID).beforePost(me.userID),
             "isVs" to isVs
         ).apply {
             other?.let {
                 put("other", it)
-                put("others", getUserPerformancePlus(it.userID))
+                put("others", getUserPerformancePlus(it.userID).beforePost(it.userID))
             }
         }
 
@@ -132,15 +132,19 @@ class PPPlusService(
     // 把数据合并一下。这个才是真传过去的 PP+
     private fun getUserPerformancePlus(uid: Long): PPPlus {
         val bests = scoreApiService.getBestScores(uid, OsuMode.OSU)
-        val performance = performancePlusAPIService.getUserPerformancePlusStats(bests)
-        val stats = calculateUserAdvancedStats(performance)
 
-        val plus = PPPlus().apply {
-            this.performance = performance
-            this.advancedStats = stats
-        }
+        return plusDao.getUserPerformancePlusMax(bests)
+            ?: throw IllegalStateException.Fetch("表现分加")
 
-        return plus
+//        val performance = performancePlusAPIService.getUserPerformancePlusStats(bests)
+//        val stats = calculateUserAdvancedStats(performance)
+//
+//        val plus = PPPlus().apply {
+//            this.performance = performance
+//            this.advancedStats = stats
+//        }
+//
+//        return plus
     }
 
     private fun setUser(
@@ -181,36 +185,7 @@ class PPPlusService(
         data.value = PPPlusParam(true, user1, user2)
     }
 
-    private fun calculateLevel(value: Double, array: IntArray?): Double {
-        if (array == null || array.size < 13) return 0.0
 
-        var lv = 11
-
-        for (i in 0..12) {
-            if (value < array[i]) {
-                lv = i - 2
-                break
-            }
-        }
-
-        when (lv) {
-            -2 -> { // 0 - 25
-                return 0.25 * value / array[0]
-            }
-
-            -1 -> { // 25 - 75
-                return 0.25 + 0.5 * (value - array[0]) / (array[1] - array[0])
-            }
-
-            0 -> { // 75 - 100
-                return 0.75 + 0.25 * (value - array[1]) / (array[2] - array[1])
-            }
-
-            else -> {
-                return lv.toDouble()
-            }
-        }
-    }
 
     companion object {
 
@@ -223,73 +198,105 @@ class PPPlusService(
         private val ACCURACY_ARRAY = intArrayOf(600, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1750, 2100, 2550, 3400, 4400)
 
         private val log: Logger = LoggerFactory.getLogger(PPPlusService::class.java)
-    }
 
-    private fun calculateUserAdvancedStats(performance: PPPlus.Stats?): AdvancedStats? {
-        if (performance == null) return null
+        fun calculateUserAdvancedStats(performance: PPPlus.Stats?): AdvancedStats? {
+            if (performance == null) return null
 
-        val advancedIndex: Double
+            val advancedIndex: Double
 
-        val jumpAim = calculateLevel(performance.jumpAim, JUMP_ARRAY)
-        val flowAim = calculateLevel(performance.flowAim, FLOW_ARRAY)
-        val precision = calculateLevel(performance.precision, PRECISION_ARRAY)
-        val speed = calculateLevel(performance.speed, SPEED_ARRAY)
-        val stamina = calculateLevel(performance.stamina, STAMINA_ARRAY)
-        val accuracy = calculateLevel(performance.accuracy, ACCURACY_ARRAY)
-        val aim = calculateLevel(performance.aim, JUMP_ARRAY)
+            val jumpAim = calculateLevel(performance.jumpAim, JUMP_ARRAY)
+            val flowAim = calculateLevel(performance.flowAim, FLOW_ARRAY)
+            val precision = calculateLevel(performance.precision, PRECISION_ARRAY)
+            val speed = calculateLevel(performance.speed, SPEED_ARRAY)
+            val stamina = calculateLevel(performance.stamina, STAMINA_ARRAY)
+            val accuracy = calculateLevel(performance.accuracy, ACCURACY_ARRAY)
+            val aim = calculateLevel(performance.aim, JUMP_ARRAY)
 
-        // 常规指数和进阶指数，进阶指数是以上情况的第二大的值，达标情况的目标是以上第二大值 * 6 - 4，
-        val generalIndex =
-            (sqrt(
-                (getPiCent(performance.jumpAim, 1300, 1700) + 8.0)
-                        * (getPiCent(performance.flowAim, 200, 450) + 3.0)
-            ) * 10.0
-                    + getPiCent(performance.precision, 200, 450)
-                    + getPiCent(performance.speed, 950, 1250) * 7.0
-                    + getPiCent(performance.stamina, 600, 1000) * 3.0
-                    + getPiCent(performance.accuracy, 600, 1200) * 10.0
-                    )
+            // 常规指数和进阶指数，进阶指数是以上情况的第二大的值，达标情况的目标是以上第二大值 * 6 - 4，
+            val generalIndex =
+                (sqrt(
+                    (getPiCent(performance.jumpAim, 1300, 1700) + 8.0)
+                            * (getPiCent(performance.flowAim, 200, 450) + 3.0)
+                ) * 10.0
+                        + getPiCent(performance.precision, 200, 450)
+                        + getPiCent(performance.speed, 950, 1250) * 7.0
+                        + getPiCent(performance.stamina, 600, 1000) * 3.0
+                        + getPiCent(performance.accuracy, 600, 1200) * 10.0
+                        )
 
 
-        advancedIndex = mutableListOf(
-            getDetail(
-                performance.jumpAim, jumpAim, JUMP_ARRAY[1], JUMP_ARRAY.last()
-            ), getDetail(
-                performance.flowAim, flowAim, FLOW_ARRAY[1], FLOW_ARRAY.last()
-            ), getDetail(
-                performance.precision, precision, PRECISION_ARRAY[1], PRECISION_ARRAY.last()
-            ), getDetail(performance.speed, speed, SPEED_ARRAY[1], SPEED_ARRAY.last()), getDetail(
-                performance.stamina, stamina, STAMINA_ARRAY[1], STAMINA_ARRAY.last()
-            ), getDetail(
-                performance.accuracy, accuracy, ACCURACY_ARRAY[1], ACCURACY_ARRAY.last()
-            )
-        ).sortedDescending()[1] // 第二大
+            advancedIndex = mutableListOf(
+                getDetail(
+                    performance.jumpAim, jumpAim, JUMP_ARRAY[1], JUMP_ARRAY.last()
+                ), getDetail(
+                    performance.flowAim, flowAim, FLOW_ARRAY[1], FLOW_ARRAY.last()
+                ), getDetail(
+                    performance.precision, precision, PRECISION_ARRAY[1], PRECISION_ARRAY.last()
+                ), getDetail(performance.speed, speed, SPEED_ARRAY[1], SPEED_ARRAY.last()), getDetail(
+                    performance.stamina, stamina, STAMINA_ARRAY[1], STAMINA_ARRAY.last()
+                ), getDetail(
+                    performance.accuracy, accuracy, ACCURACY_ARRAY[1], ACCURACY_ARRAY.last()
+                )
+            ).sortedDescending()[1] // 第二大
 
-        val index = listOf(jumpAim, flowAim, accuracy, stamina, speed, precision, aim)
-        val sum: Double = index.sum()
+            val index = listOf(jumpAim, flowAim, accuracy, stamina, speed, precision, aim)
+            val sum: Double = index.sum()
 
-        return AdvancedStats(index, generalIndex, advancedIndex, sum, advancedIndex * 6 - 4)
-    }
+            return AdvancedStats(index, generalIndex, advancedIndex, sum, advancedIndex * 6 - 4)
+        }
 
-    // 化学式进阶指数 获取百分比 * Pi（加权 1）
-    private fun getPiCent(value: Double, percent25: Int, percent75: Int): Double {
-        return (atan((value * 2.0 - (percent75 + percent25)) / (percent75 - percent25)) / Math.PI + 0.5) * Math.PI
-    }
+        // 化学式进阶指数 获取百分比 * Pi（加权 1）
+        private fun getPiCent(value: Double, percent25: Int, percent75: Int): Double {
+            return (atan((value * 2.0 - (percent75 + percent25)) / (percent75 - percent25)) / Math.PI + 0.5) * Math.PI
+        }
 
-    // 化学式进阶指数 获取详细情况（用于进阶指数求和）
-    private fun getDetail(value: Double, level: Double, percent75: Int, percentEX: Int): Double {
-        return if (value < percent75) {
-            -2.0
-        } else if (value > percentEX) {
-            floor(value / percentEX * 10.0) + 1.0
-        } else {
-            level
+        // 化学式进阶指数 获取详细情况（用于进阶指数求和）
+        private fun getDetail(value: Double, level: Double, percent75: Int, percentEX: Int): Double {
+            return if (value < percent75) {
+                -2.0
+            } else if (value > percentEX) {
+                floor(value / percentEX * 10.0) + 1.0
+            } else {
+                level
+            }
+        }
+        private fun calculateLevel(value: Double, array: IntArray?): Double {
+            if (array == null || array.size < 13) return 0.0
+
+            var lv = 11
+
+            for (i in 0..12) {
+                if (value < array[i]) {
+                    lv = i - 2
+                    break
+                }
+            }
+
+            when (lv) {
+                -2 -> { // 0 - 25
+                    return 0.25 * value / array[0]
+                }
+
+                -1 -> { // 25 - 75
+                    return 0.25 + 0.5 * (value - array[0]) / (array[1] - array[0])
+                }
+
+                0 -> { // 75 - 100
+                    return 0.75 + 0.25 * (value - array[1]) / (array[2] - array[1])
+                }
+
+                else -> {
+                    return lv.toDouble()
+                }
+            }
+        }
+
+        private fun PPPlus.beforePost(userID: Long) {
+            if (userID == 17064371L) {
+                this.performance = PPPlus.maxStats
+            }
         }
     }
-    
-    private fun beforePost(user: OsuUser, plus: PPPlus) {
-        if (user.id == 17064371L) {
-            plus.performance = PPPlus.maxStats
-        }
-    }
+
+
 }

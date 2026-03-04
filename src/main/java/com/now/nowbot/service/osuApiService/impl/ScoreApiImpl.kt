@@ -43,8 +43,8 @@ import kotlin.text.toLongOrNull
 
 @Service
 class ScoreApiImpl(
-    val base: OsuApiBaseService,
-    val scoreDao: ScoreDao,
+    private val base: OsuApiBaseService,
+    private val scoreDao: ScoreDao,
 ) : OsuScoreApiService {
     override fun getCovers(
         scores: List<LazerScore>,

@@ -1,15 +1,14 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.PerformancePlusDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.PPPlus
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.PerformancePlusAPIService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
@@ -26,7 +25,7 @@ import java.time.LocalDateTime
 
 @Service("PP_PLUS_MAP")
 class PPPlusMapService(
-    private val performancePlusAPIService: PerformancePlusAPIService,
+    private val plusDao: PerformancePlusDao,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao
@@ -63,13 +62,13 @@ class PPPlusMapService(
         }
 
         val pp = try {
-            performancePlusAPIService.getMapPerformancePlus(param.bid, param.mods)
+            plusDao.getBeatmapPerformancePlusMax(map, param.mods)
         } catch (e: Exception) {
             log.error(e.message)
-            throw IllegalStateException.Fetch("PP+")
+            throw IllegalStateException.Fetch("表现分加（谱面）")
         } ?: throw NoSuchElementException.BeatmapDownload(map.previewName)
 
-        map.addPPPlus(pp, param.mods)
+        map.applyDimensions(param.mods)
 
         val dataMap = mapOf(
             "isUser" to false,
@@ -84,8 +83,7 @@ class PPPlusMapService(
         return ServiceCallStatistic.build(event, beatmapID = map.beatmapID, beatmapsetID = map.beatmapsetID)
     }
 
-    private fun Beatmap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
-        starRating = pp.difficulty?.total ?: 0.0
+    private fun Beatmap.applyDimensions(mods: List<LazerMod>) {
         if (mods.isNotEmpty()) {
             cs = BeatmapDetailsUtil.applyCS(cs!!, mods)
             ar = BeatmapDetailsUtil.applyAR(ar!!, mods)
