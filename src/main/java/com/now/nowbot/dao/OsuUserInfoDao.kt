@@ -12,6 +12,7 @@ import com.now.nowbot.model.osu.Statistics
 import com.now.nowbot.util.JacksonUtil
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
+import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -26,6 +27,7 @@ class OsuUserInfoDao(
     @PersistenceContext
     lateinit var entityManager: EntityManager
 
+    @Transactional
     fun percentilesDailyUpsert(): Int {
         log.info("正在更新玩家百分比")
         entityManager.clear()
