@@ -1,7 +1,6 @@
 package com.now.nowbot.model.skill
 
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.util.SkillUtil
 
 abstract class Dan(
     val name: String,
@@ -43,25 +42,21 @@ fun getDanFromBests(
     val key4Set = key4.map { it.beatmapID }.toSet()
     val key7Set = key7.map { it.beatmapID }.toSet()
 
-    val key4Skills = SkillUtil.collectScoreSkills(
-        weightedMap.mapNotNull { (k, v) ->
-            if (k in key4Set) v else null
-        }.take(100)
-    )
+    val key4Skills = weightedMap.mapNotNull { (k, v) ->
+        if (k in key4Set) v else null
+    }
 
-    val key7Skills = SkillUtil.collectScoreSkills(
-        weightedMap.mapNotNull { (k, v) ->
-            if (k in key7Set) v else null
-        }.take(100)
-    )
+    val key7Skills = weightedMap.mapNotNull { (k, v) ->
+        if (k in key7Set) v else null
+    }
 
-    val key4Rice = getDanResult(key4Skills, DanType.DDMYTHICAL_REFORM)
+    val key4Rice = collectDanResult(key4Skills, DanType.DDMYTHICAL_REFORM)
 
-    val key7Rice = getDanResult(key7Skills, DanType.JINJIN_REGULAR)
+    val key7Rice = collectDanResult(key7Skills, DanType.JINJIN_REGULAR)
 
-    val key4Ln = getDanResult(key4Skills, DanType.UNDERJOY_LN)
+    val key4Ln = collectDanResult(key4Skills, DanType.UNDERJOY_LN)
 
-    val key7Ln = getDanResult(key7Skills, DanType.JINJIN_LN)
+    val key7Ln = collectDanResult(key7Skills, DanType.JINJIN_LN)
 
     val rice = if (key4Rice.level + 2.0 >= key7Rice.level) {
         key4Rice
@@ -89,14 +84,43 @@ fun getDanFromBeatmap(skills: List<Double>, cs: Number? = null): Map<String, Any
     }
 }
 
+/**
+ * 更精准地查看段位：选择第 5 到第 10 的技巧最大值，此时能代表玩家已经掌握这个技巧了。
+ */
+fun collectDanResult(
+    full: List<List<Double>>,
+    danType: DanType = DanType.DDMYTHICAL_REFORM,
+): DanResult {
+    val dan = danType.toDan()
+    val sum = full.maxOfOrNull { skills ->
+        val sorted = dan.use.mapNotNull { skills.getOrNull(it - 1) }.sortedDescending()
+
+        val s = 0.5 * (sorted.getOrNull(0) ?: 0.0) +
+                0.3 * (sorted.getOrNull(1) ?: 0.0) +
+                0.2 * (sorted.getOrNull(2) ?: 0.0)
+        s
+    } ?: 0.0
+
+    return sumToResult(dan, sum)
+}
+
+/**
+ * 经典版计算段位：对所有谱子的技巧分别求和再计算
+ */
 fun getDanResult(
     skills: List<Double>,
     danType: DanType = DanType.DDMYTHICAL_REFORM,
 ): DanResult {
-    val dan = danType.getDan()
+    val dan = danType.toDan()
     val sorted = dan.use.mapNotNull { skills.getOrNull(it - 1) }.sortedDescending()
-    val sum = 0.5 * sorted[0] + 0.3 * sorted[1] + 0.2 * sorted[2]
+    val sum = 0.5 * (sorted.getOrNull(0) ?: 0.0) +
+            0.3 * (sorted.getOrNull(1) ?: 0.0) +
+            0.2 * (sorted.getOrNull(2) ?: 0.0)
 
+    return sumToResult(dan, sum)
+}
+
+private fun sumToResult(dan: Dan, sum: Double): DanResult {
     val boundary = dan.boundary
     val grades = dan.grade
     val name = dan.name
@@ -140,7 +164,7 @@ fun getDanResult(
 enum class DanType {
     DDMYTHICAL_REFORM, UNDERJOY_LN, JINJIN_REGULAR, JINJIN_LN;
 
-    fun getDan(): Dan = when (this) {
+    fun toDan(): Dan = when (this) {
         DDMYTHICAL_REFORM -> DDMythicalReformDan()
         UNDERJOY_LN -> UnderjoyLnDan()
         JINJIN_REGULAR -> JinjinRegularDan()

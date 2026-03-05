@@ -21,8 +21,10 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     @Query("select s.id from LazerScoreLite s where s.id in (:id)")
     fun getSavedScoreIDs(id: Collection<Long>): Set<Long>
 
-    @Query("select id from lazer_score_lite where id = :id limit 1", nativeQuery = true)
-    fun ifScoreExists(id: Long): Long?
+    @Query("""
+        SELECT EXISTS(SELECT 1 FROM lazer_score_lite WHERE id = 12345);
+    """, nativeQuery = true)
+    fun ifScoreExists(id: Long): Boolean
 
     @Query("select s.time from LazerScoreLite s where s.userId = :id and s.time between :start and :end")
     fun getUserAllScoreTime(id: Long, start: OffsetDateTime, end: OffsetDateTime, page: Pageable): List<OffsetDateTime>
@@ -51,8 +53,8 @@ interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, Scor
     @Query("select s.id from ScoreStatisticLite s where s.id in (:bid) and s.status = :mode ")
     fun getSavedBeatmapIDs(bid: Collection<Long>, mode: Int): Set<Long>
 
-    @Query("select id from score_statistic where id = :id limit 1", nativeQuery = true)
-    fun ifStatisticExists(id: Long): Long?
+    @Query("SELECT EXISTS(SELECT 1 FROM score_statistic WHERE id = :id)", nativeQuery = true)
+    fun ifStatisticExists(id: Long): Boolean
 
     @Query("select s from ScoreStatisticLite s where s.id in (:sid) and s.status=-1")
     fun getByScoreIDWhenGraveyard(sid: Collection<Long>): List<ScoreStatisticLite>

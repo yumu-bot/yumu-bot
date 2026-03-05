@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 
 interface BeatmapStarRatingCacheRepository : JpaRepository<BeatmapStarRatingCache, BeatmapStarRatingCache.BeatmapStarRatingKey> {
     @Query("select s.star from BeatmapStarRatingCache s where s.id = :id and s.mode = :mode and s.mods = :mods")
-    fun findByKey(id: Long, mode: Byte, mods: Int): Float?
+    fun getStarRating(id: Long, mode: Byte, mods: Int): Float?
 
     @Transactional
     @Modifying
