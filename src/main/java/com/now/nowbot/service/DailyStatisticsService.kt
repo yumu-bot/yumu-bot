@@ -138,7 +138,6 @@ class DailyStatisticsService(
     private fun collectingUsers(users: List<BindUser>): Triple<Int, Int, Int> {
         val ids = users.map { it.userID }
 
-        waitForRateLimit(5000)
         val stats = userApiService.getUsers(users = ids, isVariant = true, isBackground = true)
 
         val needUpdate = stats.flatMap { micro ->
@@ -173,6 +172,12 @@ class DailyStatisticsService(
 
         val needSize = needUpdate.map { it.first.userID }.toSet().size
         val reallySize = reallyNeedUpgrade.map { it.first.userID }.toSet().size
+
+        if (reallySize > 0) {
+            waitForRateLimit(4500)
+        } else {
+            waitForRateLimit(1000)
+        }
 
         return Triple(needSize, reallySize, scoreCount)
     }
