@@ -300,7 +300,7 @@ object InstructionUtil {
         isMyself: AtomicBoolean,
     ): InstructionRange<SBUser> {
         val range = getSBUserAndRange(matcher, mode)
-        if (range.data == null) {
+        if (range.data == null || event.hasAt()) {
             range.data = getSBUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range
