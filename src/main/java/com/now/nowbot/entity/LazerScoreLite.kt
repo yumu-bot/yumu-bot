@@ -13,10 +13,8 @@ import java.time.OffsetDateTime
 
 @Entity
 @Table(indexes = [
-    Index(name = "s_uid", columnList = "user_id"),
-    Index(name = "s_bid", columnList = "beatmap_id"),
-    Index(name = "s_time", columnList = "time"),
-    Index(name = "s_mode", columnList = "mode"),
+    Index(name = "idx_lazer_user_query", columnList = "user_id, mode, time DESC"),
+    Index(name = "idx_lazer_beatmap_user_query", columnList = "beatmap_id, user_id, mode"),
 ])
 class LazerScoreLite(
     @Id
@@ -194,6 +192,7 @@ class ScoreStatisticLite(
         else -> null
     }
 
+    @Suppress("UNUSED")
     fun setStatus(score: LazerScore) {
         when(this.status) {
             -1 -> score.statistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
@@ -219,6 +218,7 @@ class ScoreStatisticLite(
         var id: Long,
         var status: Int,
     ) : Serializable {
+        @Suppress("UNUSED")
         constructor() : this(0, -1)
     }
 }

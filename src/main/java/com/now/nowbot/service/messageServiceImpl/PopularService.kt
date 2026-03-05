@@ -251,7 +251,9 @@ class PopularService(
         val after = now.minusDays(param.range.getDayEnd().toLong()).clamp()
 
         val scores = try {
-            scoreDao.getUsersRankedScore(users.map { it.userID }, mode.modeValue, after, before)
+            users.map { it.userID }.chunked(50).flatMap { ids ->
+                scoreDao.getUsersRankedScore(ids, mode.modeValue, after, before)
+            }
         } catch (e: Throwable) {
             log.error("流行谱面：查询错误", e)
             throw NetworkException("查询超时，有可能是天数太多了。")
