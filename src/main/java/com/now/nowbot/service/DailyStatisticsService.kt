@@ -84,7 +84,7 @@ class DailyStatisticsService(
 
         val bindCount = bindDao.getBindUserCount()
 
-        while (IocAllReadyRunner.APP_ALIVE) {
+        while (IocAllReadyRunner.APP_ALIVE && !Thread.currentThread().isInterrupted) {
             // 获取一批用户
             val users = bindDao.getBindUsersLimit50(offset.get())
             if (users.isEmpty()) {

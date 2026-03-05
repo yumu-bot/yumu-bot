@@ -109,7 +109,7 @@ object InstructionUtil {
         isMyself: AtomicBoolean,
     ): InstructionRange<OsuUser> {
         val range = getUserAndRange(event, matcher, mode)
-        if (range.data == null) {
+        if (range.data == null || event.hasAt()) {
             range.data = getUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range

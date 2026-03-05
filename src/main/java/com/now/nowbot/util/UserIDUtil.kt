@@ -32,7 +32,7 @@ object UserIDUtil {
     ): InstructionRange<Long> {
         val range = getUserIDAndRange(event, matcher, mode, isMyself, maximum)
 
-        if (range.data == null) {
+        if (range.data == null || event.hasAt()) {
             range.data = getUserIDWithoutRange(event, matcher, mode, isMyself, maximum)
         }
 
