@@ -13,10 +13,10 @@ import java.time.ZoneId
 @Entity
 @Table(
     name = "service_call_stat",
-    indexes = [Index(name = "index_time", columnList = "time"), Index(
-        name = "index_group",
-        columnList = "time, group_id"
-    )]
+    indexes = [
+        Index(name = "idx_call_group_time", columnList = "group_id, time DESC"),
+        Index(name = "idx_call_group_name_time", columnList = "group_id, name, time DESC"),
+    ]
 )
 class ServiceCallStatistic(
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE) var id: Long? = null,
