@@ -5,7 +5,6 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
-import com.now.nowbot.model.osu.LazerMod.Companion.isNotAffectStarRating
 import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.RosuPerformance
@@ -35,6 +34,10 @@ import kotlin.time.Duration.Companion.seconds
 
         // 如果为真，则会使用 rosu 的计算。否则使用官网的计算
         private val R_OSU = true
+
+        // 如果为真，则会使用 rosu 的星数。否则使用官网的星数
+        // 仅在 R_OSU 为真时可以使用 rosu。
+        private val R_OSU_STAR = false
 
         private val log: Logger = LoggerFactory.getLogger(Companion::class.java)
 
@@ -235,7 +238,7 @@ import kotlin.time.Duration.Companion.seconds
 
     override fun applyStarToScores(scores: Collection<LazerScore>) {
         val needApply = scores.filter { s ->
-            s.beatmapID == 0L || s.mods.isNotAffectStarRating() || s.beatmap.starRating < 1e-4
+            s.beatmapID == 0L || s.mods.isAffectStarRating() || s.beatmap.starRating < 1e-4
         }
 
         val details = needApply.map {
@@ -444,7 +447,7 @@ import kotlin.time.Duration.Companion.seconds
             }
         }
 
-        if (R_OSU) {
+        if (R_OSU && R_OSU_STAR) {
             val missingIds = valueMods.filter { it.beatmapID !in starMap.keys }
             if (missingIds.isNotEmpty()) {
                 starMap += getBeatmapStarFromLocal(missingIds)
