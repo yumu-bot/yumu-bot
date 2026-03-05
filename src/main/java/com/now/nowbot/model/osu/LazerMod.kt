@@ -2629,6 +2629,14 @@ sealed class LazerMod {
         const val FUN_MOD_COLOR = "#EA68A2"
         const val KEY_MOD_COLOR = "#616161"
 
+        val affectingClasses = setOf(
+            Easy::class, HardRock::class,
+            DoubleTime::class, Daycore::class, HalfTime::class, Nightcore::class,
+            WindUp::class, WindDown::class,
+            Hidden::class, Flashlight::class,
+            TouchDevice::class, DifficultyAdjust::class, AdaptiveSpeed::class
+        )
+
         inline fun <reified T: LazerMod> List<T>.isValueMod(): Boolean {
             return this.all { it.settings == null && it::class.companionObjectInstance is ValueMod }
         }
@@ -2636,32 +2644,9 @@ sealed class LazerMod {
         /**
          * 老 stable 会改变星数的模组
          */
-        inline fun <reified T: LazerMod> List<T>.isAffectStarRating(): Boolean {
-            return this.any {
-                when(it) {
-                    is Easy,
-                    is HardRock,
-
-                    is DoubleTime,
-                    is Daycore,
-                    is HalfTime,
-                    is Nightcore,
-
-                    is WindUp,
-                    is WindDown,
-
-                    is Hidden,
-                    is Flashlight,
-
-                    is TouchDevice,
-                    is DifficultyAdjust,
-                    is AdaptiveSpeed -> true
-
-                    else -> false
-                }
-            }
+        inline fun <reified T : LazerMod> List<T>.isAffectStarRating(): Boolean {
+            return any { it::class in affectingClasses }
         }
-
 
         inline fun <reified T: LazerMod> List<T>.isNotAffectStarRating(): Boolean {
             return !this.isAffectStarRating()
