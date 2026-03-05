@@ -175,8 +175,6 @@ class DailyStatisticsService(
 
         if (reallySize > 0) {
             waitForRateLimit(4500)
-        } else {
-            waitForRateLimit(1000)
         }
 
         return Triple(needSize, reallySize, scoreCount)
