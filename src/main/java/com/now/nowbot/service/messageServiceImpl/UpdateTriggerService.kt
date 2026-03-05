@@ -178,10 +178,10 @@ class UpdateTriggerService(
                     onSuccess = {
                         val count = scoreDao.deleteByMode(mode)
 
-                        val c = if (mode == OsuMode.DEFAULT) {
-                            ""
-                        } else {
+                        val c = if (count > 0) {
                             "\n总计 $count 条。"
+                        } else {
+                            ""
                         }
 
                         event.reply("已经清除 $modeStr 模式的星数。${c}")

@@ -430,35 +430,31 @@ import kotlin.time.Duration.Companion.seconds
 
     private fun getBeatmapStars(details: List<BeatmapDetails>): Map<Long, Double> {
 
-        val isValueMods = details.filter {
+        val valueMods = details.filter {
             it.mods.isValueMod()
         }
 
         val starMap = mutableMapOf<Long, Double>()
 
         if (LOCAL_STAR) {
-            isValueMods.forEach { d ->
-                val cache = scoreDao.getStarRatingCache(d.beatmapID, d.mode, d.mods)
-
-                if (cache != null) {
-                    starMap[d.beatmapID] = cache.toDouble()
+            valueMods.forEach { d ->
+                scoreDao.getStarRatingCache(d.beatmapID, d.mode, d.mods)?.let {
+                    starMap[d.beatmapID] = it.toDouble()
                 }
             }
         }
 
         if (R_OSU) {
-            val noCaches = isValueMods.filter { it.beatmapID !in starMap.keys }
-
-            val locals = getBeatmapStarFromLocal(noCaches)
-
-            starMap += locals
+            val missingIds = valueMods.filter { it.beatmapID !in starMap.keys }
+            if (missingIds.isNotEmpty()) {
+                starMap += getBeatmapStarFromLocal(missingIds)
+            }
         }
 
-        val noLocal = isValueMods.filter { it.beatmapID !in starMap.keys }
-
-        val officials = getBeatmapStarFromOfficial(noLocal)
-
-        starMap += officials
+        val stillMissing = details.filter { it.beatmapID !in starMap.keys }
+        if (stillMissing.isNotEmpty()) {
+            starMap += getBeatmapStarFromOfficial(stillMissing)
+        }
 
         return details
             .filter { it.beatmapID in starMap.keys }

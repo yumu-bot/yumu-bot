@@ -10,7 +10,6 @@ import com.now.nowbot.service.PerformancePlusAPIService
 import com.now.nowbot.service.messageServiceImpl.PPPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import org.springframework.util.DigestUtils
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -58,8 +57,7 @@ class PerformancePlusDao(
 
         val beforeStats: PPPlus.Stats?
 
-        val currentDataString = bests.joinToString(",") { "${it.beatmapID}:${it.scoreID}" }
-        val hash = DigestUtils.md5DigestAsHex(currentDataString.toByteArray())
+        val hash = snapshotDao.getHash(bests)
 
         if (hash != before?.contentHash && before != null && bests.size >= before.scoreIDs.size) {
             val saved = before.scoreIDs.toSet().mapNotNull { s ->
@@ -101,8 +99,7 @@ class PerformancePlusDao(
             }
         }
 
-        val performance =
-            PerformancePlusAPIService.collect(exists.values + locals)
+        val performance = PerformancePlusAPIService.collect(exists.values + locals)
         val stats = PPPlusService.calculateUserAdvancedStats(performance)
 
         val plus = PPPlus().apply {

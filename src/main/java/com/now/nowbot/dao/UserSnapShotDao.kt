@@ -13,9 +13,7 @@ class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository
     fun upsertSnapshot(scores: Collection<LazerScore>) {
         val f = scores.firstOrNull() ?: return
 
-        val currentDataString = scores.joinToString(",") { "${it.beatmapID}:${it.scoreID}" }
-
-        val hash = DigestUtils.md5DigestAsHex(currentDataString.toByteArray())
+        val hash = getHash(scores)
 
         val latest = snapshotRepository.getLatest(f.userID, f.mode.modeValue)
 
@@ -32,5 +30,10 @@ class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository
 
     fun getLatestSnapshot(userID: Long, mode: OsuMode): UserBestSnapshot? {
         return snapshotRepository.getLatest(userID, mode.modeValue)
+    }
+
+    fun getHash(scores: Collection<LazerScore>): String {
+        val currentDataString = scores.joinToString(",") { "${it.beatmapID}:${it.scoreID}" }
+        return DigestUtils.md5DigestAsHex(currentDataString.toByteArray())
     }
 }

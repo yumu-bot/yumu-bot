@@ -23,7 +23,7 @@ interface BeatmapStarRatingCacheRepository : JpaRepository<BeatmapStarRatingCach
     @Transactional
     @Modifying
     @Query("DELETE FROM BeatmapStarRatingCache s WHERE s.mode = :mode")
-    fun deleteByMode(mode: Byte): Long
+    fun deleteByMode(mode: Byte): Int
 
     @Transactional
     @Modifying

@@ -2630,9 +2630,8 @@ sealed class LazerMod {
         const val KEY_MOD_COLOR = "#616161"
 
         inline fun <reified T: LazerMod> List<T>.isValueMod(): Boolean {
-            return !this.any { it.settings != null || it::class.companionObjectInstance !is ValueMod }
+            return this.all { it.settings == null && it::class.companionObjectInstance is ValueMod }
         }
-
 
         /**
          * 老 stable 会改变星数的模组
