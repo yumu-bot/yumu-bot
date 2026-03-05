@@ -8,7 +8,6 @@ import java.time.LocalDateTime
     name = "osu_user_info_archive",
     indexes = [
         Index(name = "index_time_id_mode", columnList = "osu_id, mode, time DESC"),
-        Index(name = "index_user_time", columnList = "time"),
     ]
 )
 class OsuUserInfoArchiveLite {

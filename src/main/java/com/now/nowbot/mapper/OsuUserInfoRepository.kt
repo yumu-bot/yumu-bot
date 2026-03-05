@@ -77,8 +77,7 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
             DELETE FROM osu_user_info_archive 
             WHERE osu_id = :userID 
                 AND mode = :mode 
-                AND time >= :from 
-                AND time < :to
+                AND time BETWEEN :from AND :to
         """, nativeQuery = true
     )
     fun removeBetween(userID: Long, mode: OsuMode, from: LocalDateTime, to: LocalDateTime)
