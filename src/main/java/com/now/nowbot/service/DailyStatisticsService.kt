@@ -3,6 +3,7 @@ package com.now.nowbot.service
 import com.now.nowbot.config.IocAllReadyRunner
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.MicroUser
@@ -21,6 +22,7 @@ class DailyStatisticsService(
     private val scoreApiService: OsuScoreApiService,
     private val userInfoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
+    private val scoreDao: ScoreDao,
 ) {
     private val isRunning = AtomicBoolean(false)
 
@@ -90,8 +92,8 @@ class DailyStatisticsService(
             }
 
             try {
-                val (t, s) = collectingUsers(users)
-                val currentCount = count.addAndGet(t)
+                val (u, r, s) = collectingUsers(users)
+                val currentCount = count.addAndGet(r)
                 val currentOffset = offset.addAndGet(users.size)
                 val currentScore = score.addAndGet(s)
                 val progress = "%.2f".format((currentOffset * 100.0 / bindCount).coerceIn(0.0, 100.0))
@@ -116,7 +118,7 @@ class DailyStatisticsService(
 
                 log.info("""
                     第 ${batch.get()} 批用户已更新完成：
-                    需要更新：$t 人，总计 $currentCount 人。
+                    含有变化：$u 人，需要更新：$r 人，总计 $currentCount 人。
                     其中包含：$s 条成绩，总计 $currentScore 条。
                     进度：$progress %
                     预期完成时间：${expect}
@@ -133,7 +135,7 @@ class DailyStatisticsService(
         log.info("统计已完成，耗时： ${DataUtil.time2HMS(endTime - startTime)}")
     }
 
-    private fun collectingUsers(users: List<BindUser>): Pair<Int, Int> {
+    private fun collectingUsers(users: List<BindUser>): Triple<Int, Int, Int> {
         val ids = users.map { it.userID }
 
         waitForRateLimit(5000)
@@ -151,21 +153,28 @@ class DailyStatisticsService(
 
             plays.mapIndexed { index, pc ->
                 val current = currents[index]
-                val changed = current != pc
+                val delta = current - pc
 
                 val mode = OsuMode.getMode(index)
 
-                Triple(micro, mode, changed)
+                Triple(micro, mode, delta)
             }.filter {
-                it.third
-            }.map {
-                it.first to it.second
+                it.third > 0
             }
         }
 
-        val scoreCount = updatingUsers(needUpdate)
+        val reallyNeedUpgrade = needUpdate.filter { (micro, mode, delta) ->
+            val saved = scoreDao.getYesterdayCount(micro.userID, mode)
 
-        return needUpdate.map { it.first.userID }.toSet().size to scoreCount
+            delta > saved
+        }.map { it.first to it.second }
+
+        val scoreCount = updatingUsers(reallyNeedUpgrade)
+
+        val needSize = needUpdate.map { it.first.userID }.toSet().size
+        val reallySize = reallyNeedUpgrade.map { it.first.userID }.toSet().size
+
+        return Triple(needSize, reallySize, scoreCount)
     }
 
     private fun updatingUsers(needUpdate: List<Pair<MicroUser, OsuMode>>): Int {

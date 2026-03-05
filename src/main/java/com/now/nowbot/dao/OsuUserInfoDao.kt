@@ -22,7 +22,7 @@ import java.time.LocalTime
 @Component
 class OsuUserInfoDao(
     private val infoRepository: OsuUserInfoRepository,
-    private val percentileRepository: OsuUserInfoPercentilesLiteRepository
+    private val percentileRepository: OsuUserInfoPercentilesLiteRepository,
 ) {
     @PersistenceContext
     lateinit var entityManager: EntityManager
@@ -34,7 +34,7 @@ class OsuUserInfoDao(
 
         val now = LocalDateTime.now()
 
-        val users = infoRepository.getLastBetween(now.minusDays(1), now)
+        val users = infoRepository.getLatestBetween(now.minusDays(1), now)
 
         log.info("已经获取到 ${users.size} 条数据，正在更新")
 
@@ -233,10 +233,10 @@ class OsuUserInfoDao(
         users.flatMap {
             if (it.rulesets == null) return@flatMap emptyList<OsuUserInfoArchiveLite>()
 
-            val oc = infoRepository.getLastCountryRank(it.userID, OsuMode.OSU)
-            val tc = infoRepository.getLastCountryRank(it.userID, OsuMode.TAIKO)
-            val cc = infoRepository.getLastCountryRank(it.userID, OsuMode.CATCH)
-            val mc = infoRepository.getLastCountryRank(it.userID, OsuMode.MANIA)
+            val oc = infoRepository.getLatestCountryRank(it.userID, OsuMode.OSU)
+            val tc = infoRepository.getLatestCountryRank(it.userID, OsuMode.TAIKO)
+            val cc = infoRepository.getLatestCountryRank(it.userID, OsuMode.CATCH)
+            val mc = infoRepository.getLatestCountryRank(it.userID, OsuMode.MANIA)
 
             val osu = fromStatistics(it.rulesets!!.osu, OsuMode.OSU, oc)
             if (osu != null) {
@@ -278,7 +278,7 @@ class OsuUserInfoDao(
      * @return 这一天最后的数据
      */
     private fun getLastToday(userID: Long, mode: OsuMode, date: LocalDate = LocalDate.now()): OsuUserInfoArchiveLite? {
-        return infoRepository.getLastBetween(userID, mode, LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX))
+        return infoRepository.getLatestBetween(userID, mode, LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX))
     }
 
     fun getHistoryUser(user: OsuUser, day: Long = 1): OsuUser? {
@@ -297,11 +297,11 @@ class OsuUserInfoDao(
      */
     fun getLastFrom(userID: Long, mode: OsuMode, date: LocalDate): OsuUserInfoArchiveLite? {
         val time = LocalDateTime.of(date, LocalTime.MAX)
-        return infoRepository.getLastBetween(userID, mode, time.minusYears(1), time)
+        return infoRepository.getLatestBetween(userID, mode, time.minusYears(1), time)
     }
 
     fun getLast(userID: Long, mode: OsuMode): OsuUserInfoArchiveLite? {
-        return infoRepository.getLast(userID, mode)
+        return infoRepository.getLatest(userID, mode)
     }
 
     private fun getFromUserIDsYesterday(userIDs: List<Long>): List<InfoArchive> {
@@ -310,16 +310,48 @@ class OsuUserInfoDao(
     }
 
     fun getPlayCountsFromUserIDBeforeToday(userID: Long): List<Long> {
+
+        val to = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.MAX)
+        val from = to.minusYears(1)
+
+        fun parseResults(arrays: List<Array<Any>>): List<Long> {
+            // 1. 初始化一个长度为 4 的默认值列表 [0, 0, 0, 0]
+            // 对应索引: 0:osu, 1:taiko, 2:catch, 3:mania
+            val playCounts = mutableListOf(0L, 0L, 0L, 0L)
+
+            arrays.forEach { row ->
+                val count = (row[1] as Number).toLong()
+                val modeIndex = (row[2] as Number).toInt()
+
+                // 2. 根据数据库返回的 mode 值，精准填入对应的索引位置
+                if (modeIndex in 0..3) {
+                    playCounts[modeIndex] = count
+                }
+            }
+
+            return playCounts
+        }
+
+        val arrays = infoRepository.getLatestPlayCounts(userID, from, to)
+        return parseResults(arrays)
+    }
+
+
+
+    /*
+    fun getPlayCountsFromUserIDBeforeToday(userID: Long): List<Long> {
         val time = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.MAX)
         val year = time.minusYears(1)
 
-        val osu = infoRepository.getLastBetween(userID, OsuMode.OSU, year, time)?.playCount ?: 0L
-        val taiko = infoRepository.getLastBetween(userID, OsuMode.TAIKO, year, time)?.playCount ?: 0L
-        val catch = infoRepository.getLastBetween(userID, OsuMode.CATCH, year, time)?.playCount ?: 0L
-        val mania = infoRepository.getLastBetween(userID, OsuMode.MANIA, year, time)?.playCount ?: 0L
+        val osu = infoRepository.getLatestBetween(userID, OsuMode.OSU, year, time)?.playCount ?: 0L
+        val taiko = infoRepository.getLatestBetween(userID, OsuMode.TAIKO, year, time)?.playCount ?: 0L
+        val catch = infoRepository.getLatestBetween(userID, OsuMode.CATCH, year, time)?.playCount ?: 0L
+        val mania = infoRepository.getLatestBetween(userID, OsuMode.MANIA, year, time)?.playCount ?: 0L
 
         return listOf(osu, taiko, catch, mania)
     }
+
+     */
 
     companion object {
         private val log = LoggerFactory.getLogger(OsuUserInfoDao::class.java)

@@ -17,7 +17,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -180,6 +182,12 @@ class ScoreDao(
      */
     fun getBeatmapScores(user: OsuUser, beatmap: Beatmap, mode: OsuMode): List<LazerScore> {
         return scoreRepository.getBeatmapScores(user.userID, beatmap.beatmapID, mode.modeValue).map { it.toLazerScore() }
+    }
+
+    fun getYesterdayCount(userID: Long, mode: OsuMode): Long {
+        val time = LocalDate.now().minusDays(1)
+
+        return scoreRepository.getCountBetween(userID, mode.modeValue, LocalDateTime.of(time, LocalTime.MIN), LocalDateTime.of(time, LocalTime.MAX))
     }
 
     companion object {

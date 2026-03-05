@@ -5,9 +5,16 @@ import com.now.nowbot.entity.ScoreStatisticLite
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
+    @Query("""
+        SELECT COUNT(*)
+        FROM lazer_score_lite s 
+        WHERE s.user_id = :userID AND s.mode = :mode AND s.time BETWEEN :from AND :to
+        """, nativeQuery = true)
+    fun getCountBetween(userID: Long, mode: Byte, from: LocalDateTime, to: LocalDateTime): Long
 
     @Query("""
         select * from lazer_score_lite s
