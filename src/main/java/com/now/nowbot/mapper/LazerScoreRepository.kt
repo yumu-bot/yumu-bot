@@ -29,9 +29,14 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     fun getSavedScoreIDs(id: Collection<Long>): Set<Long>
 
     @Query("""
-        SELECT EXISTS(SELECT 1 FROM lazer_score_lite WHERE id = 12345);
+        SELECT EXISTS(SELECT 1 FROM lazer_score_lite WHERE id = :id);
     """, nativeQuery = true)
-    fun ifScoreExists(id: Long): Boolean
+    fun exists(id: Long): Boolean
+
+    @Query("""
+        SELECT id FROM lazer_score_lite WHERE id IN (:ids)
+    """, nativeQuery = true)
+    fun exists(ids: Collection<Long>): List<Long>
 
     @Query("select s.time from LazerScoreLite s where s.userId = :id and s.time between :start and :end")
     fun getUserAllScoreTime(id: Long, start: OffsetDateTime, end: OffsetDateTime, page: Pageable): List<OffsetDateTime>
@@ -59,13 +64,15 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {
 
     @Query("""
-        SELECT s FROM ScoreStatisticLite s WHERE s.id in (:ids) AND s.mode = :mode
+        SELECT s FROM ScoreStatisticLite s WHERE s.id IN (:ids) AND s.mode = :mode
     """)
-    fun getStatistics(ids: Collection<Long>, mode: Int = -1): List<ScoreStatisticLite>
+    fun getStatistics(ids: Collection<Long>, mode: Byte = -1): List<ScoreStatisticLite>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM score_statistic WHERE id = :id)", nativeQuery = true)
-    fun ifStatisticExists(id: Long): Boolean
+    @Query("SELECT EXISTS(SELECT 1 FROM score_statistic WHERE id = :id AND mode = :mode)", nativeQuery = true)
+    fun exists(id: Long, mode: Byte = -1): Boolean
 
-    @Query("select s from ScoreStatisticLite s where s.id in (:sid) and s.mode = -1")
-    fun getByScoreIDWhenGraveyard(sid: Collection<Long>): List<ScoreStatisticLite>
+    @Query("""
+        SELECT id FROM score_statistic WHERE id IN (:ids) AND mode = :mode
+    """, nativeQuery = true)
+    fun exists(ids: Collection<Long>, mode: Byte = -1): List<Long>
 }

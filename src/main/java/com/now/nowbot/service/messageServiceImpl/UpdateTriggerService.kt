@@ -12,7 +12,7 @@ import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.service.messageServiceImpl.UpdateTriggerService.UpdateType.*
-import com.now.nowbot.throwable.botRuntimeException.PermissionException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException.DeniedException.*
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil
@@ -50,6 +50,7 @@ class UpdateTriggerService(
                         p -> osu percent
                         d -> osu daily
                         r -> flush osu star rating
+                        t -> repair osu statistics missing
                     """.trimIndent())
                 }
             }
@@ -141,7 +142,7 @@ class UpdateTriggerService(
 
             OSU_DAILY -> {
                 if (!Permission.isSuperAdmin(event.sender.contactID)) {
-                    throw PermissionException.DeniedException.BelowSuperAdministrator()
+                    throw BelowSuperAdministrator()
                 }
 
                 ASyncMessageUtil.doubleCheck(

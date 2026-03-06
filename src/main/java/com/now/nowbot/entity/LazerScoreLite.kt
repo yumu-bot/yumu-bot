@@ -75,8 +75,6 @@ class LazerScoreLite(
         rankToByte(score.rank)
     )
 
-
-
     fun toLazerScore(): LazerScore {
         val lite = this
 
@@ -115,7 +113,7 @@ class LazerScoreLite(
         }
 
         return LazerScore().apply {
-            this.buildID = if (lite.legacyScoreId == 0L) 1 else null
+            this.buildID = if (lite.legacyScore == 0) 1 else null
             this.scoreID = lite.id
             this.legacyScoreID = lite.legacyScoreId
             this.userID = lite.userId
@@ -174,18 +172,17 @@ class LazerScoreLite(
 @IdClass(ScoreStatisticLite.ScoreStatisticKey::class)
 class ScoreStatisticLite(
     @Id
-    var id: Long,
+    var id: Long = 0,
 
     @Id
     // -1: score, 0-3: osu, taiko, catch, mania
     @Column(name = "mode", columnDefinition = "int2")
-    var mode: Byte,
+    var mode: Byte = -1,
 
     @Type(JsonBinaryType::class)
     @Column(name = "data", columnDefinition = "jsonb", nullable = false)
-    var data: String
+    var data: String = ""
 ) {
-    @Suppress("UNUSED")
     fun setStatus(score: LazerScore) {
         when(this.mode.toInt()) {
             -1 -> score.statistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)

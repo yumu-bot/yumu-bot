@@ -3,17 +3,15 @@ package com.now.nowbot.service
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.ScoreDao
-import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.NewbiePlayCount
 import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.util.JacksonUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.text.DecimalFormat
@@ -34,29 +32,9 @@ class NewbieService(
     private val bindDao: BindDao,
 ) {
 
-    val allowedMods = setOf(
-        LazerMod.Easy::class,
-        LazerMod.NoFail::class,
-        LazerMod.HalfTime::class,
-        LazerMod.HardRock::class,
-        LazerMod.SuddenDeath::class,
-        LazerMod.Perfect::class,
-        LazerMod.DoubleTime::class,
-        LazerMod.Nightcore::class,
-        LazerMod.Hidden::class,
-        LazerMod.Flashlight::class,
-        LazerMod.SpunOut::class,
-        LazerMod.TouchDevice::class,
-    )
-
-    fun getStarRating(bid: Long, modsString: String): Float {
-        if (modsString == "[]") {
+    fun getStarRating(bid: Long, mods: List<LazerMod>): Float {
+        if (mods.isEmpty()) {
             return beatmapApiService.getBeatmapFromDatabase(bid).starRating.toFloat()
-        }
-        val mods = JacksonUtil.parseObjectList(modsString, LazerMod::class.java)
-
-        if (!mods.isValueMod()) {
-            return -1f
         }
 
         val star = calculateApiService.getBeatmapStar(bid, OsuMode.OSU, mods)
@@ -72,18 +50,18 @@ class NewbieService(
         val scores = scoreDao
             .getUserRankedScore(userId, OsuMode.OSU.modeValue, start, end)
             .filter {
-                val star = getStarRating(it.beatmapId, it.mods ?: "[]")
+                val star = getStarRating(it.beatmapID, it.mods)
                 star in 0f..5.7f
             }
 
-        val statisticsMap = scoreDao.getStatisticsMap(scores)
+        val mapStatistics = scoreDao.getBeatmapStatistics(scores.map { it.beatmapID })
 
         val (passScore, failedScore) = scores.partition { it.passed }
 
         // this.sliderTailHit is tth
-        val passStatistics = passScore.toStatistics(statisticsMap)
+        val passStatistics = passScore.toStatistics(mapStatistics)
 
-        val failedStatistics = failedScore.toStatistics(statisticsMap)
+        val failedStatistics = failedScore.toStatistics(mapStatistics)
 
         val tth = passStatistics
             .sumOf { it.second.sliderTailHit } + failedStatistics.sumOf { it.second.sliderTailHit }
@@ -222,9 +200,9 @@ $ppList
         }
     }
 
-    fun List<LazerScoreLite>.toStatistics(statisticsMap: Map<Long, LazerStatistics>): List<Pair<LazerScoreLite, LazerStatistics>> {
+    fun List<LazerScore>.toStatistics(statisticsMap: Map<Long, LazerStatistics>): List<Pair<LazerScore, LazerStatistics>> {
         return mapNotNull {
-            val stat = statisticsMap[it.id]?.apply { this.sliderTailHit = getTotalHits(OsuMode.OSU) }
+            val stat = statisticsMap[it.beatmapID]?.apply { this.sliderTailHit = getTotalHits(OsuMode.OSU) }
             if (stat != null) {
                 it to stat
             } else {

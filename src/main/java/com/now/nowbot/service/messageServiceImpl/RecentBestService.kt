@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.ScoreDao
-import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
@@ -42,7 +41,7 @@ class RecentBestService(
         val user: OsuUser,
         val history: OsuUser?,
         val mode: OsuMode,
-        val scores: List<LazerScoreLite>,
+        val scores: List<LazerScore>,
     )
 
     override fun isHandle(
@@ -69,7 +68,7 @@ class RecentBestService(
 
         return ServiceCallStatistic.builds(
             event,
-            beatmapIDs = param.scores.map { it.beatmapId }.distinct(),
+            beatmapIDs = param.scores.map { it.beatmapID }.distinct(),
             userIDs = listOf(param.user.userID),
             modes = listOf(param.user.currentOsuMode),
         )
@@ -138,15 +137,14 @@ class RecentBestService(
         return RecentBestParam(user, historyUser, mode, scores)
     }
 
-    private fun List<LazerScoreLite>.extend(): List<LazerScore> {
-        val scores = this.map { it.toLazerScore() }
+    private fun List<LazerScore>.extend(): List<LazerScore> {
 
-        beatmapApiService.applyBeatmapExtend(scores)
-        beatmapApiService.applyVersion(scores)
-        calculateApiService.applyBeatmapChanges(scores)
-        calculateApiService.applyStarToScores(scores)
+        beatmapApiService.applyBeatmapExtend(this)
+        beatmapApiService.applyVersion(this)
+        calculateApiService.applyBeatmapChanges(this)
+        calculateApiService.applyStarToScores(this)
 
-        return scores.sortedByDescending {
+        return this.sortedByDescending {
             return@sortedByDescending when(it.rank) {
                 "F" -> -1
                 "D" -> 0

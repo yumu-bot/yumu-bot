@@ -28,7 +28,7 @@ import java.time.ZonedDateTime
 class ScoreDao(
     private val beatmapDao: BeatmapDao,
     private val scoreRepository: LazerScoreRepository,
-    private val scoreStatisticRepository: LazerScoreStatisticRepository,
+    private val statisticRepository: LazerScoreStatisticRepository,
     private val beatmapStarRatingCacheRepository: BeatmapStarRatingCacheRepository
 ) {
 
@@ -93,13 +93,25 @@ class ScoreDao(
 
     @Transactional
     fun saveScores(scores: List<LazerScore>) {
-        val exists = scores.map { it.scoreID }.filter { scoreRepository.ifScoreExists(it) }.toSet()
-        val notExists = scores.filterNot { exists.contains(it.scoreID) }
+        val ss = scores.map { it.scoreID }
 
-        if (notExists.isEmpty()) return
+        val exists = ss.chunked(1000) { sss ->
+            scoreRepository.exists(sss)
+        }.flatten().toSet()
 
-        val uniqueSets = notExists.map { it.beatmapset }.associateBy { it.beatmapsetID }.values
-        val uniqueBeatmaps = notExists.map { it.beatmap }.associateBy { it.beatmapID }.values
+        val notExistsScore = scores.filterNot { exists.contains(it.scoreID) }
+
+        val bs = scores.map { it.beatmapID }
+        val existsBeatmap = bs.chunked(1000) { bss ->
+            statisticRepository.exists(bss, -1)
+        }.flatten().toSet()
+
+        val notExistsBeatmap = scores.filterNot { existsBeatmap.contains(it.beatmapID) }
+
+        if (notExistsScore.isEmpty() && notExistsBeatmap.isEmpty()) return
+
+        val uniqueSets = notExistsScore.map { it.beatmapset }.associateBy { it.beatmapsetID }.values
+        val uniqueBeatmaps = notExistsScore.map { it.beatmap }.associateBy { it.beatmapID }.values
 
         try {
             beatmapDao.saveBeatmapsets(uniqueSets)
@@ -112,24 +124,21 @@ class ScoreDao(
         val scoreLites = mutableListOf<LazerScoreLite>()
         val allStatistics = mutableListOf<ScoreStatisticLite>()
 
-        notExists.forEach { score ->
+        notExistsScore.forEach { score ->
             scoreLites.add(LazerScoreLite(score))
-
-            // 统计数据逻辑处理
             allStatistics.add(ScoreStatisticLite.createByScore(score))
-            // 注意：这里的 ifStatisticExists 如果涉及频繁 IO，建议也改为批量预查
-            if (scoreStatisticRepository.ifStatisticExists(score.beatmapID)) {
-                allStatistics.add(ScoreStatisticLite.createByBeatmap(score))
-            }
         }
 
-        // 4. 最后的统一批量写入 (Spring Data JPA 会自动优化为 Batch Insert)
+        notExistsBeatmap.forEach { score ->
+            allStatistics.add(ScoreStatisticLite.createByBeatmap(score))
+        }
+
         scoreRepository.saveAll(scoreLites)
-        scoreStatisticRepository.saveAll(allStatistics)
+        statisticRepository.saveAll(allStatistics)
     }
 
     fun saveScore(score: LazerScore) {
-        if (scoreRepository.ifScoreExists(score.scoreID)) {
+        if (scoreRepository.exists(score.scoreID)) {
             return
         }
 
@@ -143,14 +152,15 @@ class ScoreDao(
         val data = LazerScoreLite(score)
         val statisticList: List<ScoreStatisticLite>
         val statistic = ScoreStatisticLite.createByScore(score)
-        statisticList = if (scoreStatisticRepository.ifStatisticExists(score.beatmapID)) {
+
+        statisticList = if (!statisticRepository.exists(score.beatmapID)) {
             listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
         } else {
             listOf(statistic)
         }
 
         scoreRepository.save(data)
-        scoreStatisticRepository.saveAll(statisticList)
+        statisticRepository.saveAll(statisticList)
     }
 
     fun getUserAllScoreTime(userID: Long): List<OffsetDateTime> {
@@ -163,17 +173,18 @@ class ScoreDao(
         return scoreRepository.getUserAllScoreTime(userID, start, end, PageRequest.ofSize(500))
     }
 
-    fun getUserRankedScore(userID: Long, mode: Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
-        return scoreRepository.getUserRankedScore(userID, mode, start, end)
+    fun getUserRankedScore(userID: Long, mode: Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScore> {
+        return scoreRepository.getUserRankedScore(userID, mode, start, end).applyStatistics()
     }
 
-    fun getUsersRankedScore(userIDs: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
-        return scoreRepository.getUsersRankedScore(userIDs, mode, start, end)
+    fun getUsersRankedScore(userIDs: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScore> {
+        return scoreRepository.getUsersRankedScore(userIDs, mode, start, end).applyStatistics()
     }
 
-    fun getStatisticsMap(scores: Iterable<LazerScoreLite>): Map<Long, LazerStatistics> {
-        return scoreStatisticRepository
-            .getByScoreIDWhenGraveyard(scores.map { it.id })
+    fun getBeatmapStatistics(beatmapIDs: Collection<Long>): Map<Long, LazerStatistics> {
+        return statisticRepository
+            .getStatistics(beatmapIDs, -1)
+            .distinctBy { it.id }
             .associate { it.id to JacksonUtil.parseObject(it.data, LazerStatistics::class.java) }
     }
 
@@ -181,13 +192,37 @@ class ScoreDao(
      * 还要自己取
      */
     fun getBeatmapScores(user: OsuUser, beatmap: Beatmap, mode: OsuMode): List<LazerScore> {
-        return scoreRepository.getBeatmapScores(user.userID, beatmap.beatmapID, mode.modeValue).map { it.toLazerScore() }
+        return scoreRepository.getBeatmapScores(user.userID, beatmap.beatmapID, mode.modeValue).applyStatistics()
     }
 
     fun getYesterdayCount(userID: Long, mode: OsuMode): Long {
         val time = LocalDate.now().minusDays(1)
 
         return scoreRepository.getCountBetween(userID, mode.modeValue, LocalDateTime.of(time, LocalTime.MIN), LocalDateTime.of(time, LocalTime.MAX))
+    }
+
+    fun Collection<LazerScoreLite>.applyStatistics(): List<LazerScore> {
+        if (this.isEmpty()) return emptyList()
+
+        val mode = this.firstOrNull()?.mode?.toByte() ?: 0.toByte()
+
+        return this.chunked(1000) { ss ->
+            val ids = ss.map { it.id }
+            val bs = ss.map { it.beatmapId }.distinct()
+
+            val tm = statisticRepository.getStatistics(ids, -1)
+                .associateBy { it.id }
+
+            val bm = statisticRepository.getStatistics(bs, mode)
+                .associateBy { it.id }
+
+            ss.map { s ->
+                s.toLazerScore().apply {
+                    tm[s.id]?.setStatus(this)
+                    bm[s.beatmapId]?.setStatus(this)
+                }
+            }
+        }.flatten()
     }
 
     companion object {
