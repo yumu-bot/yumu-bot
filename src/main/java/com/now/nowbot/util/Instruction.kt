@@ -554,14 +554,14 @@ enum class Instruction(val pattern: Pattern) {
     GET_NEWBIE_MAP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beat)?map", "get\\s*map", "gw")
         appendMode()
-        appendID()
+        appendCaptureGroup(FLAG_ID, REG_NUMBER_SEPERATOR, MORE)
         appendMod()
     }),
 
     GET_NEWBIE_SET(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beatmap)?set", "get\\s*(map)?set", "gy")
         appendMode()
-        appendID()
+        appendCaptureGroup(FLAG_ID, REG_NUMBER_SEPERATOR, MORE)
         appendMod()
     }),
 
