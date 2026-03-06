@@ -9,6 +9,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -32,6 +33,7 @@ import kotlin.text.trim
 class GetItemsService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
+    private val scoreApiService: OsuScoreApiService,
 ) : MessageService<GetItemsService.GetItemsParam> {
 
     abstract class GetItemsParam
@@ -122,21 +124,39 @@ class GetItemsService(
         val mode = InstructionUtil.getMode(matcher)
         val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
+        if (user.pp <= 0.0 && user.globalRank == 0L) {
+            val bests = scoreApiService.getBestScores(user)
+
+            user.updateEstimatedPP(bests)
+        }
+
         return NewbiePlayerParam(user, mode.data!!)
     }
 
     private fun NewbiePlayerParam.getNewbiePlayerComponent(): String {
+        val pp = if (user.ppEstimate > 0.0) {
+            user.ppEstimate.roundToInt()
+        } else {
+            user.pp.roundToInt()
+        }
+
+        val globalRank = if (user.globalRank == 0L) {
+            user.highestRank?.rank ?: user.globalRank
+        } else {
+            user.globalRank
+        }
+
         return """
             <Player 
               id=${user.userID}
               name="${user.username}"
               country=${user.countryRank}
-              global=${user.globalRank}
+              global=${globalRank}
               from="${user.countryCode}"
               accuracy=${"%.2f".format(user.accuracy).toDouble()}
               level=${user.levelCurrent}
               progress=${user.levelProgress}
-              performance=${user.pp.roundToInt()}
+              performance=${pp}
             />
         """.trimIndent()
     }

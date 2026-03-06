@@ -110,14 +110,19 @@ class ScoreDao(
 
         if (notExistsScore.isEmpty() && notExistsBeatmap.isEmpty()) return
 
-        val uniqueSets = notExistsScore.map { it.beatmapset }.associateBy { it.beatmapsetID }.values
-        val uniqueBeatmaps = notExistsScore.map { it.beatmap }.associateBy { it.beatmapID }.values
+        val uniqueSets = notExistsScore.map { it.beatmapset }.sortedBy { it.beatmapsetID }.associateBy { it.beatmapsetID }.values
+        val uniqueBeatmaps = notExistsScore.map { it.beatmap }.sortedBy { it.beatmapID }.associateBy { it.beatmapID }.values
 
         try {
-            beatmapDao.saveBeatmapsets(uniqueSets)
             beatmapDao.saveBeatmaps(uniqueBeatmaps)
         } catch (e: Exception) {
             log.error("批量存储 beatmap 异常", e)
+        }
+
+        try {
+            beatmapDao.saveBeatmapsets(uniqueSets)
+        } catch (e: Exception) {
+            log.error("批量存储 beatmapset 异常", e)
         }
 
         // 3. 准备成绩基础数据和统计数据
