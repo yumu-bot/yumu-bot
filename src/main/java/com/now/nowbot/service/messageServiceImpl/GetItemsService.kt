@@ -178,16 +178,16 @@ class GetItemsService(
 
         val bs = s.beatmaps.orEmpty().onEach {
             calculateApiService.applyStarToBeatmap(it, OsuMode.getConvertableMode(mode, it.mode), mods)
-        }.sortedByDescending { it.starRating }
+        }.sortedBy { it.starRating }
 
-        val t = bs.firstOrNull()
+        val t = bs.lastOrNull()
 
         return """
             <Beatmap
               sid=${s.beatmapsetID}
               preview="${s.previewName}"
               star=${"%.2f".format(t?.starRating ?: 0.0)}
-              difficulties=[${bs.joinToString(",") { "%.2f".format(it.starRating) }}]
+              difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]
             />
         """.trimIndent()
 
