@@ -82,7 +82,7 @@ class InfoService(
                         "bests" to bests.take(6),
                         "best_arr" to BestsArray(bests),
                         "playcount_arr" to PlaycountsArray(user.monthlyPlaycounts),
-                        "ranking_arr" to RankingArray(user.rankHistory?.data ?: listOf()),
+                        "ranking_arr" to RankingArray(user.rankHistory?.data.orEmpty()),
                         "highest_rank" to HighestRanking(user.highestRank, user.rankHistory, user.globalRank),
                         "percentiles" to percentiles,
                         "history_day" to day,

@@ -44,6 +44,12 @@ class GetItemsService(
         val mods: List<LazerMod>
     ): GetItemsParam()
 
+    data class NewbieBeatmapsetParam(
+        val beatmapsetID: Long,
+        val mode: OsuMode,
+        val mods: List<LazerMod>
+    ): GetItemsParam()
+
     data class NewbieScoreParam(
         val beatmapID: Long,
         val mode: OsuMode,
@@ -72,6 +78,14 @@ class GetItemsService(
         val mod = InstructionUtil.getMod(matcher)
 
         return NewbieBeatmapParam(bid, mode.data!!, mod)
+    }
+
+    private fun getNewbieBeatmapsetParam(matcher: Matcher): NewbieBeatmapsetParam {
+        val mode = InstructionUtil.getMode(matcher)
+        val sid = matcher.group(FLAG_ID).toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapsetID()
+        val mod = InstructionUtil.getMod(matcher)
+
+        return NewbieBeatmapsetParam(sid, mode.data!!, mod)
     }
 
     private fun getNewbieScoreParam(matcher: Matcher): NewbieScoreParam {
@@ -146,6 +160,34 @@ class GetItemsService(
               preview="${b.previewName}"
               star=${"%.2f".format(b.starRating)}
               max=${b.maxCombo}
+            />
+        """.trimIndent()
+
+    }
+
+    private fun NewbieBeatmapsetParam.getNewbieBeatmapsetComponent(): String {
+        val s = try {
+            beatmapApiService.getBeatmapset(beatmapsetID)
+        } catch (_: NetworkException.BeatmapException.NotFound) {
+            try {
+                beatmapApiService.getBeatmapset(beatmapApiService.getBeatmap(beatmapsetID).beatmapsetID)
+            } catch (e: NetworkException.BeatmapException) {
+                throw e
+            }
+        }
+
+        val bs = s.beatmaps.orEmpty().onEach {
+            calculateApiService.applyStarToBeatmap(it, OsuMode.getConvertableMode(mode, it.mode), mods)
+        }.sortedByDescending { it.starRating }
+
+        val t = bs.firstOrNull()
+
+        return """
+            <Beatmap
+              sid=${s.beatmapsetID}
+              preview="${s.previewName}"
+              star=${"%.2f".format(t?.starRating ?: 0.0)}
+              difficulties=[${bs.joinToString(",") { "%.2f".format(it.starRating) }}]
             />
         """.trimIndent()
 
@@ -241,8 +283,9 @@ class GetItemsService(
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<GetItemsParam>): Boolean {
         val m = Instruction.GET_MAP.matcher(messageText)
         val m2 = Instruction.GET_NEWBIE_MAP.matcher(messageText)
-        val m3 = Instruction.GET_NEWBIE_PLAYER.matcher(messageText)
-        val m4 = Instruction.GET_NEWBIE_SCORE.matcher(messageText)
+        val m3 = Instruction.GET_NEWBIE_SET.matcher(messageText)
+        val m4 = Instruction.GET_NEWBIE_PLAYER.matcher(messageText)
+        val m5 = Instruction.GET_NEWBIE_SCORE.matcher(messageText)
 
         if (m.find()) {
             data.value = getPoolParam(m)
@@ -251,9 +294,12 @@ class GetItemsService(
             data.value = getNewbieBeatmapParam(m2)
             return true
         } else if (m3.find()) {
-            data.value = getNewbiePlayerParam(event, m3)
+            data.value = getNewbieBeatmapsetParam(m3)
             return true
         } else if (m4.find()) {
+            data.value = getNewbiePlayerParam(event, m3)
+            return true
+        } else if (m5.find()) {
             data.value = getNewbieScoreParam(m4)
             return true
         }
@@ -265,6 +311,7 @@ class GetItemsService(
         when(param) {
             is PoolParam -> event.reply(param.getMapPoolText())
             is NewbieBeatmapParam -> event.reply(param.getNewbieBeatmapComponent())
+            is NewbieBeatmapsetParam -> event.reply(param.getNewbieBeatmapsetComponent())
             is NewbiePlayerParam -> event.reply(param.getNewbiePlayerComponent())
             is NewbieScoreParam -> event.reply(param.getNewbieScoreComponent())
         }

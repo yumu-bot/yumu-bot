@@ -558,6 +558,13 @@ enum class Instruction(val pattern: Pattern) {
         appendMod()
     }),
 
+    GET_NEWBIE_SET(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beatmap)?set", "get\\s*(map)?set", "gy")
+        appendMode()
+        appendID()
+        appendMod()
+    }),
+
     GET_NEWBIE_SCORE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("get\\s*new(bie)?\\s*score", "get\\s*score", "gx")
         appendMode()

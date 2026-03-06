@@ -461,7 +461,7 @@ class BindDao(
     }
 
     fun updateNameToID(user: OsuUser) {
-        val names = listOf(user.username) + (user.previousNames ?: emptyList())
+        val names = listOf(user.username) + (user.previousNames.orEmpty())
 
         val count = countNameToID(user.userID)
 

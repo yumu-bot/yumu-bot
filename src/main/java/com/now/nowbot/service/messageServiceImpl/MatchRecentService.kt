@@ -4,16 +4,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.CATCH
-import com.now.nowbot.model.enums.OsuMode.CATCH_RELAX
-import com.now.nowbot.model.enums.OsuMode.MANIA
-import com.now.nowbot.model.enums.OsuMode.OSU
-import com.now.nowbot.model.enums.OsuMode.OSU_AUTOPILOT
-import com.now.nowbot.model.enums.OsuMode.OSU_RELAX
-import com.now.nowbot.model.enums.OsuMode.TAIKO
-import com.now.nowbot.model.enums.OsuMode.TAIKO_RELAX
 import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -181,7 +172,7 @@ class MatchRecentService(
                 s.beatmap = b
                 b.beatmapset?.let { s.beatmapset = it }
                 s.beatmapID = round.beatmapID
-                s.maximumStatistics = getMaximumStatistics(s.mode, s.statistics)
+                s.maximumStatistics = s.statistics.constructMaxStatistics(s.mode)
             }
 
             ss
@@ -265,38 +256,6 @@ class MatchRecentService(
         }
 
         return image
-    }
-
-    private fun getMaximumStatistics(mode: OsuMode, stat: LazerStatistics): LazerStatistics {
-        return when (mode) {
-            OSU, OSU_RELAX, OSU_AUTOPILOT -> LazerStatistics(
-                great = stat.great + stat.ok + stat.meh + stat.miss,
-                largeBonus = stat.largeBonus,
-                smallBonus = stat.smallBonus,
-                sliderTailHit = stat.sliderTailHit,
-                legacyComboIncrease = stat.legacyComboIncrease
-            )
-
-            TAIKO, TAIKO_RELAX -> LazerStatistics(
-                great = stat.great + stat.ok + stat.meh,
-                largeBonus = stat.largeBonus,
-                smallBonus = stat.smallBonus
-            )
-
-            CATCH, CATCH_RELAX -> LazerStatistics(
-                great = stat.great + stat.miss,
-                largeTickHit = stat.largeTickHit + stat.largeTickMiss,
-                smallTickHit = stat.smallTickHit + stat.smallTickMiss,
-                largeBonus = stat.largeTickMiss,
-            )
-
-            MANIA -> LazerStatistics(
-                perfect = stat.perfect + stat.great + stat.good + stat.ok + stat.meh + stat.miss,
-                legacyComboIncrease = stat.legacyComboIncrease
-            )
-
-            else -> LazerStatistics()
-        }
     }
 
     companion object {

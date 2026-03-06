@@ -282,7 +282,7 @@ class BeatmapDao(
                     if (it.isBitSet(4)) rulesets.add("mania")
 
                     return@let rulesets
-                } ?: listOf(), Beatmapset.RequiredMeta(
+                }.orEmpty(), Beatmapset.RequiredMeta(
                     x.nominationsRequiredMain ?: 0,
                     x.nominationsRequiredSecondary ?: 0
                 )
@@ -366,7 +366,7 @@ class BeatmapDao(
                     if (it.isBitSet(4)) rulesets.add("mania")
 
                     return@let rulesets
-                } ?: listOf(), Beatmapset.RequiredMeta(
+                }.orEmpty(), Beatmapset.RequiredMeta(
                     x.nominationsRequiredMain ?: 0,
                     x.nominationsRequiredSecondary ?: 0
                 )

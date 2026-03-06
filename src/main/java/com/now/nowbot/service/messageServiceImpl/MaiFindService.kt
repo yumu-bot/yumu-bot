@@ -73,7 +73,7 @@ import java.util.regex.Matcher
             val conditions = DataUtil.getConditions(any, MaiSongFilter.entries.map { it.regex },
                 endPattern = MaiSongFilter.RANGE.regex.pattern)
 
-            val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+            val rangeInConditions = conditions.lastOrNull().orEmpty()
             val hasRangeInConditions = rangeInConditions.isNotEmpty()
             val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 

@@ -500,7 +500,7 @@ class BeatmapApiImpl(
 
     override fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset> {
         val map = sets.associate { set ->
-            set.beatmapsetID to (set.beatmaps ?: listOf()).map { b -> b.beatmapID }
+            set.beatmapsetID to (set.beatmaps.orEmpty()).map { b -> b.beatmapID }
         }
 
         val bids = map.values.flatten()

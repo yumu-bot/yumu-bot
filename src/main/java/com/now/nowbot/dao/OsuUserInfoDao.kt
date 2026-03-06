@@ -390,7 +390,7 @@ class OsuUserInfoDao(
             user.statistics = statistics
             archive.rankHistory?.let {
                 user.rankHistory = OsuUser.RankHistory(archive.mode.shortName,
-                    JacksonUtil.parseObjectList(archive.rankHistory, Long::class.java) ?: listOf())
+                    JacksonUtil.parseObjectList(archive.rankHistory, Long::class.java).orEmpty())
             }
 
             return user

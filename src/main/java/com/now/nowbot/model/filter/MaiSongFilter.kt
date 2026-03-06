@@ -198,7 +198,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                 TITLE -> fit(operator, it.title, str) to default
                 ALIASES -> {
-                    val a = it.aliases ?: listOf()
+                    val a = it.aliases.orEmpty()
 
                     a.map { alias ->
                         fit(operator, alias, str)
@@ -389,8 +389,8 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     val song = collectionMap[songID]?.first ?: fitMap[songID]!!.first
 
                     // 合并难度（取并集）
-                    val difficulties1 = collectionMap[songID]?.second ?: emptyList()
-                    val difficulties2 = fitMap[songID]?.second ?: emptyList()
+                    val difficulties1 = collectionMap[songID]?.second.orEmpty()
+                    val difficulties2 = fitMap[songID]?.second.orEmpty()
                     val mergedDifficulties = (difficulties1.toSet() + difficulties2.toSet()).toList()
 
                     song to mergedDifficulties

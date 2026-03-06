@@ -174,7 +174,7 @@ import kotlin.text.Charsets.UTF_8
         return maiDao.getSurroundingMaiRanking(rating).sortedBy { abs(rating - it.rating) }.associate { it.name to it.rating }
     }
 
-    override fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData> { //return getMaimaiFitLibraryFromFile().charts[songID.toString()] ?: listOf()
+    override fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData> { //return getMaimaiFitLibraryFromFile().charts[songID.toString()].orEmpty()
         return maiDao.getMaiFitChartDataBySongID(songID.toInt())
     }
 

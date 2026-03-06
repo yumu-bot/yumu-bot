@@ -337,7 +337,7 @@ import java.util.concurrent.ExecutionException
     }
 
     override fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>) {
-        val userSet = (beatmapsets.flatMap { it.beatmaps ?: listOf() }
+        val userSet = (beatmapsets.flatMap { it.beatmaps.orEmpty() }
             .flatMap { it.mapperIDs } + beatmapsets.map { it.creatorID }).toSet()
 
         val users = getUsers(userSet).associateBy { it.userID }

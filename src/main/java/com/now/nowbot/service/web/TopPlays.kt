@@ -32,7 +32,7 @@ fun parseTopPlays(html: String): TopPlays {
 
         firstScoreRank = node?.get("first_score_rank")?.asInt(0) ?: 0
 
-        scores = node?.get("scores")?.map { JacksonUtil.parseObject(it, LazerScore::class.java) } ?: listOf()
+        scores = node?.get("scores")?.map { JacksonUtil.parseObject(it, LazerScore::class.java) }.orEmpty()
     } else {
         firstScoreRank = -1
         scores = listOf()

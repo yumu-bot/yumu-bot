@@ -81,7 +81,7 @@ fun getOauthUrl(state: String, full: Boolean): String
     fun asyncDownloadAvatar(users: List<MicroUser>)
 
     fun asyncDownloadAvatarFromBeatmapsets(beatmapsets: List<Beatmapset>) {
-        val set = beatmapsets.flatMap { it.beatmaps ?: listOf() }.mapNotNull { it.user }.toSet()
+        val set = beatmapsets.flatMap { it.beatmaps.orEmpty() }.mapNotNull { it.user }.toSet()
 
         asyncDownloadAvatar(set.map { o -> MicroUser().apply { this.avatarUrl = o.avatarUrl } })
     }

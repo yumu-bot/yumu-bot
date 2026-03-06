@@ -391,7 +391,7 @@ import kotlin.time.Duration.Companion.seconds
 
         val set = beatmapApiService.getBeatmapset(map.beatmapsetID)
 
-        val maps = (set.beatmaps ?: listOf()).dropWhile { it.beatmapID == map.beatmapID }
+        val maps = (set.beatmaps.orEmpty()).dropWhile { it.beatmapID == map.beatmapID }
 
         if (maps.size >= 16) {
             receipt.recallIn(10 * 1000)

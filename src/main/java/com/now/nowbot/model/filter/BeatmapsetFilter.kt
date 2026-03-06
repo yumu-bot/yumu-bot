@@ -114,7 +114,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                 long
             }
 
-            val bs = s.beatmaps ?: emptyList()
+            val bs = s.beatmaps.orEmpty()
 
             return when(filter) {
                 CREATOR -> fit(operator, s.creator, str)

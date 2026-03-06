@@ -106,7 +106,7 @@ class ScoreDao(
             statisticRepository.exists(bss, -1)
         }.flatten().toSet()
 
-        val notExistsBeatmap = scores.filterNot { existsBeatmap.contains(it.beatmapID) }
+        val notExistsBeatmap = scores.filterNot { existsBeatmap.contains(it.beatmapID) || (!it.passed && !it.isLazer) }
 
         if (notExistsScore.isEmpty() && notExistsBeatmap.isEmpty()) return
 
@@ -153,10 +153,10 @@ class ScoreDao(
         val statisticList: List<ScoreStatisticLite>
         val statistic = ScoreStatisticLite.createByScore(score)
 
-        statisticList = if (!statisticRepository.exists(score.beatmapID)) {
-            listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
-        } else {
+        statisticList = if (statisticRepository.exists(score.beatmapID) || (!score.isLazer && !score.passed)) {
             listOf(statistic)
+        } else {
+            listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
         }
 
         scoreRepository.save(data)
@@ -218,8 +218,16 @@ class ScoreDao(
 
             ss.map { s ->
                 s.toLazerScore().apply {
-                    tm[s.id]?.setStatus(this)
-                    bm[s.beatmapId]?.setStatus(this)
+                    val t = tm[s.id]
+                    val b = bm[s.beatmapId]
+
+                    t?.setStatus(this)
+
+                    if (b != null) {
+                        b.setStatus(this)
+                    } else if (t != null) {
+                        this.maximumStatistics = this.statistics.constructMaxStatistics(OsuMode.getMode(s.mode))
+                    }
                 }
             }
         }.flatten()
