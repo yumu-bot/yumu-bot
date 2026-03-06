@@ -198,7 +198,7 @@ import kotlin.time.Duration.Companion.seconds
 
     override fun applyBeatmapChanges(scores: Collection<LazerScore>) {
         scores.forEach {
-            applyPPToScore(it)
+            applyBeatmapChanges(it)
         }
     }
 
@@ -212,15 +212,20 @@ import kotlin.time.Duration.Companion.seconds
 
         if (mods.isAffectStarRating()) {
             beatmap.bpm = BeatmapDetailsUtil.applyBPM(
-                beatmap.bpm, mods)
+                beatmap.bpm, mods
+            )
             beatmap.ar = BeatmapDetailsUtil.applyAR(
-                beatmap.ar ?: 0f, mods)
+                beatmap.ar ?: 0f, mods
+            )
             beatmap.cs = BeatmapDetailsUtil.applyCS(
-                beatmap.cs ?: 0f, mods)
+                beatmap.cs ?: 0f, mods
+            )
             beatmap.od = BeatmapDetailsUtil.applyOD(
-                beatmap.od ?: 0f, mods, mode)
+                beatmap.od ?: 0f, mods, mode
+            )
             beatmap.hp = BeatmapDetailsUtil.applyHP(
-                beatmap.hp ?: 0f, mods)
+                beatmap.hp ?: 0f, mods
+            )
             beatmap.totalLength =
                 BeatmapDetailsUtil.applyLength(
                     beatmap.totalLength, mods

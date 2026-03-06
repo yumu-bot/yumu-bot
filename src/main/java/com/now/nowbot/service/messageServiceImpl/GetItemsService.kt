@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlin.text.ifEmpty
+import kotlin.text.lowercase
 import kotlin.text.split
 import kotlin.text.trim
 
@@ -182,15 +184,19 @@ class GetItemsService(
 
         val t = bs.lastOrNull()
 
+        val attributes = listOfNotNull(
+            "sid=${s.beatmapsetID}",
+            "preview=\"${s.previewName}\"",
+            "star=${"%.2f".format(t?.starRating ?: 0.0)}",
+            "difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]",
+            if (s.availability.downloadDisabled) "disabled=true" else null,
+        )
+
         return """
             <Beatmap
-              sid=${s.beatmapsetID}
-              preview="${s.previewName}"
-              star=${"%.2f".format(t?.starRating ?: 0.0)}
-              difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]
+              ${attributes.joinToString("\n              ")}
             />
-        """.trimIndent()
-
+            """.trimIndent()
     }
 
     private fun NewbieScoreParam.getNewbieScoreComponent(): String {
