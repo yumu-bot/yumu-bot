@@ -57,12 +57,15 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {
-    @Query("select s.id from ScoreStatisticLite s where s.id in (:bid) and s.status = :mode ")
-    fun getSavedBeatmapIDs(bid: Collection<Long>, mode: Int): Set<Long>
+
+    @Query("""
+        SELECT s FROM ScoreStatisticLite s WHERE s.id in (:ids) AND s.mode = :mode
+    """)
+    fun getStatistics(ids: Collection<Long>, mode: Int = -1): List<ScoreStatisticLite>
 
     @Query("SELECT EXISTS(SELECT 1 FROM score_statistic WHERE id = :id)", nativeQuery = true)
     fun ifStatisticExists(id: Long): Boolean
 
-    @Query("select s from ScoreStatisticLite s where s.id in (:sid) and s.status=-1")
+    @Query("select s from ScoreStatisticLite s where s.id in (:sid) and s.mode = -1")
     fun getByScoreIDWhenGraveyard(sid: Collection<Long>): List<ScoreStatisticLite>
 }

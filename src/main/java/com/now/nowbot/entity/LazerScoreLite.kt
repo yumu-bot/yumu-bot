@@ -178,23 +178,16 @@ class ScoreStatisticLite(
 
     @Id
     // -1: score, 0-3: osu, taiko, catch, mania
-    var status: Int,
+    @Column(name = "mode", columnDefinition = "int2")
+    var mode: Byte,
 
     @Type(JsonBinaryType::class)
-    @Column(columnDefinition = "json", nullable = false)
+    @Column(name = "data", columnDefinition = "jsonb", nullable = false)
     var data: String
 ) {
-    fun getMode(): OsuMode?  = when(status){
-        0 -> OsuMode.OSU
-        1 -> OsuMode.TAIKO
-        2 -> OsuMode.CATCH
-        3 -> OsuMode.MANIA
-        else -> null
-    }
-
     @Suppress("UNUSED")
     fun setStatus(score: LazerScore) {
-        when(this.status) {
+        when(this.mode.toInt()) {
             -1 -> score.statistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
             else -> score.maximumStatistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
         }
@@ -203,7 +196,7 @@ class ScoreStatisticLite(
     companion object {
         fun createByBeatmap(score: LazerScore) = ScoreStatisticLite(
             score.beatmapID,
-            score.mode.modeValue.toInt(),
+            score.mode.modeValue,
             score.maximumStatistics.toShortJson()
         )
 
@@ -215,11 +208,11 @@ class ScoreStatisticLite(
     }
 
     data class ScoreStatisticKey(
-        var id: Long,
-        var status: Int,
+        var id: Long = 0L,
+        var mode: Byte = -1,
     ) : Serializable {
         @Suppress("UNUSED")
-        constructor() : this(0, -1)
+        constructor() : this(0L, -1)
     }
 }
 
