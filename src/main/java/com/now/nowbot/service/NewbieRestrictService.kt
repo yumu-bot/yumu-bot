@@ -29,7 +29,7 @@ class NewbieRestrictService(
     // 新人群、杀手群、执行机器人
     private val newbieGroupID = config.newbieGroup
     private val killerGroupID = config.killerGroup
-    private val executorBotID = config.hydrantBot
+    private val executorBotID = config.yumuBot
 
     // 赦免图：No title，竹取飞翔，C type
     private val remitBIDs = config.remitBIDs.toSet()
@@ -62,7 +62,7 @@ class NewbieRestrictService(
                 }
 
                 maxScore?.let { check(event, it) }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 log.error("新人群超星禁言：发生错误：${e.message}", e)
             }
         }
@@ -86,7 +86,7 @@ class NewbieRestrictService(
                 }
 
                 maxScore?.let { check(event, it) }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 log.error("新人群超星禁言：发生错误：${e.message}", e)
             }
         }
@@ -150,13 +150,18 @@ class NewbieRestrictService(
             log.error(sb.append("但是保存记录失败了。").toString(), e)
         }
 
-        val executorBot = botContainer.robots[executorBotID]
-            ?: run {
-                log.info(sb.append("但是执行机器人并未上线。无法执行禁言任务。").toString())
-                return
-            }
+        val executorBot = runCatching {
+            botContainer.robots[executorBotID]
+        }.getOrNull()
 
-        val isReportable = executorBot.groupList.data?.map { it.groupId }?.contains(killerGroupID) == true
+        if (executorBot == null) {
+            log.info(sb.append("但是执行机器人并未上线。无法执行禁言任务。").toString())
+            return
+        }
+
+        val isReportable = runCatching {
+            executorBot.groupList.data?.any { it.groupId == killerGroupID }
+        }.getOrNull() == true
 
         if (Permission.isGroupAdmin(event)) {
             report(isReportable, executorBot, sb.append("但是对方是管理员或群主，无法执行禁言任务。").toString())
@@ -170,23 +175,38 @@ class NewbieRestrictService(
         if (silence >= 30 * 24 * 60 - 1) {
             report(isReportable, executorBot, sb.append("情节严重，已按最大时间禁言。").toString())
 
-            executorBot.setGroupBan(newbieGroupID, event.sender.contactID, (30 * 24 * 60 - 1) * 60)
-                ?: report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
+
+            val action = runCatching {
+                executorBot.setGroupBan(newbieGroupID, event.sender.contactID, (30 * 24 * 60 - 1) * 60)
+            }.getOrNull()
+
+
+            if (action == null) {
+                report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
+            }
+
         } else {
             report(isReportable, executorBot, sb.append("正在执行禁言任务。").toString())
 
-            executorBot.setGroupBan(newbieGroupID, event.sender.contactID, (silence * 60).toInt())
-                ?: report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
+            val action = runCatching {
+                executorBot.setGroupBan(newbieGroupID, event.sender.contactID, (silence * 60).toInt())
+            }.getOrNull()
+
+            if (action == null) {
+                report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
+            }
         }
     }
 
     private fun report(isReportable: Boolean = false, executorBot: Bot? = null, messageText: String) {
         if (isReportable && executorBot != null) {
-            executorBot.sendGroupMsg(killerGroupID, messageText, true)
-            return
+            runCatching {
+                executorBot.sendGroupMsg(killerGroupID, messageText, true)
+            }.onFailure {
+                log.warn("新人群禁言：正在报告禁言任务，但是发送失败了。\n原消息如下：\n${messageText}")
+            }
         } else {
-            log.info(messageText)
-            return
+            log.warn("新人群禁言：正在报告禁言任务，但是不可发送或执行机器人未上线。\n原消息如下：\n${messageText}")
         }
     }
 
