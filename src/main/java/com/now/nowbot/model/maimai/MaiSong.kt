@@ -86,12 +86,14 @@ class MaiSong {
 
     class MaiChart {
         // 物件数量
-        @get:JsonIgnore var notes: MaiNote = MaiNote()
+        @get:JsonProperty("notes", access = JsonProperty.Access.READ_ONLY)
+        var notes: MaiNote = MaiNote()
 
-        @get:JsonProperty val dxScore: Int
+        @get:JsonProperty("dx_score")
+        val dxScore: Int
             get() = 3 * notes.total
 
-        @JsonProperty("notes")
+        @JsonProperty("notes", access = JsonProperty.Access.WRITE_ONLY)
         fun setNotes(list: List<Int>) {
             if (list.isEmpty() || list.size < 4) {
                 notes = MaiNote(0, 0, 0, 0, 0)
