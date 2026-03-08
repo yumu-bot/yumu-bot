@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.body
+import org.springframework.web.client.toEntity
 import org.springframework.web.util.UriBuilder
 import java.net.URI
 import java.nio.ByteBuffer
@@ -91,7 +92,8 @@ class ScoreApiImpl(
                 val image = base.osuApiRestClient.get()
                     .uri(url)
                     .retrieve()
-                    .body<ByteArray>()!!
+                    .toEntity<ByteArray>()
+                    .body!!
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
@@ -330,25 +332,26 @@ class ScoreApiImpl(
         type: String?,
         legacy: Boolean
     ): List<LazerScore> {
-        return request { client -> client.get()
-            .uri {
-                it.path("beatmaps/{bid}/scores")
-                    .queryParam("legacy_only", if (legacy) 1 else 0)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                    .queryParamIfPresent("type", Optional.ofNullable(type))
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("beatmaps/{bid}/scores")
+                        .queryParam("legacy_only", if (legacy) 1 else 0)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .queryParamIfPresent("type", Optional.ofNullable(type))
 
-                LazerMod.setMods(it, mods)
+                    LazerMod.setMods(it, mods)
 
-                it.build(bid)
-            }.headers { headers ->
-                if (bindUser != null) {
-                    base.insertHeader(headers, bindUser)
-                } else {
-                    base.insertHeader(headers)
+                    it.build(bid)
+                }.headers { headers ->
+                    if (bindUser != null) {
+                        base.insertHeader(headers, bindUser)
+                    } else {
+                        base.insertHeader(headers)
+                    }
                 }
-            }
-            .retrieve()
-            .body<BeatmapScoreResponse>()!!
+                .retrieve()
+                .body<BeatmapScoreResponse>()!!
         }.scores
     }
 
@@ -404,7 +407,8 @@ class ScoreApiImpl(
                                 }
                                 .headers(base::insertHeader)
                                 .retrieve()
-                                .body<ByteArray>()!!
+                                .toEntity<ByteArray>()
+                                .body!!
                         }
                     } catch (e: Exception) {
                         log.error("异步下载谱面图片：任务失败\n", e)
@@ -537,7 +541,7 @@ class ScoreApiImpl(
     /**
      * 错误包装
      */
-    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
+    private fun <T : Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
@@ -587,7 +591,7 @@ class ScoreApiImpl(
                 e.findCauseOfType<RejectedExecutionException>() != null -> {
                     throw NetworkException.ScoreException.TooManyRequests()
                 }
-                
+
                 e.findCauseOfType<java.net.SocketException>() != null -> {
                     throw NetworkException.ScoreException.GatewayTimeout()
                 }
@@ -635,6 +639,7 @@ class ScoreApiImpl(
             }
         }
     }
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScoreApiImpl::class.java)
 

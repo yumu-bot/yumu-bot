@@ -464,7 +464,14 @@ class ScorePRService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val e5 = getE5ParamForFilteredScore(user, history, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
+                val e5 = getE5ParamForFilteredScore(
+                    user,
+                    history,
+                    score,
+                    (if (isPass) "P" else "R"),
+                    beatmapApiService,
+                    calculateApiService
+                )
 
                 return MessageChain(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
             }
@@ -490,7 +497,7 @@ class ScorePRService(
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPairCallableExecute(
                 { beatmapApiService.applyBeatmapExtend(s) },
                 { calculateApiService.applyPPToScore(s) },
             )
@@ -508,7 +515,8 @@ class ScorePRService(
         val imgBytes = base.osuApiRestClient.get()
             .uri(d.url ?: "")
             .retrieve()
-            .body<ByteArray>()!!
+            .toEntity<ByteArray>()
+            .body!!
 
         return MessageChain(d.scoreLegacyOutput, imgBytes)
     }
@@ -519,7 +527,14 @@ class ScorePRService(
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
-        fun getE5ParamForFilteredScore(user: OsuUser, history: OsuUser? = null, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
+        fun getE5ParamForFilteredScore(
+            user: OsuUser,
+            history: OsuUser? = null,
+            score: LazerScore,
+            panel: String,
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService
+        ): PanelE5Param {
             val originalBeatmap = beatmapApiService.getBeatmap(score.beatmapID)
 
             beatmapApiService.applyBeatmapExtend(score, originalBeatmap)
@@ -547,7 +562,15 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score)
-            return getE5ParamAfterExtended(user, history, score, score.ranking, panel, beatmapApiService, calculateApiService)
+            return getE5ParamAfterExtended(
+                user,
+                history,
+                score,
+                score.ranking,
+                panel,
+                beatmapApiService,
+                calculateApiService
+            )
         }
 
         fun getE5Param(
@@ -561,7 +584,15 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score, beatmap)
-            return getE5ParamAfterExtended(user, history, score, position ?: score.ranking, panel, beatmapApiService, calculateApiService)
+            return getE5ParamAfterExtended(
+                user,
+                history,
+                score,
+                position ?: score.ranking,
+                panel,
+                beatmapApiService,
+                calculateApiService
+            )
         }
 
         private fun getE5ParamAfterExtended(
@@ -589,7 +620,17 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, history, score, position ?: score.ranking, density, progress, original, attributes, panel)
+            return PanelE5Param(
+                user,
+                history,
+                score,
+                position ?: score.ranking,
+                density,
+                progress,
+                original,
+                attributes,
+                panel
+            )
         }
     }
 }

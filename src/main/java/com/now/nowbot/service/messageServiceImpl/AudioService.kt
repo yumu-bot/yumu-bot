@@ -7,7 +7,6 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.AudioService.AudioParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -17,7 +16,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
+import org.springframework.web.client.toEntity
 import java.time.LocalDateTime
 
 @Service("AUDIO")
@@ -122,7 +121,12 @@ class AudioService(
     private fun getVoice(sid: Number): ByteArray {
         val url = "https://b.ppy.sh/preview/${sid}.mp3"
 
-        return osuApiRestClient.get().uri(url).retrieve().body<ByteArray>()!!
+        return osuApiRestClient
+            .get()
+            .uri(url)
+            .retrieve()
+            .toEntity<ByteArray>()
+            .body!!
     }
 
     private fun getVoiceFromSID(sid: Long): ByteArray? {

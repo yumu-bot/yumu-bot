@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.body
+import org.springframework.web.client.toEntity
 import java.io.IOException
 import java.nio.file.Files
 import kotlin.text.Charsets.UTF_8
@@ -102,7 +103,8 @@ class ChunithmApiImpl(
             request { client ->
                 client.get().uri("https://assets2.lxns.net/chunithm/jacket/${song}.png")
                     .retrieve()
-                    .body<ByteArray>()!!
+                    .toEntity<ByteArray>()
+                    .body!!
             }
         } catch (_: Exception) {
             val path = path.resolve("Cover").resolve("0.png")

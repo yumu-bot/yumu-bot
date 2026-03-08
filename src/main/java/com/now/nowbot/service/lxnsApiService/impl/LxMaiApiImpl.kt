@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.body
+import org.springframework.web.client.toEntity
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeoutException
@@ -39,7 +40,8 @@ class LxMaiApiImpl(
                 }
                 .headers(base::insertDeveloperHeader)
                 .retrieve()
-                .body<ByteArray>()!!
+                .toEntity<ByteArray>()
+                .body!!
         }
     }
 

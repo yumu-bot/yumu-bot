@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
+import org.springframework.web.client.toEntity
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -37,7 +37,7 @@ class CustomService(
     private val restClient: RestClient,
     private val bindDao: BindDao,
     private val userProfileRepository: UserProfileRepository,
-        // todo: 等待数据迁移后使用
+    // todo: 等待数据迁移后使用
     private val userProfileItemRepository: UserProfileItemRepository,
     fileConfig: FileConfig,
 ) : MessageService<CustomParam> {
@@ -87,10 +87,12 @@ class CustomService(
 
     private fun confirmDelete(id: Long, type: UserProfile.UserProfileType, event: MessageEvent): CustomParam {
         val receipt =
-            event.reply("""
+            event.reply(
+                """
                 您想要清除你的自定义 ${type.name} 吗？回复 OK 确认。
                 如果并不想，请无视。
-                """.trimIndent())
+                """.trimIndent()
+            )
 
         val lock = ASyncMessageUtil.getLock(event, 60 * 1000)
         val ev = lock.get()
@@ -134,14 +136,14 @@ class CustomService(
             restClient
                 .get()
                 .uri(param.url).retrieve()
-                .body<ByteArray>()!!
+                .toEntity<ByteArray>()
+                .body!!
 
         } catch (_: Exception) {
             throw IllegalStateException.Fetch("自定义图片")
         } else byteArrayOf()
 
-        val profile = userProfileRepository.findTopById(param.uid) ?:
-        UserProfileLite()
+        val profile = userProfileRepository.findTopById(param.uid) ?: UserProfileLite()
             .apply {
                 this.userId = param.uid
                 this.id = param.uid
@@ -175,10 +177,12 @@ class CustomService(
             try {
                 Files.delete(path)
             } catch (_: NoSuchFileException) {
-                event.reply("""
+                event.reply(
+                    """
                     删除 ${param.type} 失败。
                     数据库里不存在你设置的自定义图片呢。
-                """.trimIndent())
+                """.trimIndent()
+                )
                 return ServiceCallStatistic.building(event)
             } catch (e: Exception) {
                 log.error("自定义：文件删除失败", e)
@@ -197,7 +201,7 @@ class CustomService(
     /**
      * 设置新的自定义配置, 并等待审核
      */
-    fun pendingVerificationQueue(userId:Long, type: UserProfile.UserProfileType, path:Path) {
+    fun pendingVerificationQueue(userId: Long, type: UserProfile.UserProfileType, path: Path) {
         val pathStr = path.toAbsolutePath().toString()
         val item = UserProfileItem(userId, type.column, pathStr)
         userProfileItemRepository.saveAndFlush(item)
@@ -223,6 +227,7 @@ class CustomService(
         UNKNOWN,
 
         ;
+
         companion object {
             fun getOperate(input: String?): CustomOperate {
                 return when (input) {

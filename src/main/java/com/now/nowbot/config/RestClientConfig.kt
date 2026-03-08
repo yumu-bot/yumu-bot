@@ -75,9 +75,6 @@ class RestClientConfig {
                 // 实在是没招了, 现在 jackson3 在 spring 中自己封了一层, 很多功能失效了, 暂时先用 jackson2
                 it.addCustomConverter(MappingJackson2HttpMessageConverter(JacksonUtil.mapper))
             }
-            .messageConverters { converters ->
-                converters.add(org.springframework.http.converter.ByteArrayHttpMessageConverter())
-            }
             .build()
     }
 
@@ -178,9 +175,6 @@ class RestClientConfig {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .configureMessageConverters {
                     it.addCustomConverter(MappingJackson2HttpMessageConverter(JacksonUtil.mapper))
-                }
-                .messageConverters { converters ->
-                    converters.add(org.springframework.http.converter.ByteArrayHttpMessageConverter())
                 }
         }
     }

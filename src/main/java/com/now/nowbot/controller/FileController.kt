@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
+import org.springframework.web.client.toEntity
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
@@ -50,7 +51,8 @@ class FileController(
                         .uri("${url}/api/file/map/bg/${bid}")
                         .headers { it.add("AuthorizationX", token) }
                         .retrieve()
-                        .body<ByteArray>()!!
+                        .toEntity<ByteArray>()
+                        .body!!
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
                         .body(mapOf("code" to 400, "message" to e.message))
