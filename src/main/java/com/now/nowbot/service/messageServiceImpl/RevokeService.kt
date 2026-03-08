@@ -61,7 +61,7 @@ class RevokeService(private val botContainer: BotContainer): MessageService<Revo
 
         val sender = response.sender ?: throw UnsupportedOperationException.BotOperation.SenderUnavailable()
 
-        val senderID = sender.userId?.toLongOrNull()
+        val senderID = sender.userId
 
         // 1. 优先排除机器人撤回自己的消息，这种情况无需任何权限检查
         if (botID != senderID) {
@@ -70,9 +70,7 @@ class RevokeService(private val botContainer: BotContainer): MessageService<Revo
                 return false
             }
 
-            // shiro 已经去掉了 role 信息, 无法再获取
-            // val targetRole = Role.getRole(sender.role)
-            val targetRole = Role.OWNER
+             val targetRole = Role.getRole(sender.role)
 
             // 3. 核心权限校验逻辑：利用 Role 的等级比较（假设 Role 是 Enum 且有序）
             when (botRole) {

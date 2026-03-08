@@ -2,9 +2,38 @@ package com.now.nowbot.qq.event
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.core.Bot
-import com.mikuac.shiro.dto.action.response.MsgResp
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+
+class MessageSender {
+    //    user_id	number (int64)	发送者 QQ 号
+    @JsonProperty("user_id")
+    var userId: Long = 0
+
+    @JsonProperty("nickname")
+    var nickname: String = ""
+
+    @JsonProperty("card")
+    var card: String = ""
+
+    @JsonProperty("sex")
+    var sex: String = ""
+
+    @JsonProperty("age")
+    var age: Int = 0
+
+    @JsonProperty("area")
+    var area: String = ""
+
+    @JsonProperty("level")
+    var level: String = ""
+
+    @JsonProperty("role")
+    var role: String = ""
+
+    @JsonProperty("title")
+    var title: String = ""
+}
 
 // 定义一个可以接收任何格式消息的类
 class FlexibleGetMsgResp {
@@ -15,7 +44,7 @@ class FlexibleGetMsgResp {
     var message: Any? = null // 关键：Any 可以接收 String 或 List
 
     @JsonProperty("sender")
-    var sender: MsgResp.Sender? = null
+    var sender: MessageSender? = null
 
     @JsonProperty("time")
     var time: Int? = null
