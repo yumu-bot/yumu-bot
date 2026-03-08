@@ -19,6 +19,7 @@ import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
@@ -567,9 +568,13 @@ import kotlin.text.Charsets.UTF_8
         return try {
             request(base.divingFishApiWebClient).block()!!
         } catch (e: Throwable) {
-            when (e.cause) {
+            val ex = e.findCauseOfType<WebClientException>()
+
+            when (ex) {
                 is WebClientResponseException.BadRequest -> {
-                    throw NetworkException.DivingFishException.BadRequest()
+                    // throw NetworkException.DivingFishException.BadRequest()
+                    // 水鱼找不到报的是 400
+                    throw NetworkException.DivingFishException.NotFound()
                 }
 
                 is WebClientResponseException.Unauthorized -> {
@@ -583,14 +588,6 @@ import kotlin.text.Charsets.UTF_8
                 is WebClientResponseException.NotFound -> {
                     throw NetworkException.DivingFishException.NotFound()
                 }
-
-//                is WebClientResponseException.UnprocessableEntity -> {
-//                    throw NetworkException.DivingFishException.UnprocessableEntity()
-//                }
-
-//                is WebClientResponseException.TooManyRequests -> {
-//                    throw NetworkException.DivingFishException.TooManyRequests()
-//                }
 
                 is WebClientResponseException.InternalServerError -> {
                     throw NetworkException.DivingFishException.InternalServerError()

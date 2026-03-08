@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.io.IOException
@@ -320,9 +321,14 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
         return try {
             request(base.divingFishApiWebClient).block()!!
         } catch (e: Throwable) {
-            when (e.cause) {
+            val ex = e.findCauseOfType<WebClientException>()
+
+            when (ex) {
                 is WebClientResponseException.BadRequest -> {
-                    throw NetworkException.DivingFishException.BadRequest()
+                    // throw NetworkException.DivingFishException.BadRequest()
+                    // 水鱼找不到报的是 400
+
+                    throw NetworkException.DivingFishException.NotFound()
                 }
 
                 is WebClientResponseException.Unauthorized -> {
