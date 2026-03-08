@@ -26,23 +26,25 @@ class LxChunithmApiImpl(
 ) : LxChunithmApiService {
     override fun getChunithmBests(friendCode: Long): LxChuBestScore {
         return request { client ->
-            client.get()
+            val jsonString = client.get()
                 .uri("api/v0/chunithm/player/${friendCode}/bests")
                 .headers(base::insertDeveloperHeader)
                 .retrieve()
-                .body<JsonNode>()!!
-                .let { parse<LxChuBestScore>(it, "data", "玩家中二节奏最好成绩") }
+                .body<String>()!!
+            val node = JacksonUtil.toNode(jsonString) as JsonNode
+            parse<LxChuBestScore>(node, "data", "玩家中二节奏最好成绩")
         }
     }
 
     override fun getUser(qq: Long): LxChuUser {
         return request { client ->
-            client.get()
+            val jsonString = client.get()
                 .uri("api/v0/chunithm/player/qq/${qq}")
                 .headers(base::insertDeveloperHeader)
                 .retrieve()
-                .body<JsonNode>()!!
-                .let { parse<LxChuUser>(it, "data", "玩家中二节奏信息") }
+                .body<String>()!!
+            val node = JacksonUtil.toNode(jsonString) as JsonNode
+            parse<LxChuUser>(node, "data", "玩家中二节奏信息")
         }
     }
 

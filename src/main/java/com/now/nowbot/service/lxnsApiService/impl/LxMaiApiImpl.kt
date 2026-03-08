@@ -44,7 +44,7 @@ class LxMaiApiImpl(
     }
 
     override fun getLxMaiSongs(): List<LxMaiSong> {
-        val node = request { client ->
+        val jsonString = request { client ->
             client.get()
                 .uri {
                     it.path("api/v0/maimai/song/list")
@@ -53,8 +53,9 @@ class LxMaiApiImpl(
                 }
                 .headers(base::insertDeveloperHeader)
                 .retrieve()
-                .body<JsonNode>()!!
+                .body<String>()!!
         }
+        val node = JacksonUtil.toNode(jsonString) as JsonNode
 
         return JacksonUtil.parseObjectList(node["songs"]!!, LxMaiSong::class.java)
     }
@@ -212,7 +213,7 @@ class LxMaiApiImpl(
 
     override fun getLxMaiCollection(type: String, types: String): List<LxMaiCollection> {
 
-        val node = request { client ->
+        val jsonString = request { client ->
             client.get()
                 .uri {
                     it.path("api/v0/maimai/${type}/list")
@@ -221,8 +222,9 @@ class LxMaiApiImpl(
                 }
                 .headers(base::insertDeveloperHeader)
                 .retrieve()
-                .body<JsonNode>()!!
+                .body<String>()!!
         }
+        val node = JacksonUtil.toNode(jsonString) as JsonNode
 
         val body = if (node.has(types)) {
             node[types]

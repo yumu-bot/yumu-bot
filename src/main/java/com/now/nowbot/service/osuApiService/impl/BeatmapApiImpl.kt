@@ -366,7 +366,7 @@ class BeatmapApiImpl(
      * @param ids 注意，单次请求量必须小于等于 50
      */
     private fun getBeatmapsPrivate(ids: Iterable<Long>): List<Beatmap> {
-        val json = request { client ->
+        val jsonString = request { client ->
             val idsStr = ids.map { id -> id.toString() }
             client.get()
                 .uri {
@@ -376,8 +376,9 @@ class BeatmapApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .body<JsonNode>()!!
+                .body<String>()!!
         }
+        val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json["beatmaps"], Beatmap::class.java)
     }
 
@@ -405,7 +406,7 @@ class BeatmapApiImpl(
 
 
     private fun getUserBeatmapsetPrivate(id: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
-        val json = request { client ->
+        val jsonString = request { client ->
             client.get()
                 .uri {
                     it
@@ -416,8 +417,9 @@ class BeatmapApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .body<JsonNode>()!!
+                .body<String>()!!
         }
+        val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json, Beatmapset::class.java)
     }
 
@@ -457,7 +459,7 @@ class BeatmapApiImpl(
             val beatmapset: Beatmapset,
         )
 
-        val node = request { client ->
+        val jsonString = request { client ->
             client.get()
                 .uri {
                     it
@@ -468,8 +470,10 @@ class BeatmapApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .body<JsonNode>()!!
+                .body<String>()!!
         }
+
+        val node = JacksonUtil.toNode(jsonString) as JsonNode
 
         val most = JacksonUtil.parseObjectList(node, MostPlayed::class.java)
 
@@ -824,7 +828,7 @@ class BeatmapApiImpl(
 
     override fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode? {
         return try {
-            request { client ->
+            val jsonString = request { client ->
                 client.get().uri {
                     it.path("beatmapsets/lookup")
                         .queryParamIfPresent("checksum", Optional.ofNullable(checksum))
@@ -833,8 +837,9 @@ class BeatmapApiImpl(
                 }
                     .headers(base::insertHeader)
                     .retrieve()
-                    .body<JsonNode>()!!
+                    .body<String>()!!
             }
+            JacksonUtil.toNode(jsonString) as JsonNode
         } catch (e: Exception) {
             val ex = e.findCauseOfType<RestClientResponseException>()
             if (ex?.statusCode == org.springframework.http.HttpStatus.NOT_FOUND) {
@@ -1063,13 +1068,16 @@ class BeatmapApiImpl(
     }
 
     private val beatmapTagLibraryFromAPI: JsonNode
-        get() = request { client ->
-            client.get()
-                .uri {
-                    it.path("tags").build()
-                }.headers(base::insertHeader)
-                .retrieve()
-                .body<JsonNode>()!!
+        get() {
+            val jsonString = request { client ->
+                client.get()
+                    .uri {
+                        it.path("tags").build()
+                    }.headers(base::insertHeader)
+                    .retrieve()
+                    .body<String>()!!
+            }
+            return JacksonUtil.toNode(jsonString) as JsonNode
         }
 
     /*
@@ -1152,10 +1160,11 @@ class BeatmapApiImpl(
     }
 
     private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {
-        val json = proxyClient.get()
+        val jsonString = proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets")
             .retrieve()
-            .body<JsonNode>()!!
+            .body<String>()!!
+        val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json, BeatmapsetWithRankTime::class.java)
     }
 

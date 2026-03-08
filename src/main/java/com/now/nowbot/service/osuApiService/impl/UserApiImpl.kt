@@ -253,15 +253,16 @@ import java.util.concurrent.Callable
      * @param isVariant 是否获取玩家的多模式信息
      */
     private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
-        val data = request(isBackground) { client ->
+        val jsonString = request(isBackground) { client ->
             client.get().uri {
                 val ids = users.map { it -> it.toLong() }.toList()
                     it.path("users")
                         .queryParam("ids[]", *ids.toTypedArray())
                         .queryParam("include_variant_statistics", isVariant)
                         .build()
-                }.headers(base::insertHeader).retrieve().body<JsonNode>()!!
+                }.headers(base::insertHeader).retrieve().body<String>()!!
         }
+        val data = JacksonUtil.toNode(jsonString) as JsonNode
 
         val userList = JacksonUtil.parseObjectList(
             data["users"], MicroUser::class.java
@@ -279,23 +280,25 @@ import java.util.concurrent.Callable
             }
         }
 
-        val json = request { client ->
+        val jsonString = request { client ->
             client.get().uri("friends")
                 .headers { headers ->
                     base.insertHeader(headers, user)
                 }
-                .retrieve().body<JsonNode>()!!
+                .retrieve().body<String>()!!
         }
+        val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json, LazerFriend::class.java)
     }
 
     override fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent> {
-        val json = request { client ->
+        val jsonString = request { client ->
             client.get().uri {
                     it.path("users/{userId}/recent_activity").queryParam("offset", offset).queryParam("limit", limit)
                         .build(id)
-                }.headers(base::insertHeader).retrieve().body<JsonNode>()!!
+                }.headers(base::insertHeader).retrieve().body<String>()!!
         }
+        val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json, ActivityEvent::class.java)
     }
 
@@ -310,31 +313,34 @@ import java.util.concurrent.Callable
 
     override fun sendPrivateMessage(sender: BindUser, target: Long, message: String): JsonNode {
         val body: Map<String, Any> = mapOf("target_id" to target, "message" to message, "is_action" to false)
-        return request { client ->
+        val jsonString = request { client ->
             client.post().uri("chat/new").headers { headers ->
                 base.insertHeader(headers, sender)
             }.body(body).retrieve()
-                .body<JsonNode>()!!
+                .body<String>()!!
         }
+        return JacksonUtil.toNode(jsonString) as JsonNode
     }
 
     override fun acknowledgmentPrivateMessageAlive(user: BindUser, since: Long?): JsonNode {
-        return request { client ->
+        val jsonString = request { client ->
             client.post().uri {
                     it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
                 }.headers { headers ->
                 base.insertHeader(headers, user)
-            }.retrieve().body<JsonNode>()!!
+            }.retrieve().body<String>()!!
         }
+        return JacksonUtil.toNode(jsonString) as JsonNode
     }
 
     override fun getPrivateMessage(sender: BindUser, channel: Long, since: Long): JsonNode {
-        return request { client ->
+        val jsonString = request { client ->
             client.get().uri("chat/channels/{channel}/messages?since={since}", channel, since)
                 .headers { headers ->
                     base.insertHeader(headers, sender)
-                }.retrieve().body<JsonNode>()!!
+                }.retrieve().body<String>()!!
         }
+        return JacksonUtil.toNode(jsonString) as JsonNode
     }
 
     override fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>) {

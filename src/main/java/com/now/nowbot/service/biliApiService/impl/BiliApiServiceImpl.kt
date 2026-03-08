@@ -17,7 +17,7 @@ class BiliApiServiceImpl(
     private val base: BiliApiBaseService,
 ): BiliApiService {
     override fun getStreamer(id: Long): BiliStreamer {
-        val node = base.biliApiWebClient.get().uri { it
+        val jsonString = base.biliApiWebClient.get().uri { it
             .scheme("https")
             .host("api.live.bilibili.com")
             .path("live_user/v1/Master/info")
@@ -26,14 +26,15 @@ class BiliApiServiceImpl(
         }
             .headers(base::insertJSONHeader)
             .retrieve()
-            .body<JsonNode>()!!
+            .body<String>()!!
+        val node = JacksonUtil.toNode(jsonString) as JsonNode
 
         return parse(node, id, "直播主")
     }
 
 
     override fun getUser(id: Long): BiliUser {
-        val node = base.biliApiWebClient.get().uri { it
+        val jsonString = base.biliApiWebClient.get().uri { it
             .scheme("https")
             .path("x/space/acc/info")
             .queryParam("mid", id)
@@ -41,13 +42,14 @@ class BiliApiServiceImpl(
         }
             .headers(base::insertJSONHeader)
             .retrieve()
-            .body<JsonNode>()!!
+            .body<String>()!!
+        val node = JacksonUtil.toNode(jsonString) as JsonNode
 
         return parse(node, id, "账号信息")
     }
 
     override fun getDanmaku(roomID: Long): BiliDanmaku {
-        val node = base.biliApiWebClient.get().uri { it
+        val jsonString = base.biliApiWebClient.get().uri { it
             .scheme("https")
             .host("api.live.bilibili.com")
             .path("xlive/web-room/v1/dM/gethistory")
@@ -56,7 +58,8 @@ class BiliApiServiceImpl(
         }
             .headers(base::insertJSONHeader)
             .retrieve()
-            .body<JsonNode>()!!
+            .body<String>()!!
+        val node = JacksonUtil.toNode(jsonString) as JsonNode
 
         return parse(node, roomID, "直播间最近弹幕")
     }

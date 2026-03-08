@@ -2,6 +2,7 @@ package com.now.nowbot.controller
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.BeatmapMirrorConfig
+import com.now.nowbot.util.JacksonUtil
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -29,12 +30,13 @@ class FileController(
         return when (type) {
             "info" -> {
                 val data: JsonNode = try {
-                    restClient
+                    val jsonString = restClient
                         .get()
                         .uri("${url}/api/map/getBeatMapInfo/${bid}")
                         .headers { it.add("AuthorizationX", token) }
                         .retrieve()
-                        .body<JsonNode>()!!
+                        .body<String>()!!
+                    JacksonUtil.toNode(jsonString) as JsonNode
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
                         .body(mapOf("code" to 400, "message" to e.message))
