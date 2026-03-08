@@ -18,8 +18,7 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import io.ktor.util.collections.ConcurrentSet
-import io.netty.channel.unix.Errors
+import io.ktor.util.collections.*
 import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -41,13 +40,9 @@ import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
-import kotlin.collections.chunked
-import kotlin.collections.map
-import kotlin.collections.set
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
@@ -155,7 +150,7 @@ class BeatmapApiImpl(
         }
     }
 
-    private fun getBeatmapFileFromDirectory(bid: Long): String? {
+    override fun getBeatmapFileFromDirectory(bid: Long): String? {
         if (hasBeatmapFileFromDirectory(bid)) {
             try {
                 val path = osuDir.resolve("$bid.osu")

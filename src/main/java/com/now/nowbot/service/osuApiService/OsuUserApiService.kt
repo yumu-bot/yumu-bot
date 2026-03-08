@@ -8,7 +8,6 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.web.TeamInfo
 import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
-import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import org.springframework.web.client.RestClientResponseException
 
 interface OsuUserApiService {
@@ -16,11 +15,13 @@ interface OsuUserApiService {
 
     fun isPlayerExist(name: String): Boolean
 
-    @Throws(RestClientResponseException::class) fun getOauthUrl(state: String): String {
+    @Throws(RestClientResponseException::class)
+    fun getOauthUrl(state: String): String {
         return getOauthUrl(state, false)
     }
 
-    @Throws(RestClientResponseException::class) fun getOauthUrl(state: String, full: Boolean): String
+    @Throws(RestClientResponseException::class)
+    fun getOauthUrl(state: String, full: Boolean): String
 
     @Throws(BindException::class)
     fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean = false): BindUser
@@ -28,23 +29,31 @@ interface OsuUserApiService {
     @CanIgnoreReturnValue
     fun getUserTokenOrBotToken(user: BindUser): String?
 
-    @Throws(RestClientResponseException::class) fun refreshUserTokenFirst(user: BindUser)
+    fun syncUserToken(user: BindUser, isFirstTime: Boolean): String
 
-    @Throws(RestClientResponseException::class) fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser
+    fun applyBindUserDetails(user: BindUser)
 
-    @Throws(RestClientResponseException::class) fun getOsuUser(name: String, mode: OsuMode): OsuUser
+    @Throws(RestClientResponseException::class)
+    fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser
 
-    @Throws(RestClientResponseException::class) fun getOsuUser(id: Long, mode: OsuMode): OsuUser
+    @Throws(RestClientResponseException::class)
+    fun getOsuUser(name: String, mode: OsuMode): OsuUser
 
-    @Throws(RestClientResponseException::class) fun getOsuUser(user: BindUser): OsuUser {
+    @Throws(RestClientResponseException::class)
+    fun getOsuUser(id: Long, mode: OsuMode): OsuUser
+
+    @Throws(RestClientResponseException::class)
+    fun getOsuUser(user: BindUser): OsuUser {
         return getOsuUser(user, user.mode)
     }
 
-    @Throws(RestClientResponseException::class) fun getOsuUser(name: String): OsuUser {
+    @Throws(RestClientResponseException::class)
+    fun getOsuUser(name: String): OsuUser {
         return getOsuUser(name, OsuMode.DEFAULT)
     }
 
-    @Throws(RestClientResponseException::class) fun getOsuUser(id: Long): OsuUser {
+    @Throws(RestClientResponseException::class)
+    fun getOsuUser(id: Long): OsuUser {
         return getOsuUser(id, OsuMode.DEFAULT)
     }
 
@@ -58,7 +67,11 @@ interface OsuUserApiService {
      * @param users 单次请求量无限制
      * @param isVariant 是否需要额外的四模式信息
      */
-    fun <T : Number> getUsers(users: Collection<T>, isVariant: Boolean = false, isBackground: Boolean = false): List<MicroUser>
+    fun <T : Number> getUsers(
+        users: Collection<T>,
+        isVariant: Boolean = false,
+        isBackground: Boolean = false
+    ): List<MicroUser>
 
     fun getFriendList(user: BindUser): List<LazerFriend>
 

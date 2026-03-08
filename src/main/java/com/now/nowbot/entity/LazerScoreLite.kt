@@ -178,9 +178,8 @@ class ScoreStatisticLite(
 
     @Id
     @JdbcTypeCode(Types.SMALLINT)
-    @Column(name = "mode")
-    // -1: score, 0-3: osu, taiko, catch, mania
     @Column(name = "mode", columnDefinition = "int2")
+    // -1: score, 0-3: osu, taiko, catch, mania
     var mode: Byte = -1,
 
     @Type(JsonBinaryType::class)

@@ -2,7 +2,10 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.match.*
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.MatchAdapter
+import com.now.nowbot.model.match.MatchListener
+import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.qq.event.GroupMessageEvent
@@ -10,12 +13,16 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.MatchMapService.PanelE7Param
-import com.now.nowbot.service.osuApiService.*
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.service.osuApiService.OsuMatchApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientResponseException
 import java.util.concurrent.ConcurrentHashMap
@@ -30,10 +37,12 @@ class MatchListenerService(
     private val calculateApiService: OsuCalculateApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
-) : MessageService<MatchListenerService.ListenerParam> {
+) : MessageService<MatchListenerService.ListenerParam>
+{
 
     // 状态管理移至实例或单例管理器中 (此处暂留 Service 内但改用并发容器)
     companion object {
+        private val log = KotlinLogging.logger {}
         const val BREAK_ROUND = 20
         private const val USER_MAX = 3
         private const val GROUP_MAX = 3
@@ -109,7 +118,8 @@ class MatchListenerService(
 
         when (param.operate) {
             Operation.INFO -> {
-                val groupMatchIDs = listenerData.filter { it.groupID == event.group.contactID }.map { it.listener.matchID }
+                val groupMatchIDs =
+                    listenerData.filter { it.groupID == event.group.contactID }.map { it.listener.matchID }
 
                 val msg = if (groupMatchIDs.isEmpty()) {
                     MatchException.NoListener()
@@ -135,6 +145,7 @@ class MatchListenerService(
             Operation.STOP -> {
                 cancelListener(event.group.contactID, param.id, Permission.isSuperAdmin(event.sender.contactID))
             }
+
             else -> {}
         }
 
@@ -240,22 +251,6 @@ class MatchListenerService(
 
             val fallback = MatchException.NormalOperate.Start(match).message
 
-                val image =
-                    try {
-                        imageService.getPanel(e7, "E7")
-                    } catch (e: RestClientResponseException) {
-                        log.error(e) { "获取图片失败" }
-                        throw TipsRuntimeException(
-                            String.format(
-                                MatchListenerException.Type.ML_Match_Start.message,
-                                matchID,
-                                beatmap.beatmapID,
-                            )
-                        )
-                    }
-                messageEvent.reply(image)
-                return@with
-            }
             renderAndReply(param, "E7", fallback)
         }
 
@@ -313,6 +308,7 @@ class MatchListenerService(
             val shouldNotify = when (type) {
                 MatchListener.StopType.SERVER_REBOOT,
                 MatchListener.StopType.USER_STOP -> false
+
                 else -> true
             }
 

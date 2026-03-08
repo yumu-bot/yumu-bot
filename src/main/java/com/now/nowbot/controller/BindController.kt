@@ -173,7 +173,7 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
             sb.append("出现异常。但您大概已经绑定成功。这可能是回执的问题。")
                 .append('\n')
                 .append(e.localizedMessage)
-        } catch (e: WebClientResponseException.BadRequest) {
+        } catch (e: HttpClientErrorException.BadRequest) {
             log.error("绑定时异常：400", e)
             sb.append("出现异常。但您大概已经绑定成功。这可能是回执的问题。")
                 .append('\n')
