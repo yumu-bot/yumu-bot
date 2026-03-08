@@ -28,7 +28,7 @@ object SkillUtil {
         return (0.6 * sorted[1] + 0.4 * sorted[2] + 0.2 * sorted[3])
     }
 
-    fun collectScoreSkills(scores: List<List<Double>>): List<Double> {
+    fun collectScoreSkills(scores: Collection<List<Double>>): List<Double> {
         if (scores.isEmpty()) return List(6) { 0.0 }
 
         // 1. 获取技能维度的数量（即每一行 List 的长度）

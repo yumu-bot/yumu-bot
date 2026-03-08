@@ -481,7 +481,7 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun applyVersion(scores: List<LazerScore>) {
+    override fun applyVersion(scores: Collection<LazerScore>) {
         val existSet = scores.mapNotNull { s ->
             val b = beatmapDao.getBeatmapLite(s.beatmapID)
 
@@ -891,7 +891,7 @@ class BeatmapApiImpl(
     }
 
     // 给同一张图的成绩添加完整的谱面
-    override fun applyBeatmapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap) {
+    override fun applyBeatmapExtendForSameScore(scores: Collection<LazerScore>, beatmap: Beatmap) {
         if (scores.isEmpty()) return
 
         beatmapDao.saveExtendedBeatmap(beatmap)
@@ -905,7 +905,7 @@ class BeatmapApiImpl(
         applyBeatmapExtendFromAPI(listOf(score))
     }
 
-    override fun applyBeatmapExtendFromAPI(scores: List<LazerScore>) {
+    override fun applyBeatmapExtendFromAPI(scores: Collection<LazerScore>) {
         val ids = scores.map { it.beatmapID }.toSet()
 
         val extends = getBeatmaps(ids)
@@ -941,7 +941,7 @@ class BeatmapApiImpl(
         extended.beatmapset?.let { score.beatmapset = it }
     }
 
-    override fun applyBeatmapExtend(scores: List<LazerScore>) {
+    override fun applyBeatmapExtend(scores: Collection<LazerScore>) {
         val existSet = scores.mapNotNull { s ->
             beatmapDao.extendBeatmap(s)
         }.toSet()
@@ -985,7 +985,7 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun applyBeatmapsetRankedTime(beatmapsets: List<Beatmapset>) {
+    override fun applyBeatmapsetRankedTime(beatmapsets: Collection<Beatmapset>) {
         val l = getBeatmapsetRankedTimeMap()
 
         beatmapsets.forEach {

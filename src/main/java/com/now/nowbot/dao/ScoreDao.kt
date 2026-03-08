@@ -6,10 +6,12 @@ import com.now.nowbot.mapper.BeatmapStarRatingCacheRepository
 import com.now.nowbot.mapper.LazerScoreRepository
 import com.now.nowbot.mapper.LazerScoreStatisticRepository
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
@@ -91,9 +93,10 @@ class ScoreDao(
     }
 
     fun saveScore(score: LazerScore) {
-        if (scoreRepository.checkIdExists(score.scoreID).isPresent) {
+        if (scoreRepository.ifScoreExists(score.scoreID) != null) {
             return
         }
+
         try {
             beatmapDao.saveBeatmapset(score.beatmapset)
             beatmapDao.saveBeatmap(score.beatmap)
@@ -108,7 +111,7 @@ class ScoreDao(
         val data = LazerScoreLite(score)
         val statisticList: List<ScoreStatisticLite>
         val statistic = ScoreStatisticLite.createByScore(score)
-        statisticList = if (scoreStatisticRepository.checkIdExists(score.beatmapID).isEmpty) {
+        statisticList = if (scoreStatisticRepository.ifStatisticExists(score.beatmapID) != null) {
             listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
         } else {
             listOf(statistic)
@@ -121,7 +124,7 @@ class ScoreDao(
         if (scores.isEmpty()) return
 
         val scoreIdList = scores.map { it.scoreID }.toSet()
-        val alreadySaveScoreId = scoreRepository.getRecordId(scoreIdList)
+        val alreadySaveScoreId = scoreRepository.getSavedScoreIDs(scoreIdList)
 
         val filteredScoreList = scores.filterNot { alreadySaveScoreId.contains(it.scoreID) }
         if (filteredScoreList.isEmpty()) return
@@ -140,7 +143,7 @@ class ScoreDao(
             .unzip()
 
         val beatmapIdList = filteredScoreList.map { it.beatmapID }
-        val alreadySaveBeatmapId = scoreStatisticRepository.getRecordBeatmapId(beatmapIdList, mode.modeValue.toInt())
+        val alreadySaveBeatmapId = scoreStatisticRepository.getSavedBeatmapIDs(beatmapIdList, mode.modeValue.toInt())
 
         val mapStatisticList = filteredScoreList
             .filterNot { alreadySaveBeatmapId.contains(it.beatmapID) }
@@ -171,8 +174,15 @@ class ScoreDao(
 
     fun getStatisticsMap(scores: Iterable<LazerScoreLite>): Map<Long, LazerStatistics> {
         return scoreStatisticRepository
-            .getByScoreId(scores.map { it.id })
+            .getByScoreIDWhenGraveyard(scores.map { it.id })
             .associate { it.id to JacksonUtil.parseObject(it.data, LazerStatistics::class.java) }
+    }
+
+    /**
+     * 还要自己取
+     */
+    fun getBeatmapScores(user: OsuUser, beatmap: Beatmap, mode: OsuMode): List<LazerScore> {
+        return scoreRepository.getBeatmapScores(user.userID, beatmap.beatmapID, mode.modeValue).map { it.toLazerScore() }
     }
 
     companion object {

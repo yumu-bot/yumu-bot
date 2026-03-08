@@ -3,6 +3,10 @@ package com.now.nowbot.entity;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.osu.Beatmap;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+
+import java.sql.Types;
+
 @Entity
 @Table(name = "osu_beatmap",indexes = {
         @Index(name = "map_find", columnList = "map_id"),
@@ -55,6 +59,8 @@ public class BeatmapLite {
     //mode_init 0->osu ...
     Integer modeInt;
     Integer ranked;
+
+    @JdbcTypeCode(Types.CHAR)
     @Column(name = "check_str", columnDefinition = "char(32)")
     String md5;
 

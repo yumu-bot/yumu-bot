@@ -31,16 +31,18 @@ import kotlin.math.min
     data class MaiDistParam(val qq: Long?, val name: String?, val isMySelf: Boolean = false)
 
     data class MaiDistScore(
-        @JsonProperty("score") val score: MaiScore, @JsonProperty("chart") val chart: ChartData, @JsonProperty("rating") val rating: Int
+        @field:JsonProperty("score") val score: MaiScore,
+        @field:JsonProperty("chart") val chart: ChartData,
+        @field:JsonProperty("rating") val rating: Int
     )
 
     data class PanelMDParam(
-        @JsonProperty("user") val user: MaiBestScore.User,
-        @JsonProperty("scores_latest") val deluxe: List<MaiDistScore>,
-        @JsonProperty("scores") val standard: List<MaiDistScore>,
-        @JsonProperty("rating") val rating: Int,
-        @JsonProperty("count") val count: Int,
-        @JsonProperty("size") val size: Int,
+        @field:JsonProperty("user") val user: MaiBestScore.User,
+        @field:JsonProperty("scores_latest") val deluxe: List<MaiDistScore>,
+        @field:JsonProperty("scores") val standard: List<MaiDistScore>,
+        @field:JsonProperty("rating") val rating: Int,
+        @field:JsonProperty("count") val count: Int,
+        @field:JsonProperty("size") val size: Int,
     ) {
         fun toMap(): Map<String, Any> {
             return mapOf(

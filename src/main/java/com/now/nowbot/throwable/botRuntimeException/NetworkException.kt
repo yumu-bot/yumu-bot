@@ -536,6 +536,14 @@ open class NetworkException(message: String?
             override val code = 502
         }
 
+        class GatewayTimeout:
+            DivingFishException("""
+                504 Gateway Timeout
+                网关超时。
+            """.trimIndent()) {
+            override val code = 504
+        }
+
         class Undefined(e: Throwable):
             DivingFishException("""
                 和水鱼之间的连接出现未识别的错误。

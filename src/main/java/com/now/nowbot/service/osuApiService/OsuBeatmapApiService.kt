@@ -101,13 +101,13 @@ interface OsuBeatmapApiService {
     ): BeatmapsetSearch
 
     // 给同一张图的成绩添加完整的谱面
-    fun applyBeatmapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap)
+    fun applyBeatmapExtendForSameScore(scores: Collection<LazerScore>, beatmap: Beatmap)
 
     // 给成绩添加完整的谱面，但是走网络获取
     fun applyBeatmapExtendFromAPI(score: LazerScore)
 
     // 给成绩添加完整的谱面，但是走网络获取
-    fun applyBeatmapExtendFromAPI(scores: List<LazerScore>)
+    fun applyBeatmapExtendFromAPI(scores: Collection<LazerScore>)
 
     // 给成绩添加完整的谱面，但是你已经有谱面了
     fun applyBeatmapExtend(score: LazerScore, extended: Beatmap)
@@ -116,7 +116,11 @@ interface OsuBeatmapApiService {
     fun applyBeatmapExtend(score: LazerScore)
 
     // 给成绩添加完整的谱面，但是走本地高速获取
-    fun applyBeatmapExtend(scores: List<LazerScore>)
+    fun applyBeatmapExtend(scores: Collection<LazerScore>)
+
+    fun applyBeatmapExtend(scoreMap: Map<*, LazerScore>) {
+        applyBeatmapExtend(scoreMap.values)
+    }
 
     // 获取Q区谱面大致的上架时间
     fun getBeatmapsetRankedTime(beatmap: Beatmap): String
@@ -124,7 +128,7 @@ interface OsuBeatmapApiService {
     // 获取谱面大致的上架时间
     fun getBeatmapsetRankedTimeMap(): Map<Long, String>
 
-    fun applyBeatmapsetRankedTime(beatmapsets: List<Beatmapset>)
+    fun applyBeatmapsetRankedTime(beatmapsets: Collection<Beatmapset>)
 
     fun updateBeatmapTagLibraryDatabase()
 
@@ -133,5 +137,5 @@ interface OsuBeatmapApiService {
     fun updateExtendedBeatmapFailTimes(): Int
 
     // 给 lazerscorelite 用的
-    fun applyVersion(scores: List<LazerScore>)
+    fun applyVersion(scores: Collection<LazerScore>)
 }

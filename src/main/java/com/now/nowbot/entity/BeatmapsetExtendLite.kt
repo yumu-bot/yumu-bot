@@ -120,7 +120,7 @@ class BeatmapsetExtendLite (
     @Column(name = "availability_more_information", nullable = true)
     val moreInformation: String? = null,
 
-    @Column(name = "ratings", columnDefinition = "INTEGER[]")
+    @Column(name = "ratings", columnDefinition = "int4[]")
     var ratings: Array<Int> = arrayOf(),
 
     @Column(name = "created_at", updatable = false)

@@ -160,8 +160,8 @@ class SBTodayBPService(
         return try {
             if (scores.size > 1) {
 
-                val ranks = scores.map { it.key }
-                val ss = scores.map { it.value }
+                val ranks = scores.keys
+                val ss = scores.values
 
                 AsyncMethodExecutor.awaitTripleCallableExecute(
                     { osuCalculateApiService.applyBeatmapChanges(ss) },

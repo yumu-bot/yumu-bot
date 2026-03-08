@@ -6,8 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
-import org.springframework.lang.NonNull
-import org.springframework.lang.Nullable
 import kotlin.math.pow
 import kotlin.math.round
 
@@ -16,22 +14,22 @@ import kotlin.math.round
  */
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 open class Statistics : Cloneable {
-    @Nullable @JsonProperty("count_50")
+    @JsonProperty("count_50")
     var count50: Int? = 0
 
-    @Nullable @JsonProperty("count_100")
+    @JsonProperty("count_100")
     var count100: Int? = 0
 
-    @Nullable @JsonProperty("count_300")
+    @JsonProperty("count_300")
     var count300: Int? = 0
 
-    @Nullable @JsonProperty("count_geki")
+    @JsonProperty("count_geki")
     var countGeki: Int? = 0
 
-    @Nullable @JsonProperty("count_katu")
+    @JsonProperty("count_katu")
     var countKatu: Int? = 0
 
-    @Nullable @JsonProperty("count_miss")
+    @JsonProperty("count_miss")
     var countMiss: Int? = 0
 
     val countAll: Int
@@ -148,7 +146,7 @@ open class Statistics : Cloneable {
         }
     }
 
-    @NonNull fun getCountAll(mode: OsuMode?): Int {
+    fun getCountAll(mode: OsuMode?): Int {
         val c300 = count300 ?: 0
         val c100 = count100 ?: 0
         val c50 = count50 ?: 0

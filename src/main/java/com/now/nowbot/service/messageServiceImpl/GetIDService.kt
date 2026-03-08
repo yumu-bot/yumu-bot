@@ -94,6 +94,6 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
 
         event.reply(sb.toString().removeSuffix(","))
 
-        return ServiceCallStatistic.builds(event, userIDs = ids.map { it.value })
+        return ServiceCallStatistic.builds(event, userIDs = ids.values)
     }
 }

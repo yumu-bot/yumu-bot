@@ -78,8 +78,8 @@ class Score {
     var weight: Weight? = null
 
     data class Weight(
-        @JsonProperty("percentage") val percentage: Float,
-        @JsonProperty("pp") val weightedPP: Float
+        @field:JsonProperty("percentage") val percentage: Float,
+        @field:JsonProperty("pp") val weightedPP: Float
     ) {
         val index: Int
             get() = (ln((percentage / 100.0)) / ln(0.95)).roundToInt()

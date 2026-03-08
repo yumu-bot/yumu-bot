@@ -1,16 +1,16 @@
-<p align="center">
+<p style="text-align: center">
  <img src=".github/assets/logo.png" width="580" height="340" alt="YUMU">
 </p>
 
-<div align="center">
+<div style="text-align: center">
 
 # Yumubot
 
-_连接 osu! 并处理数据的 bot 后端_
+*连接 osu! 并处理数据的 bot 后端*
 
 </div>
 
-<p align="center">
+<p style="text-align: center">
     <a href="https://docs.365246692.xyz">使用文档</a>
     ·
     <a href="#运行">部署文档</a>
@@ -18,7 +18,7 @@ _连接 osu! 并处理数据的 bot 后端_
     <a href="#相关项目">相关项目</a>
 </p>
 
-<div align="center">
+<div style="text-align: center">
 
 [![YUMU](https://repobeats.axiom.co/api/embed/2e023b139aefd7ca09d5d1ba6fbd80d54f2d05da.svg "Repobeats analytics image")](https://github.com/yumu-bot/yumu-bot)
 
@@ -32,8 +32,26 @@ _连接 osu! 并处理数据的 bot 后端_
 
 ## 运行环境
 
-- JDK 21, 或者支持虚拟线程的其他版本
-- PostgreSQL 15
+### 必备
+
+- JDK 21
+  - 或者支持虚拟线程的更高版本
+  - 目标 Kotlin 版本是 2.3。
+  - 
+  - 如果你想测试并运行一个较早版本的实例，可能需要 JDK 17
+- PostgreSQL
+  - 最低 15，越新越好
+
+### 可选
+
+简称你必然会踩到的坑
+
+- Redis 数据库
+  - 如果你没有装 Redis，请注释掉所有 @Cacheable（因为 application.yaml 配置项没有用）
+  - 将 IdempotentService 改成简单的 Caffeine 实现
+- rosuPP 本地计算
+  - 如果你没有拿到 rosu-pp-v0.4.0，请前往 OsuCalculateApiService.kt，将 LOCAL 改成 false
+  - 为什么这些不写到配置文件里？我也不知道。我本地都跑不通
 
 ## 配置文件
 
@@ -41,7 +59,7 @@ _连接 osu! 并处理数据的 bot 后端_
 
 可选: 在项目目录中创建 `logback.xml` 文件, 用于配置日志输出.
 
-运行 `java --enable-preview -jar yumu.jar` 启动项目.
+运行 `java -jar yumu.jar` 启动项目.
 
 # 附属项目
 

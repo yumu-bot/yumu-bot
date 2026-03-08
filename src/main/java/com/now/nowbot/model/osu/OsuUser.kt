@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.util.DataUtil
-import org.springframework.lang.Nullable
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -514,7 +513,7 @@ open class OsuUser {
         else username
     }
 
-    private fun replaceCommas(@Nullable str: String?): String {
+    private fun replaceCommas(str: String?): String {
         return str?.replace(",", "/") ?: ""
     }
 
@@ -544,7 +543,13 @@ open class OsuUser {
         this.username = name
     }
 
-    fun setEstimatedPP(bests: List<LazerScore>) {
+    @JsonIgnore
+    fun updateEstimatedPP(bestMap: Map<*, LazerScore>) {
+        updateEstimatedPP(bestMap.values)
+    }
+
+    @JsonIgnore
+    fun updateEstimatedPP(bests: Collection<LazerScore>) {
         if (this.pp == 0.0) {
             val estimateBestsPP = DataUtil.getBestsPP(bests)
             val estimateBonusPP = DataUtil.getBonusPP(beatmapPlaycount)

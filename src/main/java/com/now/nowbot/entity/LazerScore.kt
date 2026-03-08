@@ -7,8 +7,10 @@ import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.util.JacksonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.Type
 import java.io.Serializable
+import java.sql.Types
 import java.time.OffsetDateTime
 
 @Entity
@@ -179,6 +181,8 @@ class ScoreStatisticLite(
     var id: Long,
 
     @Id
+    @JdbcTypeCode(Types.SMALLINT)
+    @Column(name = "mode")
     // -1: score, 0-3: osu, taiko, catch, mania
     var status: Int,
 

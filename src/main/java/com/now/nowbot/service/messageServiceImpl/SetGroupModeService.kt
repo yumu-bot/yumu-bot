@@ -45,13 +45,13 @@ class SetGroupModeService (
     }
 
     private fun getGroupModeCharts(page: Int = 1): ByteArray {
-        val list = bindDao.allGroupMode.map { it.key to it.value }
+        val entries = bindDao.allGroupMode.entries
 
-        val supplier: (Pair<Long, OsuMode>) -> List<String> = {
-            pair -> listOf(pair.first.toString(), pair.second.fullName)
+        val supplier: (Map.Entry<Long, OsuMode>) -> List<String> = { entry ->
+            listOf(entry.key.toString(), entry.value.fullName)
         }
 
-        val str = DataUtil.getMarkDownChartFromList(list, page, supplier, """
+        val str = DataUtil.getMarkDownChart(entries, page, supplier, """
                 | 群聊 QQ | 默认游戏模式 |
                 | :-- | :-: |
                 """.trimIndent(), maxPerPage = 50)

@@ -61,7 +61,7 @@ class InfoService(
         val percentiles: Map<String, Double> = mapOf(),
     ) {
         fun toMap(): Map<String, Any?> {
-            user.setEstimatedPP(bests)
+            user.updateEstimatedPP(bests)
 
             when(this.version) {
                 3 -> {
@@ -312,7 +312,7 @@ class InfoService(
         internal data class BestsArray(
             private val bests: List<LazerScore>
         ) {
-            val count: List<Int>
+            val count: Collection<Int>
             val max: Int
             val time: String
             val week0: String
@@ -328,7 +328,7 @@ class InfoService(
 
                 val bestsCount = countLast90DaysFromEndOfWeek(bests, endOfWeek)
 
-                count = bestsCount.map { it.value }
+                count = bestsCount.values
 
                 val maxEntry = bestsCount.toList().maxByOrNull { it.second }
 
@@ -385,7 +385,7 @@ class InfoService(
         internal data class PlaycountsArray(
             private val monthlies: List<OsuUser.UserMonthly>
         ) {
-            val count: List<Int>
+            val count: Collection<Int>
             val max: Int
             val time: String
             val year0: String
@@ -406,7 +406,7 @@ class InfoService(
 
                 val playcountsCount = countLastThreeAndQuarterYearFromEndOfYear(monthlies, thisYear, quarter)
 
-                count = playcountsCount.map { it.value }
+                count = playcountsCount.values
 
                 val maxEntry = playcountsCount.toList().maxByOrNull { it.second }
 

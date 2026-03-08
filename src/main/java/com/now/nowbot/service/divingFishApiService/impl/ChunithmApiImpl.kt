@@ -40,7 +40,7 @@ class ChunithmApiImpl(
     )
 
     private data class ChunithmAliasResponseBody(
-        @JsonProperty("aliases") val aliases: List<ChuAlias>
+        @field:JsonProperty("aliases") val aliases: List<ChuAlias>
     )
 
     override fun getChunithmBest30Recent10(qq: Long): ChuBestScore {
@@ -76,9 +76,9 @@ class ChunithmApiImpl(
             val cover = getChunithmCoverFromAPI(songID)
 
             Files.write(path, cover)
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             log.info("chunithm: 写入封面 $songID 失败")
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             log.info("chunithm: 下载封面 $songID 失败")
         }
     }
@@ -90,7 +90,7 @@ class ChunithmApiImpl(
         if (Files.isRegularFile(path))
             try {
                 return Files.readAllBytes(path)
-            } catch (ignored: IOException) {
+            } catch (_: IOException) {
             }
 
         return getChunithmCoverFromAPI(songID)
@@ -104,12 +104,12 @@ class ChunithmApiImpl(
                     .retrieve()
                     .body<ByteArray>()!!
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             val path = path.resolve("Cover").resolve("0.png")
 
             return try {
                 Files.readAllBytes(path)
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 byteArrayOf()
             }
         }

@@ -32,6 +32,7 @@ fun getDanFromFavor(skills: List<Double>, favor: List<DanType>): Map<String, Any
 
 /**
  * 会根据成绩 key 占比，返回最高的段位
+ * @param weightedMap b200
  */
 fun getDanFromBests(
     weightedMap: Map<Long, List<Double>>,
@@ -45,24 +46,30 @@ fun getDanFromBests(
     val key4Skills = SkillUtil.collectScoreSkills(
         weightedMap.mapNotNull { (k, v) ->
             if (k in key4Set) v else null
-        }
+        }.take(100)
     )
 
     val key7Skills = SkillUtil.collectScoreSkills(
         weightedMap.mapNotNull { (k, v) ->
             if (k in key7Set) v else null
-        }
+        }.take(100)
     )
 
-    val isPrefer4Key = SkillUtil.getMapSkillRating(key4Skills) >= SkillUtil.getMapSkillRating(key7Skills)
+    val key4Rice = getDanResult(key4Skills, DanType.DDMYTHICAL_REFORM)
 
-    val totalSkills = SkillUtil.collectScoreSkills(weightedMap.map { it.value })
+    val key7Rice = getDanResult(key7Skills, DanType.JINJIN_REGULAR)
 
-    return if (isPrefer4Key) {
-        getDanFromFavor(totalSkills, listOf(DanType.DDMYTHICAL_REFORM, DanType.UNDERJOY_LN))
-    } else {
-        getDanFromFavor(totalSkills, listOf(DanType.JINJIN_REGULAR, DanType.JINJIN_LN))
-    }
+    val key4Ln = getDanResult(key4Skills, DanType.UNDERJOY_LN)
+
+    val key7Ln = getDanResult(key7Skills, DanType.JINJIN_LN)
+
+    val rice = if (key4Rice.level >= key7Rice.level) key4Rice else key7Rice
+    val ln = if (key4Ln.level >= key7Ln.level) key4Ln else key7Ln
+
+    return mapOf(
+        rice.name to rice,
+        ln.name to ln,
+    )
 }
 
 fun getDanFromBeatmap(skills: List<Double>, cs: Number? = null): Map<String, Any> {

@@ -19,21 +19,25 @@ interface OsuCalculateApiService {
 
     fun applyBeatmapChanges(score: LazerScore)
 
-    fun applyBeatmapChanges(scores: List<LazerScore>)
+    fun applyBeatmapChanges(scores: Collection<LazerScore>)
 
     fun applyBeatmapChanges(beatmap: Beatmap?, mods: List<LazerMod>)
 
     fun applyStarToScore(score: LazerScore, local: Boolean = LOCAL)
 
-    fun applyStarToScores(scores: List<LazerScore>, local: Boolean = LOCAL)
+    fun applyStarToScores(scores: Collection<LazerScore>, local: Boolean = LOCAL)
+
+    fun applyStarToScores(scoreMap: Map<*, LazerScore>, local: Boolean = LOCAL) {
+        applyStarToScores(scoreMap.values, local)
+    }
 
     fun applyStarToBeatmap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean = LOCAL)
 
     fun applyPPToScore(score: LazerScore)
 
-    fun applyPPToScores(scores: List<LazerScore>)
+    fun applyPPToScores(scores: Collection<LazerScore>)
 
-    fun applyPPToScoresWithSameBeatmap(scores: List<LazerScore>)
+    fun applyPPToScoresWithSameBeatmap(scores: Collection<LazerScore>)
 
     fun getAccPPList(
         beatmapID: Long,

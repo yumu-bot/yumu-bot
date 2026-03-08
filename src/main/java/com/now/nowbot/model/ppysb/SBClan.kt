@@ -25,7 +25,7 @@ data class SBClan(
         /**
          * Member, Owner
          */
-        @field:JsonProperty("rank") @JsonAlias("role") val role: String,
+        @field:JsonProperty("rank") @field:JsonAlias("role") val role: String,
     )
 
     override fun equals(other: Any?): Boolean {

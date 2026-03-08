@@ -83,8 +83,8 @@ class ScorePRService(
                 "panel" to panel,
                 "position" to position,
                 "health" to mapOf(
-                    "time" to health?.map { it.key },
-                    "percent" to health?.map { it.value }
+                    "time" to health?.keys,
+                    "percent" to health?.values
                 )
             )
 
@@ -308,7 +308,7 @@ class ScorePRService(
             scores = range2.getRecentsFromOsuUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass)
         }
 
-        beatmapApiService.applyBeatmapExtend(scores.map { it.value })
+        beatmapApiService.applyBeatmapExtend(scores)
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
@@ -441,8 +441,8 @@ class ScorePRService(
     private fun ScorePRParam.getMessageChain(): MessageChain {
         try {
             if (scores.size > 1) {
-                val ranks = scores.map { it.key }
-                val scores = scores.map { it.value }
+                val ranks = scores.keys
+                val scores = scores.values
 
                 val body = mapOf(
                     "user" to user,

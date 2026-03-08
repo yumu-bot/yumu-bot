@@ -88,13 +88,13 @@ class MicroUser : Comparable<MicroUser> {
     var rulesets: UserStatisticsRulesets? = null
 
     data class UserStatisticsRulesets(
-        @JsonProperty("osu")
+        @field:JsonProperty("osu")
         val osu: Statistics? = null,
-        @JsonProperty("taiko")
+        @field:JsonProperty("taiko")
         val taiko: Statistics? = null,
-        @JsonProperty("fruits")
+        @field:JsonProperty("fruits")
         val fruits: Statistics? = null,
-        @JsonProperty("mania")
+        @field:JsonProperty("mania")
         val mania: Statistics? = null,
     )
 

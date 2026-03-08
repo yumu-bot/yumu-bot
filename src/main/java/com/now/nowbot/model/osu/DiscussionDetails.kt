@@ -3,7 +3,6 @@ package com.now.nowbot.model.osu
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.springframework.lang.Nullable
 import java.time.OffsetDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
@@ -63,7 +62,7 @@ class DiscussionDetails {
     var post: BeatmapsetDiscussionPost? = null
 
     //自己算
-    @JvmField @Nullable
+    @JsonProperty("difficulty")
     var difficulty: String? = null
 
     override fun equals(other: Any?): Boolean {

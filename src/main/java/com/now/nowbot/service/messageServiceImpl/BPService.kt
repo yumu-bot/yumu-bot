@@ -223,10 +223,10 @@ import java.util.regex.Matcher
         }
 
         if (scores.size == 200 || user.pp <= 0.0) {
-            user.setEstimatedPP(scores.map { it.value })
+            user.updateEstimatedPP(scores)
         }
 
-        beatmapApiService.applyBeatmapExtend(scores.map { it.value })
+        beatmapApiService.applyBeatmapExtend(scores)
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
@@ -325,8 +325,8 @@ import java.util.regex.Matcher
     private fun BPParam.getMessageChain(): MessageChain {
         return try {
             if (scores.size > 1) {
-                val ranks = scores.map { it.key }
-                val scores = scores.map { it.value }
+                val ranks = scores.keys
+                val scores = scores.values
 
                 val body = mapOf(
                     "user" to user,
@@ -360,7 +360,7 @@ import java.util.regex.Matcher
             val list = scores.toList().take(5)
             val ss = list.map { it.second }
 
-            beatmapApiService.applyBeatmapExtend(ss)
+            // beatmapApiService.applyBeatmapExtend(ss)
 
             val covers = scoreApiService.getCovers(ss, CoverType.COVER)
 
@@ -370,7 +370,7 @@ import java.util.regex.Matcher
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)
 
-            beatmapApiService.applyBeatmapExtend(s)
+            // beatmapApiService.applyBeatmapExtend(s)
 
             getUUScore(user, s, cover)
         }

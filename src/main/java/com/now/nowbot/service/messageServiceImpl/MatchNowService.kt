@@ -60,7 +60,7 @@ import org.springframework.stereotype.Service
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(
                 "mids" to listOf(data.match.id),
-                "uids" to data.players.map { it.key }.distinct(),
+                "uids" to data.players.keys.distinct(),
                 "bids" to data.rounds.map { it.beatmapID }.distinct(),
                 "sids" to data.rounds.mapNotNull { it.beatmap?.beatmapsetID }.distinct(),
                 "modes" to data.rounds.map { it.mode.modeValue }.distinct()

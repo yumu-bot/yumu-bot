@@ -112,33 +112,7 @@ class SkillType {
                     val distance = SkillUtil.calculateEuclideanDistance(mapList.toDoubleArray(), typeList.toDoubleArray())
 
                     typeMap[e] = 1.0 / (1.0 + 1.0/9.0 * distance.pow(2.226))
-                    /*
-                    var similarity = 1.0
-
-                    similarity *= getDifference(m.star.toDouble(), e.star)
-
-                    val typeList = getStandardizedList(
-                        listOf(e.rice, e.ln, e.coordination, e.precision, e.speed, e.stamina)
-                    )
-
-                    for (i in 0..5) {
-                        val std = getStandardDeviation(mapList[i] - typeList[i])
-
-                        similarity *= std
-                    }
-
-
-                    typeMap[e] = similarity
-
-                     */
                 }
-
-                /*
-                for (v in typeMap.toList().sortedByDescending { (_, value) -> value }.take(5)) {
-                    println("${v.first.chinese}: ${(v.second * 1000).toInt() / 10.0}%")
-                }
-
-                 */
 
                 return typeMap.toList().sortedByDescending { (_, value) -> value }.toMap()
             } else {

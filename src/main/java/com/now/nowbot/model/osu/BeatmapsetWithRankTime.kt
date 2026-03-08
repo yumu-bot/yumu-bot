@@ -5,41 +5,41 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 
 data class BeatmapsetWithRankTime(
-    @JsonProperty("id")
+    @field:JsonProperty("id")
     val beatmapID: Long = 0,
 
-    @JsonProperty("rank_date")
+    @field:JsonProperty("rank_date")
     val rankDate: String = "",
 
-    @JsonProperty("rank_date_early")
+    @field:JsonProperty("rank_date_early")
     val rankDateEarly: String = "",
 
-    @JsonProperty("artist")
+    @field:JsonProperty("artist")
     val artist: String = "",
 
-    @JsonProperty("title")
+    @field:JsonProperty("title")
     val title: String = "",
 
-    @JsonProperty("beatmaps")
+    @field:JsonProperty("beatmaps")
     val beatmaps: List<BeatmapWithRankTime> = listOf(),
 
-    @JsonProperty("rank_early")
+    @field:JsonProperty("rank_early")
     val isEarly: Boolean = false,
 ) {
     data class BeatmapWithRankTime(
-        @JsonProperty("id")
+        @field:JsonProperty("id")
         val beatmapID: Long = 0,
 
-        @JsonProperty("ver")
+        @field:JsonProperty("ver")
         val difficultyName: String = "",
 
-        @JsonProperty("spin")
+        @field:JsonProperty("spin")
         val spinner: Int = 0,
 
-        @JsonProperty("sr")
+        @field:JsonProperty("sr")
         val starRating: Float = 0f,
 
-        @JsonProperty("len")
+        @field:JsonProperty("len")
         val length: Int = 0,
 
         @set:JsonProperty("mode")

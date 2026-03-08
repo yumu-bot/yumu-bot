@@ -19,7 +19,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClientResponseException
@@ -135,7 +134,7 @@ class SeriesRatingService(
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(
                 "mids" to sr.matches.map { it.id },
-                "uids" to sr.players.map { it.key }.distinct(),
+                "uids" to sr.players.keys.distinct(),
                 "bids" to sr.rounds.map { it.beatmapID }.distinct(),
                 "sids" to sr.rounds.mapNotNull { it.beatmap?.beatmapsetID }.distinct(),
                 "modes" to sr.rounds.map { it.mode.modeValue }.distinct()
@@ -512,7 +511,6 @@ class SeriesRatingService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(SeriesRatingService::class.java)
 
-        @NonNull
         @Throws(MRAException::class)
         private fun getEasyMultiplier(matcher: Matcher): Double {
             val easyStr = matcher.group("easy") ?: ""
