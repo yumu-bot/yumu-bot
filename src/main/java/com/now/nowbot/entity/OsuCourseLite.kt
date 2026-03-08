@@ -2,9 +2,9 @@ package com.now.nowbot.entity
 
 import com.now.nowbot.model.Course
 import com.now.nowbot.model.Course.CourseSingle
-import io.hypersistence.utils.hibernate.type.array.IntArrayType
 import jakarta.persistence.*
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 
 @Entity
 @Table(name = "osu_course", indexes = [Index(name = "name_index", columnList = "course_name_all")])
@@ -23,8 +23,8 @@ class OsuCourseLite(
     /**
      * 存储 osu_course_dan 的 id
      */
-    @Type(IntArrayType::class)
-    @Column(name = "course_single", columnDefinition = "integer[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "course_single", columnDefinition = "int4[]")
     var single: IntArray? = null,
 
     @Enumerated(EnumType.STRING)
