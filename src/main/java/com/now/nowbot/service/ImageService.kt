@@ -228,7 +228,10 @@ class ImageService(private val webClient: WebClient) {
                 ex is InternalServerError ->
                     throw NetworkException.RenderModuleException.InternalServerError()
 
-                ex != null -> throw NetworkException.RenderModuleException.BadGateway()
+                ex != null -> {
+                    log.error("渲染模块：未识别的连接问题", e)
+                    throw NetworkException.RenderModuleException.BadGateway()
+                }
             }
 
             if (e.findCauseOfType<Errors.NativeIoException>() != null) {
