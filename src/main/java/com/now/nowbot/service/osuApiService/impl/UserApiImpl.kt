@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.body
-import org.springframework.web.client.toEntity
 import org.springframework.web.util.UriComponentsBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -32,26 +31,19 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.Callable
 
-@Service
-class UserApiImpl(
+@Service class UserApiImpl(
     private val base: OsuApiBaseService, private val bindDao: BindDao, private val userInfoDao: OsuUserInfoDao
 ) : OsuUserApiService {
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
             request { client ->
-                client
-                    .get()
-                    .uri(user.avatarUrl)
-                    .retrieve()
-                    .toEntity<ByteArray>()
-                    .body!!
+                client.get().uri(user.avatarUrl).retrieve().body<ByteArray>()!!
             }
         } catch (_: NetworkException) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             request { client ->
-                client.get().uri("https://a.ppy.sh/").retrieve().toEntity<ByteArray>()
-                    .body!!
+                client.get().uri("https://a.ppy.sh/").retrieve().body<ByteArray>()!!
             }
         }
     }
@@ -137,12 +129,11 @@ class UserApiImpl(
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
         if (user.isTokenAvailable == null) return getOsuUser(user.userID, mode)
 
-        val data = request { client ->
-            client
-                .get().uri("me/{mode}", mode.shortName)
-                .headers { headers ->
-                    base.insertHeader(headers, user)
-                }.retrieve()
+        val data = request { client -> client
+            .get().uri("me/{mode}", mode.shortName)
+            .headers { headers ->
+                base.insertHeader(headers, user)
+            }.retrieve()
                 .body<OsuUser>()!!
         }
 
@@ -162,8 +153,8 @@ class UserApiImpl(
     override fun getOsuUser(name: String, mode: OsuMode): OsuUser {
         val data = request { client ->
             client.get().uri {
-                it.path("users/{data}/{mode}").build("@$name", mode.shortName)
-            }.headers(base::insertHeader).retrieve().body<OsuUser>()!!
+                    it.path("users/{data}/{mode}").build("@$name", mode.shortName)
+                }.headers(base::insertHeader).retrieve().body<OsuUser>()!!
         }
         userInfoDao.saveUserToday(data, mode)
         data.currentOsuMode = getMode(mode, data.defaultOsuMode)
@@ -239,11 +230,7 @@ class UserApiImpl(
      * @param users 注意, 单次请求数量无限制
      * @param isVariant 是否获取玩家的多模式信息
      */
-    override fun <T : Number> getUsers(
-        users: Collection<T>,
-        isVariant: Boolean,
-        isBackground: Boolean
-    ): List<MicroUser> {
+    override fun <T : Number> getUsers(users: Collection<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
         if (users.size <= 50) {
             return getUsersPrivate(users = users, isVariant = isVariant, isBackground = isBackground)
         } else {
@@ -265,19 +252,15 @@ class UserApiImpl(
      * @param users 注意, 单次请求数量必须小于50
      * @param isVariant 是否获取玩家的多模式信息
      */
-    private fun <T : Number> getUsersPrivate(
-        users: Iterable<T>,
-        isVariant: Boolean,
-        isBackground: Boolean
-    ): List<MicroUser> {
+    private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
         val data = request(isBackground) { client ->
             client.get().uri {
                 val ids = users.map { it -> it.toLong() }.toList()
-                it.path("users")
-                    .queryParam("ids[]", *ids.toTypedArray())
-                    .queryParam("include_variant_statistics", isVariant)
-                    .build()
-            }.headers(base::insertHeader).retrieve().body<JsonNode>()!!
+                    it.path("users")
+                        .queryParam("ids[]", *ids.toTypedArray())
+                        .queryParam("include_variant_statistics", isVariant)
+                        .build()
+                }.headers(base::insertHeader).retrieve().body<JsonNode>()!!
         }
 
         val userList = JacksonUtil.parseObjectList(
@@ -309,9 +292,9 @@ class UserApiImpl(
     override fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent> {
         val json = request { client ->
             client.get().uri {
-                it.path("users/{userId}/recent_activity").queryParam("offset", offset).queryParam("limit", limit)
-                    .build(id)
-            }.headers(base::insertHeader).retrieve().body<JsonNode>()!!
+                    it.path("users/{userId}/recent_activity").queryParam("offset", offset).queryParam("limit", limit)
+                        .build(id)
+                }.headers(base::insertHeader).retrieve().body<JsonNode>()!!
         }
         return JacksonUtil.parseObjectList(json, ActivityEvent::class.java)
     }
@@ -338,8 +321,8 @@ class UserApiImpl(
     override fun acknowledgmentPrivateMessageAlive(user: BindUser, since: Long?): JsonNode {
         return request { client ->
             client.post().uri {
-                it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
-            }.headers { headers ->
+                    it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
+                }.headers { headers ->
                 base.insertHeader(headers, user)
             }.retrieve().body<JsonNode>()!!
         }
@@ -372,7 +355,7 @@ class UserApiImpl(
     /**
      * 错误包装
      */
-    private fun <T : Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
+    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
@@ -380,7 +363,7 @@ class UserApiImpl(
 
             when {
                 ex == null -> {
-                    throw NetworkException.UserException.Undefined(e)
+                    throw  NetworkException.UserException.Undefined(e)
                 }
 
                 ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
@@ -437,15 +420,14 @@ class UserApiImpl(
     override fun getTopPlays(page: Int, mode: OsuMode): TopPlays? {
         val html = base.request { client: RestClient ->
             client.get()
-                .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").retrieve()
-                .body<String>()!!
+                .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").
+                retrieve().body<String>()!!
         }
 
         return parseTopPlays(html)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun asyncDownloadAvatar(users: List<MicroUser>) {
+    @OptIn(ExperimentalStdlibApi::class) override fun asyncDownloadAvatar(users: List<MicroUser>) {
         val path = Path.of(IMG_BUFFER_PATH)
         if (!Files.isDirectory(path) || !Files.isWritable(path)) return
 
@@ -476,9 +458,8 @@ class UserApiImpl(
 
                     val image = try {
                         base.osuApiRestClient.get().uri {
-                            it.scheme("https").host("a.ppy.sh").replacePath(replacePath).build()
-                        }.headers(base::insertHeader).retrieve().toEntity<ByteArray>()
-                            .body!!
+                                it.scheme("https").host("a.ppy.sh").replacePath(replacePath).build()
+                            }.headers(base::insertHeader).retrieve().body<ByteArray>()!!
                     } catch (e: Exception) {
                         log.error("异步下载头像：任务失败\n", e)
                         return@Runnable
@@ -497,8 +478,7 @@ class UserApiImpl(
         AsyncMethodExecutor.asyncRunnableExecute(actions)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun asyncDownloadBackground(users: List<MicroUser>) {
+    @OptIn(ExperimentalStdlibApi::class) override fun asyncDownloadBackground(users: List<MicroUser>) {
         val path = Path.of(IMG_BUFFER_PATH)
         if (Files.isDirectory(path).not() || Files.isWritable(path).not()) return
 
@@ -529,9 +509,8 @@ class UserApiImpl(
 
                     val image = try {
                         base.osuApiRestClient.get().uri {
-                            it.scheme("https").host("assets.ppy.sh").replacePath(replacePath).build()
-                        }.headers(base::insertHeader).retrieve().toEntity<ByteArray>()
-                            .body!!
+                                it.scheme("https").host("assets.ppy.sh").replacePath(replacePath).build()
+                            }.headers(base::insertHeader).retrieve().body<ByteArray>()!!
                     } catch (e: Exception) {
                         log.error("异步下载背景：任务失败\n", e)
                         return@Runnable

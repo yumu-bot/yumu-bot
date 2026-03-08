@@ -17,15 +17,13 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.body
-import org.springframework.web.client.toEntity
 import java.io.IOException
 import java.nio.file.Files
 import java.util.concurrent.Callable
 import kotlin.math.abs
 import kotlin.text.Charsets.UTF_8
 
-@Service
-class MaimaiApiImpl(
+@Service class MaimaiApiImpl(
     private val base: DivingFishBaseService,
     private val maiDao: MaiDao,
 ) : MaimaiApiService {
@@ -137,16 +135,14 @@ class MaimaiApiImpl(
             request { client ->
                 client.get().uri("covers/$song.png")
                     .retrieve()
-                    .toEntity<ByteArray>()
-                    .body!!
+                    .body<ByteArray>()!!
             }
         } catch (e: RestClientResponseException) {
             if (e.statusCode.value() == 404) {
                 request { client ->
                     client.get().uri("covers/00000.png")
                         .retrieve()
-                        .toEntity<ByteArray>()
-                        .body!!
+                        .body<ByteArray>()!!
                 }
             } else {
                 throw e
@@ -174,8 +170,7 @@ class MaimaiApiImpl(
 
 
     override fun getMaimaiSurroundingRank(rating: Int): Map<String, Int> {
-        return maiDao.getSurroundingMaiRanking(rating).sortedBy { abs(rating - it.rating) }
-            .associate { it.name to it.rating }
+        return maiDao.getSurroundingMaiRanking(rating).sortedBy { abs(rating - it.rating) }.associate { it.name to it.rating }
     }
 
     override fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData> { //return getMaimaiFitLibraryFromFile().charts[songID.toString()].orEmpty()
@@ -279,8 +274,7 @@ class MaimaiApiImpl(
         }
     }
 
-    @Deprecated("请使用 From Database")
-    private fun getMaimaiSongLibraryFromFile(): Map<Int, MaiSong> {
+    @Deprecated("请使用 From Database") private fun getMaimaiSongLibraryFromFile(): Map<Int, MaiSong> {
         val song: List<MaiSong>
 
         if (isRegularFile("data-songs.json")) {
@@ -293,8 +287,7 @@ class MaimaiApiImpl(
         return song.associateBy { it.songID }
     }
 
-    @Deprecated("请使用 From Database")
-    private fun getMaimaiRankLibraryFromFile(): Map<String, Int> {
+    @Deprecated("请使用 From Database") private fun getMaimaiRankLibraryFromFile(): Map<String, Int> {
         val ranking: List<MaiRanking>
 
         if (isRegularFile("data-songs.json")) {
@@ -307,8 +300,7 @@ class MaimaiApiImpl(
         return ranking.associate { it.name to it.rating }
     }
 
-    @Deprecated("请使用 From Database")
-    private fun getMaimaiFitLibraryFromFile(): MaiFit {
+    @Deprecated("请使用 From Database") private fun getMaimaiFitLibraryFromFile(): MaiFit {
         if (isRegularFile("data-fit.json")) {
             return parseFile("data-fit.json", MaiFit::class.java) ?: return JacksonUtil.parseObject(
                 maimaiFitLibraryFromAPI,
@@ -320,8 +312,7 @@ class MaimaiApiImpl(
         }
     }
 
-    @Deprecated("请使用 From Database")
-    private fun getMaimaiAliasLibraryFromFile(): List<MaiAlias> {
+    @Deprecated("请使用 From Database") private fun getMaimaiAliasLibraryFromFile(): List<MaiAlias> {
         if (isRegularFile("data-aliases.json")) {
             return parseFile("data-aliases.json", MaimaiAliasResponseBody::class.java)?.aliases
                 ?: return JacksonUtil.parseObject(
@@ -375,36 +366,31 @@ class MaimaiApiImpl(
 
     @Throws(
         RestClientResponseException::class
-    )
-    override fun getMaimaiSongScore(qq: Long, songID: Int): MaiScore {
+    ) override fun getMaimaiSongScore(qq: Long, songID: Int): MaiScore {
         return MaiScore()
     }
 
     @Throws(
         RestClientResponseException::class
-    )
-    override fun getMaimaiSongsScore(qq: Long, songIDs: List<Int>): List<MaiScore> {
+    ) override fun getMaimaiSongsScore(qq: Long, songIDs: List<Int>): List<MaiScore> {
         return listOf()
     }
 
     @Throws(
         RestClientResponseException::class
-    )
-    override fun getMaimaiSongScore(username: String, songID: Int): MaiScore {
+    ) override fun getMaimaiSongScore(username: String, songID: Int): MaiScore {
         return MaiScore()
     }
 
     @Throws(
         RestClientResponseException::class
-    )
-    override fun getMaimaiSongsScore(username: String, songIDs: List<Int>): List<MaiScore> {
+    ) override fun getMaimaiSongsScore(username: String, songIDs: List<Int>): List<MaiScore> {
         return listOf()
     }
 
     @Throws(
         RestClientResponseException::class
-    )
-    override fun getMaimaiFullScores(qq: Long): MaiBestScore {
+    ) override fun getMaimaiFullScores(qq: Long): MaiBestScore {
         return request { client ->
             client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("qq", qq).build() }
                 .headers(base::insertDeveloperHeader)
@@ -415,11 +401,9 @@ class MaimaiApiImpl(
 
     @Throws(
         RestClientResponseException::class
-    )
-    override fun getMaimaiFullScores(username: String): MaiBestScore {
+    ) override fun getMaimaiFullScores(username: String): MaiBestScore {
         return request { client ->
-            client.get()
-                .uri { it.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build() }
+            client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build() }
                 .headers(base::insertDeveloperHeader)
                 .retrieve()
                 .body<MaiBestScore>()!!
@@ -515,7 +499,7 @@ class MaimaiApiImpl(
             if (Files.isRegularFile(file)) {
                 return JacksonUtil.parseObject(s, clazz)
             } else {
-                log.info("舞萌: 文件${fileName}不存在")
+                log.info("舞萌: 文件${fileName}不存在", )
                 return null
             }
 

@@ -30,7 +30,6 @@ import org.springframework.util.DigestUtils
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.body
-import org.springframework.web.client.toEntity
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -111,8 +110,7 @@ class BeatmapApiImpl(
                 val image = base.osuApiRestClient.get()
                     .uri(url)
                     .retrieve()
-                    .toEntity<ByteArray>()
-                    .body!!
+                    .body<ByteArray>()!!
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
