@@ -3,10 +3,10 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -32,6 +32,9 @@ import com.now.nowbot.util.InstructionUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -380,7 +383,7 @@ class ScorePRService(
         }
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -409,7 +412,7 @@ class ScorePRService(
         val scores = scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
@@ -464,7 +467,14 @@ class ScorePRService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val e5 = getE5ParamForFilteredScore(user, history, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
+                val e5 = getE5ParamForFilteredScore(
+                    user,
+                    history,
+                    score,
+                    (if (isPass) "P" else "R"),
+                    beatmapApiService,
+                    calculateApiService
+                )
 
                 return MessageChain(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
             }
@@ -490,7 +500,7 @@ class ScorePRService(
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPairCallableExecute(
                 { beatmapApiService.applyBeatmapExtend(s) },
                 { calculateApiService.applyPPToScore(s) },
             )
@@ -499,43 +509,30 @@ class ScorePRService(
         }
     }
 
-    /*
-    private fun ScorePRParam.getUUMessage(): MessageChain {
-        val score = scores.values.first()
-
-        val d = UUScore(score, beatmapApiService, calculateApiService)
-
-        val imgBytes = osuApiWebClient.get()
-            .uri(d.url ?: "")
-            .retrieve()
-            .bodyToMono(ByteArray::class.java)
-            .block()!!
-
-        return MessageChain(d.scoreLegacyOutput, imgBytes)
-    }
-
-     */
-
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
-        fun getE5ParamForFilteredScore(user: OsuUser, history: OsuUser? = null, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
-            val originalBeatmap = beatmapApiService.getBeatmap(score.beatmapID)
+        fun getE5ParamForFilteredScore(
+            user: OsuUser,
+            history: OsuUser? = null,
+            score: LazerScore,
+            panel: String,
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService
+        ): PanelE5Param {
+            beatmapApiService.applyBeatmapExtend(score)
 
-            beatmapApiService.applyBeatmapExtend(score, originalBeatmap)
-
-            val original = DataUtil.getOriginal(originalBeatmap)
+            val original = score.beatmap.originalDetails
 
             calculateApiService.applyPPToScore(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
-            val density = beatmapApiService.getBeatmapObjectGrouping26(originalBeatmap)
+            val density = beatmapApiService.getBeatmapObjectGrouping26(score.beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, history, score, score.ranking, density, progress, original, attributes, panel)
-
+            return PanelE5Param(user, history, score, score.ranking, density, progress, original.toMap(), attributes, panel)
         }
 
         // 用于未筛选过的成绩。此时成绩的谱面还需要重新计算
@@ -548,7 +545,15 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score)
-            return getE5ParamAfterExtended(user, history, score, score.ranking, panel, beatmapApiService, calculateApiService)
+            return getE5ParamAfterExtended(
+                user,
+                history,
+                score,
+                score.ranking,
+                panel,
+                beatmapApiService,
+                calculateApiService
+            )
         }
 
         fun getE5Param(
@@ -562,7 +567,15 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score, beatmap)
-            return getE5ParamAfterExtended(user, history, score, position ?: score.ranking, panel, beatmapApiService, calculateApiService)
+            return getE5ParamAfterExtended(
+                user,
+                history,
+                score,
+                position ?: score.ranking,
+                panel,
+                beatmapApiService,
+                calculateApiService
+            )
         }
 
         private fun getE5ParamAfterExtended(
@@ -575,22 +588,44 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
             val beatmap = score.beatmap
-            val original = DataUtil.getOriginal(beatmap)
+            val original = BeatmapUtil.getDetailMap(beatmap)
 
-            AsyncMethodExecutor.awaitRunnableExecute(
+            runBlocking {
+                val d1 = async { calculateApiService.applyPPToScore(score) }
+                val d2 = async { BeatmapUtil.applyBeatmapChanges(score) }
+                val d3 = async { calculateApiService.applyStarToScore(score) }
+
+                // 等待所有任务完成
+                listOf(d1, d2, d3).awaitAll()
+            }
+            
+            /*
+            AsyncMethodExecutor.awaitCallableExecute(
                 listOf(
-                    AsyncMethodExecutor.Runnable { calculateApiService.applyPPToScore(score) },
-                    AsyncMethodExecutor.Runnable { calculateApiService.applyBeatmapChanges(score) },
-                    AsyncMethodExecutor.Runnable { calculateApiService.applyStarToScore(score) },
+                    Callable { calculateApiService.applyPPToScore(score) },
+                    Callable { BeatmapUtil.applyBeatmapChanges(score) },
+                    Callable { calculateApiService.applyStarToScore(score) },
                 )
             )
+            
+             */
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, history, score, position ?: score.ranking, density, progress, original, attributes, panel)
+            return PanelE5Param(
+                user,
+                history,
+                score,
+                position ?: score.ranking,
+                density,
+                progress,
+                original,
+                attributes,
+                panel
+            )
         }
     }
 }

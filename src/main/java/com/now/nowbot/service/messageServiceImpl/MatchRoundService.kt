@@ -17,6 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botException.MatchRoundException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -161,7 +162,7 @@ import java.util.regex.Matcher
 
         val round = rounds[i]
 
-        calculateApiService.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
+        BeatmapUtil.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
         calculateApiService.applyStarToBeatmap(round.beatmap, round.mode, LazerMod.getModsList(round.mods))
 
         if (round.scores.size > 2) {

@@ -21,6 +21,7 @@ import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getSBUserWithRange
 import com.now.nowbot.util.Instruction
@@ -164,7 +165,7 @@ class SBTodayBPService(
                 val ss = scores.values
 
                 AsyncMethodExecutor.awaitTripleCallableExecute(
-                    { osuCalculateApiService.applyBeatmapChanges(ss) },
+                    { BeatmapUtil.applyBeatmapChanges(ss) },
                     { osuCalculateApiService.applyStarToScores(ss) },
                     { osuBeatmapApiService.applyBeatmapExtend(ss) }
                 )

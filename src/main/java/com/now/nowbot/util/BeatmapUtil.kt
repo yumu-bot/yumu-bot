@@ -1,13 +1,70 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Mod
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlin.collections.forEach
 import kotlin.math.roundToInt
 
-object BeatmapDetailsUtil {
+object BeatmapUtil {
+
+
+
+    // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatmapExtend 和 applyStarAndPP 之前用。
+    fun getDetailMap(beatmap: Beatmap): Map<String, Any> {
+        if (beatmap.cs == null) return mapOf()
+
+        return mapOf(
+            "cs" to beatmap.cs!!,
+            "ar" to beatmap.ar!!,
+            "od" to beatmap.od!!,
+            "hp" to beatmap.hp!!,
+            "bpm" to beatmap.bpm,
+            "drain" to beatmap.hitLength!!,
+            "total" to beatmap.totalLength,
+        )
+    }
+
+    fun applyBeatmapChanges(scores: Collection<LazerScore>) {
+        scores.forEach {
+            applyBeatmapChanges(it)
+        }
+    }
+
+    fun applyBeatmapChanges(score: LazerScore) {
+        applyBeatmapChanges(score.beatmap, score.mods)
+    }
+
+    fun applyBeatmapChanges(
+        beatmap: Beatmap?,
+        mods: List<LazerMod>
+    ) {
+        if (beatmap == null || beatmap.beatmapID == 0L) return
+
+        val mode = beatmap.mode
+
+        // 【核心改动】在这里触发 lazy 初始化
+        // 如果是第一次运行，它会拍下当前的原始快照
+        // 如果已经拍过了（lazy 已初始化），这一行什么都不会做
+        beatmap.originalDetails
+
+        if (mods.isAffectStarRating()) {
+
+            beatmap.bpm = applyBPM(beatmap.bpm, mods)
+            beatmap.ar = applyAR(beatmap.ar ?: 0f, mods)
+            beatmap.cs = applyCS(beatmap.cs ?: 0f, mods)
+            beatmap.od = applyOD(beatmap.od ?: 0f, mods, mode)
+            beatmap.hp = applyHP(beatmap.hp ?: 0f, mods)
+            beatmap.totalLength = applyLength(beatmap.totalLength, mods)
+            beatmap.hitLength = applyLength(beatmap.hitLength, mods)
+        }
+    }
+
 
     fun getMillisFromAR(ar: Float): Float = when {
         ar > 11f -> 300f

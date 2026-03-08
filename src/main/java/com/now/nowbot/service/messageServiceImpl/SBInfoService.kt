@@ -17,6 +17,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.InstructionUtil.getMode
@@ -83,7 +84,7 @@ class SBInfoService(
         }
 
         AsyncMethodExecutor.awaitPairCallableExecute(
-            { calculateApiService.applyBeatmapChanges(bests.take(6)) },
+            { BeatmapUtil.applyBeatmapChanges(bests.take(6)) },
             { calculateApiService.applyStarToScores(bests.take(6)) }
         )
 

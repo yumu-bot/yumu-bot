@@ -7,6 +7,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.util.BeatmapUtil
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.exp
 import kotlin.math.min
@@ -552,7 +553,7 @@ class MatchRating(
                 .filter { it.round?.beatmap != null }
                 .map { it.round!! }
                 .forEach {
-                    calculateApiService.applyBeatmapChanges(it.beatmap, LazerMod.getModsList(it.mods))
+                    BeatmapUtil.applyBeatmapChanges(it.beatmap, LazerMod.getModsList(it.mods))
                     calculateApiService.applyStarToBeatmap(it.beatmap, it.mode, LazerMod.getModsList(it.mods))
                 }
         }

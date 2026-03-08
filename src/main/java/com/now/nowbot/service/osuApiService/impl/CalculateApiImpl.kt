@@ -11,7 +11,6 @@ import com.now.nowbot.model.osu.RosuPerformance
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.BeatmapDetailsUtil
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -189,51 +188,6 @@ import kotlin.time.Duration.Companion.seconds
             result
         } finally {
             closable.forEach { it.close() }
-        }
-    }
-
-    override fun applyBeatmapChanges(score: LazerScore) {
-        applyBeatmapChanges(score.beatmap, score.mods)
-    }
-
-    override fun applyBeatmapChanges(scores: Collection<LazerScore>) {
-        scores.forEach {
-            applyBeatmapChanges(it)
-        }
-    }
-
-    override fun applyBeatmapChanges(
-        beatmap: Beatmap?,
-        mods: List<LazerMod>
-    ) {
-        if (beatmap == null || beatmap.beatmapID == 0L) return
-
-        val mode = beatmap.mode
-
-        if (mods.isAffectStarRating()) {
-            beatmap.bpm = BeatmapDetailsUtil.applyBPM(
-                beatmap.bpm, mods
-            )
-            beatmap.ar = BeatmapDetailsUtil.applyAR(
-                beatmap.ar ?: 0f, mods
-            )
-            beatmap.cs = BeatmapDetailsUtil.applyCS(
-                beatmap.cs ?: 0f, mods
-            )
-            beatmap.od = BeatmapDetailsUtil.applyOD(
-                beatmap.od ?: 0f, mods, mode
-            )
-            beatmap.hp = BeatmapDetailsUtil.applyHP(
-                beatmap.hp ?: 0f, mods
-            )
-            beatmap.totalLength =
-                BeatmapDetailsUtil.applyLength(
-                    beatmap.totalLength, mods
-                )
-            beatmap.hitLength =
-                BeatmapDetailsUtil.applyLength(
-                    beatmap.hitLength, mods
-                )
         }
     }
 

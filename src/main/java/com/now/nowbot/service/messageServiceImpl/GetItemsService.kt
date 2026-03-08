@@ -13,7 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
-import com.now.nowbot.util.BeatmapDetailsUtil
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.command.FLAG_ID
@@ -294,18 +294,18 @@ class GetItemsService(
         )
 
         val a = beatmapApiService.getAttributes(beatmapID, b.mode, mods)
-        val newTotalLength = BeatmapDetailsUtil.applyLength(b.totalLength, mods).toFloat()
+        val newTotalLength = BeatmapUtil.applyLength(b.totalLength, mods).toFloat()
 
         sb.append(String.format("%.2f", a.starRating)).append(',')
-            .append(String.format("%d", BeatmapDetailsUtil.applyBPM(b.bpm, mods).roundToInt())).append(',')
+            .append(String.format("%d", BeatmapUtil.applyBPM(b.bpm, mods).roundToInt())).append(',')
             .append(String.format("%d", floor((newTotalLength / 60.0)).roundToInt()))
             .append(':')
             .append(String.format("%02d", (newTotalLength % 60.0).roundToInt()))
             .append(',')
         sb.append(a.maxCombo).append(',')
-            .append(String.format("%.2f", BeatmapDetailsUtil.applyCS(b.cs!!, mods))).append(',')
-            .append(String.format("%.2f", BeatmapDetailsUtil.applyAR(b.ar!!, mods))).append(',')
-            .append(String.format("%.2f", BeatmapDetailsUtil.applyOD(b.od!!, mods, b.mode)))
+            .append(String.format("%.2f", BeatmapUtil.applyCS(b.cs!!, mods))).append(',')
+            .append(String.format("%.2f", BeatmapUtil.applyAR(b.ar!!, mods))).append(',')
+            .append(String.format("%.2f", BeatmapUtil.applyOD(b.od!!, mods, b.mode)))
 
         return sb.toString()
     }

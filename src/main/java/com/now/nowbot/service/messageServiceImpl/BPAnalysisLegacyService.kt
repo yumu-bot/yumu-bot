@@ -12,6 +12,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
@@ -50,7 +51,7 @@ class BPAnalysisLegacyService(
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)
 
-                    calculateApiService.applyBeatmapChanges(ss)
+                    BeatmapUtil.applyBeatmapChanges(ss)
                     calculateApiService.applyStarToScores(ss)
 
                     ss
@@ -63,7 +64,7 @@ class BPAnalysisLegacyService(
             user = getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data)
 
-            calculateApiService.applyBeatmapChanges(bests)
+            BeatmapUtil.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
         }
 

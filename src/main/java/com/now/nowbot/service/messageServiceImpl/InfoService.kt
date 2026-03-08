@@ -233,7 +233,7 @@ class InfoService(
         }
 
         AsyncMethodExecutor.awaitPairCallableExecute(
-            { calculateApiService.applyBeatmapChanges(bests.take(6)) },
+            { BeatmapUtil.applyBeatmapChanges(bests.take(6)) },
             { calculateApiService.applyStarToScores(bests.take(6)) }
         )
 

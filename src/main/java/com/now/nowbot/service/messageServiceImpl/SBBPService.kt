@@ -195,7 +195,9 @@ class SBBPService(
             scores = range2.getBestsFromSBUser(rx, isMultiple, hasCondition)
         }
 
-        osuBeatmapApiService.applyBeatmapExtend(scores)
+        runCatching {
+            osuBeatmapApiService.applyBeatmapExtend(scores)
+        }
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
@@ -256,7 +258,7 @@ class SBBPService(
         }
 
         osuCalculateApiService.applyStarToScores(scores)
-        osuCalculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -290,7 +292,7 @@ class SBBPService(
         }
 
         osuCalculateApiService.applyStarToScores(scores)
-        osuCalculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -322,12 +324,14 @@ class SBBPService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, null, score, "B", osuBeatmapApiService, osuCalculateApiService)
+                val e5Param = ScorePRService.getE5ParamForFilteredScore(
+                    user, null, score, "B", osuBeatmapApiService, osuCalculateApiService
+                )
 
                 MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
             }
         } catch (e: Exception) {
-            log.error(e.message)
+            log.error("偏偏要上班：降级运行", e)
             return getUUMessageChain()
         }
     }
@@ -338,7 +342,9 @@ class SBBPService(
             val list = scores.toList().take(5)
             val ss = list.map { it.second }
 
-            osuBeatmapApiService.applyBeatmapExtend(ss)
+            runCatching {
+                osuBeatmapApiService.applyBeatmapExtend(ss)
+            }
 
             val covers = osuScoreApiService.getCovers(ss, CoverType.COVER)
 
@@ -349,7 +355,9 @@ class SBBPService(
 
             val cover = osuScoreApiService.getCover(s, CoverType.COVER)
 
-            osuBeatmapApiService.applyBeatmapExtend(s)
+            runCatching {
+                osuBeatmapApiService.applyBeatmapExtend(s)
+            }
 
             getUUScore(user, s, cover)
         }

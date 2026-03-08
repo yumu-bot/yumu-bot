@@ -17,6 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.InstructionUtil.getBid
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
@@ -295,7 +296,7 @@ class MapStatisticsService(
 
             beatmap.starRating = attributes.stars ?: beatmap.starRating
 
-            calculateApiService.applyBeatmapChanges(beatmap, expected.mods)
+            BeatmapUtil.applyBeatmapChanges(beatmap, expected.mods)
 
             return imageService.getPanel(
                 PanelE6Param(user, beatmap, density, original, attributes, pp, expected)

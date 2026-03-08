@@ -2,13 +2,10 @@ package com.now.nowbot.entity
 
 import com.now.nowbot.model.maimai.*
 import com.now.nowbot.util.DataUtil
-import io.hypersistence.utils.hibernate.type.array.DoubleArrayType
-import io.hypersistence.utils.hibernate.type.array.IntArrayType
-import io.hypersistence.utils.hibernate.type.array.StringArrayType
 import jakarta.persistence.*
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.io.Serializable
-import kotlin.collections.toMutableSet
 import kotlin.math.roundToInt
 
 @Entity(name = "maimai_song")
@@ -26,16 +23,16 @@ class MaiSongLite(
     @Column(columnDefinition = "text")
     var type: String,
 
-    @Type(DoubleArrayType::class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "float[]")
     var star: DoubleArray,
 
-    @Type(StringArrayType::class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "text[]")
     var level: Array<String>,
 
-    @Type(IntArrayType::class)
-    @Column(columnDefinition = "integer[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(columnDefinition = "int4[]")
     var chartIDs: IntArray,
 
     @Column(columnDefinition = "text")
@@ -86,7 +83,7 @@ class MaiSongLite(
                 val l = MaiSong.MaiChart()
 
                 l.charter = cl.charter
-                l.notes = if (lite.type == "DX") {
+                l.maiNote = if (lite.type == "DX") {
                     MaiSong.MaiChart.MaiNote(cl.notes.first(), cl.notes[1], cl.notes[2], cl.notes[3], cl.notes.last())
                 } else {
                     MaiSong.MaiChart.MaiNote(cl.notes.first(), cl.notes[1], cl.notes[2], 0, cl.notes.last())
@@ -134,8 +131,8 @@ class MaiChartLite(
     @Id
     var id: Int,
 
-    @Type(IntArrayType::class)
-    @Column(columnDefinition = "integer[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(columnDefinition = "int4[]")
     var notes: IntArray,
 
     @Column(columnDefinition = "text")
@@ -144,7 +141,7 @@ class MaiChartLite(
     fun toModel(): MaiSong.MaiChart = with(MaiSong.MaiChart()) {
         val noteList = this@MaiChartLite.notes
         if (this@MaiChartLite.notes.size == 5) {
-            this.notes = MaiSong.MaiChart.MaiNote(
+            this.maiNote = MaiSong.MaiChart.MaiNote(
                 noteList[0],
                 noteList[1],
                 noteList[2],
@@ -152,7 +149,7 @@ class MaiChartLite(
                 noteList[4],
             )
         } else {
-            this.notes = MaiSong.MaiChart.MaiNote(
+            this.maiNote = MaiSong.MaiChart.MaiNote(
                 noteList[0],
                 noteList[1],
                 noteList[2],
@@ -166,18 +163,18 @@ class MaiChartLite(
 
     companion object {
         fun from(id: Int, chart: MaiSong.MaiChart): MaiChartLite {
-            val notes = if (chart.notes.touch == 0) with(IntArray(4)) {
-                this[0] = chart.notes.tap
-                this[1] = chart.notes.hold
-                this[2] = chart.notes.slide
-                this[3] = chart.notes.break_
+            val notes = if (chart.maiNote.touch == 0) with(IntArray(4)) {
+                this[0] = chart.maiNote.tap
+                this[1] = chart.maiNote.hold
+                this[2] = chart.maiNote.slide
+                this[3] = chart.maiNote.`break`
                 this
             } else with(IntArray(5)) {
-                this[0] = chart.notes.tap
-                this[1] = chart.notes.hold
-                this[2] = chart.notes.slide
-                this[3] = chart.notes.touch
-                this[4] = chart.notes.break_
+                this[0] = chart.maiNote.tap
+                this[1] = chart.maiNote.hold
+                this[2] = chart.maiNote.slide
+                this[3] = chart.maiNote.touch
+                this[4] = chart.maiNote.`break`
                 this
             }
 
@@ -214,11 +211,11 @@ class MaiFitChartLite(
     @Column(name = "standard_deviation")
     var standardDeviation: Double,
 
-    @Type(DoubleArrayType::class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "distribution", columnDefinition = "float[]")
     var distribution: DoubleArray,
 
-    @Type(DoubleArrayType::class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "fc_distribution", columnDefinition = "float[]")
     var fullComboDistribution: DoubleArray,
 ) {
@@ -262,11 +259,11 @@ class MaiFitDiffLite(
 
     var achievements: Double,
 
-    @Type(DoubleArrayType::class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "distribution", columnDefinition = "float[]")
     var distribution: DoubleArray,
 
-    @Type(DoubleArrayType::class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "fc_distribution", columnDefinition = "float[]")
     var fullComboDistribution: DoubleArray,
 ) {
@@ -372,16 +369,16 @@ class ChuSongLite(
     @Column(name = "query_text", columnDefinition = "text")
     var queryTitle: String = title,
 
-    @Type(DoubleArrayType::class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "float[]")
     var star: DoubleArray,
 
-    @Type(StringArrayType::class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "text[]")
     var level: Array<String>,
 
-    @Type(IntArrayType::class)
-    @Column(columnDefinition = "integer[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(columnDefinition = "int4[]")
     var chartIDs: IntArray,
 
     @Column(columnDefinition = "text")
@@ -625,8 +622,8 @@ class LxMaiDifficultyLite {
 
     var version: Int = 0
 
-    @Type(IntArrayType::class)
-    @Column(columnDefinition = "INTEGER[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(columnDefinition = "int4[]")
     var notes: IntArray = intArrayOf()
 
     @Column(columnDefinition = "VARCHAR(4)", nullable = true)
@@ -774,8 +771,10 @@ class LxMaiCollectionLite {
         }
 
         fun colorConvertToModel(color: Short): String? {
-            val colors = listOf(null, "normal", "bronze",
-                "silver", "gold", "rainbow")
+            val colors = listOf(
+                null, "normal", "bronze",
+                "silver", "gold", "rainbow"
+            )
 
             return if (color in 0..5) {
                 colors[color.toInt()]
@@ -783,7 +782,7 @@ class LxMaiCollectionLite {
         }
 
         fun colorConvertToEntity(color: String?): Short {
-            return when(color) {
+            return when (color) {
                 null -> 0
                 "normal" -> 1
                 "bronze" -> 2

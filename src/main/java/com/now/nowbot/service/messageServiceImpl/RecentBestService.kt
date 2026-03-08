@@ -16,6 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.UserIDUtil
@@ -141,7 +142,7 @@ class RecentBestService(
 
         beatmapApiService.applyBeatmapExtend(this)
         beatmapApiService.applyVersion(this)
-        calculateApiService.applyBeatmapChanges(this)
+        BeatmapUtil.applyBeatmapChanges(this)
         calculateApiService.applyStarToScores(this)
 
         return this.sortedByDescending {

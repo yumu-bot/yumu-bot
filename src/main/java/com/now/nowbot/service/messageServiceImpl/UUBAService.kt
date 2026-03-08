@@ -100,7 +100,7 @@ class UUBAService(
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)
 
-                    calculateApiService.applyBeatmapChanges(ss)
+                    BeatmapUtil.applyBeatmapChanges(ss)
                     calculateApiService.applyStarToScores(ss)
 
                     ss
@@ -113,7 +113,7 @@ class UUBAService(
             user = getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data)
 
-            calculateApiService.applyBeatmapChanges(bests)
+            BeatmapUtil.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
         }
 

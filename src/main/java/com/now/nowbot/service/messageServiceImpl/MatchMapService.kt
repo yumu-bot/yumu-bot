@@ -22,7 +22,7 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
-import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -148,7 +148,7 @@ class MatchMapService(
 
             val mode = OsuMode.getConvertableMode(round.mode, beatmap.mode)
 
-            val original = DataUtil.getOriginal(beatmap)
+            val original = BeatmapUtil.getDetailMap(beatmap)
 
             val mods = LazerMod.getModsList(round.mods)
 

@@ -278,7 +278,7 @@ class SBScorePRService(
         }
 
         osuCalculateApiService.applyStarToScores(scores)
-        osuCalculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -313,7 +313,7 @@ class SBScorePRService(
         ).map { it.toLazerScore() }
 
         osuCalculateApiService.applyStarToScores(scores)
-        osuCalculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {

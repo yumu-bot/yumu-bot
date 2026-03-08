@@ -6,6 +6,7 @@ import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.BeatmapUtil
 import java.util.concurrent.Callable
 
 class MapPoolDto(
@@ -47,7 +48,7 @@ class MapPoolDto(
 
             pool.beatmaps.map { b ->
                 AsyncMethodExecutor.Runnable {
-                    calculateApiService.applyBeatmapChanges(b, listOf(mod))
+                    BeatmapUtil.applyBeatmapChanges(b, listOf(mod))
                     calculateApiService.applyStarToBeatmap(b, mode, listOf(mod))
                 }
             }

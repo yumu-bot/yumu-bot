@@ -2,7 +2,10 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.match.*
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.MatchAdapter
+import com.now.nowbot.model.match.MatchListener
+import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.qq.event.GroupMessageEvent
@@ -10,25 +13,22 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.MatchMapService.PanelE7Param
-import com.now.nowbot.service.osuApiService.*
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.service.osuApiService.OsuMatchApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsRuntimeException
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
-import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.MatchException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.ASyncMessageUtil
-import com.now.nowbot.util.DataUtil.getOriginal
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClientResponseException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.max
 import kotlin.math.min
-
-private val log = KotlinLogging.logger {}
 
 @Service("MATCH_LISTENER")
 class MatchListenerService(
@@ -37,10 +37,12 @@ class MatchListenerService(
     private val calculateApiService: OsuCalculateApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
-) : MessageService<MatchListenerService.ListenerParam> {
+) : MessageService<MatchListenerService.ListenerParam>
+{
 
     // 状态管理移至实例或单例管理器中 (此处暂留 Service 内但改用并发容器)
     companion object {
+        private val log = KotlinLogging.logger {}
         const val BREAK_ROUND = 20
         private const val USER_MAX = 3
         private const val GROUP_MAX = 3
@@ -116,7 +118,8 @@ class MatchListenerService(
 
         when (param.operate) {
             Operation.INFO -> {
-                val groupMatchIDs = listenerData.filter { it.groupID == event.group.contactID }.map { it.listener.matchID }
+                val groupMatchIDs =
+                    listenerData.filter { it.groupID == event.group.contactID }.map { it.listener.matchID }
 
                 val msg = if (groupMatchIDs.isEmpty()) {
                     MatchException.NoListener()
@@ -142,6 +145,7 @@ class MatchListenerService(
             Operation.STOP -> {
                 cancelListener(event.group.contactID, param.id, Permission.isSuperAdmin(event.sender.contactID))
             }
+
             else -> {}
         }
 
@@ -238,11 +242,11 @@ class MatchListenerService(
                 bm = beatmapApiService.getBeatmap(bm.beatmapID)
             }
 
-            calculateApiService.applyBeatmapChanges(bm, event.mods)
+            BeatmapUtil.applyBeatmapChanges(bm, event.mods)
 
             val param = PanelE7Param(
                 mr, event.mode, event.mods, event.users, bm,
-                beatmapApiService.getBeatmapObjectGrouping26(bm), getOriginal(bm)
+                beatmapApiService.getBeatmapObjectGrouping26(bm), BeatmapUtil.getDetailMap(bm)
             )
 
             val fallback = MatchException.NormalOperate.Start(match).message
@@ -258,7 +262,7 @@ class MatchListenerService(
                 ?: mr.rounds.lastOrNull()
                 ?: throw NoSuchElementException.MatchRound()
 
-            calculateApiService.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
+            BeatmapUtil.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
 
             // 排序逻辑
             round.scores = if (round.scores.size > 2) {
@@ -304,6 +308,7 @@ class MatchListenerService(
             val shouldNotify = when (type) {
                 MatchListener.StopType.SERVER_REBOOT,
                 MatchListener.StopType.USER_STOP -> false
+
                 else -> true
             }
 
@@ -325,7 +330,7 @@ class MatchListenerService(
         override fun onError(e: Throwable) {
             log.error(e) { "监听器错误 ID: $matchID" }
             when (e) {
-                is WebClientResponseException -> return
+                is RestClientResponseException -> return
                 is TipsRuntimeException -> messageEvent.reply(e.message ?: "未知错误")
                 else -> messageEvent.reply("监听期间出现错误, id: $matchID")
             }
