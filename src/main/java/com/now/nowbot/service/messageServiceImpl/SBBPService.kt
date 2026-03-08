@@ -120,7 +120,7 @@ class SBBPService(
         val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val rangeInConditions = conditions.lastOrNull().orEmpty()
         val hasRangeInConditions = rangeInConditions.isNotEmpty()
         val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
@@ -295,9 +295,9 @@ class SBBPService(
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun BPParam.asyncImage() = run {
-        osuScoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
-    }
+//    private fun BPParam.asyncImage() = run {
+//        osuScoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+//    }
 
     private fun BPParam.getMessageChain(): MessageChain {
         return try {

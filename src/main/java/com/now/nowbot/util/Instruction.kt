@@ -554,7 +554,14 @@ enum class Instruction(val pattern: Pattern) {
     GET_NEWBIE_MAP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beat)?map", "get\\s*map", "gw")
         appendMode()
-        appendID()
+        appendCaptureGroup(FLAG_ID, REG_NUMBER_SEPERATOR, MORE)
+        appendMod()
+    }),
+
+    GET_NEWBIE_SET(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beatmap)?set", "get\\s*(map)?set", "gy")
+        appendMode()
+        appendCaptureGroup(FLAG_ID, REG_NUMBER_SEPERATOR, MORE)
         appendMod()
     }),
 
@@ -657,8 +664,12 @@ enum class Instruction(val pattern: Pattern) {
 
     MATCH_RECENT(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("match\\s*recents?", "mr")
-        appendModeQQUIDName()
-        appendHashCaptureGroup(FLAG_MATCHID, REG_NUMBER_SEPERATOR, MAYBE)
+        appendMode()
+        appendCaptureGroup(FLAG_MATCHID, REG_NUMBER_SEPERATOR, MORE)
+        appendQQ()
+        appendUID()
+        appendName()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_12, MAYBE)
     }),
 
     MAP_POOL(CommandPatternBuilder.create {
@@ -875,7 +886,9 @@ enum class Instruction(val pattern: Pattern) {
 
     UPDATE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("update", "ut", "ue")
-        appendColonCaptureGroup(FLAG_ANY, REG_ANYTHING, contentLevel = MORE, prefixLevel = MAYBE)
+        appendColonCaptureGroup(FLAG_MODE, REG_ANYTHING_BUT_NO_SPACE, contentLevel = MORE, prefixLevel = MAYBE)
+        appendSpace()
+        appendCaptureGroup(FLAG_ANY, REG_ANYTHING, contentLevel = MORE)
     }),
 
     FETCH(CommandPatternBuilder.create {
@@ -984,7 +997,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.ECHO) continue
+        if (i != Instruction.UPDATE) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

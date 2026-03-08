@@ -90,7 +90,7 @@ import java.util.concurrent.Callable
 
         if (user.isExpired) {
             try {
-                base.refreshUserToken(user, false)
+                base.syncUserToken(user, false)
             } catch (_: Exception) {
                 throw BindException.Oauth2Exception.NeedRefresh()
             }
@@ -108,22 +108,23 @@ import java.util.concurrent.Callable
     override fun getUserTokenOrBotToken(user: BindUser): String? {
         // 这里需要有效的
         return if (user.hasToken) {
-            base.refreshUserToken(user, false)
+            base.syncUserToken(user, false)
         } else {
             base.getBotToken()
         }
     }
 
-    override fun refreshUserTokenFirst(user: BindUser) {
-        base.refreshUserToken(user, true)
-        val o = getOsuUser(user)
-        val uid = o.userID
-        user.userID = uid
-        user.username = o.username
-        user.mode = o.currentOsuMode
+    override fun syncUserToken(user: BindUser, isFirstTime: Boolean): String {
+        return base.syncUserToken(user, isFirstTime)
     }
 
-
+    override fun applyBindUserDetails(user: BindUser) {
+        getOsuUser(user).apply {
+            user.userID = this.userID
+            user.username = this.username
+            user.mode = this.currentOsuMode
+        }
+    }
 
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
         if (user.isTokenAvailable == null) return getOsuUser(user.userID, mode)
@@ -337,7 +338,7 @@ import java.util.concurrent.Callable
     }
 
     override fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>) {
-        val userSet = (beatmapsets.flatMap { it.beatmaps ?: listOf() }
+        val userSet = (beatmapsets.flatMap { it.beatmaps.orEmpty() }
             .flatMap { it.mapperIDs } + beatmapsets.map { it.creatorID }).toSet()
 
         val users = getUsers(userSet).associateBy { it.userID }

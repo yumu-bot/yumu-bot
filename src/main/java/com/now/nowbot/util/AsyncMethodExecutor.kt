@@ -10,8 +10,7 @@ import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.random.Random
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 object AsyncMethodExecutor {
     val log: Logger = LoggerFactory.getLogger(AsyncMethodExecutor::class.java)
@@ -190,7 +189,7 @@ object AsyncMethodExecutor {
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
      */
     @JvmStatic
-    fun awaitRunnableExecute(works: Collection<Runnable>, timeout: Duration = 30.toDuration(DurationUnit.SECONDS)) {
+    fun awaitRunnableExecute(works: Collection<Runnable>, timeout: Duration = 30.seconds) {
         val lock = CountDownLatch(works.size)
         works.map { w: Runnable ->
             Runnable {
@@ -211,7 +210,7 @@ object AsyncMethodExecutor {
      * 异步执行不需要返回的结果，并等待至所有操作都完成。
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
      */
-    fun awaitRunnableExecute(work: Runnable, timeout: Duration = 30.toDuration(DurationUnit.SECONDS)) {
+    fun awaitRunnableExecute(work: Runnable, timeout: Duration = 30.seconds) {
         val lock = CountDownLatch(1)
 
         val task = Runnable {
@@ -235,9 +234,10 @@ object AsyncMethodExecutor {
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要返回结果（void 方法），请使用 awaitRunnableExecute
      * 返回结果严格按照传入的 works 顺序
      */
+    /*
     fun <T> awaitCallableExecute(
         works: Collection<Callable<out T>>,
-        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+        timeout: Duration = 30.seconds
     ): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
@@ -275,9 +275,11 @@ object AsyncMethodExecutor {
         return results.toSortedMap().mapNotNull { it.value }
     }
 
+     */
+
     /*
     fun <T> awaitSupplierExecute(work: Supplier<T>): T {
-        return awaitSupplierExecute(listOf(work), 30.toDuration(DurationUnit.SECONDS)).first()
+        return awaitSupplierExecute(listOf(work), 30.seconds).first()
     }
 
     /**
@@ -285,7 +287,7 @@ object AsyncMethodExecutor {
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要返回结果（void 方法），请使用 awaitRunnableExecute
      * 返回结果严格按照传入的 works 顺序
      */
-    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = 30.toDuration(DurationUnit.SECONDS)): List<T> {
+    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = 30.seconds): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
         val results: MutableMap<Int, T?> = ConcurrentHashMap(size)
@@ -315,7 +317,7 @@ object AsyncMethodExecutor {
 
     fun <T> awaitCallableExecute(
         work: Callable<out T>,
-        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+        timeout: Duration = 30.seconds
     ): T {
         ShutdownOnFailure().use { virtualPool ->
             val r = virtualPool.fork(work)
@@ -331,8 +333,8 @@ object AsyncMethodExecutor {
     fun <T> awaitBatchCallableExecute(
         works: List<Callable<out T>>,
         batchSize: Int = 60,
-        latency: Duration = 60.toDuration(DurationUnit.SECONDS),
-        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+        latency: Duration = 60.seconds,
+        timeout: Duration = 30.seconds
     ): List<T> {
         val batches = works.chunked(batchSize)
         val allResults = mutableListOf<T>()
@@ -382,7 +384,7 @@ object AsyncMethodExecutor {
     /*
     fun <T> awaitCallableExecute(
         works: List<Callable<out T>>,
-        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+        timeout: Duration = 30.seconds
     ): List<T> {
         ShutdownOnFailure().use { virtualPool ->
             val results = works.map { virtualPool.fork(it) }
@@ -397,7 +399,7 @@ object AsyncMethodExecutor {
     fun <T, U> awaitPairCallableExecute(
         work: Callable<out T>,
         work2: Callable<out U>,
-        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+        timeout: Duration = 30.seconds
     ): Pair<T, U> {
         ShutdownOnFailure().use { virtualPool ->
             val r1 = virtualPool.fork(work)
@@ -412,7 +414,7 @@ object AsyncMethodExecutor {
         work: Callable<out T>,
         work2: Callable<out U>,
         work3: Callable<out V>,
-        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+        timeout: Duration = 30.seconds
     ): Triple<T, U, V> {
         ShutdownOnFailure().use { virtualPool ->
             val r1 = virtualPool.fork(work)
@@ -429,7 +431,7 @@ object AsyncMethodExecutor {
         work2: Callable<out U>,
         work3: Callable<out V>,
         work4: Callable<out W>,
-        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+        timeout: Duration = 30.seconds
     ): Pair<Pair<T, U>, Pair<V, W>> {
         ShutdownOnFailure().use { virtualPool ->
             val r1 = virtualPool.fork(work)
@@ -442,7 +444,7 @@ object AsyncMethodExecutor {
         }
     }
 
-    fun <X> awaitListCallableExecute(works: List<Callable<out X>>, timeout: Duration = 30.toDuration(DurationUnit.SECONDS)): List<X> {
+    fun <X> awaitCallableExecute(works: List<Callable<out X>>, timeout: Duration = 30.seconds): List<X> {
         if (works.isEmpty()) return emptyList()
 
         ShutdownOnFailure().use { virtualPool ->
@@ -465,7 +467,7 @@ object AsyncMethodExecutor {
     @Throws(Exception::class)
     fun <T> awaitSupplierExecuteThrows(
         works: Collection<Supplier<T>>,
-        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+        timeout: Duration = 30.seconds
     ): List<T> {
         val size = works.size
         val phaser = Phaser(1)

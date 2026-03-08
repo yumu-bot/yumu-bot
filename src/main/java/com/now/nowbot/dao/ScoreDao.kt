@@ -17,7 +17,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -26,15 +28,23 @@ import java.time.ZonedDateTime
 class ScoreDao(
     private val beatmapDao: BeatmapDao,
     private val scoreRepository: LazerScoreRepository,
-    private val scoreStatisticRepository: LazerScoreStatisticRepository,
+    private val statisticRepository: LazerScoreStatisticRepository,
     private val beatmapStarRatingCacheRepository: BeatmapStarRatingCacheRepository
 ) {
 
     /**
      * 使用外界的星数
      */
-    fun saveStarRatingCache(score: LazerScore, star: Float) {
-        saveStarRatingCache(score.beatmapID, score.mode, score.mods, star, score.beatmap.hasLeaderBoard)
+    fun saveStarRatingCacheAsync(score: LazerScore, star: Float) {
+        Thread.startVirtualThread {
+            saveStarRatingCache(score.beatmapID, score.mode, score.mods, star, score.beatmap.hasLeaderBoard)
+        }
+    }
+
+    fun saveStarRatingCacheAsync(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, star: Float, hasLeaderBoard: Boolean = false) {
+        Thread.startVirtualThread {
+            saveStarRatingCache(beatmapID, mode, mods, star, hasLeaderBoard)
+        }
     }
 
     fun saveStarRatingCache(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, star: Float, hasLeaderBoard: Boolean = false) {
@@ -50,19 +60,21 @@ class ScoreDao(
         }
     }
 
-    fun deleteByMode(mode: OsuMode) {
-        beatmapStarRatingCacheRepository.deleteByMode(mode.modeValue)
+    fun deleteByMode(mode: OsuMode): Int {
+        return if (mode == OsuMode.DEFAULT) {
+            beatmapStarRatingCacheRepository.truncateTable()
+            0
+        } else {
+            beatmapStarRatingCacheRepository.deleteByMode(mode.modeValue)
+        }
     }
 
+    /**
+     * 提前确保这里是 valueMod
+     */
     fun getStarRatingCache(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>): Float? {
-
-        val modsValue: Int = if (mods.isValueMod()) {
-            LazerMod.getModsValue(mods)
-        } else {
-            0
-        }
-
-        return beatmapStarRatingCacheRepository.findByKey(beatmapID, mode.modeValue, modsValue)
+        val modsValue: Int = LazerMod.getModsValue(mods)
+        return beatmapStarRatingCacheRepository.getStarRating(beatmapID, mode.modeValue, modsValue)
     }
 
 
@@ -81,19 +93,57 @@ class ScoreDao(
 
     @Transactional
     fun saveScores(scores: List<LazerScore>) {
-        if (scores.isEmpty()) {
-            return
+        val ss = scores.map { it.scoreID }
+
+        val exists = ss.chunked(1000) { sss ->
+            scoreRepository.exists(sss)
+        }.flatten().toSet()
+
+        val notExistsScore = scores.filterNot { exists.contains(it.scoreID) }
+
+        val bs = scores.map { it.beatmapID }
+        val existsBeatmap = bs.chunked(1000) { bss ->
+            statisticRepository.exists(bss, -1)
+        }.flatten().toSet()
+
+        val notExistsBeatmap = scores.filterNot { existsBeatmap.contains(it.beatmapID) || (!it.passed && !it.isLazer) }
+
+        if (notExistsScore.isEmpty() && notExistsBeatmap.isEmpty()) return
+
+        val uniqueSets = notExistsScore.map { it.beatmapset }.sortedBy { it.beatmapsetID }.associateBy { it.beatmapsetID }.values
+        val uniqueBeatmaps = notExistsScore.map { it.beatmap }.sortedBy { it.beatmapID }.associateBy { it.beatmapID }.values
+
+        try {
+            beatmapDao.saveBeatmaps(uniqueBeatmaps)
+        } catch (e: Exception) {
+            log.error("批量存储 beatmap 异常", e)
         }
-        if (scores.size == 1) {
-            saveScore(scores.first())
-            return
+
+        try {
+            beatmapDao.saveBeatmapsets(uniqueSets)
+        } catch (e: Exception) {
+            log.error("批量存储 beatmapset 异常", e)
         }
-        val mode = scores.first().mode
-        saveScores(scores, mode)
+
+        // 3. 准备成绩基础数据和统计数据
+        val scoreLites = mutableListOf<LazerScoreLite>()
+        val allStatistics = mutableListOf<ScoreStatisticLite>()
+
+        notExistsScore.forEach { score ->
+            scoreLites.add(LazerScoreLite(score))
+            allStatistics.add(ScoreStatisticLite.createByScore(score))
+        }
+
+        notExistsBeatmap.forEach { score ->
+            allStatistics.add(ScoreStatisticLite.createByBeatmap(score))
+        }
+
+        scoreRepository.saveAll(scoreLites)
+        statisticRepository.saveAll(allStatistics)
     }
 
     fun saveScore(score: LazerScore) {
-        if (scoreRepository.ifScoreExists(score.scoreID) != null) {
+        if (scoreRepository.exists(score.scoreID)) {
             return
         }
 
@@ -104,54 +154,18 @@ class ScoreDao(
             log.error("统计成绩中存储 beatmap 异常", e)
         }
 
-        if (score.maximumStatistics.great == 0 && score.mode != OsuMode.MANIA) {
-            log.warn("Score ${score.scoreID} 缺少统计数据，Rank 计算可能不准")
-        }
-
         val data = LazerScoreLite(score)
         val statisticList: List<ScoreStatisticLite>
         val statistic = ScoreStatisticLite.createByScore(score)
-        statisticList = if (scoreStatisticRepository.ifStatisticExists(score.beatmapID) != null) {
-            listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
-        } else {
+
+        statisticList = if (statisticRepository.exists(score.beatmapID) || (!score.isLazer && !score.passed)) {
             listOf(statistic)
+        } else {
+            listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
         }
+
         scoreRepository.save(data)
-        scoreStatisticRepository.saveAll(statisticList)
-    }
-
-    private fun saveScores(scores: List<LazerScore>, mode: OsuMode) {
-        if (scores.isEmpty()) return
-
-        val scoreIdList = scores.map { it.scoreID }.toSet()
-        val alreadySaveScoreId = scoreRepository.getSavedScoreIDs(scoreIdList)
-
-        val filteredScoreList = scores.filterNot { alreadySaveScoreId.contains(it.scoreID) }
-        if (filteredScoreList.isEmpty()) return
-
-        try {
-            val set = filteredScoreList.map { it.beatmapset }
-            beatmapDao.saveBeatmapsets(set)
-            val map = filteredScoreList.map { it.beatmap }
-            beatmapDao.saveBeatmaps(map)
-        } catch (e: Exception) {
-            log.error("统计成绩中存储 beatmap 异常", e)
-        }
-
-        val (scoreLiteList, scoreStatisticList) = filteredScoreList
-            .map { LazerScoreLite(it) to ScoreStatisticLite.createByScore(it) }
-            .unzip()
-
-        val beatmapIdList = filteredScoreList.map { it.beatmapID }
-        val alreadySaveBeatmapId = scoreStatisticRepository.getSavedBeatmapIDs(beatmapIdList, mode.modeValue.toInt())
-
-        val mapStatisticList = filteredScoreList
-            .filterNot { alreadySaveBeatmapId.contains(it.beatmapID) }
-            .map { ScoreStatisticLite.createByBeatmap(it) }
-
-        scoreStatisticRepository.saveAll(mapStatisticList)
-        scoreStatisticRepository.saveAll(scoreStatisticList)
-        scoreRepository.saveAll(scoreLiteList)
+        statisticRepository.saveAll(statisticList)
     }
 
     fun getUserAllScoreTime(userID: Long): List<OffsetDateTime> {
@@ -164,17 +178,18 @@ class ScoreDao(
         return scoreRepository.getUserAllScoreTime(userID, start, end, PageRequest.ofSize(500))
     }
 
-    fun getUserRankedScore(userID: Long, mode: Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
-        return scoreRepository.getUserRankedScore(userID, mode, start, end)
+    fun getUserRankedScore(userID: Long, mode: Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScore> {
+        return scoreRepository.getUserRankedScore(userID, mode, start, end).applyStatistics()
     }
 
-    fun getUsersRankedScore(userIDs: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
-        return scoreRepository.getUsersRankedScore(userIDs, mode, start, end)
+    fun getUsersRankedScore(userIDs: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScore> {
+        return scoreRepository.getUsersRankedScore(userIDs, mode, start, end).applyStatistics()
     }
 
-    fun getStatisticsMap(scores: Iterable<LazerScoreLite>): Map<Long, LazerStatistics> {
-        return scoreStatisticRepository
-            .getByScoreIDWhenGraveyard(scores.map { it.id })
+    fun getBeatmapStatistics(beatmapIDs: Collection<Long>): Map<Long, LazerStatistics> {
+        return statisticRepository
+            .getStatistics(beatmapIDs, -1)
+            .distinctBy { it.id }
             .associate { it.id to JacksonUtil.parseObject(it.data, LazerStatistics::class.java) }
     }
 
@@ -182,7 +197,45 @@ class ScoreDao(
      * 还要自己取
      */
     fun getBeatmapScores(user: OsuUser, beatmap: Beatmap, mode: OsuMode): List<LazerScore> {
-        return scoreRepository.getBeatmapScores(user.userID, beatmap.beatmapID, mode.modeValue).map { it.toLazerScore() }
+        return scoreRepository.getBeatmapScores(user.userID, beatmap.beatmapID, mode.modeValue).applyStatistics()
+    }
+
+    fun getYesterdayCount(userID: Long, mode: OsuMode): Long {
+        val time = LocalDate.now().minusDays(1)
+
+        return scoreRepository.getCountBetween(userID, mode.modeValue, LocalDateTime.of(time, LocalTime.MIN), LocalDateTime.of(time, LocalTime.MAX))
+    }
+
+    fun Collection<LazerScoreLite>.applyStatistics(): List<LazerScore> {
+        if (this.isEmpty()) return emptyList()
+
+        val mode = this.firstOrNull()?.mode?.toByte() ?: 0.toByte()
+
+        return this.chunked(1000) { ss ->
+            val ids = ss.map { it.id }
+            val bs = ss.map { it.beatmapId }.distinct()
+
+            val tm = statisticRepository.getStatistics(ids, -1)
+                .associateBy { it.id }
+
+            val bm = statisticRepository.getStatistics(bs, mode)
+                .associateBy { it.id }
+
+            ss.map { s ->
+                s.toLazerScore().apply {
+                    val t = tm[s.id]
+                    val b = bm[s.beatmapId]
+
+                    t?.setStatus(this)
+
+                    if (b != null) {
+                        b.setStatus(this)
+                    } else if (t != null) {
+                        this.maximumStatistics = this.statistics.constructMaxStatistics(OsuMode.getMode(s.mode))
+                    }
+                }
+            }
+        }.flatten()
     }
 
     companion object {

@@ -27,6 +27,6 @@ class PPMinusDao(private val ppMinusRepository: PPMinusRepository) {
 
         val surrounds = ppMinusRepository.findSurroundingByUserID(user.id, rawPP - delta, rawPP + delta, user.currentOsuMode.modeValue)
 
-        return surrounds ?: emptyList()
+        return surrounds.orEmpty()
     }
 }

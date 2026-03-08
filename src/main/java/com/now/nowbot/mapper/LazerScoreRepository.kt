@@ -5,9 +5,16 @@ import com.now.nowbot.entity.ScoreStatisticLite
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
+    @Query("""
+        SELECT COUNT(*)
+        FROM lazer_score_lite s 
+        WHERE s.user_id = :userID AND s.mode = :mode AND s.time BETWEEN :from AND :to
+        """, nativeQuery = true)
+    fun getCountBetween(userID: Long, mode: Byte, from: LocalDateTime, to: LocalDateTime): Long
 
     @Query("""
         select * from lazer_score_lite s
@@ -21,8 +28,15 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     @Query("select s.id from LazerScoreLite s where s.id in (:id)")
     fun getSavedScoreIDs(id: Collection<Long>): Set<Long>
 
-    @Query("select id from lazer_score_lite where id = :id limit 1", nativeQuery = true)
-    fun ifScoreExists(id: Long): Long?
+    @Query("""
+        SELECT EXISTS(SELECT 1 FROM lazer_score_lite WHERE id = :id);
+    """, nativeQuery = true)
+    fun exists(id: Long): Boolean
+
+    @Query("""
+        SELECT id FROM lazer_score_lite WHERE id IN (:ids)
+    """, nativeQuery = true)
+    fun exists(ids: Collection<Long>): List<Long>
 
     @Query("select s.time from LazerScoreLite s where s.userId = :id and s.time between :start and :end")
     fun getUserAllScoreTime(id: Long, start: OffsetDateTime, end: OffsetDateTime, page: Pageable): List<OffsetDateTime>
@@ -48,12 +62,17 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {
-    @Query("select s.id from ScoreStatisticLite s where s.id in (:bid) and s.status = :mode ")
-    fun getSavedBeatmapIDs(bid: Collection<Long>, mode: Int): Set<Long>
 
-    @Query("select id from score_statistic where id = :id limit 1", nativeQuery = true)
-    fun ifStatisticExists(id: Long): Long?
+    @Query("""
+        SELECT s FROM ScoreStatisticLite s WHERE s.id IN (:ids) AND s.mode = :mode
+    """)
+    fun getStatistics(ids: Collection<Long>, mode: Byte = -1): List<ScoreStatisticLite>
 
-    @Query("select s from ScoreStatisticLite s where s.id in (:sid) and s.status=-1")
-    fun getByScoreIDWhenGraveyard(sid: Collection<Long>): List<ScoreStatisticLite>
+    @Query("SELECT EXISTS(SELECT 1 FROM score_statistic WHERE id = :id AND mode = :mode)", nativeQuery = true)
+    fun exists(id: Long, mode: Byte = -1): Boolean
+
+    @Query("""
+        SELECT id FROM score_statistic WHERE id IN (:ids) AND mode = :mode
+    """, nativeQuery = true)
+    fun exists(ids: Collection<Long>, mode: Byte = -1): List<Long>
 }

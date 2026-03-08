@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 
 interface BeatmapStarRatingCacheRepository : JpaRepository<BeatmapStarRatingCache, BeatmapStarRatingCache.BeatmapStarRatingKey> {
     @Query("select s.star from BeatmapStarRatingCache s where s.id = :id and s.mode = :mode and s.mods = :mods")
-    fun findByKey(id: Long, mode: Byte, mods: Int): Float?
+    fun getStarRating(id: Long, mode: Byte, mods: Int): Float?
 
     @Transactional
     @Modifying
@@ -23,5 +23,10 @@ interface BeatmapStarRatingCacheRepository : JpaRepository<BeatmapStarRatingCach
     @Transactional
     @Modifying
     @Query("DELETE FROM BeatmapStarRatingCache s WHERE s.mode = :mode")
-    fun deleteByMode(mode: Byte)
+    fun deleteByMode(mode: Byte): Int
+
+    @Transactional
+    @Modifying
+    @Query(value = "TRUNCATE TABLE osu_beatmap_star CASCADE ", nativeQuery = true)
+    fun truncateTable()
 }

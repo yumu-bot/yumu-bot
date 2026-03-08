@@ -5,7 +5,6 @@ import com.now.nowbot.listener.LocalCommandListener
 import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.service.messageServiceImpl.MatchListenerService
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -67,10 +66,8 @@ class IocAllReadyRunner(
 
         Runtime.getRuntime().addShutdownHook(Thread({
             APP_ALIVE = false
-            // check.doEnd()
-            (executor as ThreadPoolTaskExecutor).shutdown()
-            //MatchListenerServiceLegacy.stopAllListener()
             MatchListenerService.stopAllListenerFromReboot()
+            (executor as ThreadPoolTaskExecutor).shutdown()
         }, "endThread"))
 
         log.info("新人群配置: {}", env.getProperty("spring.datasource.newbie.enable", "false"))
@@ -78,7 +75,7 @@ class IocAllReadyRunner(
         try {
             val debugging = ApplicationHome(NowbotConfig::class.java).source?.parentFile?.toString()?.contains("target") ?: false
             if (debugging) {
-                PerformancePlusService.runDevelopment()
+                //PerformancePlusAPIService.runDevelopment()
                 startCommandListener()
             }
         } catch (_: Exception) {

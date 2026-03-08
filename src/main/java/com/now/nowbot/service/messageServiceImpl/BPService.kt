@@ -74,7 +74,7 @@ import java.util.regex.Matcher
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: BPParam): ServiceCallStatistic? {
-        param.asyncImage()
+        // param.asyncImage()
         val message: MessageChain = param.getMessageChain()
 
         try {
@@ -125,7 +125,7 @@ import java.util.regex.Matcher
     }
 
     override fun reply(event: MessageEvent, param: BPParam): MessageChain? = run {
-        param.asyncImage()
+        // param.asyncImage()
         return param.getMessageChain()
     }
 
@@ -149,7 +149,7 @@ import java.util.regex.Matcher
         val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val rangeInConditions = conditions.lastOrNull().orEmpty()
         val hasRangeInConditions = rangeInConditions.isNotEmpty()
         val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
@@ -318,9 +318,9 @@ import java.util.regex.Matcher
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun BPParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
-    }
+//    private fun BPParam.asyncImage() = run {
+//        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+//    }
 
     private fun BPParam.getMessageChain(): MessageChain {
         return try {

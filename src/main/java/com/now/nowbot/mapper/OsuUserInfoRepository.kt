@@ -23,7 +23,7 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
             LIMIT 1;
         """, nativeQuery = true
     )
-    fun getLastCountryRank(userID: Long, mode: OsuMode): Long?
+    fun getLatestCountryRank(userID: Long, mode: OsuMode): Long?
 
     @Query(
         value = """
@@ -46,26 +46,45 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
 
     @Query(
         "select o from OsuUserInfoArchiveLite o where o.userID = :userID and o.mode = :mode and (o.time between :from and :to) order by o.time desc limit 1"
-    ) fun getLastBetween(
+    ) fun getLatestBetween(
         userID: Long,
         mode: OsuMode,
         from: LocalDateTime,
         to: LocalDateTime
     ): OsuUserInfoArchiveLite?
 
+    /**
+     * row[0] 是 user_id (如果你选了的话)
+     * row[1] 是 play_count
+     * row[2] 是 mode
+     */
+    @Query("""
+        SELECT s.osu_id, s.play_count, s.mode
+        FROM (
+            SELECT DISTINCT ON (osu_id, mode) osu_id, play_count, mode, time
+            FROM osu_user_info_archive
+            WHERE osu_id = :userID AND time BETWEEN :from AND :to
+            ORDER BY osu_id, mode, time DESC
+        ) s
+    """, nativeQuery = true)
+    fun getLatestPlayCounts(userID: Long, from: LocalDateTime, to: LocalDateTime): List<Array<Any>>
+
     @Query(
-        "SELECT o FROM OsuUserInfoArchiveLite o " +
-                "WHERE (o.time BETWEEN :from AND :to) " +
-                "AND o.time = (SELECT MAX(o2.time) FROM OsuUserInfoArchiveLite o2 " +
-                "WHERE o2.userID = o.userID AND o2.mode = o.mode " +
-                "AND o2.time BETWEEN :from AND :to)"
-    ) fun getLastBetween(
+        value = """
+            SELECT DISTINCT ON (osu_id, mode) *
+            FROM osu_user_info_archive
+            WHERE time BETWEEN :from AND :to
+            ORDER BY osu_id, mode, time DESC
+        """,
+        nativeQuery = true
+    )
+    fun getLatestBetween(
         from: LocalDateTime,
         to: LocalDateTime
     ): List<OsuUserInfoArchiveLite>
 
     @Query("select o from OsuUserInfoArchiveLite o where o.userID = :userID and o.mode = :mode order by o.time desc limit 1")
-    fun getLast(userID: Long, mode: OsuMode): OsuUserInfoArchiveLite?
+    fun getLatest(userID: Long, mode: OsuMode): OsuUserInfoArchiveLite?
 
     @Modifying
     @Transactional
@@ -74,8 +93,7 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
             DELETE FROM osu_user_info_archive 
             WHERE osu_id = :userID 
                 AND mode = :mode 
-                AND time >= :from 
-                AND time < :to
+                AND time BETWEEN :from AND :to
         """, nativeQuery = true
     )
     fun removeBetween(userID: Long, mode: OsuMode, from: LocalDateTime, to: LocalDateTime)

@@ -32,8 +32,8 @@ class ServiceSwitchService(
 ) : MessageService<SwitchParam> {
 
     enum class ServiceType(private val typeAlias: List<String>, val services: List<String>) {
-        BOT(listOf("b", "bot", "内部", "机器"),
-            listOf("help", "ping", "bind", "switch", "revoke", "echo", "service_count", "login", "check", "update", "fetch", "refresh_file")
+        BOT(listOf("o", "bot", "内部", "机器"),
+            listOf("help", "ping", "bind", "switch", "revoke", "echo", "service_count", "sys_info", "login", "check", "update", "fetch", "refresh_file")
         ),
 
         SCORE(listOf("s", "scores", "成绩", "分数"),
@@ -319,106 +319,112 @@ class ServiceSwitchService(
         }
     }
 
+    private fun SwitchParam.handleOn(): MessageChain {
+        return when(this.target) {
+            Target.QQ -> if (this.services.isEmpty()) {
+                controller.clearUser(this.id!!)
+
+                MessageChain("操作已完成：开启用户 ${this.id} 的所有服务")
+            } else {
+                this.services.forEach { serv ->
+                    controller.unblockUser(serv, this.id!!)
+                }
+
+                MessageChain("操作已完成：开启用户 ${this.id} 的 ${services.joinToString(", ")} 服务")
+            }
+            Target.GROUP -> if (this.services.isEmpty()) {
+                controller.clearGroup(this.id!!)
+
+                MessageChain("操作已完成：开启群聊 ${this.id} 的所有服务")
+            } else {
+                this.services.forEach { serv ->
+                    controller.unblockGroup(serv, this.id!!)
+                }
+
+                MessageChain("操作已完成：开启群聊 ${this.id} 的 ${services.joinToString(", ")} 服务")
+            }
+            null -> if (this.services.isEmpty()) {
+                full.forEach { serv ->
+                    controller.serviceSwitch(serv, true)
+                }
+
+                MessageChain("操作已完成：开启所有服务")
+            } else {
+                this.services.forEach { serv ->
+                    controller.serviceSwitch(serv, true)
+                }
+
+                MessageChain("操作已完成：开启 ${services.joinToString(", ")} 服务")
+            }
+        }
+    }
+    private fun SwitchParam.handleOff(): MessageChain {
+        return when(this.target) {
+            Target.QQ -> if (this.services.isEmpty()) {
+                controller.blockUser(this.id!!)
+
+                MessageChain("操作已完成：关闭用户 ${this.id} 的所有服务")
+            } else {
+                this.services.forEach { serv ->
+                    controller.blockUser(serv, this.id!!)
+                }
+
+                MessageChain("操作已完成：关闭用户 ${this.id} 的 ${services.joinToString(", ")} 服务")
+            }
+            Target.GROUP -> if (this.services.isEmpty()) {
+                controller.blockGroup(this.id!!)
+
+                MessageChain("操作已完成：关闭群聊 ${this.id} 的所有服务")
+            } else {
+                this.services.forEach { serv ->
+                    controller.blockGroup(serv, this.id!!)
+                }
+
+                MessageChain("操作已完成：关闭群聊 ${this.id} 的 ${services.joinToString(", ")} 服务")
+            }
+            null -> if (this.services.isEmpty()) {
+                full.forEach { serv ->
+                    controller.serviceSwitch(serv, false)
+                }
+
+                MessageChain("操作已完成：关闭所有服务")
+            } else {
+                this.services.forEach { serv ->
+                    controller.serviceSwitch(serv, false)
+                }
+
+                MessageChain("操作已完成：关闭 ${services.joinToString(", ")} 服务")
+            }
+        }
+    }
+    private fun SwitchParam.handleList(): MessageChain {
+        val global = controller.queryGlobal()
+        val all = controller.queryAllBlock()
+
+        val filtered = when (this.target) {
+            Target.QQ -> all.filter { it.enable && it.users.isNotEmpty() }.sortedByDescending { it.users.size }
+            Target.GROUP -> all.filter { it.enable && it.groups.isNotEmpty() }.sortedByDescending { it.groups.size }
+            null -> all.sortedBy { it.name }.sortedBy { it.enable }
+        }
+
+        val markdown = getStatisticsList(filtered, global)
+
+        val image = try {
+            imageService.getPanelA6(markdown, "switch")
+        } catch (e: Exception) {
+            log.error("服务控制：渲染失败", e)
+            throw IllegalStateException.Render("服务控制")
+        }
+
+        return MessageChain(image)
+    }
 
     private fun SwitchParam.handle(): MessageChain {
 
         return when(this.operate) {
-            ON -> when(this.target) {
-                Target.QQ -> if (this.services.isEmpty()) {
-                    controller.clearUser(this.id!!)
-
-                    MessageChain("操作已完成：开启用户 ${this.id} 的所有服务")
-                } else {
-                    this.services.forEach { serv ->
-                        controller.unblockUser(serv, this.id!!)
-                    }
-
-                    MessageChain("操作已完成：开启用户 ${this.id} 的 ${services.joinToString(", ")} 服务")
-                }
-                Target.GROUP -> if (this.services.isEmpty()) {
-                    controller.clearGroup(this.id!!)
-
-                    MessageChain("操作已完成：开启群聊 ${this.id} 的所有服务")
-                } else {
-                    this.services.forEach { serv ->
-                        controller.unblockGroup(serv, this.id!!)
-                    }
-
-                    MessageChain("操作已完成：开启群聊 ${this.id} 的 ${services.joinToString(", ")} 服务")
-                }
-                null -> if (this.services.isEmpty()) {
-                    full.forEach { serv ->
-                        controller.serviceSwitch(serv, true)
-                    }
-
-                    MessageChain("操作已完成：开启所有服务")
-                } else {
-                    this.services.forEach { serv ->
-                        controller.serviceSwitch(serv, true)
-                    }
-
-                    MessageChain("操作已完成：开启 ${services.joinToString(", ")} 服务")
-                }
-            }
-            OFF -> when(this.target) {
-                Target.QQ -> if (this.services.isEmpty()) {
-                    controller.blockUser(this.id!!)
-
-                    MessageChain("操作已完成：关闭用户 ${this.id} 的所有服务")
-                } else {
-                    this.services.forEach { serv ->
-                        controller.blockUser(serv, this.id!!)
-                    }
-
-                    MessageChain("操作已完成：关闭用户 ${this.id} 的 ${services.joinToString(", ")} 服务")
-                }
-                Target.GROUP -> if (this.services.isEmpty()) {
-                    controller.blockGroup(this.id!!)
-
-                    MessageChain("操作已完成：关闭群聊 ${this.id} 的所有服务")
-                } else {
-                    this.services.forEach { serv ->
-                        controller.blockGroup(serv, this.id!!)
-                    }
-
-                    MessageChain("操作已完成：关闭群聊 ${this.id} 的 ${services.joinToString(", ")} 服务")
-                }
-                null -> if (this.services.isEmpty()) {
-                    full.forEach { serv ->
-                        controller.serviceSwitch(serv, false)
-                    }
-
-                    MessageChain("操作已完成：关闭所有服务")
-                } else {
-                    this.services.forEach { serv ->
-                        controller.serviceSwitch(serv, false)
-                    }
-
-                    MessageChain("操作已完成：关闭 ${services.joinToString(", ")} 服务")
-                }
-            }
-
-            LIST -> {
-                val global = controller.queryGlobal()
-                val all = controller.queryAllBlock()
-
-                val filtered = when (this.target) {
-                    Target.QQ -> all.filter { it.enable && it.users.isNotEmpty() }.sortedByDescending { it.users.size }
-                    Target.GROUP -> all.filter { it.enable && it.groups.isNotEmpty() }.sortedByDescending { it.groups.size }
-                    null -> all.sortedBy { it.name }.sortedBy { it.enable }
-                }
-
-                val markdown = getStatisticsList(filtered, global)
-
-                val image = try {
-                    imageService.getPanelA6(markdown, "switch")
-                } catch (e: Exception) {
-                    log.error("服务控制：渲染失败", e)
-                    throw IllegalStateException.Render("服务控制")
-                }
-
-                MessageChain(image)
-            }
+            ON -> this.handleOn()
+            OFF -> this.handleOff()
+            LIST -> this.handleList()
         }
     }
 

@@ -109,7 +109,7 @@ object InstructionUtil {
         isMyself: AtomicBoolean,
     ): InstructionRange<OsuUser> {
         val range = getUserAndRange(event, matcher, mode)
-        if (range.data == null) {
+        if (range.data == null || event.hasAt()) {
             range.data = getUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range
@@ -300,7 +300,7 @@ object InstructionUtil {
         isMyself: AtomicBoolean,
     ): InstructionRange<SBUser> {
         val range = getSBUserAndRange(matcher, mode)
-        if (range.data == null) {
+        if (range.data == null || event.hasAt()) {
             range.data = getSBUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range
@@ -547,9 +547,9 @@ object InstructionUtil {
 
         // 情况1: 纯数字 (如 "100")
         if (input.matches(Regex("\\d+"))) {
-            val first = input.toInt()
+            val first = input.toIntOrNull()
 
-            return if (first > maximum) {
+            return if (first == null || first > maximum) {
                 InstructionRange(input, null, null)
             } else {
                 InstructionRange(null, first, null)
@@ -561,13 +561,13 @@ object InstructionUtil {
         dashNumberRegex.find(input)?.let { match ->
             val (prefix, firstStr, secondStr) = match.destructured
 
-            val first = firstStr.toInt()
+            val first = firstStr.toIntOrNull()
 
-            return if (first > maximum) {
+            return if (first == null || first > maximum) {
                 InstructionRange(input, null, null)
             } else {
                 val str = prefix.ifBlank { null }?.trim()
-                val second = secondStr.toInt()
+                val second = secondStr.toIntOrNull() ?: first
 
                 InstructionRange(str, min(first, second), max(first, second).coerceAtMost(maximum))
             }
@@ -578,9 +578,9 @@ object InstructionUtil {
         spaceNumberRegex.find(input)?.let { match ->
             val (prefix, suffix) = match.destructured
 
-            val first = suffix.toInt()
+            val first = suffix.toIntOrNull()
 
-            return if (first > maximum) {
+            return if (first == null || first > maximum) {
                 InstructionRange(input, null, null)
             } else {
                 val str = prefix.ifBlank { null }?.trim()
@@ -601,7 +601,7 @@ object InstructionUtil {
                 .trim()
                 .split(REG_HYPHEN.toRegex())
                 .dropWhile { it.isEmpty() }
-                .map { it.toInt() }
+                .map { it.toIntOrNull() }
                 .toTypedArray()
         } catch (e: Exception) {
             log.debug("range 解析参数有误: {}", text, e)

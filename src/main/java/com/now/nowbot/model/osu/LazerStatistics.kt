@@ -150,4 +150,39 @@ data class LazerStatistics(
         legacyComboIncrease.takeIf { it > 0 }?.let { map["legacy_combo_increase"] = it }
         return JacksonUtil.toJson(map)
     }
+
+    /**
+     * 使用现成的构造一个 max
+     */
+    fun constructMaxStatistics(mode: OsuMode): LazerStatistics {
+        return when (mode) {
+            OSU, OSU_RELAX, OSU_AUTOPILOT -> LazerStatistics(
+                great = this.great + this.ok + this.meh + this.miss,
+                largeBonus = this.largeBonus,
+                smallBonus = this.smallBonus,
+                sliderTailHit = this.sliderTailHit,
+                legacyComboIncrease = this.legacyComboIncrease
+            )
+
+            TAIKO, TAIKO_RELAX -> LazerStatistics(
+                great = this.great + this.ok + this.meh,
+                largeBonus = this.largeBonus,
+                smallBonus = this.smallBonus
+            )
+
+            CATCH, CATCH_RELAX -> LazerStatistics(
+                great = this.great + this.miss,
+                largeTickHit = this.largeTickHit + this.largeTickMiss,
+                smallTickHit = this.smallTickHit + this.smallTickMiss,
+                largeBonus = this.largeTickMiss,
+            )
+
+            MANIA -> LazerStatistics(
+                perfect = this.perfect + this.great + this.good + this.ok + this.meh + this.miss,
+                legacyComboIncrease = this.legacyComboIncrease
+            )
+
+            else -> LazerStatistics()
+        }
+    }
 }

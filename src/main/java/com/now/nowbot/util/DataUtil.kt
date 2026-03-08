@@ -21,6 +21,10 @@ import java.time.Period
 import java.time.temporal.ChronoUnit
 import kotlin.math.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -1564,7 +1568,7 @@ object DataUtil {
         )
 
         // 日时分秒
-        val duration = letter.second + colon + hyphen.days.toDuration(DurationUnit.DAYS) + sec
+        val duration = letter.second + colon + hyphen.days.days + sec
 
         return period to duration
     }
@@ -1616,10 +1620,10 @@ object DataUtil {
             when (u) {
                 "y", "yr", "year", "years", "年" -> years += value.toInt()
                 "o", "mo", "month", "months", "月" -> months += value.toInt()
-                "d", "dy" , "day", "days", "日", "天" -> duration += value.toDuration(DurationUnit.DAYS)
-                "h", "hr", "hour", "hours", "时", "小时" -> duration += value.toDuration(DurationUnit.HOURS)
-                "m", "mi", "min", "minute", "minutes", "分", "分钟" -> duration += value.toDuration(DurationUnit.MINUTES)
-                "s", "se", "sec", "second", "seconds", "秒" -> duration += value.toDuration(DurationUnit.SECONDS)
+                "d", "dy" , "day", "days", "日", "天" -> duration += value.days
+                "h", "hr", "hour", "hours", "时", "小时" -> duration += value.hours
+                "m", "mi", "min", "minute", "minutes", "分", "分钟" -> duration += value.minutes
+                "s", "se", "sec", "second", "seconds", "秒" -> duration += value.seconds
 
                 else -> duration += value.toDuration(unit)
             }
@@ -1634,9 +1638,9 @@ object DataUtil {
                     years += (LocalDateTime.now().year - number)
                     months += (now.monthValue - 1)
                     duration +=
-                        (now.dayOfMonth.toDuration(DurationUnit.DAYS) +
-                                now.minute.toDuration(DurationUnit.MINUTES) +
-                                now.second.toDuration(DurationUnit.SECONDS)
+                        (now.dayOfMonth.days +
+                                now.minute.minutes +
+                                now.second.seconds
                                 )
                 }
                 else -> duration += number.toDuration(unit)
@@ -1681,20 +1685,20 @@ object DataUtil {
                     val second = parts[1].toLong()
 
                     if (first > 24) {
-                        first.toDuration(DurationUnit.MINUTES) + second.toDuration(DurationUnit.SECONDS)
+                        first.minutes + second.seconds
                     } else {
-                        first.toDuration(DurationUnit.HOURS) + second.toDuration(DurationUnit.MINUTES)
+                        first.hours + second.minutes
                     }
                 } else if (!mode) {
                     // 时:分格式
                     val hours = parts[0].toLong()
                     val minutes = parts[1].toLong()
-                    hours.toDuration(DurationUnit.HOURS) + minutes.toDuration(DurationUnit.MINUTES)
+                    hours.hours + minutes.minutes
                 } else {
                     // 分:秒格式
                     val minutes = parts[0].toLong()
                     val seconds = parts[1].toLong()
-                    minutes.toDuration(DurationUnit.MINUTES) + seconds.toDuration(DurationUnit.SECONDS)
+                    minutes.minutes + seconds.seconds
                 }
             }
 
@@ -1703,7 +1707,7 @@ object DataUtil {
                 val hours = parts[0].toLong()
                 val minutes = parts[1].toLong()
                 val seconds = parts[2].toLong()
-                hours.toDuration(DurationUnit.HOURS) + minutes.toDuration(DurationUnit.MINUTES) + seconds.toDuration(DurationUnit.SECONDS)
+                hours.hours + minutes.minutes + seconds.seconds
             }
             else -> Duration.ZERO
         }

@@ -1,31 +1,30 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.PerformancePlusDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.PPPlus
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.util.BeatmapDetailsUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
-import com.yumu.core.constants.log
-import org.springframework.web.client.HttpClientErrorException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
-//@Service("PP_PLUS_MAP")
+@Service("PP_PLUS_MAP")
 class PPPlusMapService(
-    private val performancePlusService: PerformancePlusService,
+    private val plusDao: PerformancePlusDao,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao
@@ -54,28 +53,22 @@ class PPPlusMapService(
     }
 
     override fun handleMessage(event: MessageEvent, param: PPPlusParam): ServiceCallStatistic {
-        val map = try {
-            beatmapApiService.getBeatmapFromDatabase(param.bid)
-        } catch (_: Exception) {
-            throw NoSuchElementException.Beatmap(param.bid)
-        }
+        val map = beatmapApiService.getBeatmap(param.bid)
 
         // 不支持其他模式
         if (map.mode != OsuMode.OSU) {
             throw UnsupportedOperationException.OnlyStandard()
         }
-        val pp = try {
-            performancePlusService.getMapPerformancePlus(param.bid, param.mods)!!
-        } catch (e: Exception) {
-            if (e is HttpClientErrorException) {
-                log.error { e.responseBodyAsString }
-            } else {
-                log.error { e.message }
-            }
-            throw IllegalStateException.Fetch("PP+")
-        }
 
-        map.addPPPlus(pp, param.mods)
+        val pp = try {
+            plusDao.getBeatmapPerformancePlusMax(map, param.mods)
+        } catch (e: Exception) {
+            log.error(e.message)
+            throw IllegalStateException.Fetch("表现分加（谱面）")
+        } ?: throw NoSuchElementException.BeatmapDownload(map.previewName)
+
+        map.applyDimensions(param.mods)
+
         val dataMap = mapOf(
             "isUser" to false,
             "me" to map,
@@ -89,13 +82,16 @@ class PPPlusMapService(
         return ServiceCallStatistic.build(event, beatmapID = map.beatmapID, beatmapsetID = map.beatmapsetID)
     }
 
-    private fun Beatmap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
-        starRating = pp.difficulty?.total ?: 0.0
+    private fun Beatmap.applyDimensions(mods: List<LazerMod>) {
         if (mods.isNotEmpty()) {
-            cs = CalculateApiImpl.applyCS(cs!!, mods)
-            ar = CalculateApiImpl.applyAR(ar!!, mods)
-            od = CalculateApiImpl.applyOD(od!!, mods, OsuMode.OSU)
-            hp = CalculateApiImpl.applyHP(hp!!, mods)
+            cs = BeatmapDetailsUtil.applyCS(cs!!, mods)
+            ar = BeatmapDetailsUtil.applyAR(ar!!, mods)
+            od = BeatmapDetailsUtil.applyOD(od!!, mods, OsuMode.OSU)
+            hp = BeatmapDetailsUtil.applyHP(hp!!, mods)
         }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(PPPlusMapService::class.java)
     }
 }

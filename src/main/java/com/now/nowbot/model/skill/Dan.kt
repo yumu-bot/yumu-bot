@@ -44,15 +44,15 @@ fun getDanFromBests(
     val key7Set = key7.map { it.beatmapID }.toSet()
 
     val key4Skills = SkillUtil.collectScoreSkills(
-        weightedMap.mapNotNull { (k, v) ->
-            if (k in key4Set) v else null
-        }.take(100)
+        weightedMap.filter { e ->
+            e.key in key4Set
+        }.values
     )
 
     val key7Skills = SkillUtil.collectScoreSkills(
-        weightedMap.mapNotNull { (k, v) ->
-            if (k in key7Set) v else null
-        }.take(100)
+        weightedMap.filter { e ->
+            e.key in key7Set
+        }.values
     )
 
     val key4Rice = getDanResult(key4Skills, DanType.DDMYTHICAL_REFORM)
@@ -63,8 +63,17 @@ fun getDanFromBests(
 
     val key7Ln = getDanResult(key7Skills, DanType.JINJIN_LN)
 
-    val rice = if (key4Rice.level >= key7Rice.level) key4Rice else key7Rice
-    val ln = if (key4Ln.level >= key7Ln.level) key4Ln else key7Ln
+    val rice = if (key4Rice.level + 2.0 >= key7Rice.level) {
+        key4Rice
+    } else {
+        key7Rice
+    }
+
+    val ln = if (key4Ln.level >= key7Ln.level) {
+        key4Ln
+    } else {
+        key7Ln
+    }
 
     return mapOf(
         rice.name to rice,
@@ -84,10 +93,16 @@ fun getDanResult(
     skills: List<Double>,
     danType: DanType = DanType.DDMYTHICAL_REFORM,
 ): DanResult {
-    val dan = danType.getDan()
+    val dan = danType.toDan()
     val sorted = dan.use.mapNotNull { skills.getOrNull(it - 1) }.sortedDescending()
-    val sum = 0.5 * sorted[0] + 0.3 * sorted[1] + 0.2 * sorted[2]
+    val sum = 0.5 * (sorted.getOrNull(0) ?: 0.0) +
+            0.3 * (sorted.getOrNull(1) ?: 0.0) +
+            0.2 * (sorted.getOrNull(2) ?: 0.0)
 
+    return sumToResult(dan, sum)
+}
+
+private fun sumToResult(dan: Dan, sum: Double): DanResult {
     val boundary = dan.boundary
     val grades = dan.grade
     val name = dan.name
@@ -131,7 +146,7 @@ fun getDanResult(
 enum class DanType {
     DDMYTHICAL_REFORM, UNDERJOY_LN, JINJIN_REGULAR, JINJIN_LN;
 
-    fun getDan(): Dan = when (this) {
+    fun toDan(): Dan = when (this) {
         DDMYTHICAL_REFORM -> DDMythicalReformDan()
         UNDERJOY_LN -> UnderjoyLnDan()
         JINJIN_REGULAR -> JinjinRegularDan()

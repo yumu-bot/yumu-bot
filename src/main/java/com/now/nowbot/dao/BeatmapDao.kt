@@ -67,10 +67,7 @@ class BeatmapDao(
     }
 
     fun saveBeatmaps(beatmaps: Collection<Beatmap>) {
-        val exists =
-            beatmapsetRepository.findAllById(beatmaps.map {
-                it.beatmapID.toInt()
-            }).map { it.id }.toSet()
+        val exists = beatmapRepository.findExistingIds(beatmaps.map { it.beatmapID.toInt() }).toSet()
 
         val s = beatmaps.filterNot { it.beatmapsetID.toInt() in exists }.map { fromBeatmapModel(it) }
 
@@ -82,10 +79,7 @@ class BeatmapDao(
     }
 
     fun saveBeatmapsets(beatmapsets: Collection<Beatmapset>) {
-        val exists =
-            beatmapsetRepository.findAllById(beatmapsets.map {
-                it.beatmapsetID.toInt()
-            }).map { it.id }.toSet()
+        val exists = beatmapsetRepository.findExistingIds(beatmapsets.map { it.beatmapsetID.toInt() }).toSet()
 
         val s = beatmapsets.filterNot { it.beatmapsetID.toInt() in exists }.map { fromBeatmapsetModel(it) }
         beatmapsetRepository.saveAll(s)
@@ -101,10 +95,6 @@ class BeatmapDao(
 
     fun getBeatmapsetLite(id: Long): BeatmapsetLite? {
         return beatmapRepository.getBeatmapsetByBid(id)
-    }
-
-    fun getBeatmapsetLite(id: Int): BeatmapsetLite? {
-        return getBeatmapsetLite(id.toLong())
     }
 
     fun getBeatmapHitLength(ids: Collection<Long>): List<BeatmapHitLengthResult> {
@@ -292,7 +282,7 @@ class BeatmapDao(
                     if (it.isBitSet(4)) rulesets.add("mania")
 
                     return@let rulesets
-                } ?: listOf(), Beatmapset.RequiredMeta(
+                }.orEmpty(), Beatmapset.RequiredMeta(
                     x.nominationsRequiredMain ?: 0,
                     x.nominationsRequiredSecondary ?: 0
                 )
@@ -376,7 +366,7 @@ class BeatmapDao(
                     if (it.isBitSet(4)) rulesets.add("mania")
 
                     return@let rulesets
-                } ?: listOf(), Beatmapset.RequiredMeta(
+                }.orEmpty(), Beatmapset.RequiredMeta(
                     x.nominationsRequiredMain ?: 0,
                     x.nominationsRequiredSecondary ?: 0
                 )
@@ -446,7 +436,7 @@ class BeatmapDao(
 
         fun fromBeatmapsetModel(mapSet: Beatmapset): BeatmapsetLite {
             val s = BeatmapsetLite()
-            s.id = Math.toIntExact(mapSet.beatmapsetID)
+            s.id = mapSet.beatmapsetID.toInt()
             s.card = mapSet.covers.card2x
             s.cover = mapSet.covers.cover2x
             s.list = mapSet.covers.list2x

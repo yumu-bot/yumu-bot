@@ -72,7 +72,7 @@ class TodayBPService(
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: TodayBPParam): ServiceCallStatistic? {
-        param.asyncImage()
+        // param.asyncImage()
         val message = param.getMessageChain()
 
         try {
@@ -102,7 +102,7 @@ class TodayBPService(
     }
 
     override fun reply(event: MessageEvent, param: TodayBPParam): MessageChain? {
-        param.asyncImage()
+        // param.asyncImage()
         return param.getMessageChain()
     }
 
@@ -169,9 +169,9 @@ class TodayBPService(
         return TodayBPParam(user, historyUser, mode.data!!, dataMap, isToday, isCompact)
     }
 
-    fun TodayBPParam.asyncImage() {
-        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
-    }
+//    fun TodayBPParam.asyncImage() {
+//        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+//    }
 
     fun TodayBPParam.getMessageChain(): MessageChain {
         return try {

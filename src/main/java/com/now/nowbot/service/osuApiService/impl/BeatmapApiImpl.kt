@@ -18,6 +18,8 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import io.ktor.util.collections.ConcurrentSet
+import io.netty.channel.unix.Errors
 import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -39,10 +41,15 @@ import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
+import kotlin.collections.chunked
+import kotlin.collections.map
+import kotlin.collections.set
 import kotlin.math.min
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class BeatmapApiImpl(
@@ -121,16 +128,37 @@ class BeatmapApiImpl(
         }
     }
 
+
+    override fun deleteBeatmapFileFromDirectory(bid: Long): Boolean  {
+        val path = osuDir.resolve("$bid.osu")
+
+        return runCatching {
+            Files.deleteIfExists(path)
+        }.isSuccess
+    }
+
     override fun hasBeatmapFileFromDirectory(bid: Long): Boolean {
         val path = osuDir.resolve("$bid.osu")
-        return Files.isRegularFile(path)
+
+        if (!Files.isRegularFile(path)) return false
+
+        return try {
+            if (Files.size(path) < 100) {
+                log.info("谱面实现：检查到僵尸文件 $bid.osu，删除中...")
+                deleteBeatmapFileFromDirectory(bid)
+                false
+            } else {
+                true
+            }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun getBeatmapFileFromDirectory(bid: Long): String? {
-        val path = osuDir.resolve("$bid.osu")
-
         if (hasBeatmapFileFromDirectory(bid)) {
             try {
+                val path = osuDir.resolve("$bid.osu")
                 return Files.readString(path, StandardCharsets.UTF_8)
             } catch (e: IOException) {
                 log.error("osu 谱面 API：读取本地谱面文件失败: ", e)
@@ -200,7 +228,49 @@ class BeatmapApiImpl(
         return getBeatmapFileString(bid)?.toByteArray(StandardCharsets.UTF_8)
     }
 
-    private fun downloadBeatmapFileString(bid: Long): String? {
+    override fun downloadBeatmapFile(bids: Collection<Long>): List<Long> {
+        // 1. 区分本地和在线
+        val exists = bids.filter { hasBeatmapFileFromDirectory(it) }.toSet()
+        val notExists = bids.minus(exists)
+
+        val downloaded = ConcurrentSet<Long>()
+
+        // 2. 分批下载缺失的谱面
+        notExists.chunked(15).forEach { ids ->
+            val actions = ids.map { id ->
+                Callable {
+                    // 返回 Pair，方便后面 toMap
+                    id to getBeatmapFileStringFromOutside(id)
+                }
+            }
+
+            // 每一组给 30 秒，防止网络波动
+            val result = AsyncMethodExecutor.awaitCallableExecute(actions, 30.seconds)
+
+            result.forEach { (id, fileString) ->
+                if (!fileString.isNullOrEmpty()) {
+                    val path = osuDir.resolve("$id.osu")
+
+                    runCatching {
+                        Files.writeString(path, fileString)
+                        downloaded.add(id)
+                    }.onFailure {
+                        log.warn("谱面实现：写谱面 $id 时失败。")
+                    }
+                } else {
+                    log.warn("谱面实现：谱面 $id 下载返回内容为空")
+                }
+            }
+        }
+
+        val all = exists + downloaded
+
+        return bids.filter {
+            it in all
+        }
+    }
+
+    private fun getBeatmapFileStringFromOutside(bid: Long): String? {
         var str: String? = try {
             getBeatmapFileFromLocalService(bid)
         } catch (_: Exception) {
@@ -231,7 +301,7 @@ class BeatmapApiImpl(
         if (!str.isNullOrBlank()) {
             return str
         } else {
-            str = downloadBeatmapFileString(bid)
+            str = getBeatmapFileStringFromOutside(bid)
         }
 
         if (!str.isNullOrBlank()) {
@@ -429,7 +499,7 @@ class BeatmapApiImpl(
 
     override fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset> {
         val map = sets.associate { set ->
-            set.beatmapsetID to (set.beatmaps ?: listOf()).map { b -> b.beatmapID }
+            set.beatmapsetID to (set.beatmaps.orEmpty()).map { b -> b.beatmapID }
         }
 
         val bids = map.flatMap { it.value }

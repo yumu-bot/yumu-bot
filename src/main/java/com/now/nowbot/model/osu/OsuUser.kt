@@ -403,8 +403,10 @@ open class OsuUser {
     var userAchievementsCount: Int = 0
         get() = if (field > 0) {
             field
+        } else if (userAchievements != null) {
+            userAchievements!!.size
         } else {
-            userAchievements?.size ?: 0
+            0
         }
 
     data class UserAchievement(

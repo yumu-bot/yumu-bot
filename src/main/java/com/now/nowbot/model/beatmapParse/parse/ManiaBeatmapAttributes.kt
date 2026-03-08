@@ -15,6 +15,8 @@ class ManiaBeatmapAttributes(reader: BufferedReader, general: BeatmapGeneral?) :
 
     companion object {
         private fun getColumn(x: Int, key: Int): Int {
+            if (key <= 0) return 0
+            
             return (x * key / 512.0).toInt().coerceIn(0 ..< key)
         }
     }

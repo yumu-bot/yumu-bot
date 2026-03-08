@@ -203,12 +203,11 @@ class ExploreService(
                 val conditions = DataUtil.getConditions(any, MostPlayedBeatmapFilter.entries.map { it.regex })
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
-                val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+                val rangeInConditions = conditions.lastOrNull().orEmpty()
                 val hasRangeInConditions = rangeInConditions.isNotEmpty()
                 val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
                 val before: Int
-                val after: Int
 
                 // 此时这个字段用于筛选模式
                 val mode = OsuMode.getMode(matcher.group(FLAG_TYPE))
@@ -217,22 +216,20 @@ class ExploreService(
                     // 这个数量级肯定很大，所以减小查询
                     if (page <= 1) {
                         before = 0
-                        after = 99
                         beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 20)
                     } else if (page <= 50) {
                         before = 0
-                        after = 50
                         beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 1000)
                     } else {
                         before = (page - 1) / 50
-                        after = 0
                         beatmapApiService.getUserMostPlayedBeatmaps(user.userID, before * 1000, before * 1000 + 1000)
                     }
                 } else {
                     before = 0
-                    after = 0
                     beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 2000)
                 }
+
+                val page2 = rangeInConditions.firstOrNull()?.toIntOrNull() ?: page
 
                 val filter = MostPlayedBeatmapFilter.filterMostPlayBeatmaps(most, conditions)
                     .filter { it.mode.isEqualOrDefault(mode) }
@@ -240,38 +237,42 @@ class ExploreService(
                 if (filter.isEmpty()) {
                     throw NoSuchElementException.MostPlayed()
                 }
+                // 1. 计算相对页码
+                // 如果 page=51, before=1, 那么相对于当前 filter 集合，它是第 (51-1)%50 + 1 = 1 页
+                val relativePage = if (before > 0) ((page2 - 1) % 50) + 1 else page2
 
-                val page2 = rangeInConditions.firstOrNull()?.toIntOrNull() ?: page
+                // 2. 调用简单的分页，不需要传 before/after 参数（传 0）
+                // 因为 API 已经帮你做好了物理截取
+                val (split, _, maxPageInBlock) = DataUtil.splitPage(filter, relativePage, 20, 0, 0)
 
-                val (split, _, maxPage) = DataUtil.splitPage(filter, page2, 20, before * 20, after * 20)
+                // 3. 计算真实展示的总页数
+                // 基础页数 + API 跳过的块所占的页数
+                val actualMaxPage = maxPageInBlock + (before * 50)
 
-                return MostPlayedParam(user, split, page, maxPage)
+                // 注意：这里的 page 使用原始请求的 page 或 page2，保持 UI 连续
+                return MostPlayedParam(user, split, page2, actualMaxPage)
             }
 
             else -> {
                 val conditions = DataUtil.getConditions(any, BeatmapsetFilter.entries.map { it.regex })
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
-                val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+                val rangeInConditions = conditions.lastOrNull().orEmpty()
                 val hasRangeInConditions = rangeInConditions.isNotEmpty()
                 val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
                 val before: Int
-                val after: Int
 
                 val mine = if (hasRangeInConditions.not() && hasCondition.not()) {
                     if (page <= 50) {
                         before = 0
-                        after = 50
                         beatmapApiService.getUserBeatmapset(user.userID, type.query, 0, 750)
                     } else {
                         before = (page - 1) / 50
-                        after = 0
                         beatmapApiService.getUserBeatmapset(user.userID, type.query, before * 750, before * 750 + 750)
                     }
                 } else {
                     before = 0
-                    after = 0
                     beatmapApiService.getUserBeatmapset(user.userID, type.query, 0, 1500)
                 }
 
@@ -283,9 +284,30 @@ class ExploreService(
 
                 val page2 = rangeInConditions.firstOrNull()?.toIntOrNull() ?: page
 
-                val (split, _, maxPage) = DataUtil.splitPage(filter, page2, 15, before * 15, after * 15)
+                // 计算当前页在当前数据块（Block）中的相对位置
+                // 例如：page=51, before=1(块偏移), 每块50页。那么在当前块里它是第 1 页。
+                val relativePage = if (before > 0) {
+                    ((page2 - 1) % 50) + 1
+                } else {
+                    page2
+                }
 
-                return MyBeatmapsetParam(user, split.sortBeatmapDiff(), page, maxPage)
+                // 这里的 before 和 after 建议直接传 0，因为 API 已经帮你截取好了范围
+                // 我们只需要在 filter 后的结果里进行逻辑分页
+                val (split, _, maxPage) = DataUtil.splitPage(
+                    collection = filter,
+                    page = relativePage,
+                    maxPerPage = 15
+                )
+
+                // 计算真实的总页数
+                // 基础页数 + API 预载的前置页数
+                val actualMaxPage = maxPage + (before * 50)
+
+                // 真实的当前页码
+                val actualCurrentPage = page2
+
+                return MyBeatmapsetParam(user, split.sortBeatmapDiff(), actualCurrentPage, actualMaxPage)
             }
         }
     }
@@ -307,7 +329,7 @@ class ExploreService(
         val conditions = DataUtil.getConditions(any, SearchBeatmapsetFilter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val rangeInConditions = conditions.lastOrNull().orEmpty()
         val hasRangeInConditions = rangeInConditions.isNotEmpty()
         val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
@@ -366,8 +388,8 @@ class ExploreService(
                 fun getType(string: String?): BeatmapType {
                     return when(string?.dropWhile { it.isWhitespace() }) {
                         "f", "fa", "fav", "favor", "favour", "favourite", "favorite", "收", "藏", "收藏" -> FAVOURITE
-                        "g", "gr", "gra", "grave", "graveyard", "坟", "坟场" -> GRAVEYARD
-                        "u", "gu", "gue", "guest", "map", "客", "客串" -> GUEST
+                        "v", "d", "y", "died", "grv", "gr", "gra", "grave", "graveyard", "坟", "坟场" -> GRAVEYARD
+                        "g", "u", "gu", "gue", "guest", "map", "客", "客串" -> GUEST
                         "l", "lv", "lvd", "love", "loved", "心", "心选", "社区喜爱" -> LOVED
                         "m", "mp", "pm", "mop", "most", "play", "played", "mostplay", "mostplayed" -> MOST_PLAYED
                         "n", "nm", "nom", "nominate", "nominated", "点", "提名" -> NOMINATED

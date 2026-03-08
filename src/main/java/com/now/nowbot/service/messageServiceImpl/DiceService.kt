@@ -1055,7 +1055,7 @@ import kotlin.text.trim
 
         private val STILL_CN = "(还|仍然|依旧)不?(?=([是要能]|可以))".toRegex()
 
-        private val WE_CN = "我(?=们)?".toRegex()
+        private val WE_CN = "我(?!(的(世界|祖国)))们?".toRegex()
 
         // 阿耶来唻了价也罗给的般则连不呸哪哇 不匹配，删去其他语气助词
         private val AUXILIARY_WORD = "[啊呃欸呀哟欤呕噢呦嘢哦吧呗啵啦嘞哩咧咯啰喽吗嘛嚜呢呐呵兮噻哉矣焉]|[罢否乎][?？!！。.\\s]?$".toRegex()

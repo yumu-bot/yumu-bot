@@ -16,6 +16,8 @@ import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Service("REVOKE")
 class RevokeService(private val botContainer: BotContainer): MessageService<RevokeService.RevokeParam> {
@@ -91,11 +93,12 @@ class RevokeService(private val botContainer: BotContainer): MessageService<Revo
             }
         }
 
-        val now = System.currentTimeMillis() / 1000L
+        val now = System.currentTimeMillis().milliseconds
 
-        val time = response.time?.toLong() ?: now
+        val time = response.time?.seconds ?: now
 
-        if (now - time > 120) {
+        // 如果不是成员，可以无视 2 分钟的限制
+        if (now - time > 120.seconds && botRole == Role.MEMBER) {
             throw UnsupportedOperationException.BotOperation.Overtime()
         }
 
@@ -109,8 +112,11 @@ class RevokeService(private val botContainer: BotContainer): MessageService<Revo
         param: RevokeParam
     ): ServiceCallStatistic? {
 
-        val operation = param.bot.deleteMsg(param.messageID.toInt())
-            ?: throw IllegalStateException.Revoke(param.messageID.toString())
+        val operation = runCatching {
+            param.bot.deleteMsg(param.messageID.toInt())!!
+        }.getOrElse {
+            throw IllegalStateException.Revoke(param.messageID.toString())
+        }
 
         log.info("""
             机器人 ${param.bot.selfId} 撤回消息：ID ${param.messageID}。

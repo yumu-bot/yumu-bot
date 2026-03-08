@@ -4,7 +4,11 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
-import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import kotlin.time.Duration.Companion.days
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class BindUser {
@@ -13,26 +17,26 @@ class BindUser {
      *
      * @return base
      */
-    @JvmField var baseID: Long? = null
+    var baseID: Long? = null
 
-    @JvmField var username: String = ""
+    var username: String = ""
 
-    @JvmField var userID: Long = 0
+    var userID: Long = 0
 
     /**
      * 当前令牌
      */
-    @JvmField var accessToken: String? = null
+    var accessToken: String? = null
 
     /**
      * 刷新令牌
      */
-    @JvmField var refreshToken: String? = null
+    var refreshToken: String? = null
 
     /**
      * 过期时间戳
      */
-    @JvmField var time: Long? = null
+    var time: Long? = null
 
     /**
      * 主模式
@@ -43,12 +47,17 @@ class BindUser {
         setTimeToNow()
     }
 
+    constructor(refreshToken: String?) {
+        this.refreshToken = refreshToken
+        setTimeToNow()
+    }
+
     constructor(base: Long) : this() {
         baseID = base
     }
 
-    constructor(osuID: Long, name: String) {
-        this.userID = osuID
+    constructor(userID: Long, name: String) {
+        this.userID = userID
         this.username = name
         mode = OsuMode.DEFAULT
         time = 0L
@@ -58,9 +67,16 @@ class BindUser {
     constructor(user: OsuUser) {
         this.userID = user.userID
         this.username = user.username
-        this.mode = user.defaultOsuMode
+        this.mode = user.currentOsuMode
         time = 0L
         setTimeToNow()
+    }
+
+    constructor(userID: Long, accessToken: String, refreshToken: String, time: Long) {
+        this.userID = userID
+        this.accessToken = accessToken
+        this.refreshToken = refreshToken
+        this.time = time
     }
 
     /**
@@ -81,17 +97,21 @@ class BindUser {
 
     /**
      * - true: 没有过期
-     * - false: 可能过期，但可能可以用（三天之内撒了你
+     * - false: 可能过期，但可能可以用（6天之内
      * - null: 无效，或是已经过期很久
      */
     val isTokenAvailable: Boolean?
         get() {
-            val now = System.currentTimeMillis()
+            val tokenTime = time ?: return null // 如果 time 为 null 直接无效
+            if (!hasToken) return null
 
-            return if (!hasToken || time == null || now >= (time!! + Duration.ofDays(6).toSeconds())) {
-                null
-            } else {
-                now < time!!
+            val now = System.currentTimeMillis()
+            val gracePeriodMs = 6.days.inWholeMilliseconds // 确保单位统一为毫秒
+
+            return when {
+                now < tokenTime -> true                    // 还没过期
+                now < (tokenTime + gracePeriodMs) -> false // 已过期，但在 6 天宽限期内
+                else -> null                               // 彻底过期或无效
             }
         }
 
@@ -104,7 +124,7 @@ class BindUser {
         if (this === other) return true
         if (other !is BindUser) return false
 
-        return username.equals(other.username, ignoreCase = true) || userID == other.userID
+        return userID == other.userID || username.equals(other.username, ignoreCase = true)
     }
 
     override fun hashCode(): Int {
@@ -114,15 +134,23 @@ class BindUser {
     }
 
     override fun toString(): String {
-        return "BindUser(baseID=$baseID, username='$username', userID=$userID, accessToken=$accessToken, refreshToken=$refreshToken, time=$time, mode=$mode, hasToken=$hasToken, isTokenAvailable=$isTokenAvailable, isExpired=$isExpired)"
+        return "BindUser(baseID=$baseID, username='$username', userID=$userID, accessToken=${accessToken.take10()}, refreshToken=${refreshToken.take10()}, time=${time.toTime()}, mode=$mode, hasToken=$hasToken, isTokenAvailable=$isTokenAvailable, isExpired=$isExpired)"
     }
 
-    companion object {
-        @JvmStatic fun create(refreshToken: String?): BindUser {
-            val user = BindUser()
-            user.refreshToken = refreshToken
-            user.setTimeToNow()
-            return user
+    private fun Long?.toTime(): String? {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+        return this?.let { t ->
+            LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(t),
+                ZoneId.systemDefault()
+            ).toString()
+        }?.format(formatter)
+    }
+
+    private fun String?.take10(): String? {
+        return this?.let { str ->
+            str.take(10) + "..."
         }
     }
 }

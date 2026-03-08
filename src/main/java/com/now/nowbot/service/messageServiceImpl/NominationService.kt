@@ -230,7 +230,7 @@ import kotlin.math.floor
                     }
                 }
 
-                val bs = s.beatmaps ?: listOf()
+                val bs = s.beatmaps.orEmpty()
 
                 val stars = bs.map { it.starRating }
 

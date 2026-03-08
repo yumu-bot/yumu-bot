@@ -22,9 +22,11 @@ interface OsuUserApiService {
 
     @Throws(RestClientResponseException::class) fun getOauthUrl(state: String, full: Boolean): String
 
-    @Throws(BindException::class) fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean = false): BindUser
+    @Throws(BindException::class)
+    fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean = false): BindUser
 
-    @CanIgnoreReturnValue @Throws(NetworkException.UserException::class) fun getUserTokenOrBotToken(user: BindUser): String?
+    @CanIgnoreReturnValue
+    fun getUserTokenOrBotToken(user: BindUser): String?
 
     @Throws(RestClientResponseException::class) fun refreshUserTokenFirst(user: BindUser)
 
@@ -79,7 +81,7 @@ interface OsuUserApiService {
     fun asyncDownloadAvatar(users: List<MicroUser>)
 
     fun asyncDownloadAvatarFromBeatmapsets(beatmapsets: List<Beatmapset>) {
-        val set = beatmapsets.flatMap { it.beatmaps ?: listOf() }.mapNotNull { it.user }.toSet()
+        val set = beatmapsets.flatMap { it.beatmaps.orEmpty() }.mapNotNull { it.user }.toSet()
 
         asyncDownloadAvatar(set.map { o -> MicroUser().apply { this.avatarUrl = o.avatarUrl } })
     }

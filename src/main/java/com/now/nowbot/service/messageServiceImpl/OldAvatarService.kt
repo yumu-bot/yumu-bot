@@ -4,7 +4,6 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.osu.OsuUser.Companion.toMicroUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -33,8 +32,7 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.regex.Matcher
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 @Service("OLD_AVATAR")
 class OldAvatarService(
@@ -270,7 +268,7 @@ class OldAvatarService(
                 throw IllegalStateException.Fetch("玩家名")
             }
 
-            userApiService.asyncDownloadAvatar(users.map { it.toMicroUser() })
+            // userApiService.asyncDownloadAvatar(users.map { it.toMicroUser() })
 
             return users
         }
@@ -291,7 +289,7 @@ class OldAvatarService(
                         Callable {
                             imageService.getPanel(mapOf("user" to u), panel)
                         }
-                    }, (30L + users.size / 2).toDuration(DurationUnit.SECONDS)
+                    }, (30L + users.size / 2).seconds
                 )
             } catch (_: ExecutionException) {
                 throw NetworkException.RenderModuleException.BadGateway()

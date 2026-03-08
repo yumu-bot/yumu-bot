@@ -199,9 +199,9 @@ class MaiVersionScoreService(
     private fun getSongList(plateName: String): List<MaiSong> {
         val plate = maiDao.getLxMaiPlate(plateName) ?: throw NoSuchElementException.MaiCollection()
 
-        val mai = (plate.required ?: listOf()).flatMap { collection ->
+        val mai = (plate.required.orEmpty()).flatMap { collection ->
             val diffs = collection.difficulties ?: emptySet()
-            collection.songs?.map { it to diffs } ?: emptyList()
+            collection.songs?.map { it to diffs }.orEmpty()
         }
             .groupBy { (song, _) -> song.songID to song.type }
             .mapNotNull { (identity, pairs) ->

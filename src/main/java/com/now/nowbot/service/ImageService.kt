@@ -216,7 +216,7 @@ class ImageService(
 
         // 在这里封好可能出现的（已知原因的）错误，确保错误不会传递下去
         return try {
-            request.retrieve().body<ByteArray>()!!
+            request.retrieve().body<ByteArray>()
         } catch (e: Throwable) {
             if (e is BadRequest || e.cause is BadRequest) {
                 throw NetworkException.RenderModuleException.BadRequest()

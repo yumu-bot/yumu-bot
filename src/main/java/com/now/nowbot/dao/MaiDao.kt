@@ -100,8 +100,8 @@ class MaiDao(
 
         // 1. 收集本次 API 数据中所有的 songID
         val allSongIDs = collections
-            .flatMap { it.required ?: emptyList() }
-            .flatMap { it.songs ?: emptyList() }
+            .flatMap { it.required.orEmpty() }
+            .flatMap { it.songs.orEmpty() }
             .map { LxMaiCollectionRequiredSongID(it.songID, it.type) }
             .distinct()
 

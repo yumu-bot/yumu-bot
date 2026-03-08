@@ -364,7 +364,7 @@ import kotlin.math.max
             val mostRecentRankedGuestDiff = result.sortedByDescending { it.rankedDate?.toEpochSecond() }
                 .find { it.hasLeaderBoard && user.userID != it.creatorID }
 
-            val beatmaps = result.flatMap { it.beatmaps ?: emptyList() }
+            val beatmaps = result.flatMap { it.beatmaps.orEmpty() }
 
             val diffArr = IntArray(8)
 

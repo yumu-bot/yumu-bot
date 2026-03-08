@@ -12,14 +12,16 @@ class OsuFile @Throws(IOException::class) constructor(private val reader: Buffer
 
     private val general: BeatmapGeneral
 
+    private val prefix = "osu file format v"
+
     val mode: OsuMode
         get() = general.mode ?: OsuMode.OSU
 
     init {
-        val versionStr = reader.readLine()
+        val versionStr = reader.readLine()?.replace("\uFEFF", "")?.trimStart()
         // 修正：确保 versionStr 不为 null 且正确 trim
-        val versionInt = if (versionStr != null && versionStr.trim().startsWith("osu file format v")) {
-            versionStr.substring(17).trim().toInt()
+        val versionInt = if (versionStr != null && versionStr.startsWith(prefix)) {
+            versionStr.substringAfter(prefix).toIntOrNull() ?: 14
         } else {
             throw RuntimeException("""
                 osu 谱面解析：文件无效。

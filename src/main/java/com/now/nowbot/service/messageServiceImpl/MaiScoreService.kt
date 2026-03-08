@@ -129,7 +129,7 @@ import java.util.regex.Matcher
         val conditions = DataUtil.getConditions(any, MaiScoreFilter.entries.map { it.regex },
             endPattern = MaiScoreFilter.RANGE.regex.pattern)
 
-        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val rangeInConditions = conditions.lastOrNull().orEmpty()
         val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
         val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()

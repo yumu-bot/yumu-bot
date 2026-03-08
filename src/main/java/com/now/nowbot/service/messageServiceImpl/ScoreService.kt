@@ -36,8 +36,7 @@ import java.time.LocalDateTime
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 @Service("SCORE") class ScoreService(
     private val scoreApiService: OsuScoreApiService,
@@ -392,7 +391,7 @@ import kotlin.time.toDuration
 
         val set = beatmapApiService.getBeatmapset(map.beatmapsetID)
 
-        val maps = (set.beatmaps ?: listOf()).dropWhile { it.beatmapID == map.beatmapID }
+        val maps = (set.beatmaps.orEmpty()).dropWhile { it.beatmapID == map.beatmapID }
 
         if (maps.size >= 16) {
             receipt.recallIn(10 * 1000)
@@ -421,7 +420,7 @@ import kotlin.time.toDuration
             }
 
             val b4Scores = AsyncMethodExecutor
-                .awaitListCallableExecute(works)
+                .awaitCallableExecute(works)
                 .mapNotNull { it?.score }
 
             count += b4.size
@@ -431,7 +430,7 @@ import kotlin.time.toDuration
                 break
             } else if (count < beatmaps.size) {
                 // 避免大量查询卡爆
-                Thread.sleep(3.toDuration(DurationUnit.SECONDS).inWholeMilliseconds)
+                Thread.sleep(3.seconds.inWholeMilliseconds)
             }
         }
 
@@ -481,9 +480,9 @@ import kotlin.time.toDuration
     }
 
 
-    private fun ScoreParam.asyncDownloadBackground() {
-        scoreApiService.asyncDownloadBackgroundFromScores(map, listOf(CoverType.COVER, CoverType.LIST))
-    }
+//    private fun ScoreParam.asyncDownloadBackground() {
+//        scoreApiService.asyncDownloadBackgroundFromScores(map, listOf(CoverType.COVER, CoverType.LIST))
+//    }
 
     private fun ScoreParam.getMessageChain(): MessageChain {
         return try {
@@ -491,7 +490,7 @@ import kotlin.time.toDuration
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                 calculateApiService.applyStarToScores(scores)
 
-                asyncDownloadBackground()
+                // asyncDownloadBackground()
 
                 val body = mapOf(
                     "user" to user,
@@ -508,7 +507,7 @@ import kotlin.time.toDuration
 
                 val e5Param = ScorePRService.getE5Param(user, null, score, map, null, "S", beatmapApiService, calculateApiService)
 
-                asyncDownloadBackground()
+                // asyncDownloadBackground()
 
                 MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
             }

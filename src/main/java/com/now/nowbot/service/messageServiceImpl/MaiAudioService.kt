@@ -16,8 +16,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 @Service("MAI_AUDIO")
 class MaiAudioService(
@@ -92,7 +91,7 @@ class MaiAudioService(
     }
 
     companion object {
-        private val tokenBucketRateLimiter = TokenBucketRateLimiter(3, 30.toDuration(DurationUnit.MINUTES))
+        private val tokenBucketRateLimiter = TokenBucketRateLimiter(3, 30.seconds)
 
         private fun getVoiceInfo(songs: List<MaiSong>): String {
             if (songs.isEmpty()) return "没有需要播放的舞萌歌曲。"

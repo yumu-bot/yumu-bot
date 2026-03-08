@@ -541,13 +541,19 @@ class OsuApiBaseService(
         CLOSED, OPEN, // HALF_OPEN
     }
 
-    fun refreshUserToken(user: BindUser, firstBind: Boolean): String {
+    fun syncUserToken(user: BindUser, isFirstTime: Boolean): String {
+        val token = user.refreshToken
+
+        if (token.isNullOrBlank()) {
+            throw NetworkException.UserException.Unauthorized()
+        }
+
         val b = mapOf(
             "client_id" to oauthID.toString(),
             "client_secret" to oauthToken,
             "redirect_uri" to redirectUrl,
-            "grant_type" to if (firstBind) "authorization_code" else "refresh_token",
-            (if (firstBind) "code" else "refresh_token") to user.refreshToken!!
+            "grant_type" to if (isFirstTime) "authorization_code" else "refresh_token",
+            (if (isFirstTime) "code" else "refresh_token") to token
         )
 
         val body = MultiValueMap.fromSingleValue(b)
@@ -575,7 +581,7 @@ class OsuApiBaseService(
                 }
 
                 ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
-                    bindDao.backupBind(user.userID)
+                    bindDao.downgradeBind(user.userID)
                     log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
                     throw NetworkException.UserException.Unauthorized()
                 }
@@ -607,7 +613,7 @@ class OsuApiBaseService(
                 e.findCauseOfType<java.net.SocketException>() != null -> {
                     throw NetworkException.UserException.GatewayTimeout()
                 }
-                
+
                 else -> {
                     throw NetworkException.UserException.Undefined(e)
                 }
@@ -624,15 +630,14 @@ class OsuApiBaseService(
         user.refreshToken = refreshToken
         time = user.setTimeToAfter(s["expires_in"].asLong() * 1000)
 
-        if (firstBind) {
-            bindDao.saveBind(BindUser().apply {
-                this.userID = user.userID
-                this.accessToken = accessToken
-                this.refreshToken = refreshToken
-                this.time = time
-            })
+        val result = BindUser(user.userID, accessToken, refreshToken, time)
+
+        if (isFirstTime) {
+            // 不要在这里绑定！这样会导致已经绑定过的玩家数据库里又多一份绑定信息
+            // 并且，这里的 userID 一定是 0
+            // bindDao.saveBind(result)
         } else {
-            bindDao.updateToken(user.userID, accessToken, refreshToken, time)
+            bindDao.updateToken(result)
         }
 
         return accessToken

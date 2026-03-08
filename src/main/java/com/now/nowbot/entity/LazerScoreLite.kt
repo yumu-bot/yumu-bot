@@ -15,10 +15,8 @@ import java.time.OffsetDateTime
 
 @Entity
 @Table(indexes = [
-    Index(name = "s_uid", columnList = "user_id"),
-    Index(name = "s_bid", columnList = "beatmap_id"),
-    Index(name = "s_time", columnList = "time"),
-    Index(name = "s_mode", columnList = "mode"),
+    Index(name = "idx_lazer_user_query", columnList = "user_id, mode, time DESC"),
+    Index(name = "idx_lazer_beatmap_user_query", columnList = "beatmap_id, user_id, mode"),
 ])
 class LazerScoreLite(
     @Id
@@ -79,8 +77,6 @@ class LazerScoreLite(
         rankToByte(score.rank)
     )
 
-
-
     fun toLazerScore(): LazerScore {
         val lite = this
 
@@ -119,7 +115,7 @@ class LazerScoreLite(
         }
 
         return LazerScore().apply {
-            this.isLazer = lite.legacyScoreId == 0L
+            this.buildID = if (lite.legacyScore == 0) 1 else null
             this.scoreID = lite.id
             this.legacyScoreID = lite.legacyScoreId
             this.userID = lite.userId
@@ -178,28 +174,21 @@ class LazerScoreLite(
 @IdClass(ScoreStatisticLite.ScoreStatisticKey::class)
 class ScoreStatisticLite(
     @Id
-    var id: Long,
+    var id: Long = 0,
 
     @Id
     @JdbcTypeCode(Types.SMALLINT)
     @Column(name = "mode")
     // -1: score, 0-3: osu, taiko, catch, mania
-    var status: Int,
+    @Column(name = "mode", columnDefinition = "int2")
+    var mode: Byte = -1,
 
     @Type(JsonBinaryType::class)
-    @Column(columnDefinition = "json", nullable = false)
-    var data: String
+    @Column(name = "data", columnDefinition = "jsonb", nullable = false)
+    var data: String = ""
 ) {
-    fun getMode(): OsuMode?  = when(status){
-        0 -> OsuMode.OSU
-        1 -> OsuMode.TAIKO
-        2 -> OsuMode.CATCH
-        3 -> OsuMode.MANIA
-        else -> null
-    }
-
     fun setStatus(score: LazerScore) {
-        when(this.status) {
+        when(this.mode.toInt()) {
             -1 -> score.statistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
             else -> score.maximumStatistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
         }
@@ -208,7 +197,7 @@ class ScoreStatisticLite(
     companion object {
         fun createByBeatmap(score: LazerScore) = ScoreStatisticLite(
             score.beatmapID,
-            score.mode.modeValue.toInt(),
+            score.mode.modeValue,
             score.maximumStatistics.toShortJson()
         )
 
@@ -220,10 +209,11 @@ class ScoreStatisticLite(
     }
 
     data class ScoreStatisticKey(
-        var id: Long,
-        var status: Int,
+        var id: Long = 0L,
+        var mode: Byte = -1,
     ) : Serializable {
-        constructor() : this(0, -1)
+        @Suppress("UNUSED")
+        constructor() : this(0L, -1)
     }
 }
 

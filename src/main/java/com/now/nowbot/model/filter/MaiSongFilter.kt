@@ -198,7 +198,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                 TITLE -> fit(operator, it.title, str) to default
                 ALIASES -> {
-                    val a = it.aliases ?: listOf()
+                    val a = it.aliases.orEmpty()
 
                     a.map { alias ->
                         fit(operator, alias, str)
@@ -339,6 +339,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
         /**
          * 如果 collection 为空，则返回 fit。否则，返回它们之间的交集
+         * 应当只在双方都有具体难度约束时才取交集；如果其中一方是“全曲匹配（空集）”，则保留另一方的约束。
          */
         private fun getOrIntersect(collection: List<Pair<MaiSong, List<MaiDifficulty>>>, fit: List<Pair<MaiSong, List<MaiDifficulty>>>): List<Pair<MaiSong, List<MaiDifficulty>>> {
             if (collection.isEmpty()) {
@@ -355,12 +356,16 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                 return intersection.map { pair ->
                     val new = set[pair.first.songID]
+                    val old = pair.second
 
-                    if (new != null) {
-                        pair.first to new.toSet().intersect(pair.second.toSet()).toList()
-                    } else {
-                        pair
+                    val resultDiff = when {
+                        new == null -> old // 理论上不会发生，因为 intersection 已经过滤了 ID
+                        new.isEmpty() -> old // 如果新条件匹配全难度，保留旧约束
+                        old.isEmpty() -> new // 如果旧条件匹配全难度，采用新约束
+                        else -> old.toSet().intersect(new.toSet()).toList() // 都有约束，取交集
                     }
+
+                    pair.first to resultDiff
                 }
             }
         }
@@ -384,8 +389,8 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     val song = collectionMap[songID]?.first ?: fitMap[songID]!!.first
 
                     // 合并难度（取并集）
-                    val difficulties1 = collectionMap[songID]?.second ?: emptyList()
-                    val difficulties2 = fitMap[songID]?.second ?: emptyList()
+                    val difficulties1 = collectionMap[songID]?.second.orEmpty()
+                    val difficulties2 = fitMap[songID]?.second.orEmpty()
                     val mergedDifficulties = (difficulties1.toSet() + difficulties2.toSet()).toList()
 
                     song to mergedDifficulties

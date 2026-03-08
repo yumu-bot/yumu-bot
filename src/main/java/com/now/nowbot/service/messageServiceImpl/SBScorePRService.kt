@@ -127,7 +127,7 @@ class SBScorePRService(
         val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val rangeInConditions = conditions.lastOrNull().orEmpty()
         val hasRangeInConditions = rangeInConditions.isNotEmpty()
         val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 

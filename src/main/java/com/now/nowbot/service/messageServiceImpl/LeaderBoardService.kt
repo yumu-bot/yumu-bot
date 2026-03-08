@@ -187,7 +187,7 @@ class LeaderBoardService(
 
         val ss = scores.drop(start - 1).take(end - start + 1)
 
-        userApiService.asyncDownloadAvatar(ss.map { it.user })
+        // userApiService.asyncDownloadAvatar(ss.map { it.user })
 
         val image = if (ss.isEmpty()) {
             throw IllegalArgumentException.WrongException.Range()

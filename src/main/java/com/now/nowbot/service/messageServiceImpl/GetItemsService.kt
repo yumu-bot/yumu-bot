@@ -9,19 +9,23 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.BeatmapDetailsUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_MOD
+import com.now.nowbot.util.command.REG_SEPERATOR
 import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlin.text.ifEmpty
+import kotlin.text.lowercase
 import kotlin.text.split
 import kotlin.text.trim
 
@@ -29,6 +33,7 @@ import kotlin.text.trim
 class GetItemsService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
+    private val scoreApiService: OsuScoreApiService,
 ) : MessageService<GetItemsService.GetItemsParam> {
 
     abstract class GetItemsParam
@@ -39,7 +44,13 @@ class GetItemsService(
     ): GetItemsParam()
 
     data class NewbieBeatmapParam(
-        val beatmapID: Long,
+        val beatmapIDs: List<Long>,
+        val mode: OsuMode,
+        val mods: List<LazerMod>
+    ): GetItemsParam()
+
+    data class NewbieBeatmapsetParam(
+        val beatmapsetIDs: List<Long>,
         val mode: OsuMode,
         val mods: List<LazerMod>
     ): GetItemsParam()
@@ -68,10 +79,18 @@ class GetItemsService(
 
     private fun getNewbieBeatmapParam(matcher: Matcher): NewbieBeatmapParam {
         val mode = InstructionUtil.getMode(matcher)
-        val bid = matcher.group(FLAG_ID).toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
+        val bids = matcher.group(FLAG_ID).parseToLongList()
         val mod = InstructionUtil.getMod(matcher)
 
-        return NewbieBeatmapParam(bid, mode.data!!, mod)
+        return NewbieBeatmapParam(bids, mode.data!!, mod)
+    }
+
+    private fun getNewbieBeatmapsetParam(matcher: Matcher): NewbieBeatmapsetParam {
+        val mode = InstructionUtil.getMode(matcher)
+        val sids = matcher.group(FLAG_ID).parseToLongList()
+        val mod = InstructionUtil.getMod(matcher)
+
+        return NewbieBeatmapsetParam(sids, mode.data!!, mod)
     }
 
     private fun getNewbieScoreParam(matcher: Matcher): NewbieScoreParam {
@@ -105,41 +124,60 @@ class GetItemsService(
         val mode = InstructionUtil.getMode(matcher)
         val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
+        if (user.pp <= 0.0 && user.globalRank == 0L) {
+            val bests = scoreApiService.getBestScores(user)
+
+            user.updateEstimatedPP(bests)
+        }
+
         return NewbiePlayerParam(user, mode.data!!)
     }
 
     private fun NewbiePlayerParam.getNewbiePlayerComponent(): String {
+        val pp = if (user.ppEstimate > 0.0) {
+            user.ppEstimate.roundToInt()
+        } else {
+            user.pp.roundToInt()
+        }
+
+        val globalRank = if (user.globalRank == 0L) {
+            user.highestRank?.rank ?: user.globalRank
+        } else {
+            user.globalRank
+        }
+
         return """
             <Player 
               id=${user.userID}
               name="${user.username}"
               country=${user.countryRank}
-              global=${user.globalRank}
+              global=${globalRank}
               from="${user.countryCode}"
               accuracy=${"%.2f".format(user.accuracy).toDouble()}
               level=${user.levelCurrent}
               progress=${user.levelProgress}
-              performance=${user.pp.roundToInt()}
+              performance=${pp}
             />
         """.trimIndent()
     }
 
     private fun NewbieBeatmapParam.getNewbieBeatmapComponent(): String {
-        val b = try {
-            beatmapApiService.getBeatmap(beatmapID)
-        } catch (_: NetworkException.BeatmapException.NotFound) {
-            try {
-                val s = beatmapApiService.getBeatmapset(beatmapID)
+        return beatmapIDs.map { beatmapID ->
+            val b = try {
+                beatmapApiService.getBeatmap(beatmapID)
+            } catch (_: NetworkException.BeatmapException.NotFound) {
+                try {
+                    val s = beatmapApiService.getBeatmapset(beatmapID)
 
-                s.getTopDiff()!!
-            } catch (e: NetworkException.BeatmapException) {
-                throw e
+                    s.getTopDiff()!!
+                } catch (_: NetworkException.BeatmapException) {
+                    throw NetworkException.BeatmapException("找不到谱面 $beatmapID")
+                }
             }
-        }
 
-        calculateApiService.applyStarToBeatmap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
+            calculateApiService.applyStarToBeatmap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
 
-        return """
+            return@map """
             <Beatmap
               bid=${b.beatmapID}
               sid=${b.beatmapsetID}
@@ -147,8 +185,42 @@ class GetItemsService(
               star=${"%.2f".format(b.starRating)}
               max=${b.maxCombo}
             />
-        """.trimIndent()
+            """.trimIndent()
+        }.joinToString("\n\n")
+    }
 
+    private fun NewbieBeatmapsetParam.getNewbieBeatmapsetComponent(): String {
+        return beatmapsetIDs.map { beatmapsetID ->
+            val s = try {
+                beatmapApiService.getBeatmapset(beatmapsetID)
+            } catch (_: NetworkException.BeatmapException.NotFound) {
+                try {
+                    beatmapApiService.getBeatmapset(beatmapApiService.getBeatmap(beatmapsetID).beatmapsetID)
+                } catch (e: NetworkException.BeatmapException) {
+                    throw e
+                }
+            }
+
+            val bs = s.beatmaps.orEmpty().onEach {
+                calculateApiService.applyStarToBeatmap(it, OsuMode.getConvertableMode(mode, it.mode), mods)
+            }.sortedBy { it.starRating }
+
+            val t = bs.lastOrNull()
+
+            val attributes = listOfNotNull(
+                "sid=${s.beatmapsetID}",
+                "preview=\"${s.previewName}\"",
+                "star=${"%.2f".format(t?.starRating ?: 0.0)}",
+                "difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]",
+                if (s.availability.downloadDisabled) "disabled=true" else null,
+            )
+
+            return@map """
+            <Beatmap
+              ${attributes.joinToString("\n              ")}
+            />
+            """.trimIndent()
+        }.joinToString("\n\n")
     }
 
     private fun NewbieScoreParam.getNewbieScoreComponent(): String {
@@ -222,18 +294,18 @@ class GetItemsService(
         )
 
         val a = beatmapApiService.getAttributes(beatmapID, b.mode, mods)
-        val newTotalLength = CalculateApiImpl.applyLength(b.totalLength, mods).toFloat()
+        val newTotalLength = BeatmapDetailsUtil.applyLength(b.totalLength, mods).toFloat()
 
         sb.append(String.format("%.2f", a.starRating)).append(',')
-            .append(String.format("%d", CalculateApiImpl.applyBPM(b.bpm, mods).roundToInt())).append(',')
+            .append(String.format("%d", BeatmapDetailsUtil.applyBPM(b.bpm, mods).roundToInt())).append(',')
             .append(String.format("%d", floor((newTotalLength / 60.0)).roundToInt()))
             .append(':')
             .append(String.format("%02d", (newTotalLength % 60.0).roundToInt()))
             .append(',')
         sb.append(a.maxCombo).append(',')
-            .append(String.format("%.2f", CalculateApiImpl.applyCS(b.cs!!, mods))).append(',')
-            .append(String.format("%.2f", CalculateApiImpl.applyAR(b.ar!!, mods))).append(',')
-            .append(String.format("%.2f", CalculateApiImpl.applyOD(b.od!!, mods, b.mode)))
+            .append(String.format("%.2f", BeatmapDetailsUtil.applyCS(b.cs!!, mods))).append(',')
+            .append(String.format("%.2f", BeatmapDetailsUtil.applyAR(b.ar!!, mods))).append(',')
+            .append(String.format("%.2f", BeatmapDetailsUtil.applyOD(b.od!!, mods, b.mode)))
 
         return sb.toString()
     }
@@ -241,8 +313,9 @@ class GetItemsService(
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<GetItemsParam>): Boolean {
         val m = Instruction.GET_MAP.matcher(messageText)
         val m2 = Instruction.GET_NEWBIE_MAP.matcher(messageText)
-        val m3 = Instruction.GET_NEWBIE_PLAYER.matcher(messageText)
-        val m4 = Instruction.GET_NEWBIE_SCORE.matcher(messageText)
+        val m3 = Instruction.GET_NEWBIE_SET.matcher(messageText)
+        val m4 = Instruction.GET_NEWBIE_PLAYER.matcher(messageText)
+        val m5 = Instruction.GET_NEWBIE_SCORE.matcher(messageText)
 
         if (m.find()) {
             data.value = getPoolParam(m)
@@ -251,10 +324,13 @@ class GetItemsService(
             data.value = getNewbieBeatmapParam(m2)
             return true
         } else if (m3.find()) {
-            data.value = getNewbiePlayerParam(event, m3)
+            data.value = getNewbieBeatmapsetParam(m3)
             return true
         } else if (m4.find()) {
-            data.value = getNewbieScoreParam(m4)
+            data.value = getNewbiePlayerParam(event, m4)
+            return true
+        } else if (m5.find()) {
+            data.value = getNewbieScoreParam(m5)
             return true
         }
 
@@ -264,11 +340,34 @@ class GetItemsService(
     override fun handleMessage(event: MessageEvent, param: GetItemsParam): ServiceCallStatistic? {
         when(param) {
             is PoolParam -> event.reply(param.getMapPoolText())
-            is NewbieBeatmapParam -> event.reply(param.getNewbieBeatmapComponent())
+            is NewbieBeatmapParam -> {
+                if (param.beatmapIDs.size <= 5) {
+                    event.reply(param.getNewbieBeatmapComponent())
+                } else {
+                    event.replyFileInGroup(param.getNewbieBeatmapComponent().toByteArray(Charsets.UTF_8), "beatmaps.md")
+                }
+            }
+            is NewbieBeatmapsetParam -> {
+                if (param.beatmapsetIDs.size <= 5) {
+                    event.reply(param.getNewbieBeatmapsetComponent())
+                } else {
+                    event.replyFileInGroup(param.getNewbieBeatmapsetComponent().toByteArray(Charsets.UTF_8), "beatmapsets.md")
+                }
+            }
             is NewbiePlayerParam -> event.reply(param.getNewbiePlayerComponent())
             is NewbieScoreParam -> event.reply(param.getNewbieScoreComponent())
         }
 
         return null
+    }
+
+    companion object {
+        fun String?.parseToLongList(): List<Long> {
+            return this.orEmpty().split(REG_SEPERATOR.toRegex())
+                .filter { it.isNotEmpty() }
+                .map {
+                    it.trim().toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
+                }
+        }
     }
 }

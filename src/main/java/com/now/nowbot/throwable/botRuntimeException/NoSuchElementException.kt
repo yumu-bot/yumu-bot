@@ -22,6 +22,12 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class BeatmapCache(name: Any):
         NoSuchElementException("没有找到谱面 $name 的缓存文件。")
 
+    class BeatmapDownload(name: Any):
+        NoSuchElementException("""
+            谱面 $name 下载失败。
+            也许是谱面输入错误，或者谱面被版权限制了。
+        """.trimIndent())
+
     class BeatmapScore(name: Any):
         NoSuchElementException("没有找到您在谱面 $name 内的成绩。")
 

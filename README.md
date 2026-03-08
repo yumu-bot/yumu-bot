@@ -36,9 +36,9 @@
 
 - JDK 21
   - 或者支持虚拟线程的更高版本
-  - 目标 Kotlin 版本是 2.3。
-  - 
-  - 如果你想测试并运行一个较早版本的实例，可能需要 JDK 17
+  - 目标 Kotlin 版本是 2.3
+  - 在 260228 之前的提交，使用的是 Kotlin 2.0
+  - 如果你想测试并运行一个较早版本的实例，可能需要 JDK 17（不需要 Kotlin）
 - PostgreSQL
   - 最低 15，越新越好
 
@@ -80,3 +80,4 @@
 - [diving-fish](https://www.diving-fish.com/maimaidx/prober/#Tutorial) 水鱼查分器：提供了 maimai、chunithm 的账号数据和成绩
 - [Lxns-Network](https://maimai.lxns.net/docs) 落雪咖啡屋：提供了部分 maimai、chunithm 的歌曲信息和外号库
 - [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect/) 哔哩哔哩 - API 收集整理：提供了 bilibili 的部分 API 信息
+- [PP+](https://github.com/Syriiin/difficalcy-performanceplus) PP+：提供了表现分加功能的算法

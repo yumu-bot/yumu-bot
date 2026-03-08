@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
@@ -21,8 +20,9 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.concurrent.Callable
 import java.util.regex.Matcher
 import kotlin.math.sqrt
 
@@ -136,9 +136,9 @@ import kotlin.math.sqrt
 
                 val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode) },
+                    { scoreApiService.getBestScoresSerial(ids.first!!, mode) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode) },
+                    { scoreApiService.getBestScoresSerial(ids.second!!, mode) },
                 )
 
                 me = async.first.first
@@ -166,9 +166,9 @@ import kotlin.math.sqrt
 
                 val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode) },
+                    { scoreApiService.getBestScoresSerial(ids.first!!, mode) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode) },
+                    { scoreApiService.getBestScoresSerial(ids.second!!, mode) },
                 )
 
                 me = async.first.first
@@ -248,35 +248,33 @@ import kotlin.math.sqrt
     private fun getSkillMap(bests: List<LazerScore>?): Map<Long, Skill6?> {
         if (bests.isNullOrEmpty()) return mapOf()
 
-        val actions = bests.map {
-            Callable {
-                it to beatmapApiService.getBeatmapFileString(it.beatmapID)
-            }
-        }
+        val scoreMap = bests.associateBy { it.beatmapID }
 
-        val files: List<Pair<LazerScore, String?>> = AsyncMethodExecutor.awaitCallableExecute(actions)
+        val ids = beatmapApiService.downloadBeatmapFile(scoreMap.keys)
 
-        val actions2 = files.map {
-            val id = it.first.beatmapID
+        val fileMap = ids.associateWith { id -> beatmapApiService.getBeatmapFileString(id)}
 
-            Callable {
+        // 4. 统一解析 Skill (CPU密集型操作)
+        // 注意：这里不需要用 !!，没下载到的图直接标记为 null 即可
+        return bests.associate { score ->
+            val fileString = fileMap[score.beatmapID]
+            val skill = if (fileString != null) {
                 try {
-                    val file = OsuFile(it.second ?: "")
-
-                    id to Skill6(
-                        file,
+                    Skill6(
+                        OsuFile(fileString),
                         OsuMode.MANIA,
-                        LazerMod.getModSpeedForStarCalculate(it.first.mods).toDouble()
+                        LazerMod.getModSpeedForStarCalculate(score.mods).toDouble()
                     )
-                } catch (_: Exception) {
-                    id to null
+                } catch (e: Exception) {
+                    log.error("解析谱面 ${score.beatmapID} 异常", e)
+                    null
                 }
+            } else {
+                null // 下载失败或本地没有的图
             }
+
+            score.beatmapID to skill
         }
-
-        val result = AsyncMethodExecutor.awaitCallableExecute(actions2).toMap()
-
-        return bests.associate { it.beatmapID to result[it.beatmapID] }
     }
 
     private fun getBody(
@@ -303,13 +301,13 @@ import kotlin.math.sqrt
         val scores: List<SkillScore> = if (isShowScores) {
             val s10 = bests.take(10)
 
-            scoreApiService.asyncDownloadBackgroundFromScores(s10, CoverType.LIST)
+            // scoreApiService.asyncDownloadBackgroundFromScores(s10, CoverType.LIST)
 
             calculateApiService.applyBeatmapChanges(s10)
             calculateApiService.applyStarToScores(s10)
 
             s10.map {
-                val skills = skillMap[it.beatmapID]?.skills ?: listOf()
+                val skills = skillMap[it.beatmapID]?.skills ?: List(6) { 0.0 }
 
                 val scoreRating = SkillUtil.getMapSkillRating(skills)
 
@@ -341,6 +339,7 @@ import kotlin.math.sqrt
 
     companion object {
 
+        private val log: Logger = LoggerFactory.getLogger(SkillService::class.java)
 
         private fun nerfByAccuracy(score: LazerScore): Double {
             return when (score.mode) {

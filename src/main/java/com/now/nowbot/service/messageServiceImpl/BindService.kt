@@ -342,22 +342,18 @@ import java.util.function.Predicate
         private val BIND_MSG_MAP: MutableMap<Long, BindData> = ConcurrentHashMap()
         private val BIND_CACHE: MutableMap<Long, MutableList<Long>> = ConcurrentHashMap()
 
-        @JvmStatic fun contains(t: Long): Boolean {
+        fun contains(t: Long): Boolean {
             return BIND_MSG_MAP.containsKey(t)
         }
 
-        @JvmStatic fun getBind(t: Long): BindData? {
-            removeOldBind()
+        fun getBind(t: Long): BindData? {
+            BIND_MSG_MAP.keys.removeIf { k: Long -> (k + 120 * 1000) < System.currentTimeMillis() }
+
             return BIND_MSG_MAP[t]
         }
 
-        @JvmStatic fun removeBind(t: Long) {
+        fun removeBind(t: Long) {
             BIND_MSG_MAP.remove(t)
         }
-
-        private fun removeOldBind() {
-            BIND_MSG_MAP.keys.removeIf { k: Long -> (k + 120 * 1000) < System.currentTimeMillis() }
-        }
-
     }
 }

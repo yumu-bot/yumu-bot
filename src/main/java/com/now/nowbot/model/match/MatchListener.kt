@@ -96,6 +96,7 @@ class MatchListener(
             onStop(StopType.MATCH_END)
             return
         }
+
         future = executorService.scheduleAtFixedRate(this::listen, 0, 8, TimeUnit.SECONDS)
         kill = executorService.schedule({
             if (isStart()) stop(StopType.TIME_OUT)

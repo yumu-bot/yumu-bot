@@ -4,12 +4,11 @@ import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import java.util.concurrent.ConcurrentHashMap
 import java.time.Instant
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 class TokenBucketRateLimiter(
     private val capacity: Int = 3,
-    private val refill: Duration = 10.toDuration(DurationUnit.SECONDS) // 1令牌的毫秒
+    private val refill: Duration = 10.seconds // 1令牌的毫秒
 ) {
     private val tokens = ConcurrentHashMap<String, Double>()
     private val lastRefill = ConcurrentHashMap<String, Instant>()

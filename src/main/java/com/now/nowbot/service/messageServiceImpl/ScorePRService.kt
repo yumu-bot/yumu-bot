@@ -137,7 +137,7 @@ class ScorePRService(
     }
 
     override fun handleMessage(event: MessageEvent, param: ScorePRParam): ServiceCallStatistic? {
-        param.asyncImage()
+        // param.asyncImage()
         val messageChain: MessageChain = param.getMessageChain()
 
         try {
@@ -211,7 +211,7 @@ class ScorePRService(
     }
 
     override fun reply(event: MessageEvent, param: ScorePRParam): MessageChain? {
-        param.asyncImage()
+        // param.asyncImage()
         return param.getMessageChain()
     }
 
@@ -244,7 +244,7 @@ class ScorePRService(
         val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val rangeInConditions = conditions.lastOrNull().orEmpty()
         val hasRangeInConditions = rangeInConditions.isNotEmpty()
         val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
@@ -434,9 +434,9 @@ class ScorePRService(
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun ScorePRParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
-    }
+//    private fun ScorePRParam.asyncImage() = run {
+//        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+//    }
 
     private fun ScorePRParam.getMessageChain(): MessageChain {
         try {

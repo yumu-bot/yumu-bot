@@ -48,6 +48,10 @@ interface OsuScoreApiService {
         return getBestScores(user.userID, user.currentOsuMode, offset, limit)
     }
 
+    fun getBestScoresSerial(id: Long, mode: OsuMode?): List<LazerScore> {
+        return getBestScores(id = id, mode = mode, 0, 100) + getBestScores(id = id, mode = mode, 100, 200)
+    }
+
     // 默认获取成绩的接口，不用区分 pass 或 recent
     fun getScore(
         uid: Long,
