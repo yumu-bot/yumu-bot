@@ -103,7 +103,7 @@ import java.time.Duration
             .defaultHeaders { headers: HttpHeaders ->
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
-            }.baseUrl(divingFishConfig.url)
+            }.baseUrl(divingFishConfig.url!!)
             .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
             .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
@@ -131,7 +131,7 @@ import java.time.Duration
             .defaultHeaders { headers: HttpHeaders ->
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
-            }.baseUrl(lxnsConfig.url)
+            }.baseUrl(lxnsConfig.url!!)
             .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
             .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
