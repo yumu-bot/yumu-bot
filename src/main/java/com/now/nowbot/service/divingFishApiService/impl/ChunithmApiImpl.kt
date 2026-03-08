@@ -10,13 +10,13 @@ import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.file.Files
 import kotlin.text.Charsets.UTF_8
@@ -51,8 +51,7 @@ class ChunithmApiImpl(
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .retrieve()
-                .body<ChuBestScore>()!!
+                .toBody<ChuBestScore>()
         }
     }
 
@@ -64,8 +63,7 @@ class ChunithmApiImpl(
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .retrieve()
-                .body<ChuBestScore>()!!
+                .toBody<ChuBestScore>()
         }
     }
 
@@ -101,8 +99,7 @@ class ChunithmApiImpl(
         val cover = try {
             request { client ->
                 client.get().uri("https://assets2.lxns.net/chunithm/jacket/${song}.png")
-                    .retrieve()
-                    .body<ByteArray>()!!
+                    .toBody<ByteArray>()
             }
         } catch (_: Exception) {
             val path = path.resolve("Cover").resolve("0.png")
@@ -252,15 +249,13 @@ class ChunithmApiImpl(
     private val chunithmSongLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/chunithmprober/music_data")
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
 
     private val chunithmAliasLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("https://maimai.lxns.net/api/v0/chunithm/alias/list")
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {

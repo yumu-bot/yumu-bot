@@ -8,10 +8,10 @@ import com.now.nowbot.model.multiplayer.RoomLeaderBoard
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
+import com.now.nowbot.util.toBody
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 
 @Service
 class MatchApiImpl(
@@ -28,8 +28,7 @@ class MatchApiImpl(
                     it.build()
                 }
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<MatchLobby>()!!
+                .toBody<MatchLobby>()
         }
     }
 
@@ -76,8 +75,7 @@ class MatchApiImpl(
             client.get()
                 .uri("rooms/${roomID}/events")
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<Room>()!!
+                .toBody<Room>()
         }
     }
 
@@ -86,8 +84,7 @@ class MatchApiImpl(
             client.get()
                 .uri("rooms/${roomID}")
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<RoomInfo>()!!
+                .toBody<RoomInfo>()
         }
     }
 
@@ -96,8 +93,7 @@ class MatchApiImpl(
             client.get()
                 .uri("rooms/${roomID}/leaderboard")
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<RoomLeaderBoard>()!!
+                .toBody<RoomLeaderBoard>()
         }
     }
 
@@ -106,8 +102,7 @@ class MatchApiImpl(
             client.get()
                 .uri("matches/${matchID}")
                 .headers(base::insertHeader)
-                .retrieve()
-            .body<Match>()!!
+                .toBody<Match>()
         }
     }
 
@@ -122,15 +117,14 @@ class MatchApiImpl(
                     it.build()
                 }
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<Match>()!!
+                .toBody<Match>()
         }
     }
 
     /**
      * 错误包装
      */
-    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
+    private fun <T : Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
@@ -140,6 +134,7 @@ class MatchApiImpl(
                 ex == null -> {
                     throw NetworkException.MatchException.Undefined(e)
                 }
+
                 ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
                     throw NetworkException.MatchException.BadRequest()
                 }
@@ -175,7 +170,7 @@ class MatchApiImpl(
                 e.findCauseOfType<java.net.SocketException>() != null -> {
                     throw NetworkException.MatchException.GatewayTimeout()
                 }
-                
+
                 else -> {
                     throw NetworkException.MatchException.Undefined(e)
                 }

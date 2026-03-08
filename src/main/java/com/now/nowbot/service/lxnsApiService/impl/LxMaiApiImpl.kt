@@ -13,12 +13,12 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeoutException
@@ -38,8 +38,7 @@ class LxMaiApiImpl(
                         .build()
                 }
                 .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .body<ByteArray>()!!
+                .toBody<ByteArray>()
         }
     }
 
@@ -52,8 +51,7 @@ class LxMaiApiImpl(
                         .build()
                 }
                 .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
         val node = JacksonUtil.toNode(jsonString) as JsonNode
 
@@ -221,8 +219,7 @@ class LxMaiApiImpl(
                         .build()
                 }
                 .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
         val node = JacksonUtil.toNode(jsonString) as JsonNode
 

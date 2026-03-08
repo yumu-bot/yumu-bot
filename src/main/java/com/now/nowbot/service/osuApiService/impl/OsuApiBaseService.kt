@@ -1,5 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.mikuac.shiro.common.utils.JsonUtils
 import com.now.nowbot.config.IocAllReadyRunner
 import com.now.nowbot.config.OsuConfig
@@ -8,6 +9,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -20,7 +22,6 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 import java.io.IOException
 import java.time.Instant
 import java.time.ZoneOffset
@@ -113,16 +114,14 @@ class OsuApiBaseService(
         body.add("grant_type", "client_credentials")
         body.add("scope", "public")
 
-        val jsonString = submitRequest({ client ->
+        val result = submitRequest({ client ->
             client.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(body)
-                .retrieve()
-                .body<String>()!!
+                .toBody<JsonNode>()
         }, isBackground = false).get()
-        val result = JsonUtils.parseObject(jsonString).get()
 
         botAccessToken = result["access_token"].asText()
         tokenExpiresAt = System.currentTimeMillis() + result["expires_in"].asLong() * 1000
@@ -569,8 +568,7 @@ class OsuApiBaseService(
                     .accept(MediaType.APPLICATION_JSON)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(body)
-                    .retrieve()
-                    .body<String>()!!
+                    .toBody<String>()
             }
             JsonUtils.parseObject(jsonString).get()
         } catch (e: Exception) {

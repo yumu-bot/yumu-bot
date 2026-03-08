@@ -18,12 +18,12 @@ import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationExceptio
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import kotlinx.io.IOException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 import org.springframework.web.util.UriComponentsBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -37,13 +37,13 @@ import java.util.concurrent.Callable
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
             request { client ->
-                client.get().uri(user.avatarUrl).retrieve().body<ByteArray>()!!
+                client.get().uri(user.avatarUrl).toBody<ByteArray>()!!
             }
         } catch (_: NetworkException) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             request { client ->
-                client.get().uri("https://a.ppy.sh/").retrieve().body<ByteArray>()!!
+                client.get().uri("https://a.ppy.sh/").toBody<ByteArray>()!!
             }
         }
     }
@@ -53,8 +53,7 @@ import java.util.concurrent.Callable
         val response = try {
             request { client ->
                 client.get().uri("https://osu.ppy.sh/users/@{name}", name)
-                    .headers(base::insertHeader).retrieve()
-                    .body<String>() ?: ""
+                    .headers(base::insertHeader).toBody<String>() ?: ""
             }
         } catch (e: Exception) {
             ""
@@ -133,8 +132,7 @@ import java.util.concurrent.Callable
             .get().uri("me/{mode}", mode.shortName)
             .headers { headers ->
                 base.insertHeader(headers, user)
-            }.retrieve()
-                .body<OsuUser>()!!
+            }.toBody<OsuUser>()
         }
 
         userInfoDao.saveUserToday(data, mode)
@@ -154,7 +152,7 @@ import java.util.concurrent.Callable
         val data = request { client ->
             client.get().uri {
                     it.path("users/{data}/{mode}").build("@$name", mode.shortName)
-                }.headers(base::insertHeader).retrieve().body<OsuUser>()!!
+            }.headers(base::insertHeader).toBody<OsuUser>()
         }
         userInfoDao.saveUserToday(data, mode)
         data.currentOsuMode = getMode(mode, data.defaultOsuMode)
@@ -171,8 +169,7 @@ import java.util.concurrent.Callable
             client.get().uri {
                 it.path("users/{id}/{mode}").build(id, mode.shortName)
             }.headers(base::insertHeader)
-                .retrieve()
-                .body<OsuUser>()!!
+                .toBody<OsuUser>()
         } // 执行到这里，数据已经回到了虚拟线程
 
         // 以下逻辑在虚拟线程中执行，不会卡死 Netty
@@ -253,16 +250,15 @@ import java.util.concurrent.Callable
      * @param isVariant 是否获取玩家的多模式信息
      */
     private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
-        val jsonString = request(isBackground) { client ->
+        val data = request(isBackground) { client ->
             client.get().uri {
                 val ids = users.map { it -> it.toLong() }.toList()
                     it.path("users")
                         .queryParam("ids[]", *ids.toTypedArray())
                         .queryParam("include_variant_statistics", isVariant)
                         .build()
-                }.headers(base::insertHeader).retrieve().body<String>()!!
+            }.headers(base::insertHeader).toBody<JsonNode>()
         }
-        val data = JacksonUtil.toNode(jsonString) as JsonNode
 
         val userList = JacksonUtil.parseObjectList(
             data["users"], MicroUser::class.java
@@ -280,25 +276,23 @@ import java.util.concurrent.Callable
             }
         }
 
-        val jsonString = request { client ->
+        val json = request { client ->
             client.get().uri("friends")
                 .headers { headers ->
                     base.insertHeader(headers, user)
                 }
-                .retrieve().body<String>()!!
+                .toBody<JsonNode>()
         }
-        val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json, LazerFriend::class.java)
     }
 
     override fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent> {
-        val jsonString = request { client ->
+        val json = request { client ->
             client.get().uri {
                     it.path("users/{userId}/recent_activity").queryParam("offset", offset).queryParam("limit", limit)
                         .build(id)
-                }.headers(base::insertHeader).retrieve().body<String>()!!
+            }.headers(base::insertHeader).toBody<JsonNode>()
         }
-        val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json, ActivityEvent::class.java)
     }
 
@@ -306,41 +300,36 @@ import java.util.concurrent.Callable
         return request { client ->
             client.get().uri("users/{uid}/kudosu").headers { headers ->
                 base.insertHeader(headers, user)
-            }.retrieve()
-                .body<KudosuHistory>()!!
+            }.toBody<KudosuHistory>()
         }
     }
 
     override fun sendPrivateMessage(sender: BindUser, target: Long, message: String): JsonNode {
         val body: Map<String, Any> = mapOf("target_id" to target, "message" to message, "is_action" to false)
-        val jsonString = request { client ->
+        return request { client ->
             client.post().uri("chat/new").headers { headers ->
                 base.insertHeader(headers, sender)
-            }.body(body).retrieve()
-                .body<String>()!!
+            }.body(body).toBody<JsonNode>()
         }
-        return JacksonUtil.toNode(jsonString) as JsonNode
     }
 
     override fun acknowledgmentPrivateMessageAlive(user: BindUser, since: Long?): JsonNode {
-        val jsonString = request { client ->
+        return request { client ->
             client.post().uri {
                     it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
                 }.headers { headers ->
                 base.insertHeader(headers, user)
-            }.retrieve().body<String>()!!
+            }.toBody<JsonNode>()
         }
-        return JacksonUtil.toNode(jsonString) as JsonNode
     }
 
     override fun getPrivateMessage(sender: BindUser, channel: Long, since: Long): JsonNode {
-        val jsonString = request { client ->
+        return request { client ->
             client.get().uri("chat/channels/{channel}/messages?since={since}", channel, since)
                 .headers { headers ->
                     base.insertHeader(headers, sender)
-                }.retrieve().body<String>()!!
+                }.toBody<JsonNode>()
         }
-        return JacksonUtil.toNode(jsonString) as JsonNode
     }
 
     override fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>) {
@@ -417,7 +406,7 @@ import java.util.concurrent.Callable
 
     override fun getTeamInfo(id: Int): TeamInfo? {
         val html = base.request { client: RestClient ->
-            client.get().uri("https://osu.ppy.sh/teams/{id}", id).retrieve().body<String>()!!
+            client.get().uri("https://osu.ppy.sh/teams/{id}", id).toBody<String>()
         }
 
         return parseTeamInfo(id, html)
@@ -426,8 +415,7 @@ import java.util.concurrent.Callable
     override fun getTopPlays(page: Int, mode: OsuMode): TopPlays? {
         val html = base.request { client: RestClient ->
             client.get()
-                .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").
-                retrieve().body<String>()!!
+                .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").toBody<String>()!!
         }
 
         return parseTopPlays(html)
@@ -465,7 +453,7 @@ import java.util.concurrent.Callable
                     val image = try {
                         base.osuApiRestClient.get().uri {
                                 it.scheme("https").host("a.ppy.sh").replacePath(replacePath).build()
-                            }.headers(base::insertHeader).retrieve().body<ByteArray>()!!
+                        }.headers(base::insertHeader).toBody<ByteArray>()
                     } catch (e: Exception) {
                         log.error("异步下载头像：任务失败\n", e)
                         return@Runnable
@@ -516,7 +504,7 @@ import java.util.concurrent.Callable
                     val image = try {
                         base.osuApiRestClient.get().uri {
                                 it.scheme("https").host("assets.ppy.sh").replacePath(replacePath).build()
-                            }.headers(base::insertHeader).retrieve().body<ByteArray>()!!
+                        }.headers(base::insertHeader).toBody<ByteArray>()
                     } catch (e: Exception) {
                         log.error("异步下载背景：任务失败\n", e)
                         return@Runnable

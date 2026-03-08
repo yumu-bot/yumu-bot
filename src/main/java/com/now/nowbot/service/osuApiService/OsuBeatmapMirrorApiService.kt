@@ -1,13 +1,13 @@
 package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.config.BeatmapMirrorConfig
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -33,8 +33,7 @@ class OsuBeatmapMirrorApiService(
             val str = restClient.get()
                 .uri(url) { it.path("/api/mirror/beatmap/osufile/{bid}").build(bid) }
                 .header("X-TOKEN", token)
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
 
             val sub = str.replaceBefore("osu", "")
 
@@ -61,8 +60,7 @@ class OsuBeatmapMirrorApiService(
                         .build(bid)
                 }
                 .header("X-TOKEN", token)
-                .retrieve()
-                .body<String>()
+                .toBody<String>()
 
             if (localPath == null) {
                 log.warn("获取谱面 $bid 背景失败: 获取本地路径超时，可能是镜像站没有启动")

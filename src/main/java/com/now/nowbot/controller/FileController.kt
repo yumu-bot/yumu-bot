@@ -2,13 +2,12 @@ package com.now.nowbot.controller
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.BeatmapMirrorConfig
-import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
@@ -30,13 +29,11 @@ class FileController(
         return when (type) {
             "info" -> {
                 val data: JsonNode = try {
-                    val jsonString = restClient
+                    restClient
                         .get()
                         .uri("${url}/api/map/getBeatMapInfo/${bid}")
                         .headers { it.add("AuthorizationX", token) }
-                        .retrieve()
-                        .body<String>()!!
-                    JacksonUtil.toNode(jsonString) as JsonNode
+                        .toBody<JsonNode>()
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
                         .body(mapOf("code" to 400, "message" to e.message))
@@ -51,8 +48,7 @@ class FileController(
                         .get()
                         .uri("${url}/api/file/map/bg/${bid}")
                         .headers { it.add("AuthorizationX", token) }
-                        .retrieve()
-                        .body<ByteArray>()!!
+                        .toBody<ByteArray>()
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
                         .body(mapOf("code" to 400, "message" to e.message))

@@ -7,17 +7,18 @@ import com.now.nowbot.model.bili.BiliUser
 import com.now.nowbot.service.biliApiService.BiliApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.body
 
 @Service
 class BiliApiServiceImpl(
     private val base: BiliApiBaseService,
 ): BiliApiService {
     override fun getStreamer(id: Long): BiliStreamer {
-        val jsonString = base.biliApiWebClient.get().uri { it
+        val node = base.biliApiWebClient.get().uri {
+            it
             .scheme("https")
             .host("api.live.bilibili.com")
             .path("live_user/v1/Master/info")
@@ -25,31 +26,29 @@ class BiliApiServiceImpl(
             .build()
         }
             .headers(base::insertJSONHeader)
-            .retrieve()
-            .body<String>()!!
-        val node = JacksonUtil.toNode(jsonString) as JsonNode
+            .toBody<JsonNode>()
 
         return parse(node, id, "直播主")
     }
 
 
     override fun getUser(id: Long): BiliUser {
-        val jsonString = base.biliApiWebClient.get().uri { it
+        val node = base.biliApiWebClient.get().uri {
+            it
             .scheme("https")
             .path("x/space/acc/info")
             .queryParam("mid", id)
             .build()
         }
             .headers(base::insertJSONHeader)
-            .retrieve()
-            .body<String>()!!
-        val node = JacksonUtil.toNode(jsonString) as JsonNode
+            .toBody<JsonNode>()
 
         return parse(node, id, "账号信息")
     }
 
     override fun getDanmaku(roomID: Long): BiliDanmaku {
-        val jsonString = base.biliApiWebClient.get().uri { it
+        val node = base.biliApiWebClient.get().uri {
+            it
             .scheme("https")
             .host("api.live.bilibili.com")
             .path("xlive/web-room/v1/dM/gethistory")
@@ -57,9 +56,7 @@ class BiliApiServiceImpl(
             .build()
         }
             .headers(base::insertJSONHeader)
-            .retrieve()
-            .body<String>()!!
-        val node = JacksonUtil.toNode(jsonString) as JsonNode
+            .toBody<JsonNode>()
 
         return parse(node, roomID, "直播间最近弹幕")
     }
@@ -67,8 +64,7 @@ class BiliApiServiceImpl(
     override fun getImage(url: String): ByteArray {
         val avatar: ByteArray? = base.biliApiWebClient.get()
             .uri(url)
-            .retrieve()
-            .body<ByteArray>()
+            .toBody<ByteArray>()
 
         return avatar ?: throw TipsException("获取图片失败。")
     }

@@ -507,8 +507,7 @@ class ScorePRService(
 
         val imgBytes = base.osuApiRestClient.get()
             .uri(d.url ?: "")
-            .retrieve()
-            .body<ByteArray>()!!
+            .toBody<ByteArray>()
 
         return MessageChain(d.scoreLegacyOutput, imgBytes)
     }

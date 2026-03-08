@@ -12,6 +12,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import io.netty.channel.unix.Errors
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
@@ -27,14 +28,14 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
             request { client ->
-                client.get().uri(user.avatarUrl).retrieve().body(ByteArray::class.java)!!
+                client.get().uri(user.avatarUrl).toBody<ByteArray>()
             }
         } catch (_: NetworkException) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             // 默认头像是个智乃
             request { client ->
-                client.get().uri("https://a.ppy.sb/").retrieve().body(ByteArray::class.java)!!
+                client.get().uri("https://a.ppy.sb/").toBody<ByteArray>()
             }
         }
     }
@@ -54,8 +55,7 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     .path("/v1/search_players")
                     .queryParam("q", username)
                     .build()
-                }.retrieve()
-                    .body(JsonNode::class.java)?.let {
+                }.toBody<JsonNode>().let {
                         parseList<Result>(it, "result", "玩家结果")
                     } ?: listOf()
             }.firstOrNull()?.id
@@ -81,10 +81,9 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
             client.get().uri { it
                 .path("/v1/search_players")
                 .build()
-            }.retrieve()
-                .body(JsonNode::class.java)?.let {
+            }.toBody<JsonNode>().let {
                     parse<Count>(it, "counts", "玩家在线数量")
-                }!!
+            }
         }
 
         return count.online to count.total
@@ -111,10 +110,9 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                         .queryParamIfPresent("name", Optional.ofNullable(username))
                         .queryParam("scope", scope.ifEmpty { "all" })
                         .build()
-                }.retrieve()
-                    .body(JsonNode::class.java)?.let {
+                }.toBody<JsonNode>().let {
                         parse<User>(it, "player","玩家信息")
-                    }!!
+                }
 
             }
         } catch (_: NetworkException.UserException) {
@@ -147,10 +145,9 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     .queryParamIfPresent("id", Optional.ofNullable(id))
                     .queryParamIfPresent("name", Optional.ofNullable(username))
                     .build()
-                }.retrieve()
-                    .body(JsonNode::class.java)?.let {
+                }.toBody<JsonNode>().let {
                         parse<Status>(it, "player_status", "玩家在线状态")
-                    }!!
+                }
             }
         } catch (_: NetworkException.UserException) {
             return false to 0L

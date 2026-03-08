@@ -6,6 +6,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.toBody
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -18,7 +19,6 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpClientErrorException.BadRequest
 import org.springframework.web.client.HttpServerErrorException.InternalServerError
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
 import java.net.SocketException
 
 @Service("NOWBOT_IMAGE")
@@ -216,7 +216,7 @@ class ImageService(
 
         // 在这里封好可能出现的（已知原因的）错误，确保错误不会传递下去
         return try {
-            request.retrieve().body<ByteArray>()!!
+            request.toBody<ByteArray>()!!
         } catch (e: Throwable) {
             if (e is BadRequest || e.cause is BadRequest) {
                 throw NetworkException.RenderModuleException.BadRequest()

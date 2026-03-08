@@ -18,6 +18,7 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import io.ktor.util.collections.*
 import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
@@ -29,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -109,8 +109,7 @@ class BeatmapApiImpl(
             try {
                 val image = base.osuApiRestClient.get()
                     .uri(url)
-                    .retrieve()
-                    .body<ByteArray>()!!
+                    .toBody<ByteArray>()
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
@@ -174,8 +173,7 @@ class BeatmapApiImpl(
             return request { client ->
                 client.get()
                     .uri("https://osu.ppy.sh/osu/{bid}", bid)
-                    .retrieve()
-                    .body<String>() ?: ""
+                    .toBody<String>() ?: ""
             }
         } catch (e: RestClientResponseException) {
             log.error("osu 谱面 API：请求官网谱面失败: ", e)
@@ -337,8 +335,7 @@ class BeatmapApiImpl(
             client.get()
                 .uri("beatmaps/{bid}", bid)
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<Beatmap>()!!
+                .toBody<Beatmap>()
         }
 
         beatmapDao.saveBeatmapAndSaveExtendAsync(beatmap)
@@ -375,8 +372,7 @@ class BeatmapApiImpl(
                     it.build()
                 }
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
         val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json["beatmaps"], Beatmap::class.java)
@@ -416,8 +412,7 @@ class BeatmapApiImpl(
                         .build()
                 }
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
         val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json, Beatmapset::class.java)
@@ -469,8 +464,7 @@ class BeatmapApiImpl(
                         .build()
                 }
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
 
         val node = JacksonUtil.toNode(jsonString) as JsonNode
@@ -532,8 +526,7 @@ class BeatmapApiImpl(
             client.get()
                 .uri("beatmapsets/{sid}", sid)
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<Beatmapset>()!!
+                .toBody<Beatmapset>()
         }
 
         beatmapDao.saveBeatmapsetAsync(beatmapset)
@@ -818,8 +811,7 @@ class BeatmapApiImpl(
                     .uri("beatmaps/{id}/attributes", id)
                     .headers(base::insertHeader)
                     .body(body)
-                    .retrieve()
-                    .body<AttributesResponse>()!!.attributes
+                    .toBody<AttributesResponse>().attributes
             }
         } catch (e: Exception) {
             BeatmapDifficultyAttributes()
@@ -836,8 +828,7 @@ class BeatmapApiImpl(
                         .queryParamIfPresent("id", Optional.ofNullable(id)).build()
                 }
                     .headers(base::insertHeader)
-                    .retrieve()
-                    .body<String>()!!
+                    .toBody<String>()
             }
             JacksonUtil.toNode(jsonString) as JsonNode
         } catch (e: Exception) {
@@ -868,8 +859,7 @@ class BeatmapApiImpl(
                     base.insertHeader(header)
                 }
             }
-                .retrieve()
-                .body<BeatmapsetSearch>()!!
+                .toBody<BeatmapsetSearch>()
         }
     }
 
@@ -1074,8 +1064,7 @@ class BeatmapApiImpl(
                     .uri {
                         it.path("tags").build()
                     }.headers(base::insertHeader)
-                    .retrieve()
-                    .body<String>()!!
+                    .toBody<String>()
             }
             return JacksonUtil.toNode(jsonString) as JsonNode
         }
@@ -1162,8 +1151,7 @@ class BeatmapApiImpl(
     private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {
         val jsonString = proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets")
-            .retrieve()
-            .body<String>()!!
+            .toBody<String>()
         val json = JacksonUtil.toNode(jsonString) as JsonNode
         return JacksonUtil.parseObjectList(json, BeatmapsetWithRankTime::class.java)
     }
@@ -1172,8 +1160,7 @@ class BeatmapApiImpl(
     fun getBeatmapSetWithRankedTime(beatmapsetID: Long): BeatmapsetWithRankTime {
         return proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets/{sid}", beatmapsetID)
-            .retrieve()
-            .body<BeatmapsetWithRankTime>()!!
+            .toBody<BeatmapsetWithRankTime>()
     }
 
     /**

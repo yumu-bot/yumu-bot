@@ -2,9 +2,9 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.now.nowbot.model.osu.Discussion
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
+import com.now.nowbot.util.toBody
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
 import org.springframework.web.util.UriBuilder
 import java.util.*
 
@@ -70,8 +70,7 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
                         .build()
                 }
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<Discussion>()!!
+                .toBody<Discussion>()
         }
     }
 

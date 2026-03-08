@@ -9,12 +9,12 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeoutException
@@ -29,8 +29,7 @@ class LxChunithmApiImpl(
             val jsonString = client.get()
                 .uri("api/v0/chunithm/player/${friendCode}/bests")
                 .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
             val node = JacksonUtil.toNode(jsonString) as JsonNode
             parse<LxChuBestScore>(node, "data", "玩家中二节奏最好成绩")
         }
@@ -41,8 +40,7 @@ class LxChunithmApiImpl(
             val jsonString = client.get()
                 .uri("api/v0/chunithm/player/qq/${qq}")
                 .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
             val node = JacksonUtil.toNode(jsonString) as JsonNode
             parse<LxChuUser>(node, "data", "玩家中二节奏信息")
         }

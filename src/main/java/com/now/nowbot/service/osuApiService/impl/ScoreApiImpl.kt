@@ -12,6 +12,8 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
+import com.now.nowbot.util.toBody
+import com.now.nowbot.util.toBodyList
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,7 +21,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 import org.springframework.web.util.UriBuilder
 import java.net.URI
 import java.nio.ByteBuffer
@@ -90,8 +91,7 @@ class ScoreApiImpl(
             try {
                 val image = base.osuApiRestClient.get()
                     .uri(url)
-                    .retrieve()
-                    .body<ByteArray>()!!
+                    .toBody<ByteArray>()
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
@@ -167,7 +167,7 @@ class ScoreApiImpl(
         return request { client ->
             client.get().uri {
                 it.path("scores/{scoreID}").build(scoreID)
-            }.headers(base::insertHeader).retrieve().body<LazerScore>()!!
+            }.headers(base::insertHeader).toBody<LazerScore>()!!
         }
     }
 
@@ -347,8 +347,7 @@ class ScoreApiImpl(
                     base.insertHeader(headers)
                 }
             }
-            .retrieve()
-            .body<BeatmapScoreResponse>()!!
+            .toBody<BeatmapScoreResponse>()
         }.scores
     }
 
@@ -403,8 +402,7 @@ class ScoreApiImpl(
                                         .build()
                                 }
                                 .headers(base::insertHeader)
-                                .retrieve()
-                                .body<ByteArray>()!!
+                                .toBody<ByteArray>()
                         }
                     } catch (e: Exception) {
                         log.error("异步下载谱面图片：任务失败\n", e)
@@ -434,8 +432,7 @@ class ScoreApiImpl(
                                 .build(score.scoreID)
                         }
                         .headers(base::insertHeader)
-                        .retrieve()
-                        .body<ByteBuffer>()!!
+                        .toBody<ByteBuffer>()
                     Replay(buf)
                 }
             } catch (_: Exception) {
@@ -463,8 +460,7 @@ class ScoreApiImpl(
                         .build(id)
                 }
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<List<LazerScore>>()!!
+                .toBodyList<LazerScore>()
         }
 
         scoreDao.saveScoreAsync(bests)
@@ -494,8 +490,7 @@ class ScoreApiImpl(
                 .headers { headers ->
                     base.insertHeader(headers, user)
                 }
-                .retrieve()
-                .body<List<LazerScore>>()!!
+                .toBodyList<LazerScore>()
         }
 
         scoreDao.saveScoreAsync(recents)
@@ -524,8 +519,7 @@ class ScoreApiImpl(
                         .build(uid)
                 }
                 .headers(base::insertHeader)
-                .retrieve()
-                .body<List<LazerScore>>()!!
+                .toBodyList<LazerScore>()
         }
 
         scoreDao.saveScoreAsync(recents)
@@ -609,15 +603,7 @@ class ScoreApiImpl(
                 client.get()
                     .uri(target)
                     .headers { h -> headers(h) }
-                    .retrieve()
-                    .onStatus({ it.is4xxClientError }) { _, response ->
-                        // 如果发现 404，手动抛出特定异常以触发外层 catch
-                        if (response.statusCode.value() == 404) {
-                            throw NetworkException.ScoreException.NotFound()
-                        }
-                        // 其他 4xx 错误交由 RestClient 默认处理或抛出
-                    }
-                    .body(T::class.java)!!
+                    .toBody<T>()
             }
         }
 

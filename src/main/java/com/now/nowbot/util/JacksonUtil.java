@@ -3,6 +3,7 @@ package com.now.nowbot.util;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -74,16 +75,11 @@ public class JacksonUtil {
         }
     }
 
-    public static <T> T jsonToObject(String src, Class<T> clazz) {
+    public static <T> T jsonToObject(String src, Class<T> clazz) throws JsonProcessingException {
         if (src == null || src.trim().isEmpty() || clazz == null) {
             return null;
         }
-        try {
-            return clazz.isAssignableFrom(String.class) ? (T) src : mapper.readValue(src, clazz);
-        } catch (Exception e) {
-            log.warn("Parse Json to Object error", e);
-            return null;
-        }
+        return clazz.isAssignableFrom(String.class) ? (T) src : mapper.readValue(src, clazz);
     }
 
     public static String parseString(String body, String field) {
@@ -282,13 +278,8 @@ public class JacksonUtil {
         return null;
     }
 
-    public static <T> T toObj(String data, Class<T> clazz) {
-        try {
-            return mapper.readValue(data, clazz);
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
-        return null;
+    public static <T> T toObj(String data, Class<T> clazz) throws IOException {
+        return mapper.readValue(data, clazz);
     }
 
     public static String toJson(Object data) {

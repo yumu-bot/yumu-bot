@@ -19,13 +19,13 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.toBody
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -133,8 +133,7 @@ class CustomService(
         val imgBytes: ByteArray = if (param.url != null) try {
             restClient
                 .get()
-                .uri(param.url).retrieve()
-                .body<ByteArray>()!!
+                .uri(param.url).toBody<ByteArray>()
 
         } catch (_: Exception) {
             throw IllegalStateException.Fetch("自定义图片")

@@ -339,8 +339,7 @@ class UUPRService(
         val img = try {
             base.osuApiRestClient.get()
                 .uri(d.url ?: "")
-                .retrieve()
-                .body<ByteArray>()
+                .toBody<ByteArray>()
         } catch (_: Exception) {
             try {
                 Files.readAllBytes(Path.of(System.getenv("EXPORT_FILE_V3") + "avatar_guest.jpg"))

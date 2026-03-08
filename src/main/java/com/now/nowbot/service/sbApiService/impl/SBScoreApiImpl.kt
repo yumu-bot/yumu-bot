@@ -9,6 +9,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import io.netty.channel.unix.Errors
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
@@ -59,7 +60,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                 }
 
                 it.build()
-            }.retrieve().body(JsonNode::class.java)?.let {
+            }.toBody<JsonNode>().let {
                 parseList<SBScore>(it, "scores", "玩家成绩")
             } ?: listOf()
         }
@@ -100,7 +101,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                 }
 
                 it.build()
-            }.retrieve().body(JsonNode::class.java)?.let {
+            }.toBody<JsonNode>().let {
                 parseList<SBScore>(it, "scores", "谱面成绩")
             } ?: listOf()
         }.drop(off)

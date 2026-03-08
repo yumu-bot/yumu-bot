@@ -1,7 +1,6 @@
 package com.now.nowbot.config
 
 
-import com.now.nowbot.util.JacksonUtil
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClients
@@ -21,7 +20,6 @@ import org.springframework.http.client.ClientHttpRequestExecution
 import org.springframework.http.client.ClientHttpRequestInterceptor
 import org.springframework.http.client.ClientHttpResponse
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.io.IOException
@@ -31,6 +29,7 @@ import kotlin.math.pow
 @Component
 @Configuration
 class RestClientConfig {
+
     @Bean("osuApiRestClient")
     @Qualifier("osuApiRestClient")
     fun osuApiRestClient(config: NowbotConfig): RestClient {
@@ -71,13 +70,6 @@ class RestClientConfig {
             .baseUrl("https://osu.ppy.sh/api/v2/")
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-            .configureMessageConverters {
-                // 实在是没招了, 现在 jackson3 在 spring 中自己封了一层, 很多功能失效了, 暂时先用 jackson2
-                it.addCustomConverter(MappingJackson2HttpMessageConverter(JacksonUtil.mapper))
-            }
-            .messageConverters { converters ->
-                converters.add(org.springframework.http.converter.ByteArrayHttpMessageConverter())
-            }
             .build()
     }
 
@@ -176,12 +168,6 @@ class RestClientConfig {
                 .requestInterceptor(RestClientRetryInterceptor(3))
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .configureMessageConverters {
-                    it.addCustomConverter(MappingJackson2HttpMessageConverter(JacksonUtil.mapper))
-                }
-                .messageConverters { converters ->
-                    converters.add(org.springframework.http.converter.ByteArrayHttpMessageConverter())
-                }
         }
     }
 

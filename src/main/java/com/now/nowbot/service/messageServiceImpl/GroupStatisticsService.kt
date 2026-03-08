@@ -16,12 +16,12 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -46,8 +46,7 @@ class GroupStatisticsService(
         val json = try {
             osuApiRestClient.get()
                 .uri(GET_BINDING, qq)
-                .retrieve()
-                .body<JsonNode>()
+                .toBody<JsonNode>()
         } catch (e: Exception) {
             null
         }
@@ -66,8 +65,7 @@ class GroupStatisticsService(
         val json = try {
             osuApiRestClient.get()
                 .uri(GET_BP_URL, osuId)
-                .retrieve()
-                .body<JsonNode>()
+                .toBody<JsonNode>()
         } catch (e: Exception) {
             null
         }

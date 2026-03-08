@@ -10,13 +10,13 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
-import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.file.Files
 import java.util.concurrent.Callable
@@ -53,8 +53,7 @@ import kotlin.text.Charsets.UTF_8
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .retrieve()
-                .body<MaiBestScore>()!!
+                .toBody<MaiBestScore>()
         }
     }
 
@@ -65,8 +64,7 @@ import kotlin.text.Charsets.UTF_8
             client.post().uri("api/maimaidxprober/query/player")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
-                .retrieve()
-                .body<MaiBestScore>()!!
+                .toBody<MaiBestScore>()
         }
     }
 
@@ -80,8 +78,7 @@ import kotlin.text.Charsets.UTF_8
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .retrieve()
-                .body<MaiVersionScore>()!!
+                .toBody<MaiVersionScore>()
         }
     }
 
@@ -95,8 +92,7 @@ import kotlin.text.Charsets.UTF_8
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .retrieve()
-                .body<MaiVersionScore>()!!
+                .toBody<MaiVersionScore>()
         }
     }
 
@@ -134,15 +130,13 @@ import kotlin.text.Charsets.UTF_8
         val cover = try {
             request { client ->
                 client.get().uri("covers/$song.png")
-                    .retrieve()
-                    .body<ByteArray>()!!
+                    .toBody<ByteArray>()
             }
         } catch (e: RestClientResponseException) {
             if (e.statusCode.value() == 404) {
                 request { client ->
                     client.get().uri("covers/00000.png")
-                        .retrieve()
-                        .body<ByteArray>()!!
+                        .toBody<ByteArray>()
                 }
             } else {
                 throw e
@@ -394,8 +388,7 @@ import kotlin.text.Charsets.UTF_8
         return request { client ->
             client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("qq", qq).build() }
                 .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .body<MaiBestScore>()!!
+                .toBody<MaiBestScore>()
         }
     }
 
@@ -405,8 +398,7 @@ import kotlin.text.Charsets.UTF_8
         return request { client ->
             client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build() }
                 .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .body<MaiBestScore>()!!
+                .toBody<MaiBestScore>()
         }
     }
 
@@ -466,29 +458,25 @@ import kotlin.text.Charsets.UTF_8
     private val maimaiSongLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/maimaidxprober/music_data")
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
 
     private val maimaiRankLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/maimaidxprober/rating_ranking")
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
 
     private val maimaiFitLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/maimaidxprober/chart_stats")
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
 
     private val maimaiAliasLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("https://maimai.lxns.net/api/v0/maimai/alias/list")
-                .retrieve()
-                .body<String>()!!
+                .toBody<String>()
         }
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {

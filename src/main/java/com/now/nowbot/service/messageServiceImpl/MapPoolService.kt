@@ -19,13 +19,13 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
 import org.springframework.web.util.UriComponentsBuilder
 
 @Service("MAP_POOL")
@@ -117,16 +117,14 @@ class MapPoolService(
     fun searchByName(name: String): List<Pool> {
         if (url == null) return emptyList()
 
-        val nodeOpt = restClient.get().uri {
+        val node = restClient.get().uri {
             UriComponentsBuilder.fromUriString(url).path("/api/public/searchPool").queryParam("poolName", name).build()
                 .toUri()
         }.headers {
             it.add("AuthorizationX", token)
-        }.retrieve().body<JsonNode>() ?: return emptyList()
+        }.toBody<JsonNode>() ?: return emptyList()
 
-        return nodeOpt.map { node: JsonNode ->
-            JacksonUtil.parseObjectList(node["data"], Pool::class.java)
-        }.flatten()
+        return JacksonUtil.parseObjectList(node["data"], Pool::class.java)
     }
 
     fun searchByID(id: Int): Pool? {
@@ -146,8 +144,7 @@ class MapPoolService(
                 .headers {
                     it.add("AuthorizationX", token)
                 }
-                .retrieve()
-                .body<JsonNode>()
+                .toBody<JsonNode>()
                 ?: return null
             return if (json.has("data")) {
                 JacksonUtil.parseObject(json["data"], Pool::class.java)
