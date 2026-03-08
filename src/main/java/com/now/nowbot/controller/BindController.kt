@@ -8,14 +8,13 @@ import com.now.nowbot.service.messageServiceImpl.BindService.BindData
 import com.now.nowbot.service.messageServiceImpl.BindService.Companion.getBind
 import com.now.nowbot.service.messageServiceImpl.BindService.Companion.removeBind
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import jakarta.annotation.Nullable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.lang.Nullable
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @ResponseBody
 @RestController

@@ -13,14 +13,16 @@ import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.FastPower095
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
 import java.net.SocketException
 
 @Component
 class PerformancePlusAPIService(
-    private val webClient: WebClient,
-    private val beatmapApiService: OsuBeatmapApiService
+    private val beatmapApiService: OsuBeatmapApiService,
+    @Qualifier("rlient") private val restClient: RestClient
 ) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -266,7 +268,7 @@ class PerformancePlusAPIService(
 
 
     private fun post(body: List<PlusRetrieveData>): List<PPPlus> {
-        return webClient.post()
+        return restClient.post()
             .uri { u -> u
                 .scheme(API_SCHEME)
                 .host(API_HOST)
@@ -274,11 +276,9 @@ class PerformancePlusAPIService(
                 .replacePath("/api/batch/calculation")
                 .build()
             }
-            .bodyValue(body)
+            .body(body)
             .retrieve()
-            .bodyToFlux(PPPlus::class.java)
-            .collectList()
-            .block()!!
+            .body(object : ParameterizedTypeReference<List<PPPlus>>() {})!!
     }
 
     companion object {

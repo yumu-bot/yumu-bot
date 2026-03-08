@@ -29,14 +29,13 @@ import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.*
-import org.springframework.lang.NonNull
-import org.springframework.lang.Nullable
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClientResponseException
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
+import javax.annotation.Nullable
 import kotlin.math.max
 import kotlin.math.min
 
@@ -656,7 +655,7 @@ import kotlin.math.min
      */
     @GetMapping(value = ["bp/analysis"]) @DiscordParam(name = "ba", description = "最好成绩分析")
     @Throws(RuntimeException::class) fun getBPAnalysis(
-        @DiscordParam(name = "name", description = "玩家名称", required = true) @NonNull @RequestParam("name") name: String,
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
     ): ResponseEntity<ByteArray> {
         val bests: List<LazerScore>
@@ -1091,7 +1090,7 @@ import kotlin.math.min
      *
      * @param code 验证码
      */
-    @GetMapping(value = ["login"]) fun doLogin(@RequestParam("code") @NonNull code: String): OsuUser {
+    @GetMapping(value = ["login"]) fun doLogin(@RequestParam("code") code: String): OsuUser {
         val u = LoginService.LOGIN_USER_MAP.getOrDefault(code.uppercase(Locale.getDefault()), null)
         if (u != null) {
             LoginService.LOGIN_USER_MAP.remove(code.uppercase(Locale.getDefault()))
