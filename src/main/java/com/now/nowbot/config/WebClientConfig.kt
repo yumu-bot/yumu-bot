@@ -103,7 +103,7 @@ import java.time.Duration
             .defaultHeaders { headers: HttpHeaders ->
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
-            }.baseUrl(divingFishConfig.url!!)
+            }.baseUrl(divingFishConfig.url)
             .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
             .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
@@ -131,7 +131,7 @@ import java.time.Duration
             .defaultHeaders { headers: HttpHeaders ->
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
-            }.baseUrl(lxnsConfig.url!!)
+            }.baseUrl(lxnsConfig.url)
             .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
             .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
@@ -271,15 +271,17 @@ import java.time.Duration
     }
 
     @Bean("webClient") @Qualifier("webClient") fun webClient(builder: WebClient.Builder): WebClient {
-        val connectionProvider = ConnectionProvider.builder("connectionProvider3")
-            .maxIdleTime(Duration.ofMinutes(1))
-            .maxLifeTime(Duration.ofMinutes(2))
-            .maxConnections(500)
-            .pendingAcquireMaxCount(-1)
-            .evictInBackground(Duration.ofSeconds(30))
+        val connectionProvider = ConnectionProvider.builder("connectionProvider0")
+            // 等待获取连接的最长时间，超过这个时间直接报错，防止积压
+            .pendingAcquireTimeout(Duration.ofSeconds(25))
+            .pendingAcquireMaxCount(50)
+            .maxIdleTime(Duration.ofSeconds(20))
+            .maxLifeTime(Duration.ofMinutes(5))
+            .evictInBackground(Duration.ofSeconds(25))
             .build()
 
         val httpClient = HttpClient.create(connectionProvider)
+            .noProxy()
             .responseTimeout(Duration.ofSeconds(25))
             .option(ChannelOption.TCP_NODELAY, true)
 
