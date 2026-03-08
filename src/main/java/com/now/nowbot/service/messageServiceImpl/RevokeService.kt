@@ -70,7 +70,9 @@ class RevokeService(private val botContainer: BotContainer): MessageService<Revo
                 return false
             }
 
-            val targetRole = Role.getRole(sender.role)
+            // shiro 已经去掉了 role 信息, 无法再获取
+            // val targetRole = Role.getRole(sender.role)
+            val targetRole = Role.OWNER
 
             // 3. 核心权限校验逻辑：利用 Role 的等级比较（假设 Role 是 Enum 且有序）
             when (botRole) {

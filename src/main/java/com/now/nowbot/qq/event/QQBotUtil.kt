@@ -2,7 +2,7 @@ package com.now.nowbot.qq.event
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.core.Bot
-import com.mikuac.shiro.dto.action.response.GetMsgResp
+import com.mikuac.shiro.dto.action.response.MsgResp
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 
@@ -15,7 +15,7 @@ class FlexibleGetMsgResp {
     var message: Any? = null // 关键：Any 可以接收 String 或 List
 
     @JsonProperty("sender")
-    var sender: GetMsgResp.Sender? = null
+    var sender: MsgResp.Sender? = null
 
     @JsonProperty("time")
     var time: Int? = null
