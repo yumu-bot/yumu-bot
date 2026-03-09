@@ -51,7 +51,7 @@ class OsuUserInfoDao(
             }
         }
 
-        log.info("更新完成、")
+        log.info("更新完成。")
 
         return users.size
     }
