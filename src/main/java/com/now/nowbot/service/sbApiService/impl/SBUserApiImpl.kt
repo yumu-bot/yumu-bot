@@ -57,7 +57,7 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     .build()
                 }.toBody<JsonNode>().let {
                         parseList<Result>(it, "result", "玩家结果")
-                    } ?: listOf()
+                    }
             }.firstOrNull()?.id
         } catch (_: NetworkException.UserException) {
             return null

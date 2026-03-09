@@ -21,14 +21,15 @@ class WikiService internal constructor() : MessageService<Matcher> {
     var log: Logger = LoggerFactory.getLogger(WikiService::class.java)
 
     init {
-        var datestr = ""
+        var data = ""
+
         try {
-            datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH, "wiki.json"))
-        } catch (e: IOException) {
+            data = Files.readString(Path.of(NowbotConfig.RUN_PATH, "wiki.json"))
+        } catch (_: IOException) {
             log.info("未找到wiki文件路径, 加载失败")
         }
         WIKI = JacksonUtil.jsonToObject(
-            datestr,
+            data,
             JsonNode::class.java
         )
     }
@@ -53,21 +54,24 @@ class WikiService internal constructor() : MessageService<Matcher> {
         val sb = StringBuilder()
         if (null == key || "null" == key || key.trim().isEmpty() || "index" == key) {
             if (WIKI == null) {
-                val datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH + "wiki.json"))
+                val data = Files.readString(Path.of(NowbotConfig.RUN_PATH + "wiki.json"))
                 WIKI = JacksonUtil.jsonToObject(
-                    datestr,
+                    data,
                     JsonNode::class.java
                 )
             }
 
             val dates = WIKI!!["index"]
-            val it = dates.fields()
+            val it = dates.properties().iterator()
             while (it.hasNext()) {
                 val m = it.next()
                 sb.append(m.key).append(':').append('\n')
-                if (m.value.isArray) {
-                    for (i in 0..<m.value.size()) {
-                        sb.append(" ").append(m.value[i].asText())
+
+                val nodeValue = m.value
+                if (nodeValue.isArray) {
+                    // 2. 推荐使用 elements() 迭代器或直接遍历
+                    for (element in nodeValue) {
+                        sb.append(" ").append(element.asText())
                     }
                 }
                 sb.append('\n')

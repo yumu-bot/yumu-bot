@@ -14,6 +14,7 @@ import com.now.nowbot.service.web.parseTeamInfo
 import com.now.nowbot.service.web.parseTopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
@@ -37,29 +38,36 @@ import java.util.concurrent.Callable
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
             request { client ->
-                client.get().uri(user.avatarUrl).toBody<ByteArray>()!!
+                client.get().uri(user.avatarUrl).toBody<ByteArray>()
             }
-        } catch (_: NetworkException) {
+        } catch (_: Exception) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             request { client ->
-                client.get().uri("https://a.ppy.sh/").toBody<ByteArray>()!!
+                client.get().uri("https://a.ppy.sh/").toBody<ByteArray>()
             }
         }
     }
 
-    // 用来确认玩家是否存在于服务器，而无需使用 API 请求。
     override fun isPlayerExist(name: String): Boolean {
-        val response = try {
+        return try {
             request { client ->
-                client.get().uri("https://osu.ppy.sh/users/@{name}", name)
-                    .headers(base::insertHeader).toBody<String>() ?: ""
+                client.head()
+                    .uri("https://osu.ppy.sh/users/@{name}", name) // 注意：URI 变量通常不带 @
+                    .headers(base::insertHeader)
+                    .retrieve()
+                    .onStatus({ it.value() == 404 }) { _, _ ->
+                        throw NoSuchElementException.Player()
+                    }
+                    .toBodilessEntity()
             }
+            true
+        } catch (_: NoSuchElementException.Player) {
+            false
         } catch (e: Exception) {
-            ""
+            log.error("检测玩家 $name 失败: ${e.message}")
+            false
         }
-
-        return response.isNotBlank()
     }
 
     override fun getOauthUrl(state: String, full: Boolean): String {
@@ -252,7 +260,7 @@ import java.util.concurrent.Callable
     private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
         val data = request(isBackground) { client ->
             client.get().uri {
-                val ids = users.map { it -> it.toLong() }.toList()
+                val ids = users.map { u -> u.toLong() }.toList()
                     it.path("users")
                         .queryParam("ids[]", *ids.toTypedArray())
                         .queryParam("include_variant_statistics", isVariant)
@@ -415,7 +423,7 @@ import java.util.concurrent.Callable
     override fun getTopPlays(page: Int, mode: OsuMode): TopPlays? {
         val html = base.request { client: RestClient ->
             client.get()
-                .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").toBody<String>()!!
+                .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").toBody<String>()
         }
 
         return parseTopPlays(html)

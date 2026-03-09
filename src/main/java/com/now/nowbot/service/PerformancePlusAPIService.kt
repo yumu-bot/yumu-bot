@@ -22,7 +22,7 @@ import java.net.SocketException
 @Component
 class PerformancePlusAPIService(
     private val beatmapApiService: OsuBeatmapApiService,
-    @Qualifier("rlient") private val restClient: RestClient
+    @field:Qualifier("rlient") private val restClient: RestClient
 ) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)

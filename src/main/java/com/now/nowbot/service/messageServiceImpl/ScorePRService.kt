@@ -380,7 +380,7 @@ class ScorePRService(
         }
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -409,7 +409,7 @@ class ScorePRService(
         val scores = scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
@@ -519,17 +519,15 @@ class ScorePRService(
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
         fun getE5ParamForFilteredScore(user: OsuUser, history: OsuUser? = null, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
-            val originalBeatmap = beatmapApiService.getBeatmap(score.beatmapID)
+            beatmapApiService.applyBeatmapExtend(score)
 
-            beatmapApiService.applyBeatmapExtend(score, originalBeatmap)
-
-            val original = DataUtil.getOriginal(originalBeatmap)
+            val original = score.beatmap.originalDetails.toMap()
 
             calculateApiService.applyPPToScore(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
-            val density = beatmapApiService.getBeatmapObjectGrouping26(originalBeatmap)
+            val density = beatmapApiService.getBeatmapObjectGrouping26(score.beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
             return PanelE5Param(user, history, score, score.ranking, density, progress, original, attributes, panel)
@@ -573,12 +571,12 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
             val beatmap = score.beatmap
-            val original = DataUtil.getOriginal(beatmap)
+            val original = BeatmapUtil.getDetailMap(beatmap)
 
             AsyncMethodExecutor.awaitRunnableExecute(
                 listOf(
                     AsyncMethodExecutor.Runnable { calculateApiService.applyPPToScore(score) },
-                    AsyncMethodExecutor.Runnable { calculateApiService.applyBeatmapChanges(score) },
+                    AsyncMethodExecutor.Runnable { BeatmapUtil.applyBeatmapChanges(score) },
                     AsyncMethodExecutor.Runnable { calculateApiService.applyStarToScore(score) },
                 )
             )

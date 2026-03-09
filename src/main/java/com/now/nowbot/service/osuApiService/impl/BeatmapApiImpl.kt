@@ -175,7 +175,7 @@ class BeatmapApiImpl(
             return request { client ->
                 client.get()
                     .uri("https://osu.ppy.sh/osu/{bid}", bid)
-                    .toBody<String>() ?: ""
+                    .toBody<String>()
             }
         } catch (e: RestClientResponseException) {
             log.error("osu 谱面 API：请求官网谱面失败: ", e)
@@ -815,7 +815,7 @@ class BeatmapApiImpl(
                     .body(body)
                     .toBody<AttributesResponse>().attributes
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             BeatmapDifficultyAttributes()
         }
     }
@@ -1029,7 +1029,7 @@ class BeatmapApiImpl(
                 } else {
                     t.rankDate.replace(".000Z", "Z")
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 ""
             }
         } else {

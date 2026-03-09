@@ -622,15 +622,11 @@ class OsuApiBaseService(
             }
         }
 
-        val accessToken: String
-        val refreshToken: String
-        val time: Long
-
-        accessToken = s["access_token"].asText()
+        val accessToken: String = s["access_token"].asString()
         user.accessToken = accessToken
-        refreshToken = s["refresh_token"].asText()
+        val refreshToken: String = s["refresh_token"].asString()
         user.refreshToken = refreshToken
-        time = user.setTimeToAfter(s["expires_in"].asLong() * 1000)
+        val time: Long = user.setTimeToAfter(s["expires_in"].asLong() * 1000)
 
         val result = BindUser(user.userID, accessToken, refreshToken, time)
 

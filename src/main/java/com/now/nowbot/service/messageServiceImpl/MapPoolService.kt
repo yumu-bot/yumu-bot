@@ -122,7 +122,7 @@ class MapPoolService(
                 .toUri()
         }.headers {
             it.add("AuthorizationX", token)
-        }.toBody<JsonNode>() ?: return emptyList()
+        }.toBody<JsonNode>()
 
         return JacksonUtil.parseObjectList(node["data"], Pool::class.java)
     }
@@ -145,7 +145,6 @@ class MapPoolService(
                     it.add("AuthorizationX", token)
                 }
                 .toBody<JsonNode>()
-                ?: return null
             return if (json.has("data")) {
                 JacksonUtil.parseObject(json["data"], Pool::class.java)
             } else {

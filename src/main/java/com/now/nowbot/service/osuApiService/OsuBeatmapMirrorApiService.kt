@@ -27,25 +27,22 @@ class OsuBeatmapMirrorApiService(
 
         if (url.isNullOrEmpty()) return null
 
-        return null
-
-        return try {
-            val str = restClient.get()
+        val str = try {
+            restClient.get()
                 .uri(url) { it.path("/api/mirror/beatmap/osufile/{bid}").build(bid) }
                 .header("X-TOKEN", token)
                 .toBody<String>()
-
-            val sub = str.replaceBefore("osu", "")
-
-            if (sub.startsWith("osu file format")) {
-                sub
-            } else {
-                log.warn("谱面镜像站：谱面 $bid 文件损坏！\n谱面前 100 位是：${sub.take(100)}")
-                null
-            }
         } catch (e: Exception) {
             log.warn("谱面镜像站：请求谱面 $bid 失败：${e.message}")
+            return null
+        }
 
+        val sub = str.replaceBefore("osu", "")
+
+        return if (sub.startsWith("osu file format")) {
+            sub
+        } else {
+            log.warn("谱面镜像站：谱面 $bid 文件损坏！\n谱面前 100 位是：${sub.take(100)}")
             null
         }
     }
@@ -54,13 +51,15 @@ class OsuBeatmapMirrorApiService(
         if (url.isNullOrEmpty()) return null
 
         try {
-            val localPath = restClient.get()
-                .uri(url) {
-                    it.path("/api/mirror/fileName/bg/{bid}")
-                        .build(bid)
-                }
-                .header("X-TOKEN", token)
-                .toBody<String>()
+            val localPath = runCatching {
+                restClient.get()
+                    .uri(url!!) {
+                        it.path("/api/mirror/fileName/bg/{bid}")
+                            .build(bid)
+                    }
+                    .header("X-TOKEN", token)
+                    .toBody<String>()
+            }.getOrNull()
 
             if (localPath == null) {
                 log.warn("获取谱面 $bid 背景失败: 获取本地路径超时，可能是镜像站没有启动")

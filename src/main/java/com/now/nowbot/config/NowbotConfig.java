@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -74,8 +75,9 @@ public class NowbotConfig {
     public ObjectMapper jacksonObjectMapper() {
         return JsonMapper
                 .builder()
-                .serializationInclusion(JsonInclude.Include.NON_EMPTY)
+                .defaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.ALWAYS))
                 .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .addModule(new KotlinModule.Builder().build())
                 .build();
     }
 

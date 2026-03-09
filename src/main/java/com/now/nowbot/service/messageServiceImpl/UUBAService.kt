@@ -20,6 +20,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
@@ -208,7 +209,7 @@ class UUBAService(
                 val modsAttributeTmp: MutableList<Attribute> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double>) ->
                     val attribute = Attribute(
-                        mod, value.filterNotNull().size, value.filterNotNull().sum(), value.filterNotNull().average()
+                        mod, value.size, value.sum(), value.average()
                     )
                     modsAttributeTmp.add(attribute)
                 }

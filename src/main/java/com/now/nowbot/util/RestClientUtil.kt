@@ -2,7 +2,7 @@ package com.now.nowbot.util
 
 import org.springframework.web.client.HttpClientErrorException
 
-public inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBody(): T {
+inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBody(): T {
     if (T::class == ByteArray::class) {
         return exchange { _, response ->
             if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {
@@ -32,7 +32,7 @@ public inline fun <reified T : Any> org.springframework.web.client.RestClient.Re
     return JacksonUtil.parseObject(jsonString, T::class.java)
 }
 
-public inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBodyList(): List<T> {
+inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBodyList(): List<T> {
 
     val jsonString = exchange { _, response ->
         if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {

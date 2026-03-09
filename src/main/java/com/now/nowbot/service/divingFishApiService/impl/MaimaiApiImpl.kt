@@ -253,11 +253,10 @@ import kotlin.text.Charsets.UTF_8
         if (song.charts.isEmpty() || score.index >= song.charts.size) return
 
         val chart = song.charts[score.index]
-        val notes = chart.notes
 
         score.charter = chart.charter
-        score.max = 3 * (notes.tap + notes.hold + notes.slide + notes.touch + notes.break_)
-        score.notes = listOf(notes.tap, notes.hold, notes.slide, notes.touch, notes.break_)
+        score.max = 3 * chart.notes.sum()
+        score.notes = chart.notes
     }
 
     override fun insertPosition(scores: List<MaiScore>, offset: Int) {

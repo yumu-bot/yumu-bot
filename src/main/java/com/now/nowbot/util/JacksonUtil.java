@@ -25,31 +25,42 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class JacksonUtil {
 
-    private static final Logger       log         = LoggerFactory.getLogger(JacksonUtil.class);
-    public static final  ObjectMapper mapper      = JsonMapper.builder().build().registerModules(new JavaTimeModule());
-    public static        TypeFactory  typeFactory = mapper.getTypeFactory();
+    private static final Logger log = LoggerFactory.getLogger(JacksonUtil.class);
 
-    static {
-        var ktMode = new KotlinModule.Builder()
-                .enable(KotlinFeature.NullToEmptyCollection)
-                .enable(KotlinFeature.NullToEmptyMap)
-                .enable(KotlinFeature.NullIsSameAsDefault)
-                .enable(KotlinFeature.SingletonSupport)
-                .enable(KotlinFeature.StrictNullChecks)
-                .enable(KotlinFeature.KotlinPropertyNameAsImplicitName)
-                .enable(KotlinFeature.UseJavaDurationConversion)
-                .build();
-        mapper
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                // 设置可见性
-                .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
-                // 默认使用驼峰转下划线命名
-                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-                .registerModules(ktMode)
-        ;
-    }
+    // 1. 将 KotlinModule 的配置抽离为一个私有静态方法或直接内联
+    private static final KotlinModule KOTLIN_MODULE = new KotlinModule.Builder()
+            .enable(KotlinFeature.NullToEmptyCollection)
+            .enable(KotlinFeature.NullToEmptyMap)
+
+            // 核心替代方案：
+            // 1. 确保将 null 视为缺失，从而触发 Kotlin 的默认参数
+            .enable(KotlinFeature.NullIsSameAsDefault)
+            // 2. 启用新的严格空值检查逻辑（Jackson 3 推荐）
+            .enable(KotlinFeature.NewStrictNullChecks)
+
+            .enable(KotlinFeature.SingletonSupport)
+
+            .enable(KotlinFeature.KotlinPropertyNameAsImplicitName)
+            .enable(KotlinFeature.UseJavaDurationConversion)
+            .build();
+
+    // 2. 一气呵成构建 final mapper
+    public static final ObjectMapper mapper = JsonMapper.builder()
+            // 包含性设置
+            .defaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.ALWAYS))
+            // 特性开关
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING)
+            // 可见性
+            .visibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
+            // 命名策略
+            .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+            // 注册所有模块（包括 JavaTime 和刚才配置好的 KotlinModule）
+            .addModule(new JavaTimeModule())
+            .addModule(KOTLIN_MODULE)
+            .build();
+
+    public static TypeFactory typeFactory = mapper.getTypeFactory();
 
     public static <T> String objectToJsonPretty(T obj) {
         if (obj == null) {

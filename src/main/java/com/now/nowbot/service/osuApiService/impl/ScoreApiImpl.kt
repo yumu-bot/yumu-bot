@@ -28,6 +28,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.RejectedExecutionException
 import java.util.function.Function
 import kotlin.text.HexFormat
@@ -116,19 +117,17 @@ class ScoreApiImpl(
             return getBests(id, mode, offset, limit)
         }
 
-        val firstBatch = getBests(id, mode, offset, step)
-        val secondBatch = getBests(id, mode, offset + step, limit - step)
+//        val firstBatch = getBests(id, mode, offset, step)
+//        val secondBatch = getBests(id, mode, offset + step, limit - step)
+//
+//        return firstBatch + secondBatch
 
-        return firstBatch + secondBatch
-
-        // TODO webclient 死锁问题还是会出现，请换到 RestClient 后修改回来。当前的 webclient 无法在嵌套的协程中使用，会直接失败
-
-//        return AsyncMethodExecutor.awaitList(
-//            listOf(
-//                Callable { getBests(id, mode, offset, step) },
-//                Callable { getBests(id, mode, offset + step, limit - step) }
-//            )
-//        ).flatten()
+        return AsyncMethodExecutor.awaitList(
+            listOf(
+                Callable { getBests(id, mode, offset, step) },
+                Callable { getBests(id, mode, offset + step, limit - step) }
+            )
+        ).flatten()
 
 //        // 使用你现有的工具方法进行并发
 //        val result = AsyncMethodExecutor.awaitPairCallableExecute(
@@ -181,7 +180,7 @@ class ScoreApiImpl(
         return request { client ->
             client.get().uri {
                 it.path("scores/{scoreID}").build(scoreID)
-            }.headers(base::insertHeader).toBody<LazerScore>()!!
+            }.headers(base::insertHeader).toBody<LazerScore>()
         }
     }
 

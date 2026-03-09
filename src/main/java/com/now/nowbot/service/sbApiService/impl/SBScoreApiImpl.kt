@@ -62,7 +62,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                 it.build()
             }.toBody<JsonNode>().let {
                 parseList<SBScore>(it, "scores", "玩家成绩")
-            } ?: listOf()
+            }
         }
             .drop(off)
     }
@@ -103,7 +103,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                 it.build()
             }.toBody<JsonNode>().let {
                 parseList<SBScore>(it, "scores", "谱面成绩")
-            } ?: listOf()
+            }
         }.drop(off)
     }
 
