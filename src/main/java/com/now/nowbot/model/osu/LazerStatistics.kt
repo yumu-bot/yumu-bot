@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.util.JacksonUtil
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import kotlin.math.roundToInt
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class LazerStatistics(
     // M 320
     @field:JsonProperty("perfect") var perfect: Int = 0,

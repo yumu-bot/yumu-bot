@@ -1,6 +1,9 @@
 package com.now.nowbot.model.match
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.match.MatchRating.PlayerData
 import com.now.nowbot.model.match.MatchRating.RatingParam
@@ -10,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.exp
 import kotlin.math.min
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class SeriesRating(
     val matches: List<Match>,
     private val ratingParams: List<RatingParam>,

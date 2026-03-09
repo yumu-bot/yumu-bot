@@ -2,8 +2,12 @@ package com.now.nowbot.model.maimai
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
+
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class MaiSong {
 
     @JsonProperty("song_id")

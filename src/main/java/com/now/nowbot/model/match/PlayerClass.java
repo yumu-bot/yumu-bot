@@ -1,8 +1,16 @@
 package com.now.nowbot.model.match;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.annotation.JsonNaming;
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class PlayerClass {
     String name;
+
+    @JsonProperty("name_cn")
     String nameCN;
+
     String color;
 
     public PlayerClass(double ERA_index, double DRA_index, double RWS_index) {

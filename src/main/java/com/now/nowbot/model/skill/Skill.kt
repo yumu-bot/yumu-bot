@@ -3,8 +3,11 @@ package com.now.nowbot.model.skill
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.TipsException
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import kotlin.math.*
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 abstract class Skill {
     abstract val values: List<Float>
 

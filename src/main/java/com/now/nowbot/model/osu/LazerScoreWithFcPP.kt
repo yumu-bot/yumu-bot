@@ -5,10 +5,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.beans.BeanUtils
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class LazerScoreWithFcPP : LazerScore() {
     @JsonProperty("fc_pp")
     var fcPP: Double = 0.0

@@ -2,6 +2,9 @@ package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
+
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
@@ -23,6 +26,7 @@ import kotlin.math.roundToInt
     setterVisibility = JsonAutoDetect.Visibility.ANY
 )
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 open class LazerScore(
     @field:JsonProperty("classic_total_score")
     var classicScore: Long = 0L,

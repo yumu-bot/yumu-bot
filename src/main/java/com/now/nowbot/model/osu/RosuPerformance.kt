@@ -3,9 +3,12 @@ package com.now.nowbot.model.osu
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.spring.osu.extended.rosu.*
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import kotlin.reflect.full.memberProperties
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 open class RosuPerformance(result: JniPerformanceAttributes? = null) {
     @JsonProperty("pp")
     var pp: Double = 0.0

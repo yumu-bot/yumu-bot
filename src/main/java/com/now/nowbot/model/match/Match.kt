@@ -1,6 +1,9 @@
 package com.now.nowbot.model.match
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
@@ -9,6 +12,7 @@ import com.now.nowbot.model.osu.MicroUser
 import java.time.OffsetDateTime
 import kotlin.math.max
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class Match(
     @field:JsonProperty("match") var statistics: MatchStat,
     @field:JsonProperty("events") var events: List<MatchEvent>,

@@ -2,6 +2,8 @@ package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
@@ -9,6 +11,7 @@ import com.now.nowbot.model.enums.OsuMode
 import jakarta.persistence.Column
 import java.time.OffsetDateTime
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class Beatmap(
     @field:JsonProperty("beatmapset_id")
     var beatmapsetID: Long = 0L,

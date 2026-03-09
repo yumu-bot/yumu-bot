@@ -1,6 +1,9 @@
 package com.now.nowbot.model.skill
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.TipsException
@@ -9,6 +12,7 @@ import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.pow
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 sealed class Skill6 {
 
     companion object {

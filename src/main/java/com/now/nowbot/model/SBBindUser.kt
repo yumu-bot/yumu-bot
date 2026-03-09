@@ -3,8 +3,11 @@ package com.now.nowbot.model
 import com.now.nowbot.entity.SBBindUserLite
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.ppysb.SBUser
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class SBBindUser(
     val id: Long? = null,
 

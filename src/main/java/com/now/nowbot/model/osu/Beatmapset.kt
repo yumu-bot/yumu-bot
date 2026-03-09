@@ -1,6 +1,9 @@
 package com.now.nowbot.model.osu
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.yumu.core.extensions.isNotNull
 import jakarta.persistence.Column
@@ -9,6 +12,7 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.max
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class Beatmapset {
     @Column(name = "anime_cover")
     var animeCover: Boolean = false

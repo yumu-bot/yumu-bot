@@ -3,7 +3,10 @@ package com.now.nowbot.model
 import com.now.nowbot.entity.OsuCourseLite
 import com.now.nowbot.entity.OsuCourseSingleLite
 import com.now.nowbot.model.osu.Beatmap
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class Course(
     // id 在数据库中生成, 初始为空
     var id: Int? = null,

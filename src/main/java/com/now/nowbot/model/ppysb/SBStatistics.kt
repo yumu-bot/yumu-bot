@@ -2,10 +2,14 @@ package com.now.nowbot.model.ppysb
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
+
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class SBStatistics(
     @field:JsonProperty("id")
     var id: Long = 0L,

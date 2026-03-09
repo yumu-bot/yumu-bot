@@ -1,6 +1,9 @@
 package com.now.nowbot.service
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.LazerMod
@@ -25,6 +28,7 @@ class PerformancePlusAPIService(
     @field:Qualifier("rlient") private val restClient: RestClient
 ) {
 
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
     @JsonIgnoreProperties(ignoreUnknown = true)
     private data class PlusRetrieveData(
         @JsonIgnore
@@ -51,6 +55,7 @@ class PerformancePlusAPIService(
             get() = mods?.map { LazerModLite(it) }
     }
 
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class LazerModLite(
         @JsonIgnore

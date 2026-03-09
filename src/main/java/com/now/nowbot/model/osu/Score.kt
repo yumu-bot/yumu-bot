@@ -3,6 +3,8 @@ package com.now.nowbot.model.osu
 import com.fasterxml.jackson.annotation.*
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -12,6 +14,7 @@ import kotlin.math.roundToInt
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true, allowSetters = true, allowGetters = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class Score {
     @JsonProperty("accuracy")
     var accuracy: Double? = null

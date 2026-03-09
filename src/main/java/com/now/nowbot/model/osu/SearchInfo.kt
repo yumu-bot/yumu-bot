@@ -1,7 +1,10 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class SearchInfo {
     @JsonProperty("c") 
     var general: String? = null

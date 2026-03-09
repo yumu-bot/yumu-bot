@@ -1,11 +1,14 @@
 package com.now.nowbot.model.osu
 
 import com.now.nowbot.util.lzma.LZMAInputStream
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class Replay(bf: ByteBuffer) {
     // 0 = osu!, 1 = osu!taiko, 2 = osu!catch, 3 = osu!mania
     var mode: Byte

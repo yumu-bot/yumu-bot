@@ -2,7 +2,10 @@ package com.now.nowbot.model.multiplayer
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.MicroUser
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class RoomScore(
     @field:JsonProperty("accuracy")
     val accuracy: Double,

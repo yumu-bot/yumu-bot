@@ -1,8 +1,11 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class Kudosu {
     @JsonProperty("id")
     var kudosuID: Long = 0
@@ -24,6 +27,7 @@ class Kudosu {
     @JsonProperty("giver")
     var giver: Giver? = null
 
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
     data class Giver(
         @field:JsonProperty("url")
         var url: String? = "",
@@ -35,6 +39,7 @@ class Kudosu {
     @JsonProperty("post")
     var post: Post? = null
 
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
     data class Post(
         // 贴子的链接
         @field:JsonProperty("url")
@@ -48,6 +53,7 @@ class Kudosu {
     @field:JsonProperty("details")
     var details: Details? = null
 
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
     data class Details(
         @field:JsonProperty("url")
         var event: String? = null,

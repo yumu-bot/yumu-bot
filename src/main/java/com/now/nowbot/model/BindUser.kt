@@ -1,9 +1,9 @@
 package com.now.nowbot.model
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId

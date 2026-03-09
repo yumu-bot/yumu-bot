@@ -1,8 +1,12 @@
 package com.now.nowbot.model.osu
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class Tag(
     @field:JsonProperty("id") var id: Int = 0,
 

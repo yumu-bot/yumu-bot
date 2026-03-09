@@ -2,6 +2,9 @@ package com.now.nowbot.model.ppysb
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
+
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -13,6 +16,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatterBuilder
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class SBScore(
     @field:JsonProperty("id") val scoreID: Long,
 

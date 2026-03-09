@@ -1,8 +1,12 @@
 package com.now.nowbot.model.maimai
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class MaiScore {
     // 也就是准确率
     @JsonProperty("achievements") var achievements: Double = 0.0

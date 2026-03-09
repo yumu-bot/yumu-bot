@@ -5,10 +5,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class SBUser(
     @field:JsonProperty("id") val userID: Long = 0,
     @field:JsonProperty("name") val username: String = "",

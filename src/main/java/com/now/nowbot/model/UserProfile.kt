@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.UserProfileItem
 import com.now.nowbot.service.messageServiceImpl.CustomService
 import com.now.nowbot.util.DataUtil
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KMutableProperty1
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class UserProfile(
     @field:JsonProperty("card")
     var card: String? = null,

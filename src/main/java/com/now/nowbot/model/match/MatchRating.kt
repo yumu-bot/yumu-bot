@@ -1,6 +1,9 @@
 package com.now.nowbot.model.match
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
@@ -14,6 +17,8 @@ import kotlin.math.min
 import kotlin.math.roundToLong
 
 // 原来的 MatchCalculate
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class MatchRating(
     val match: Match,
     private val ratingParam: RatingParam,

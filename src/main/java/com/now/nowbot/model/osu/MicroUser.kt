@@ -3,6 +3,8 @@ package com.now.nowbot.model.osu
 import com.fasterxml.jackson.annotation.*
 import com.now.nowbot.model.osu.OsuUser.Team
 import com.now.nowbot.model.osu.OsuUser.UserGroup
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -11,6 +13,7 @@ import java.time.format.DateTimeFormatterBuilder
 @JsonIgnoreProperties(ignoreUnknown = true) // 允许忽略json没有的值赋为空
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY) //扫描非public的值并注入
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class MicroUser : Comparable<MicroUser> {
     @JsonProperty("avatar_url")
     var avatarUrl: String? = null

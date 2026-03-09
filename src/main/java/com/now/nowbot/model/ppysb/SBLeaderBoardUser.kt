@@ -1,7 +1,10 @@
 package com.now.nowbot.model.ppysb
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class SBLeaderBoardUser(
     @field:JsonProperty("player_id")
     val userID: Long,

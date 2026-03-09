@@ -3,9 +3,12 @@ package com.now.nowbot.model.multiplayer
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.MicroUser
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class RoomInfo(
     @field:JsonProperty("id")
     val roomID: Long,

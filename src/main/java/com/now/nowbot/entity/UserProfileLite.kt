@@ -1,12 +1,16 @@
 package com.now.nowbot.entity
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
 @Entity
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class UserProfileLite {
 
     @Id

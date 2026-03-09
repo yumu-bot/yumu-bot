@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.MicroUser
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class Room(
     @field:JsonProperty("beatmaps")
     val beatmaps: List<Beatmap>,

@@ -1,9 +1,13 @@
 package com.now.nowbot.model.osu
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class BeatmapsetWithRankTime(
     @field:JsonProperty("id")
     val beatmapID: Long = 0,

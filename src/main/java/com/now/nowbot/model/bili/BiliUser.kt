@@ -1,11 +1,15 @@
 package com.now.nowbot.model.bili
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.util.DataUtil
 import java.net.URLDecoder
 import java.time.format.DateTimeFormatterBuilder
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class BiliUser {
     @field:JsonProperty("code")
     var code: Int = -1

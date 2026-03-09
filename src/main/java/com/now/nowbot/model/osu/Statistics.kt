@@ -1,6 +1,9 @@
 package com.now.nowbot.model.osu
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -12,7 +15,9 @@ import kotlin.math.round
 /**
  * 注意，成绩内的 Statistics 只有 count_xxx 的指标
  */
-@JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 open class Statistics : Cloneable {
     @JsonProperty("count_50")
     var count50: Int? = 0

@@ -1,28 +1,28 @@
-package com.now.nowbot.model.osu;
+package com.now.nowbot.model.osu
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.now.nowbot.entity.UserProfileLite;
-import org.springframework.beans.BeanUtils;
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.now.nowbot.entity.UserProfileLite
+import org.springframework.beans.BeanUtils
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class OsuUserPlus extends OsuUser {
-    UserProfileLite profile;
+@JsonNaming(
+    PropertyNamingStrategies.SnakeCaseStrategy::class
+)
+class OsuUserPlus : OsuUser() {
+    var profile: UserProfileLite? = null
 
-    public static OsuUserPlus copyOf(OsuUser user) {
-        var result = new OsuUserPlus();
-        BeanUtils.copyProperties(user, result);
-        return result;
-    }
-
-    public UserProfileLite getProfile() {
-        return profile;
-    }
-
-    public void setProfile(UserProfileLite profile) {
-        this.profile = profile;
+    companion object {
+        @JvmStatic
+        fun copyOf(user: OsuUser): OsuUserPlus {
+            val result = OsuUserPlus()
+            BeanUtils.copyProperties(user, result)
+            return result
+        }
     }
 }

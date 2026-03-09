@@ -2,11 +2,15 @@ package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.OffsetDateTime
 
-@JsonIgnoreProperties(ignoreUnknown = true) @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class ActivityEvent {
     data class Achievement(
         @field:JsonProperty("icon_url") val url: String,

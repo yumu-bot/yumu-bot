@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.util.DataUtil
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -15,6 +17,7 @@ import java.util.*
 
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 open class OsuUser {
     @JsonProperty("avatar_url")
     var avatarUrl: String = ""
