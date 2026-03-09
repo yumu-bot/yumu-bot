@@ -51,10 +51,6 @@ class PerformancePlusDao(
 
         val before = snapshotDao.getLatestSnapshot(f.userID, f.mode)
 
-        Thread.startVirtualThread {
-            snapshotDao.upsertSnapshot(bests)
-        }
-
         val beforeStats: PPPlus.Stats?
 
         val hash = snapshotDao.getHash(bests)
@@ -63,16 +59,16 @@ class PerformancePlusDao(
             val saved = before.scoreIDs.toSet().mapNotNull { s ->
                 val d = plusRepository.findDetailsByScoreID(s, f.userID)
 
-                d?.let { s to d.toModel() }
-            }.toMap()
+                d?.let { d.toModel() }
+            }.toList()
 
-            val notSaved = bests.filterNot { it.scoreID in saved.keys }
-
-            val legacy = plusAPIService.getScoresPerformancePlus(notSaved).mapNotNull { it.performance }
-
-            beforeStats = PerformancePlusAPIService.collect(saved.values + legacy)
+            beforeStats = PerformancePlusAPIService.collect(saved)
         } else {
             beforeStats = null
+        }
+
+        Thread.startVirtualThread {
+            snapshotDao.upsertSnapshot(bests)
         }
 
         val exists = bests.mapNotNull { b ->
