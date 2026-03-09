@@ -155,7 +155,7 @@ import kotlin.math.min
                     }
                 }
 
-            return AsyncMethodExecutor.awaitCallableExecute(actions).toMap()
+            return AsyncMethodExecutor.awaitList(actions).toMap()
         }
 
         // 计算对应成绩的对应 DX 评分

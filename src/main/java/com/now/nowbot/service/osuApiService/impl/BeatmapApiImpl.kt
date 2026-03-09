@@ -24,7 +24,6 @@ import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
@@ -250,7 +249,7 @@ class BeatmapApiImpl(
             }
 
             // 每一组给 30 秒，防止网络波动
-            val result = AsyncMethodExecutor.awaitCallableExecute(actions, 30.seconds)
+            val result = AsyncMethodExecutor.awaitList(actions, 30.seconds)
 
             result.forEach { (id, fileString) ->
                 if (!fileString.isNullOrEmpty()) {
@@ -365,7 +364,7 @@ class BeatmapApiImpl(
             }
         }
 
-        val beatmaps = AsyncMethodExecutor.awaitCallableExecute(callables).flatten()
+        val beatmaps = AsyncMethodExecutor.awaitList(callables).flatten()
 
         beatmapDao.saveExtendedBeatmap(beatmaps)
 
@@ -407,7 +406,7 @@ class BeatmapApiImpl(
                 }
             }
 
-            val async = AsyncMethodExecutor.awaitCallableExecute(works)
+            val async = AsyncMethodExecutor.awaitList(works)
 
             return async.flatten()
         }
@@ -445,7 +444,7 @@ class BeatmapApiImpl(
                 }
             }
 
-            val async = AsyncMethodExecutor.awaitCallableExecute(works)
+            val async = AsyncMethodExecutor.awaitList(works)
 
             return async.flatten()
         }
@@ -497,7 +496,7 @@ class BeatmapApiImpl(
             }
         }
 
-        return AsyncMethodExecutor.awaitCallableExecute(callables)
+        return AsyncMethodExecutor.awaitList(callables)
     }
 
     override fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset> {
@@ -922,7 +921,7 @@ class BeatmapApiImpl(
                     }
                 }
 
-                val searches = AsyncMethodExecutor.awaitCallableExecute(actions)
+                val searches = AsyncMethodExecutor.awaitList(actions)
 
                 if (searches.map { it.cursorString }.any { it == null }) {
                     isEnd.set(true)

@@ -204,7 +204,7 @@ import java.util.concurrent.ExecutionException
             }
         }
 
-        val results = AsyncMethodExecutor.awaitBatchCallableExecute(actions)
+        val results = AsyncMethodExecutor.awaitBatch(actions)
             .filter { it.second.userID > 0 }
             .toMap()
 
@@ -245,7 +245,7 @@ import java.util.concurrent.ExecutionException
                 }
             }
 
-            return AsyncMethodExecutor.awaitCallableExecute(callables).flatten()
+            return AsyncMethodExecutor.awaitList(callables).flatten()
         }
     }
 
@@ -405,19 +405,19 @@ import java.util.concurrent.ExecutionException
     }
 
     override fun getTeamInfo(id: Int): TeamInfo? {
-        val html = base.request { client: WebClient ->
-            client.get().uri("https://osu.ppy.sh/teams/{id}", id).retrieve().bodyToMono(String::class.java)
-        }
+        val html = base.osuApiWebClient
+            .get().uri("https://osu.ppy.sh/teams/{id}", id).retrieve().bodyToMono(String::class.java)
+            .block()!!
 
         return parseTeamInfo(id, html)
     }
 
     override fun getTopPlays(page: Int, mode: OsuMode): TopPlays? {
-        val html = base.request { client: WebClient ->
-            client.get()
-                .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").
-                retrieve().bodyToMono(String::class.java)
-        }
+        val html = base.osuApiWebClient
+            .get()
+            .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores")
+            .retrieve().bodyToMono(String::class.java)
+            .block()!!
 
         return parseTopPlays(html)
     }

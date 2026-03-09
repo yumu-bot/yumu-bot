@@ -263,7 +263,7 @@ import kotlin.time.Duration.Companion.seconds
         if (userID != null) {
             mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(userID, mode) },
                 { scoreApiService.getBeatmapScores(beatmapID, userID, mode) }
             )
@@ -285,7 +285,7 @@ import kotlin.time.Duration.Companion.seconds
     ) : ScoreData {
         val score = scoreApiService.getScore(scoreID)
 
-        val async = AsyncMethodExecutor.awaitPairCallableExecute(
+        val async = AsyncMethodExecutor.awaitPair(
             { userApiService.getOsuUser(score.userID, score.mode) },
             { beatmapApiService.getBeatmap(score.beatmapID) }
         )
@@ -310,7 +310,7 @@ import kotlin.time.Duration.Companion.seconds
         val user: OsuUser
 
         if (userID != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(userID, inputMode.data ?: OsuMode.DEFAULT) },
                 { scoreApiService.getRecentScore(userID, inputMode.data, 0, 1) }
             )
@@ -364,7 +364,7 @@ import kotlin.time.Duration.Companion.seconds
         }
 
         if (userID != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(userID, inputMode.data!!)},
                 { scoreApiService.getBeatmapScores(beforeBeatmapID, userID, mode)}
             )
@@ -420,7 +420,7 @@ import kotlin.time.Duration.Companion.seconds
             }
 
             val b4Scores = AsyncMethodExecutor
-                .awaitCallableExecute(works)
+                .awaitList(works)
                 .mapNotNull { it?.score }
 
             count += b4.size

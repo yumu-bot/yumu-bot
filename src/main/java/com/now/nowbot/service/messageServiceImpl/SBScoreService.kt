@@ -136,7 +136,7 @@ class SBScoreService(
             if (id != null) {
                 mode = OsuMode.getConvertableMode(rx, map.mode)
 
-                val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getUser(id) },
                     { scoreApiService.getBeatmapRecentScore(bid, mods, mode) }
                 )
@@ -228,7 +228,7 @@ class SBScoreService(
             }
 
             if (id != null) {
-                val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getUser(id) },
                     { scoreApiService.getRecentScore(
                         id = id,

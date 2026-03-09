@@ -46,7 +46,7 @@ class BPAnalysisLegacyService(
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
         if (id != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id, mode.data!!) },
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)

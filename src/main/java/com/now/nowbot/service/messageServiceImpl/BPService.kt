@@ -191,7 +191,7 @@ import java.util.regex.Matcher
                 InstructionRange(id.data!!, start, end)
             }
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
                 { id2.getBestsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition) }
             )

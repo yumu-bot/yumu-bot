@@ -280,7 +280,7 @@ class ScorePRService(
             }
 
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
                 { id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass) }
             )
@@ -500,7 +500,7 @@ class ScorePRService(
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)
 
-            AsyncMethodExecutor.awaitPairCallableExecute(
+            AsyncMethodExecutor.awaitPair(
                 { beatmapApiService.applyBeatmapExtend(s) },
                 { calculateApiService.applyPPToScore(s) },
             )

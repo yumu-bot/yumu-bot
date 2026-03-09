@@ -90,7 +90,7 @@ class RecentBestService(
             dayStart = dataID.getDayStart()
             dayEnd = dataID.getDayEnd(7)
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(dataID.data!!, dataMode.data!!) },
                 { scoreApiService.getBestScores(dataID.data!!, dataMode.data!!, 0, 100) },
             )

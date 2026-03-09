@@ -40,6 +40,11 @@ import java.time.Duration
             .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
+
+            // TODO 最佳实践应该是使用fifo，并且配合 RestClient
+            .lifo()
+            .evictInBackground(Duration.ofSeconds(60))
+
             .build()
 
         val httpClient = HttpClient.create(connectionProvider)
@@ -76,7 +81,9 @@ import java.time.Duration
             .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
+            .evictInBackground(Duration.ofSeconds(60))
             .build()
+
         val httpClient = HttpClient.create(connectionProvider)
             // 要用梯子
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
@@ -114,7 +121,9 @@ import java.time.Duration
             .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
+            .evictInBackground(Duration.ofSeconds(60))
             .build()
+
         val httpClient = HttpClient.create(connectionProvider)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
             .followRedirect(true).responseTimeout(Duration.ofSeconds(25))
@@ -142,7 +151,9 @@ import java.time.Duration
             .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
+            .evictInBackground(Duration.ofSeconds(60))
             .build()
+
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
             .followRedirect(true).responseTimeout(Duration.ofSeconds(25))
@@ -170,6 +181,7 @@ import java.time.Duration
             .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
+            .evictInBackground(Duration.ofSeconds(60))
             .build()
 
         val httpClient = HttpClient.create(connectionProvider)
@@ -272,12 +284,12 @@ import java.time.Duration
 
     @Bean("webClient") @Qualifier("webClient") fun webClient(builder: WebClient.Builder): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider0")
-            // 等待获取连接的最长时间，超过这个时间直接报错，防止积压
-            .pendingAcquireTimeout(Duration.ofSeconds(25))
-            .pendingAcquireMaxCount(50)
-            .maxIdleTime(Duration.ofSeconds(20))
-            .maxLifeTime(Duration.ofMinutes(5))
-            .evictInBackground(Duration.ofSeconds(25))
+            .maxConnections(500)
+            .fifo()
+            .pendingAcquireMaxCount(-1)
+            .pendingAcquireTimeout(Duration.ofSeconds(10))
+            .maxIdleTime(Duration.ofSeconds(60))
+            .evictInBackground(Duration.ofSeconds(60))
             .build()
 
         val httpClient = HttpClient.create(connectionProvider)

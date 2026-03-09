@@ -70,7 +70,7 @@ object UserIDUtil {
         val userID: Long?
         val me: BindUser?
 
-        val async = AsyncMethodExecutor.awaitPairCallableExecute(
+        val async = AsyncMethodExecutor.awaitPair(
             { getUserID(event, matcher, mode, isMyself, maximum) },
             { bindDao.getBindFromQQOrNull(event.sender.contactID) }
         )
@@ -104,7 +104,7 @@ object UserIDUtil {
         val userID: Long?
         val me: SBBindUser?
 
-        val async = AsyncMethodExecutor.awaitPairCallableExecute(
+        val async = AsyncMethodExecutor.awaitPair(
             { getSBUserID(event, matcher, mode, isMyself) },
             {
                 try {

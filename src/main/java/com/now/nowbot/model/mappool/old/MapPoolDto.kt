@@ -28,7 +28,7 @@ class MapPoolDto(
                     beatmapApiService.getBeatmapFromDatabase(it)
                 }
             }
-            AsyncMethodExecutor.awaitCallableExecute(action)
+            AsyncMethodExecutor.awaitList(action)
         }.map { ModPool(it.key, it.value) }
     }
 

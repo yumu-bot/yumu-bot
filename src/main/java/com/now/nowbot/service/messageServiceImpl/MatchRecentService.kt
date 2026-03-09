@@ -211,7 +211,7 @@ class MatchRecentService(
         val body = if (filteredScores.size == 1) {
             val score = filteredScores.first()
 
-            AsyncMethodExecutor.awaitTripleCallableExecute(
+            AsyncMethodExecutor.awaitTriple(
                 // 缺的东西太多
                 { beatmapApiService.applyBeatmapExtendFromAPI(score) },
                 { calculateApiService.applyStarToScore(score) },
@@ -226,7 +226,7 @@ class MatchRecentService(
 
             e5
         } else {
-            AsyncMethodExecutor.awaitTripleCallableExecute(
+            AsyncMethodExecutor.awaitTriple(
                 { beatmapApiService.applyBeatmapExtend(filteredScores) },
                 { calculateApiService.applyStarToScores(filteredScores) },
                 { calculateApiService.applyPPToScores(filteredScores) }

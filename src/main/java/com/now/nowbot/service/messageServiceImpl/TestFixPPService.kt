@@ -91,7 +91,7 @@ import kotlin.math.roundToInt
                 }
             }
 
-            val result = AsyncMethodExecutor.awaitCallableExecute(actions)
+            val result = AsyncMethodExecutor.awaitList(actions)
                 .filterNotNull()
                 .toMap()
 
@@ -124,7 +124,7 @@ import kotlin.math.roundToInt
             }
         }
 
-        val data = AsyncMethodExecutor.awaitCallableExecute(actions).toMap()
+        val data = AsyncMethodExecutor.awaitList(actions).toMap()
 
         log.info("TP：获取玩家信息和最好成绩成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
         time = System.currentTimeMillis()

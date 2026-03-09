@@ -1,5 +1,13 @@
 package com.now.nowbot.util
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Instant
@@ -381,20 +389,147 @@ object AsyncMethodExecutor {
         }
     }
 
-    /*
-    fun <T> awaitCallableExecute(
-        works: List<Callable<out T>>,
-        timeout: Duration = 30.seconds
-    ): List<T> {
-        ShutdownOnFailure().use { virtualPool ->
-            val results = works.map { virtualPool.fork(it) }
-            virtualPool.joinUntil(Instant.now().plus(timeout))
-            virtualPool.throwIfFailed()
-            return results.map { it.get() }
+    /* 以下是协程代码 */
+
+    val vDispatcher = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
+
+    fun <T> await(work: Callable<out T>, timeout: Duration = 30.seconds): T {
+        return runBlocking(vDispatcher) {
+            suspend(work, timeout)
         }
     }
 
+    suspend fun <T> suspend(work: Callable<out T>, timeout: Duration = 30.seconds): T = withTimeout(timeout) {
+        val r = async(vDispatcher) { work.call() }
+
+        r.await()
+    }
+
+    fun <T, U> awaitPair(
+        work: Callable<out T>,
+        work2: Callable<out U>,
+        timeout: Duration = 30.seconds
+    ): Pair<T, U> {
+        return runBlocking(vDispatcher) {
+            suspendPair(work, work2, timeout)
+        }
+    }
+
+    suspend fun <T, U> suspendPair(
+        work: Callable<out T>,
+        work2: Callable<out U>,
+        timeout: Duration = 30.seconds
+    ): Pair<T, U> = withTimeout(timeout) {
+        val r1 = async(vDispatcher) { work.call() }
+        val r2 = async(vDispatcher) { work2.call() }
+
+        r1.await() to r2.await()
+    }
+
+    fun <T, U, V> awaitTriple(
+        work: Callable<out T>,
+        work2: Callable<out U>,
+        work3: Callable<out V>,
+        timeout: Duration = 30.seconds
+    ): Triple<T, U, V> {
+        return runBlocking(vDispatcher) {
+            suspendTriple(work, work2, work3, timeout)
+        }
+    }
+
+    suspend fun <T, U, V> suspendTriple(
+        work: Callable<out T>,
+        work2: Callable<out U>,
+        work3: Callable<out V>,
+        timeout: Duration = 30.seconds
+    ): Triple<T, U, V> = withTimeout(timeout) {
+        val r1 = async(vDispatcher) { work.call() }
+        val r2 = async(vDispatcher) { work2.call() }
+        val r3 = async(vDispatcher) { work3.call() }
+
+        Triple(r1.await(), r2.await(), r3.await())
+    }
+
+
+
+    fun <T, U, V, W> awaitQuad(
+        work: Callable<out T>,
+        work2: Callable<out U>,
+        work3: Callable<out V>,
+        work4: Callable<out W>,
+        timeout: Duration = 30.seconds
+    ): Pair<Pair<T, U>, Pair<V, W>> {
+        return runBlocking(vDispatcher) {
+            suspendQuad(work, work2, work3, work4, timeout)
+        }
+    }
+
+    suspend fun <T, U, V, W> suspendQuad(
+        work: Callable<out T>,
+        work2: Callable<out U>,
+        work3: Callable<out V>,
+        work4: Callable<out W>,
+        timeout: Duration = 30.seconds
+    ): Pair<Pair<T, U>, Pair<V, W>> = withTimeout(timeout) {
+        val r1 = async(vDispatcher) { work.call() }
+        val r2 = async(vDispatcher) { work2.call() }
+        val r3 = async(vDispatcher) { work3.call() }
+        val r4 = async(vDispatcher) { work4.call() }
+
+        (r1.await() to r2.await()) to (r3.await() to r4.await())
+    }
+
+    @CanIgnoreReturnValue
+    fun <T> awaitList(
+        works: List<Callable<out T>>,
+        timeout: Duration = 30.seconds
+    ): List<T> = runBlocking(vDispatcher) {
+        suspendList(works, timeout)
+    }
+
+    suspend fun <T> suspendList(
+        works: List<Callable<out T>>,
+        timeout: Duration = 30.seconds
+    ): List<T> = withTimeout(timeout) {
+        works.map { async(vDispatcher) { it.call() } }.awaitAll()
+    }
+
+    fun <T> awaitBatch(
+        works: List<Callable<out T>>,
+        batchSize: Int = 60,
+        latency: Duration = 60.seconds,
+        timeout: Duration = 30.seconds
+    ): List<T> = runBlocking(vDispatcher) {
+        suspendBatch(works, batchSize, latency, timeout)
+    }
+
+    /**
+     * 协程原生版：处理分批异步逻辑
      */
+    suspend fun <T> suspendBatch(
+        works: List<Callable<out T>>,
+        batchSize: Int = 60,
+        latency: Duration = 60.seconds,
+        timeout: Duration = 30.seconds
+    ): List<T> = coroutineScope {
+        val batches = works.chunked(batchSize)
+
+        // 将每一批次映射为一个异步 Job
+        val batchDeferred = batches.mapIndexed { index, batch ->
+            async(vDispatcher) {
+                // 批次间延迟：使用非阻塞的 delay 替代 Thread.sleep
+                if (index > 0) {
+                    delay(latency)
+                }
+
+                suspendList(batch, timeout)
+            }
+        }
+
+        batchDeferred.awaitAll().flatten()
+    }
+
+    /* 以下是 java 原生的 ShutdownOnFailure */
 
     fun <T, U> awaitPairCallableExecute(
         work: Callable<out T>,

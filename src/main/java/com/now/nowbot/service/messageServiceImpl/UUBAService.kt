@@ -95,7 +95,7 @@ class UUBAService(
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
         if (id != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id, mode.data!!) },
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)
@@ -119,7 +119,7 @@ class UUBAService(
 
         val mapperIDs = bests.flatMap { it.beatmap.mapperIDs }.toSet()
 
-        val async2 = AsyncMethodExecutor.awaitPairCallableExecute(
+        val async2 = AsyncMethodExecutor.awaitPair(
             { beatmapApiService.extendBeatmapInScore(bests) },
             { userApiService.getUsers(mapperIDs) },
         )

@@ -67,7 +67,7 @@ class SBInfoService(
         val id = UserIDUtil.getSBUserIDWithoutRange(event, matcher, mode, isMyself)
 
         if (id != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { sbUserApiService.getUser(id) },
                 { sbScoreApiService.getBestScore(
                     id = id, mode = mode.data!!) }
@@ -83,7 +83,7 @@ class SBInfoService(
                 .map { it.toLazerScore() }
         }
 
-        AsyncMethodExecutor.awaitPairCallableExecute(
+        AsyncMethodExecutor.awaitPair(
             { BeatmapUtil.applyBeatmapChanges(bests.take(6)) },
             { calculateApiService.applyStarToScores(bests.take(6)) }
         )

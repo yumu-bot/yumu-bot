@@ -71,7 +71,7 @@ object InstructionUtil {
         val user: OsuUser?
         val me: BindUser?
 
-        val async = AsyncMethodExecutor.awaitPairCallableExecute(
+        val async = AsyncMethodExecutor.awaitPair(
             { getOsuUser(event, matcher, mode, isMyself) },
             { bindDao.getBindFromQQOrNull(event.sender.contactID) }
         )

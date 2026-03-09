@@ -57,7 +57,7 @@ class PPMinusService(
                     val others: PPMinus?
 
                     if (isVs) {
-                        val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                        val async = AsyncMethodExecutor.awaitPair(
                             { getPPMinus2(me, myBests, dao) },
                             { getPPMinus2(other!!, otherBests!!, dao) }
                         )
@@ -123,7 +123,7 @@ class PPMinusService(
                     val others: PPMinus4?
 
                     if (isVs) {
-                        val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                        val async = AsyncMethodExecutor.awaitPair(
                             { getPPMinus4(me, myBests, dao) },
                             { getPPMinus4(other!!, otherBests!!, dao) }
                         )
@@ -322,7 +322,7 @@ class PPMinusService(
                     inputMode.data!!
                 }
 
-                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
+                val async = AsyncMethodExecutor.awaitQuad(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
@@ -360,7 +360,7 @@ class PPMinusService(
                     inputMode.data!!
                 }
 
-                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
+                val async = AsyncMethodExecutor.awaitQuad(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
@@ -382,7 +382,7 @@ class PPMinusService(
                     inputMode.data!!
                 }
 
-                val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                 )

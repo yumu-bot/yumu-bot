@@ -3,7 +3,6 @@ package com.now.nowbot.service.osuApiService.impl
 import com.now.nowbot.model.osu.Discussion
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriBuilder
 import java.util.*
 
@@ -47,32 +46,32 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
         uid: Long?,
         cursor: String?
     ): Discussion {
-        return base.request { client: WebClient ->
-            client
-                .get()
-                .uri { u: UriBuilder ->
+        return base.osuApiWebClient
+            .get()
+            .uri { u: UriBuilder ->
 
-                    types?.forEach { t ->
-                        u.queryParam("message_types[]", t)
-                    }
-
-                    u.path("beatmapsets/discussions")
-                        .queryParamIfPresent("beatmap_id", Optional.ofNullable(bid))
-                        .queryParamIfPresent("beatmapset_id", Optional.ofNullable(sid))
-                        .queryParamIfPresent("beatmapset_status", Optional.ofNullable(status))
-                        .queryParamIfPresent("limit", Optional.ofNullable(limit))
-                        .queryParamIfPresent("only_resolved", Optional.ofNullable(onlyResolved))
-                        .queryParamIfPresent("page", Optional.ofNullable(page))
-                        .queryParamIfPresent("sort", Optional.ofNullable(sort))
-                        .queryParamIfPresent("user", Optional.ofNullable(uid))
-                        .queryParamIfPresent("cursor_string", Optional.ofNullable(cursor))
-                        .build()
+                types?.forEach { t ->
+                    u.queryParam("message_types[]", t)
                 }
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(Discussion::class.java)
+
+                u.path("beatmapsets/discussions")
+                    .queryParamIfPresent("beatmap_id", Optional.ofNullable(bid))
+                    .queryParamIfPresent("beatmapset_id", Optional.ofNullable(sid))
+                    .queryParamIfPresent("beatmapset_status", Optional.ofNullable(status))
+                    .queryParamIfPresent("limit", Optional.ofNullable(limit))
+                    .queryParamIfPresent("only_resolved", Optional.ofNullable(onlyResolved))
+                    .queryParamIfPresent("page", Optional.ofNullable(page))
+                    .queryParamIfPresent("sort", Optional.ofNullable(sort))
+                    .queryParamIfPresent("user", Optional.ofNullable(uid))
+                    .queryParamIfPresent("cursor_string", Optional.ofNullable(cursor))
+                    .build()
+            }
+            .headers(base::insertHeader)
+            .retrieve()
+            .bodyToMono(Discussion::class.java)
+            .block()!!
         }
-    }
+
 
     enum class BeatmapSetStatus {
         all, ranked, qualified, disqualified, never_qualified,

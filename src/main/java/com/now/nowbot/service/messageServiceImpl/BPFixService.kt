@@ -90,7 +90,7 @@ class BPFixService(
 
         // 高效的获取方式
         if (id.data != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
                 { scoreApiService.getBestScores(id.data!!, mode.data) },
                 1.minutes
@@ -172,7 +172,7 @@ class BPFixService(
         }
 
         val fixedScores = if (fixTasks.isNotEmpty()) {
-            AsyncMethodExecutor.awaitCallableExecute(fixTasks, 1.minutes)
+            AsyncMethodExecutor.awaitList(fixTasks, 1.minutes)
         } else {
             emptyList()
         }

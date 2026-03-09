@@ -112,7 +112,7 @@ class GuestDifficultyService(
                 "q" to id.data!!, "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
 
-            val async = AsyncMethodExecutor.awaitTripleCallableExecute(
+            val async = AsyncMethodExecutor.awaitTriple(
                 { beatmapApiService.searchBeatmapsetParallel(query) },
                 { beatmapApiService.searchBeatmapsetParallel(query2) },
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
@@ -150,7 +150,7 @@ class GuestDifficultyService(
                 "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { beatmapApiService.searchBeatmapsetParallel(query) },
                 { beatmapApiService.searchBeatmapsetParallel(query2) },
             )
@@ -192,7 +192,7 @@ class GuestDifficultyService(
                 }
             }
 
-            AsyncMethodExecutor.awaitCallableExecute(actions).flatten()
+            AsyncMethodExecutor.awaitList(actions).flatten()
         }
 
 //        AsyncMethodExecutor.asyncRunnableExecute {

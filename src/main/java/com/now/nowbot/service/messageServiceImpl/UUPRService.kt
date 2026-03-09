@@ -176,7 +176,7 @@ class UUPRService(
             }
 
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
                 { id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, false, hasCondition, isPass) }
             )
@@ -360,7 +360,7 @@ class UUPRService(
             val list = scores.toList().take(5)
             val ss = list.map { it.second }
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPair (
                 { beatmapApiService.applyBeatmapExtend(ss) },
                 { calculateApiService.applyPPToScores(ss) },
             )
@@ -374,7 +374,7 @@ class UUPRService(
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPair (
                 { beatmapApiService.applyBeatmapExtend(s) },
                 { calculateApiService.applyPPToScore(s) },
             )
