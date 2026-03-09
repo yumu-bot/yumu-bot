@@ -28,6 +28,7 @@ import java.time.ZoneOffset
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.max
 import kotlin.math.min
 
@@ -93,15 +94,23 @@ class OsuApiBaseService(
         return submitRequest(request, isBackground).get()
     }
 
+    private val tokenLock = ReentrantLock()
+
     // Token 管理方法
     fun getBotToken(): String {
         val now = System.currentTimeMillis()
         if (now >= tokenExpiresAt || botAccessToken == null) {
-            synchronized(this) {
-                // 再次检查，防止在等待锁的过程中其他线程已经刷新好了
-                if (now >= tokenExpiresAt || botAccessToken == null) {
+            log.info("发生请求")
+
+            // 使用 ReentrantLock 替代 synchronized
+            tokenLock.lock()
+            try {
+                // 双重检查
+                if (System.currentTimeMillis() >= tokenExpiresAt || botAccessToken == null) {
                     refreshBotToken()
                 }
+            } finally {
+                tokenLock.unlock()
             }
         }
         return botAccessToken!!
