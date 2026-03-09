@@ -37,14 +37,11 @@ import java.time.Duration
          * Refer https://github.com/reactor/reactor-netty/issues/1318#issuecomment-702668918
          */
         val connectionProvider = ConnectionProvider.builder("connectionProvider")
-            .maxIdleTime(Duration.ofSeconds(25))
-            .maxConnections(200)
-            .pendingAcquireMaxCount(-1)
-
-            // TODO 最佳实践应该是使用fifo，并且配合 RestClient
-            .lifo()
-            .evictInBackground(Duration.ofSeconds(60))
-
+            .maxConnections(500) // 调大连接数
+            .pendingAcquireMaxCount(-1) // 允许排队
+            .pendingAcquireTimeout(Duration.ofSeconds(60))
+            .maxIdleTime(Duration.ofSeconds(20))
+            .evictInBackground(Duration.ofSeconds(30))
             .build()
 
         val httpClient = HttpClient.create(connectionProvider)
