@@ -61,7 +61,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
             }
         }
 
-        val ids = AsyncMethodExecutor.awaitBatchCallableExecute(actions)
+        val ids = AsyncMethodExecutor.awaitBatch(actions)
             .filter { it.second > 0L }
             .toMap()
 

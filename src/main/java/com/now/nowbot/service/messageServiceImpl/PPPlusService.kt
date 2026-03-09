@@ -159,7 +159,7 @@ class PPPlusService(
         val user2: OsuUser?
 
         if (!name2.isNullOrBlank()) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(
                     name1 ?: me?.username ?: throw BindException.NotBindException.YouNotBind(), OsuMode.OSU)
                 },
@@ -169,7 +169,7 @@ class PPPlusService(
             user1 = async.first
             user2 = async.second
         } else if (isVs && !name1.isNullOrBlank() && me != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(me.username, OsuMode.OSU) },
                 { userApiService.getOsuUser(name1, OsuMode.OSU) }
             )

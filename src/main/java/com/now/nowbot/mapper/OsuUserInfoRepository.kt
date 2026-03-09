@@ -71,11 +71,14 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
 
     @Query(
         value = """
-            SELECT DISTINCT ON (osu_id, mode) *
+        SELECT * FROM osu_user_info_archive
+        WHERE id IN (
+            SELECT DISTINCT ON (osu_id, mode) id
             FROM osu_user_info_archive
             WHERE time BETWEEN :from AND :to
             ORDER BY osu_id, mode, time DESC
-        """,
+        )
+    """,
         nativeQuery = true
     )
     fun getLatestBetween(

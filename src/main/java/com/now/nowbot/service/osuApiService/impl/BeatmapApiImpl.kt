@@ -128,6 +128,8 @@ class BeatmapApiImpl(
 
         return runCatching {
             Files.deleteIfExists(path)
+        }.onFailure {
+            log.warn("谱面实现：无法删除谱面 $bid，原因：${it.message}")
         }.isSuccess
     }
 
@@ -238,7 +240,7 @@ class BeatmapApiImpl(
             }
 
             // 每一组给 30 秒，防止网络波动
-            val result = AsyncMethodExecutor.awaitCallableExecute(actions, 30.seconds)
+            val result = AsyncMethodExecutor.awaitList(actions, 30.seconds)
 
             result.forEach { (id, fileString) ->
                 if (!fileString.isNullOrEmpty()) {
@@ -352,7 +354,7 @@ class BeatmapApiImpl(
             }
         }
 
-        val beatmaps = AsyncMethodExecutor.awaitCallableExecute(callables).flatten()
+        val beatmaps = AsyncMethodExecutor.awaitList(callables).flatten()
 
         beatmapDao.saveExtendedBeatmap(beatmaps)
 
@@ -394,7 +396,7 @@ class BeatmapApiImpl(
                 }
             }
 
-            val async = AsyncMethodExecutor.awaitCallableExecute(works)
+            val async = AsyncMethodExecutor.awaitList(works)
 
             return async.flatten()
         }
@@ -433,7 +435,7 @@ class BeatmapApiImpl(
                 }
             }
 
-            val async = AsyncMethodExecutor.awaitCallableExecute(works)
+            val async = AsyncMethodExecutor.awaitList(works)
 
             return async.flatten()
         }
@@ -487,7 +489,7 @@ class BeatmapApiImpl(
             }
         }
 
-        return AsyncMethodExecutor.awaitCallableExecute(callables)
+        return AsyncMethodExecutor.awaitList(callables)
     }
 
     override fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset> {
@@ -913,7 +915,7 @@ class BeatmapApiImpl(
                     }
                 }
 
-                val searches = AsyncMethodExecutor.awaitCallableExecute(actions)
+                val searches = AsyncMethodExecutor.awaitList(actions)
 
                 if (searches.map { it.cursorString }.any { it == null }) {
                     isEnd.set(true)

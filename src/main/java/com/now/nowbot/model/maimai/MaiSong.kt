@@ -85,24 +85,25 @@ class MaiSong {
     }
 
     class MaiChart {
+        @JsonProperty("notes")
+        var notes: List<Int> = List(5) { 0 }
+
         // 物件数量
-        @get:JsonProperty("notes", access = JsonProperty.Access.READ_ONLY)
-        var notes: MaiNote = MaiNote()
+        @JsonIgnore
+        var maiNote: MaiNote = MaiNote()
+            get() = when (notes.size) {
+                4 -> MaiNote(notes[0], notes[1], notes[2], 0, notes[3])
+                5 -> MaiNote(notes[0], notes[1], notes[2], notes[3], notes[4])
+                else -> MaiNote(0, 0, 0, 0, 0)
+            }
+            set(value) {
+                notes = value.toList()
+                field = value
+            }
 
         @get:JsonProperty("dx_score")
         val dxScore: Int
-            get() = 3 * notes.total
-
-        @JsonProperty("notes", access = JsonProperty.Access.WRITE_ONLY)
-        fun setNotes(list: List<Int>) {
-            if (list.isEmpty() || list.size < 4) {
-                notes = MaiNote(0, 0, 0, 0, 0)
-            } else if (list.size == 4) {
-                notes = MaiNote(list.first(), list[1], list[2], 0, list[3])
-            } else if (list.size == 5) {
-                notes = MaiNote(list.first(), list[1], list[2], list[3], list.last())
-            }
-        }
+            get() = 3 * maiNote.total
 
         // 谱师
         @JsonProperty("charter") var charter: String = ""
@@ -112,11 +113,15 @@ class MaiSong {
                 val hold: Int = 0,
                 val slide: Int = 0,
                 val touch: Int = 0, // 仅 DX 有
-                val break_: Int = 0
+                val `break`: Int = 0
         ) {
             @get:JsonProperty("total")
             val total: Int
-                get() = tap + hold + slide + touch + break_
+                get() = tap + hold + slide + touch + `break`
+
+            fun toList(): List<Int> {
+                return listOf(tap, hold, slide, touch, `break`)
+            }
         }
     }
 

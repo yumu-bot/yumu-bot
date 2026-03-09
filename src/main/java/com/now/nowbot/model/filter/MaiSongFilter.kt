@@ -220,9 +220,9 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                 TAP -> {
                     val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.notes.total
+                        val t = chart.maiNote.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.tap, double, t, hasDecimal)
+                        val f = fitCountOrPercent(operator, chart.maiNote.tap, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -240,9 +240,9 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                 HOLD -> {
                     val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.notes.total
+                        val t = chart.maiNote.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.hold, double, t, hasDecimal)
+                        val f = fitCountOrPercent(operator, chart.maiNote.hold, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -259,9 +259,9 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                 }
                 SLIDE -> {
                     val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.notes.total
+                        val t = chart.maiNote.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.slide, double, t, hasDecimal)
+                        val f = fitCountOrPercent(operator, chart.maiNote.slide, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -278,9 +278,9 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                 }
                 TOUCH -> {
                     val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.notes.total
+                        val t = chart.maiNote.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.touch, double, t, hasDecimal)
+                        val f = fitCountOrPercent(operator, chart.maiNote.touch, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -297,9 +297,9 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                 }
                 BREAK -> {
                     val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.notes.total
+                        val t = chart.maiNote.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.break_, double, t, hasDecimal)
+                        val f = fitCountOrPercent(operator, chart.maiNote.`break`, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 

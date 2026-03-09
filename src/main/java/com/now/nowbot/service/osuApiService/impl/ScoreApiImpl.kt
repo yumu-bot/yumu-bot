@@ -42,7 +42,7 @@ class ScoreApiImpl(
         scores: List<LazerScore>,
         type: CoverType
     ): List<ByteArray?> {
-        val async = AsyncMethodExecutor.awaitCallableExecute(
+        val async = AsyncMethodExecutor.await(
             {
                 scores.map { s ->
                     getCover(s, type)
@@ -116,14 +116,28 @@ class ScoreApiImpl(
             return getBests(id, mode, offset, limit)
         }
 
-        // 使用你现有的工具方法进行并发
-        val result = AsyncMethodExecutor.awaitPairCallableExecute(
-            { getBests(id, mode, offset, step) },
-            { getBests(id, mode, offset + step, limit - step) }
-        )
+        val firstBatch = getBests(id, mode, offset, step)
+        val secondBatch = getBests(id, mode, offset + step, limit - step)
 
-        // result.first 是前 100 条，result.second 是后 100 条
-        return result.first + result.second
+        return firstBatch + secondBatch
+
+        // TODO webclient 死锁问题还是会出现，请换到 RestClient 后修改回来。当前的 webclient 无法在嵌套的协程中使用，会直接失败
+
+//        return AsyncMethodExecutor.awaitList(
+//            listOf(
+//                Callable { getBests(id, mode, offset, step) },
+//                Callable { getBests(id, mode, offset + step, limit - step) }
+//            )
+//        ).flatten()
+
+//        // 使用你现有的工具方法进行并发
+//        val result = AsyncMethodExecutor.awaitPairCallableExecute(
+//            { getBests(id, mode, offset, step) },
+//            { getBests(id, mode, offset + step, limit - step) }
+//        )
+//
+//        // result.first 是前 100 条，result.second 是后 100 条
+//        return result.first + result.second
     }
 
     override fun getPassedScore(

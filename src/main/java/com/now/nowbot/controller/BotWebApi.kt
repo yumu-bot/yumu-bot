@@ -22,6 +22,7 @@ import com.now.nowbot.throwable.botException.MapPoolException
 import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.DataUtil.parseRange2Limit
 import com.now.nowbot.util.DataUtil.parseRange2Offset
 import com.now.nowbot.util.JacksonUtil
@@ -331,7 +332,7 @@ import kotlin.math.min
                 for (i in offset..(offset + limit)) ranks.add(i + 1)
 
                 if (isMultipleScore) {
-                    calculateApiService.applyBeatmapChanges(scores)
+                    BeatmapUtil.applyBeatmapChanges(scores)
                     calculateApiService.applyStarToScores(scores)
 
                     data = imageService.getPanel(
@@ -358,7 +359,7 @@ import kotlin.math.min
             ScoreType.Pass -> {
                 scores = scoreApiService.getPassedScore(osuUser.userID, mode, offset, limit)
 
-                calculateApiService.applyBeatmapChanges(scores)
+                BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 val ranks = ((offset + 1)..scores.size).toList()
@@ -388,7 +389,7 @@ import kotlin.math.min
             ScoreType.Recent -> {
                 scores = scoreApiService.getPassedScore(osuUser.userID, mode, offset, limit)
 
-                calculateApiService.applyBeatmapChanges(scores)
+                BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 if (isMultipleScore) {
@@ -419,7 +420,7 @@ import kotlin.math.min
                 scores = scoreApiService.getScore(osuUser.userID, mode, offset, 1, true)
                 val score: LazerScore = scores.first()
 
-                calculateApiService.applyBeatmapChanges(scores)
+                BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 data = imageService.getPanelGamma(score)
@@ -430,7 +431,7 @@ import kotlin.math.min
                 scores = scoreApiService.getScore(osuUser.userID, mode, offset, 1, false)
                 val score: LazerScore = scores.first()
 
-                calculateApiService.applyBeatmapChanges(scores)
+                BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 data = imageService.getPanelGamma(score)
@@ -450,7 +451,7 @@ import kotlin.math.min
                 val ranks = bests.keys
                 scores = bests.values
 
-                calculateApiService.applyBeatmapChanges(scores)
+                BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 data = imageService.getPanel(
@@ -670,7 +671,7 @@ import kotlin.math.min
             bests = scoreApiService.getBestScores(uid, mode)
             mappers = userApiService.getUsers(bests.flatMap { it.beatmap.mapperIDs }.toSet())
 
-            calculateApiService.applyBeatmapChanges(bests)
+            BeatmapUtil.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
         } catch (_: Exception) {
             throw RuntimeException(IllegalStateException.Fetch("最好成绩分析"))
@@ -846,7 +847,7 @@ import kotlin.math.min
             "q" to userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
         )
 
-        val async = AsyncMethodExecutor.awaitQuadCallableExecute(
+        val async = AsyncMethodExecutor.awaitQuad(
             { beatmapApiService.searchBeatmapsetParallel(query) },
             { beatmapApiService.searchBeatmapsetParallel(query2) },
             { userApiService.getUserRecentActivity(userID, 0, 100).filter { it.isMapping } },

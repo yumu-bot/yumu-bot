@@ -21,6 +21,7 @@ import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getSBUserWithRange
 import com.now.nowbot.util.Instruction
@@ -99,7 +100,7 @@ class SBTodayBPService(
             dayStart = id.getDayStart()
             dayEnd = id.getDayEnd()
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getUser(id.data!!) },
                 { scoreApiService.getBestScore(
                     id = id.data!!,
@@ -163,8 +164,8 @@ class SBTodayBPService(
                 val ranks = scores.keys
                 val ss = scores.values
 
-                AsyncMethodExecutor.awaitTripleCallableExecute(
-                    { osuCalculateApiService.applyBeatmapChanges(ss) },
+                AsyncMethodExecutor.awaitTriple(
+                    { BeatmapUtil.applyBeatmapChanges(ss) },
                     { osuCalculateApiService.applyStarToScores(ss) },
                     { osuBeatmapApiService.applyBeatmapExtend(ss) }
                 )
@@ -199,7 +200,7 @@ class SBTodayBPService(
             val list = scores.toList().take(5)
             val ss = list.map { it.second }
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPair (
                 { osuBeatmapApiService.applyBeatmapExtend(ss) },
                 { osuCalculateApiService.applyPPToScores(ss) },
             )
@@ -213,7 +214,7 @@ class SBTodayBPService(
 
             val cover = osuScoreApiService.getCover(s, CoverType.COVER)
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPair (
                 { osuBeatmapApiService.applyBeatmapExtend(s) },
                 { osuCalculateApiService.applyPPToScore(s) },
             )

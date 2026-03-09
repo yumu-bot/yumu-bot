@@ -16,6 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getUserWithRange
 import com.now.nowbot.util.Instruction
@@ -66,7 +67,7 @@ class ScorePRCardService(
         }
 
         calculateApiService.applyPPToScore(score)
-        calculateApiService.applyBeatmapChanges(score)
+        BeatmapUtil.applyBeatmapChanges(score)
         calculateApiService.applyStarToScore(score)
 
         restrict.checkAsync(event, score)

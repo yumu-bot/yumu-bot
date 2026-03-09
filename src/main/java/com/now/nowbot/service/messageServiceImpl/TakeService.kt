@@ -135,7 +135,7 @@ import kotlin.math.floor
                 }
             }
 
-            val result = AsyncMethodExecutor.awaitCallableExecute(actions).toMap()
+            val result = AsyncMethodExecutor.awaitList(actions).toMap()
 
             val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value
                 ?: throw NoSuchElementException.PlayerPlay(user.username)
@@ -268,12 +268,12 @@ import kotlin.math.floor
                 "q" to "creator=" + nameStr.ifEmpty { id }, "sort" to "ranked_desc", "page" to 1
             )
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 {
                     try {
                         userApiService.getOsuUser(id)
                     } catch (_: Exception) {
-                        return@awaitPairCallableExecute null
+                        return@awaitPair null
                     }
                 },
                 { beatmapApiService.searchBeatmapset(query) },

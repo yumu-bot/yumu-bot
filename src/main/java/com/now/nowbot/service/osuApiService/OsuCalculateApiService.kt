@@ -13,12 +13,6 @@ interface OsuCalculateApiService {
 
     fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance?
 
-    fun applyBeatmapChanges(score: LazerScore)
-
-    fun applyBeatmapChanges(scores: Collection<LazerScore>)
-
-    fun applyBeatmapChanges(beatmap: Beatmap?, mods: List<LazerMod>)
-
     fun applyStarToScore(score: LazerScore)
 
     fun applyStarToScores(scores: Collection<LazerScore>)

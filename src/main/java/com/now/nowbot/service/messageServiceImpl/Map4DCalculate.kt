@@ -7,7 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.Map4DCalculate.Map4DParam
-import com.now.nowbot.util.BeatmapDetailsUtil
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service
@@ -48,22 +48,22 @@ class Map4DCalculate : MessageService<Map4DParam> {
         val message =
                 when (param.type) {
                     "ar" -> {
-                        val ar = BeatmapDetailsUtil.applyAR(param.value, mod)
-                        val ms = BeatmapDetailsUtil.getMillisFromAR(ar)
+                        val ar = BeatmapUtil.applyAR(param.value, mod)
+                        val ms = BeatmapUtil.getMillisFromAR(ar)
                         String.format("AR: %.2f, 缩圈时间: %.2fms", ar, ms)
                     }
                     "od" -> {
                         // TODO 这里要赋予游戏模式，太鼓和下落式的 OD 不一样
-                        val od = BeatmapDetailsUtil.applyOD(param.value, mod, OsuMode.OSU)
-                        val ms = BeatmapDetailsUtil.getMillisFromOD(od, OsuMode.OSU)
+                        val od = BeatmapUtil.applyOD(param.value, mod, OsuMode.OSU)
+                        val ms = BeatmapUtil.getMillisFromOD(od, OsuMode.OSU)
                         String.format("OD: %.2f, 300 判定区间: %.2fms", od, ms)
                     }
                     "cs" -> {
-                        val cs = BeatmapDetailsUtil.applyCS(param.value, mod)
+                        val cs = BeatmapUtil.applyCS(param.value, mod)
                         String.format("CS: %.2f", cs)
                     }
                     "hp" -> {
-                        val hp = BeatmapDetailsUtil.applyHP(param.value, mod)
+                        val hp = BeatmapUtil.applyHP(param.value, mod)
                         String.format("HP: %.2f", hp)
                     }
                     else -> "Unexpected value: " + param.type

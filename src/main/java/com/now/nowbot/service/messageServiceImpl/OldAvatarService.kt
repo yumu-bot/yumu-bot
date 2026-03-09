@@ -169,7 +169,7 @@ class OldAvatarService(
             }
         } else {
             try {
-                AsyncMethodExecutor.awaitCallableExecute({
+                AsyncMethodExecutor.await({
                     strings.map { name ->
                         userApiService.getOsuUser(name, mode)
                     }
@@ -284,7 +284,7 @@ class OldAvatarService(
 
         return if (users.size > 1) {
             try {
-                AsyncMethodExecutor.awaitCallableExecute(
+                AsyncMethodExecutor.awaitList(
                     users.map { u ->
                         Callable {
                             imageService.getPanel(mapOf("user" to u), panel)

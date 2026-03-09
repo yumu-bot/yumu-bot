@@ -14,7 +14,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
-import com.now.nowbot.util.BeatmapDetailsUtil
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
@@ -85,10 +85,10 @@ class PPPlusMapService(
 
     private fun Beatmap.applyDimensions(mods: List<LazerMod>) {
         if (mods.isNotEmpty()) {
-            cs = BeatmapDetailsUtil.applyCS(cs!!, mods)
-            ar = BeatmapDetailsUtil.applyAR(ar!!, mods)
-            od = BeatmapDetailsUtil.applyOD(od!!, mods, OsuMode.OSU)
-            hp = BeatmapDetailsUtil.applyHP(hp!!, mods)
+            cs = BeatmapUtil.applyCS(cs!!, mods)
+            ar = BeatmapUtil.applyAR(ar!!, mods)
+            od = BeatmapUtil.applyOD(od!!, mods, OsuMode.OSU)
+            hp = BeatmapUtil.applyHP(hp!!, mods)
         }
     }
 

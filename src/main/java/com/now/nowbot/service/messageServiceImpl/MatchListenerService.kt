@@ -20,7 +20,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.ASyncMessageUtil
-import com.now.nowbot.util.DataUtil.getOriginal
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
@@ -242,11 +242,11 @@ class MatchListenerService(
                 bm = beatmapApiService.getBeatmap(bm.beatmapID)
             }
 
-            calculateApiService.applyBeatmapChanges(bm, event.mods)
+            BeatmapUtil.applyBeatmapChanges(bm, event.mods)
 
             val param = PanelE7Param(
                 mr, event.mode, event.mods, event.users, bm,
-                beatmapApiService.getBeatmapObjectGrouping26(bm), getOriginal(bm)
+                beatmapApiService.getBeatmapObjectGrouping26(bm), BeatmapUtil.getDetailMap(bm)
             )
 
             val fallback = MatchException.NormalOperate.Start(match).message
@@ -262,7 +262,7 @@ class MatchListenerService(
                 ?: mr.rounds.lastOrNull()
                 ?: throw NoSuchElementException.MatchRound()
 
-            calculateApiService.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
+            BeatmapUtil.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
 
             // 排序逻辑
             round.scores = if (round.scores.size > 2) {

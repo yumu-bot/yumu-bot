@@ -71,7 +71,7 @@ class CsvPPMinusService(
                 }
             }
 
-            val result = AsyncMethodExecutor.awaitCallableExecute(actions)
+            val result = AsyncMethodExecutor.awaitList(actions)
                 .filter { it.second > 0L }
                 .toMap()
 
@@ -109,7 +109,7 @@ class CsvPPMinusService(
             }
         }
 
-        val async: Map<Long, TestPPMData> = AsyncMethodExecutor.awaitCallableExecute(actions)
+        val async: Map<Long, TestPPMData> = AsyncMethodExecutor.awaitList(actions)
             .filterNotNull()
             .filter { it.user != null }
             .associateBy { it.user!!.userID }

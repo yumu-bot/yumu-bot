@@ -122,7 +122,7 @@ class TodayBPService(
             dayStart = id.getDayStart()
             dayEnd = id.getDayEnd()
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
                 { scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT) }
             )
@@ -180,8 +180,8 @@ class TodayBPService(
                 val ranks = scores.keys
                 val ss = scores.values
 
-                AsyncMethodExecutor.awaitPairCallableExecute(
-                    { calculateApiService.applyBeatmapChanges(ss) },
+                AsyncMethodExecutor.awaitPair(
+                    { BeatmapUtil.applyBeatmapChanges(ss) },
                     { calculateApiService.applyStarToScores(ss) }
                 )
 
@@ -215,7 +215,7 @@ class TodayBPService(
             val list = scores.toList().take(5)
             val ss = list.map { it.second }
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPair (
                 { beatmapApiService.applyBeatmapExtend(ss) },
                 { calculateApiService.applyPPToScores(ss) },
             )
@@ -229,7 +229,7 @@ class TodayBPService(
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPair (
                 { beatmapApiService.applyBeatmapExtend(s) },
                 { calculateApiService.applyPPToScore(s) },
             )

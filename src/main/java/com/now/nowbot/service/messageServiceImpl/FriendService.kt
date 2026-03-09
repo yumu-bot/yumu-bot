@@ -238,7 +238,7 @@ class FriendService(
                 InstructionRange(id.data!!, start, end)
             }
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(me) },
                 { userApiService.getFriendList(me).map { it.target } },
             )
@@ -280,7 +280,7 @@ class FriendService(
                 // 对方未绑定模式
                 val others = getUserWithRange(event, matcher, InstructionObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
 
-                val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getOsuUser(me) },
                     { userApiService.getFriendList(me) }
                 )
@@ -301,7 +301,7 @@ class FriendService(
                 ))
             } else {
                 // 对方已绑定模式
-                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
+                val async = AsyncMethodExecutor.awaitQuad(
                     { userApiService.getOsuUser(me) },
                     { userApiService.getOsuUser(other) },
                     { userApiService.getFriendList(me) },

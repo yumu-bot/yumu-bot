@@ -309,12 +309,12 @@ import kotlin.math.min
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
         if (id != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id, mode.data!!) },
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)
 
-                    calculateApiService.applyBeatmapChanges(ss)
+                    BeatmapUtil.applyBeatmapChanges(ss)
                     calculateApiService.applyStarToScores(ss)
 
                     ss
@@ -327,13 +327,13 @@ import kotlin.math.min
             user = getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data)
 
-            calculateApiService.applyBeatmapChanges(bests)
+            BeatmapUtil.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
         }
 
         val mapperIDs = bests.flatMap { it.beatmap.mapperIDs }.toSet()
 
-        val async2 = AsyncMethodExecutor.awaitPairCallableExecute(
+        val async2 = AsyncMethodExecutor.awaitPair(
             { beatmapApiService.extendBeatmapInScore(bests) },
             { userApiService.getUsers(mapperIDs) },
         )

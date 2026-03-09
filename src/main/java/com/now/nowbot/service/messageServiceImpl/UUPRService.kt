@@ -175,7 +175,7 @@ class UUPRService(
             }
 
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
                 { id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, false, hasCondition, isPass) }
             )
@@ -245,7 +245,7 @@ class UUPRService(
         val scores = scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
@@ -304,7 +304,7 @@ class UUPRService(
         }
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -357,7 +357,7 @@ class UUPRService(
             val list = scores.toList().take(5)
             val ss = list.map { it.second }
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPair (
                 { beatmapApiService.applyBeatmapExtend(ss) },
                 { calculateApiService.applyPPToScores(ss) },
             )
@@ -371,7 +371,7 @@ class UUPRService(
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)
 
-            AsyncMethodExecutor.awaitPairCallableExecute (
+            AsyncMethodExecutor.awaitPair (
                 { beatmapApiService.applyBeatmapExtend(s) },
                 { calculateApiService.applyPPToScore(s) },
             )

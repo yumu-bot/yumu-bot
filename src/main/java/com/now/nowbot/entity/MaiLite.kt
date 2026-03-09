@@ -83,7 +83,7 @@ class MaiSongLite(
                 val l = MaiSong.MaiChart()
 
                 l.charter = cl.charter
-                l.notes = if (lite.type == "DX") {
+                l.maiNote = if (lite.type == "DX") {
                     MaiSong.MaiChart.MaiNote(cl.notes.first(), cl.notes[1], cl.notes[2], cl.notes[3], cl.notes.last())
                 } else {
                     MaiSong.MaiChart.MaiNote(cl.notes.first(), cl.notes[1], cl.notes[2], 0, cl.notes.last())
@@ -141,7 +141,7 @@ class MaiChartLite(
     fun toModel(): MaiSong.MaiChart = with(MaiSong.MaiChart()) {
         val noteList = this@MaiChartLite.notes
         if (this@MaiChartLite.notes.size == 5) {
-            this.notes = MaiSong.MaiChart.MaiNote(
+            this.maiNote = MaiSong.MaiChart.MaiNote(
                 noteList[0],
                 noteList[1],
                 noteList[2],
@@ -149,7 +149,7 @@ class MaiChartLite(
                 noteList[4],
             )
         } else {
-            this.notes = MaiSong.MaiChart.MaiNote(
+            this.maiNote = MaiSong.MaiChart.MaiNote(
                 noteList[0],
                 noteList[1],
                 noteList[2],
@@ -163,18 +163,18 @@ class MaiChartLite(
 
     companion object {
         fun from(id: Int, chart: MaiSong.MaiChart): MaiChartLite {
-            val notes = if (chart.notes.touch == 0) with(IntArray(4)) {
-                this[0] = chart.notes.tap
-                this[1] = chart.notes.hold
-                this[2] = chart.notes.slide
-                this[3] = chart.notes.break_
+            val notes = if (chart.maiNote.touch == 0) with(IntArray(4)) {
+                this[0] = chart.maiNote.tap
+                this[1] = chart.maiNote.hold
+                this[2] = chart.maiNote.slide
+                this[3] = chart.maiNote.`break`
                 this
             } else with(IntArray(5)) {
-                this[0] = chart.notes.tap
-                this[1] = chart.notes.hold
-                this[2] = chart.notes.slide
-                this[3] = chart.notes.touch
-                this[4] = chart.notes.break_
+                this[0] = chart.maiNote.tap
+                this[1] = chart.maiNote.hold
+                this[2] = chart.maiNote.slide
+                this[3] = chart.maiNote.touch
+                this[4] = chart.maiNote.`break`
                 this
             }
 

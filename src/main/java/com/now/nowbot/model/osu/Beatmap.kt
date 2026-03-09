@@ -203,6 +203,41 @@ data class Beatmap(
     @get:JsonProperty("mapper_ids")
     val mapperIDs: List<Long> = owners?.map { it.userID } ?: listOf(mapperID)
 
+    //自己保存一份
+    data class BeatmapDetails(
+        val ar: Float = 0f,
+        val cs: Float = 0f,
+        val od: Float = 0f,
+        val hp: Float = 0f,
+        val bpm: Float = 0f,
+
+        @field:JsonProperty("drain")
+        val hitLength: Int = 0,
+
+        @field:JsonProperty("total")
+        val totalLength: Int = 0,
+    ) {
+        fun toMap(): Map<String, Any> {
+            return mapOf(
+                "cs" to cs,
+                "ar" to ar,
+                "od" to od,
+                "hp" to hp,
+                "bpm" to bpm,
+                "drain" to hitLength,
+                "total" to totalLength,
+            )
+        }
+    }
+
+    @get:JsonIgnore
+    val originalDetails: BeatmapDetails by lazy {
+        BeatmapDetails(
+            ar ?: 0f, cs ?: 0f, od ?: 0f, hp ?: 0f, bpm,
+            hitLength ?: 0, totalLength
+        )
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -217,20 +252,15 @@ data class Beatmap(
     }
 
     companion object {
-        @JvmStatic
         private fun getList(data: JsonNode?, fieldName: String): List<Int> {
             if (data == null) return listOf(0)
 
             return if (data.hasNonNull(fieldName) && data[fieldName].isArray) {
                 data[fieldName].map { it.asInt(0) }
 
-                /*
-                StreamSupport.stream(data[fieldName].spliterator(), false)
-                    .map { n: JsonNode -> n.asInt(0) }
-                    .toList()
-
-                 */
             } else listOf()
         }
+
+
     }
 }

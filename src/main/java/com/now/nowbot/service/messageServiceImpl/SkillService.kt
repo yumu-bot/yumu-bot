@@ -134,7 +134,7 @@ import kotlin.math.sqrt
 
                 mode = inputMode.data!!
 
-                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
+                val async = AsyncMethodExecutor.awaitQuad(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScoresSerial(ids.first!!, mode) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
@@ -164,7 +164,7 @@ import kotlin.math.sqrt
 
                 mode = inputMode.data!!
 
-                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
+                val async = AsyncMethodExecutor.awaitQuad(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScoresSerial(ids.first!!, mode) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
@@ -182,7 +182,7 @@ import kotlin.math.sqrt
 
                 mode = inputMode.data!!
 
-                val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScores(ids.first!!, mode) },
                 )
@@ -218,7 +218,7 @@ import kotlin.math.sqrt
         val others: Map<Long, Skill6?>?
 
         if (hasOthers) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { getSkillMap(myBests) },
                 { getSkillMap(otherBests) }
             )
@@ -303,7 +303,7 @@ import kotlin.math.sqrt
 
             // scoreApiService.asyncDownloadBackgroundFromScores(s10, CoverType.LIST)
 
-            calculateApiService.applyBeatmapChanges(s10)
+            BeatmapUtil.applyBeatmapChanges(s10)
             calculateApiService.applyStarToScores(s10)
 
             s10.map {

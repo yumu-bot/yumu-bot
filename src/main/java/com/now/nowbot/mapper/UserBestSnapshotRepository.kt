@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query
 interface UserBestSnapshotRepository: JpaRepository<UserBestSnapshot, Long> {
 
     @Query("""
-        SELECT s From UserBestSnapshot s WHERE s.userID = :userID AND s.mode = :modeByte ORDER BY s.createdAt DESC
+        SELECT s From UserBestSnapshot s WHERE s.userID = :userID AND s.mode = :modeByte ORDER BY s.createdAt DESC LIMIT 1
     """)
     fun getLatest(userID: Long, modeByte: Byte): UserBestSnapshot?
 

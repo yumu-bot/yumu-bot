@@ -114,7 +114,7 @@ class SBOldAvatarService(
             listOf(userApiService.getUser(strings.first())?.toOsuUser(mode)
                 ?: throw NoSuchElementException.Player(strings.first()))
         } else {
-            AsyncMethodExecutor.awaitCallableExecute({
+            AsyncMethodExecutor.await({
                 strings.mapNotNull { name ->
                     userApiService.getUser(name)?.toOsuUser(mode)
                 }
@@ -154,7 +154,7 @@ class SBOldAvatarService(
 
         return if (users.size > 1) {
             try {
-                AsyncMethodExecutor.awaitCallableExecute(
+                AsyncMethodExecutor.awaitList(
                     users.map { u ->
                         Callable {
                             imageService.getPanel(mapOf("user" to u), panel)

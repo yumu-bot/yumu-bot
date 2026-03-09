@@ -35,8 +35,8 @@ class ChunithmApiImpl(
     private data class ChunithmByVersionQQBody(val qq: Long, val version: List<String>)
 
     private data class ChunithmByVersionNameBody(
-        val username: String,
-        val version: List<String>
+            val username: String,
+            val version: List<String>
     )
 
     private data class ChunithmAliasResponseBody(

@@ -16,7 +16,7 @@ import java.time.OffsetDateTime
 @Entity
 @Table(indexes = [
     Index(name = "idx_lazer_user_query", columnList = "user_id, mode, time DESC"),
-    Index(name = "idx_lazer_beatmap_user_query", columnList = "beatmap_id, user_id, mode"),
+    Index(name = "idx_lazer_user_beatmap_query", columnList = "user_id, beatmap_id, mode, time DESC"),
 ])
 class LazerScoreLite(
     @Id

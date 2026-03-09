@@ -133,7 +133,7 @@ data class LxMaiDifficulty(
         val lx = this
 
         return MaiSong.MaiChart().apply {
-            notes = MaiSong.MaiChart.MaiNote(
+            maiNote = MaiSong.MaiChart.MaiNote(
                 lx.notes.tap,
                 lx.notes.hold,
                 lx.notes.slide,

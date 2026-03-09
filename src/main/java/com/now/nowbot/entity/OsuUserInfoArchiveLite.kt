@@ -7,7 +7,8 @@ import java.time.LocalDateTime
 @Entity @Table(
     name = "osu_user_info_archive",
     indexes = [
-        Index(name = "index_time_id_mode", columnList = "osu_id, mode, time DESC"),
+        Index(name = "index_time_id_mode", columnList = "time DESC, osu_id, mode"),
+        Index(name = "index_id_mode_time", columnList = "osu_id, mode, time DESC"),
     ]
 )
 class OsuUserInfoArchiveLite {

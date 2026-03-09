@@ -191,7 +191,7 @@ import java.util.regex.Matcher
                 InstructionRange(id.data!!, start, end)
             }
 
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
                 { id2.getBestsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition) }
             )
@@ -284,7 +284,7 @@ import java.util.regex.Matcher
         }
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -313,7 +313,7 @@ import java.util.regex.Matcher
         }
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatmapChanges(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }

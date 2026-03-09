@@ -210,7 +210,7 @@ class InfoService(
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
         if (id != null) {
-            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id, mode.data!!) },
                 { scoreApiService.getBestScores(id, mode.data!!) }
             )
@@ -232,8 +232,8 @@ class InfoService(
             bests = scoreApiService.getBestScores(user.userID, mode.data!!)
         }
 
-        AsyncMethodExecutor.awaitPairCallableExecute(
-            { calculateApiService.applyBeatmapChanges(bests.take(6)) },
+        AsyncMethodExecutor.awaitPair(
+            { BeatmapUtil.applyBeatmapChanges(bests.take(6)) },
             { calculateApiService.applyStarToScores(bests.take(6)) }
         )
 

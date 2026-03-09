@@ -5,7 +5,6 @@ import com.now.nowbot.model.enums.GreekChar
 import com.now.nowbot.model.enums.JaChar
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
-import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Statistics
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -281,22 +280,6 @@ object DataUtil {
         return Range(offset, limit)
     }
 
-
-
-    // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatmapExtend 和 applyStarAndPP 之前用。
-    fun getOriginal(beatmap: Beatmap): Map<String, Any> {
-        if (beatmap.cs == null) return mapOf()
-
-        return mapOf(
-            "cs" to beatmap.cs!!,
-            "ar" to beatmap.ar!!,
-            "od" to beatmap.od!!,
-            "hp" to beatmap.hp!!,
-            "bpm" to beatmap.bpm,
-            "drain" to beatmap.hitLength!!,
-            "total" to beatmap.totalLength,
-        )
-    }
 
     /** 根据准确率，通过获取准确率，来构建一个 Statistic。 */
     fun accuracy2Statistics(accuracy: Double, total: Int, osuMode: OsuMode): Statistics {

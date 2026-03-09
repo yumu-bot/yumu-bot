@@ -76,7 +76,7 @@ import java.util.regex.Matcher
             val split = DataUtil.splitPage(search.beatmapsets, param.page, maxPerPage)
 
             // 后处理
-            AsyncMethodExecutor.awaitPairCallableExecute(
+            AsyncMethodExecutor.awaitPair(
                 { beatmapApiService.applyBeatmapsetRankedTime(split.first) },
                 { userApiService.applyUserForBeatmapset(split.first) },
 //                {
