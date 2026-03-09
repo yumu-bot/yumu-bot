@@ -100,8 +100,6 @@ class OsuApiBaseService(
     fun getBotToken(): String {
         val now = System.currentTimeMillis()
         if (now >= tokenExpiresAt || botAccessToken == null) {
-            log.info("发生请求")
-
             // 使用 ReentrantLock 替代 synchronized
             tokenLock.lock()
             try {
