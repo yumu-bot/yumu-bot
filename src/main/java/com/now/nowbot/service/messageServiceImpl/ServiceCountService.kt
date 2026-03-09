@@ -56,7 +56,7 @@ class ServiceCountService(
         val status = if (between.toMinutes().absoluteValue <= 1) {
             // 0 分之内，视作获取全部
             ServiceCountStatus.ALL
-        } else if (between.toMinutes().absoluteValue <= 24 * 60 + 5) {
+        } else if (between.toMinutes().absoluteValue in (24 * 60 - 5) .. (24 * 60 + 5)) {
             // 1 天 5 分之内
             ServiceCountStatus.DAILY
         } else {

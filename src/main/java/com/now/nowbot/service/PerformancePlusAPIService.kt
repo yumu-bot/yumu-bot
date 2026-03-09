@@ -152,7 +152,7 @@ class PerformancePlusAPIService(
         throw NetworkException.ComponentException.RequestTimeout()
     }
 
-    fun getScoresPerformancePlus(scores: List<LazerScore>, retryCount: Int = 3): List<PPPlus> {
+    fun getScoresPerformancePlus(scores: List<LazerScore>, retryCount: Int = 3, potentialBadBIDs: Collection<Long> = emptyList()): List<PPPlus> {
         runCatching {
             // 尝试正常的批量请求
             return getScoresPerformancePlusRaw(scores)
@@ -170,12 +170,20 @@ class PerformancePlusAPIService(
             log.warn("表现分加：批量计算失败，启动二分排雷程序...")
 
             // 进入排雷模式，寻找坏 ID
-            val badBIDs = findBadBeatmapIDs(scores)
+            val badBIDs = findBadBeatmapIDs(scores).toSet()
 
             if (badBIDs.isNotEmpty()) {
+                if (potentialBadBIDs.isNotEmpty() && badBIDs.size >= potentialBadBIDs.size) {
+                    log.warn("表现分加：发现损坏的文件 ID: ${badBIDs.joinToString(", ")}，但是没法修复。跳过中...")
+
+                    return getScoresPerformancePlus(scores.filterNot { it.beatmapID in badBIDs }, retryCount - 1, emptyList())
+                }
+
                 log.warn("表现分加：发现损坏的文件 ID: ${badBIDs.joinToString(", ")}，正在清理并尝试修复...")
 
-                badBIDs.forEach { beatmapApiService.deleteBeatmapFileFromDirectory(it) }
+                badBIDs.forEach {
+                    beatmapApiService.deleteBeatmapFileFromDirectory(it)
+                }
 
                 val has = beatmapApiService.downloadBeatmapFile(badBIDs).toSet()
 
@@ -186,7 +194,7 @@ class PerformancePlusAPIService(
                 }
 
                 // 3. 递归重试整个批量请求
-                return getScoresPerformancePlus(scores.filterNot { it.beatmapID in disabled }, retryCount - 1)
+                return getScoresPerformancePlus(scores.filterNot { it.beatmapID in has }, retryCount - 1, badBIDs)
             }
         }
 

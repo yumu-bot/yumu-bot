@@ -135,6 +135,8 @@ class BeatmapApiImpl(
 
         return runCatching {
             Files.deleteIfExists(path)
+        }.onFailure {
+            log.warn("谱面实现：无法删除谱面 $bid，原因：${it.message}")
         }.isSuccess
     }
 
