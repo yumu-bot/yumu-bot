@@ -41,6 +41,7 @@ object JacksonUtil {
             )
         } // 特性开关
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
         .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT) // 可见性
         .changeDefaultVisibility { vc: VisibilityChecker ->
             vc.withVisibility(
@@ -51,7 +52,6 @@ object JacksonUtil {
         // 命名策略
         .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
         // 注册所有模块（KotlinModule）
-        // JavaTime 已经默认集成
         .addModule(KOTLIN_MODULE)
         .build()
 

@@ -2,13 +2,13 @@ package com.now.nowbot.model.match
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import tools.jackson.databind.PropertyNamingStrategies
-import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.MicroUser
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
 import kotlin.math.max
 
@@ -28,11 +28,15 @@ data class Match(
     val lastRound: MatchRound?
         get() = events.lastOrNull { it.round != null }?.round
 
+
     @get:JsonProperty("current_game_id")
-    val currentGameID: Long? by lazy {
-        val r = lastRound ?: return@lazy null
-        r.takeIf { it.endTime == null }?.roundID
-    }
+    @set:JsonProperty("current_game_id")
+    var currentGameID: Long? = null
+        get() {
+            if (field != null) return field
+            val r = lastRound ?: return null
+            return r.takeIf { it.endTime == null }?.roundID
+        }
 
     val name by statistics::name
 
@@ -87,11 +91,10 @@ data class Match(
         val isTeamVS: Boolean
             get() = teamType == "team-vs" || teamType == "tag-team-vs"
 
-        // 预计算得分，避免多次访问时重复 filter + sum
-        private val teamScores by lazy {
-            scores.groupBy { it.playerStat?.team }
+        @get:JsonIgnore
+        val teamScores: Map<String?, Long>
+            get() = scores.groupBy { it.playerStat?.team }
                 .mapValues { (_, scoreList) -> scoreList.sumOf { it.score } }
-        }
 
         @get:JsonProperty("red_team_score")
         val redTeamScore: Long
