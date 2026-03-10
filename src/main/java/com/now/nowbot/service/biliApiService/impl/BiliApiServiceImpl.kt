@@ -1,6 +1,5 @@
 package com.now.nowbot.service.biliApiService.impl
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.bili.BiliDanmaku
 import com.now.nowbot.model.bili.BiliStreamer
 import com.now.nowbot.model.bili.BiliUser
@@ -11,6 +10,7 @@ import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import tools.jackson.databind.JsonNode
 
 @Service
 class BiliApiServiceImpl(
@@ -62,11 +62,15 @@ class BiliApiServiceImpl(
     }
 
     override fun getImage(url: String): ByteArray {
-        val avatar: ByteArray? = base.biliApiWebClient.get()
-            .uri(url)
-            .toBody<ByteArray>()
+        val avatar: ByteArray = runCatching {
+            base.biliApiWebClient.get()
+                .uri(url)
+                .toBody<ByteArray>()
+        }.onFailure {
+            throw TipsException("获取图片失败。")
+        }.getOrThrow()
 
-        return avatar ?: throw TipsException("获取图片失败。")
+        return avatar
     }
 
     companion object {
@@ -74,14 +78,14 @@ class BiliApiServiceImpl(
 
         private inline fun <reified T> parse(node: JsonNode, param: Any?, name: String): T {
             val code = node.get("code").asInt(-1)
-            val message = node.get("message").asText("未知")
+            val message = node.get("message").asString("未知")
 
             if (code == -400) {
                 throw TipsException("找不到${if (param != null) " $param " else ""}对应的${name}。")
             } else if (code != 0) {
                 throw TipsException("获取${name}失败。失败代码：${code}，失败原因：${message}")
             } else try {
-                return JacksonUtil.parseObject(node["data"], T::class.java)
+                return JacksonUtil.parseObject<T>(node["data"])!!
             } catch (e : Exception) {
                 log.error("生成${name}失败。", e)
                 return T::class.objectInstance!!

@@ -125,7 +125,7 @@ class BiliDanmaku {
         val emotions: List<Emotion>
             get() = emotionMap.mapNotNull {
                 try {
-                    JacksonUtil.parseObject(it.value, Emotion::class.java)
+                    JacksonUtil.parseObject(it.value)
                 } catch (_: Exception) {
                     null
                 }

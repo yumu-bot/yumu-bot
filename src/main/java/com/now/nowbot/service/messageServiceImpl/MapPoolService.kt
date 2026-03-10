@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.now.nowbot.config.BeatmapMirrorConfig
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -146,7 +146,7 @@ class MapPoolService(
                 }
                 .toBody<JsonNode>()
             return if (json.has("data")) {
-                JacksonUtil.parseObject(json["data"], Pool::class.java)
+                JacksonUtil.parseObject<Pool>(json["data"])
             } else {
                 null
             }

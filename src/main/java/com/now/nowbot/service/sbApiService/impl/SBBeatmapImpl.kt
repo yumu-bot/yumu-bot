@@ -1,6 +1,6 @@
 package com.now.nowbot.service.sbApiService.impl
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.now.nowbot.model.ppysb.SBBeatmap
 import com.now.nowbot.service.sbApiService.SBBeatmapApiService
 import com.now.nowbot.throwable.TipsException
@@ -68,12 +68,12 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
         private val log: Logger = LoggerFactory.getLogger(SBBeatmapApiService::class.java)
 
         private inline fun <reified T> parse(node: JsonNode, field: String, name: String): T {
-            val status = node.get("status").asText("未知")
+            val status = node.get("status").asString("未知")
 
             if (status != "success") {
                 throw TipsException("获取${name}失败。失败提示：${status}")
             } else try {
-                return JacksonUtil.parseObject(node[field]!!, T::class.java)
+                return JacksonUtil.parseObject<T>(node[field])!!
             } catch (e : Exception) {
                 log.error("生成${name}失败。", e)
                 return T::class.objectInstance!!
@@ -81,7 +81,7 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
         }
 
         private inline fun <reified T> parseList(node: JsonNode, field: String, name: String): List<T> {
-            val status = node.get("status").asText("未知")
+            val status = node.get("status").asString("未知")
 
             if (status != "success") {
                 throw TipsException("获取${name}失败。失败提示：${status}")

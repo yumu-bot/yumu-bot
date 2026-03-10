@@ -7,9 +7,9 @@ import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.osu.OsuUser.Companion.merge2OsuUserList
 import com.now.nowbot.util.JacksonUtil
+import tools.jackson.databind.JsonNode
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -40,11 +40,7 @@ data class Discussion(
     var beatmapset: Beatmapset? = null
 
     @JsonProperty("beatmapsets") fun parseBeatmapset(data: JsonNode) {
-        if (!data.hasNonNull("beatmapsets") || !data["beatmapsets"].isArray) return
-        beatmapset = JacksonUtil.parseObject(
-            data["beatmapsets"].first(),
-            Beatmapset::class.java
-        )
+        beatmapset = JacksonUtil.parseObject<Beatmapset>(data["beatmapsets"].firstOrNull())
     }
 
     data class ReviewsConfig(

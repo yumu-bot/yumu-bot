@@ -1,7 +1,5 @@
 package com.now.nowbot.service.lxnsApiService.impl
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.model.maimai.LxChuBestScore
 import com.now.nowbot.model.maimai.LxChuUser
 import com.now.nowbot.service.lxnsApiService.LxChunithmApiService
@@ -15,6 +13,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
+import tools.jackson.databind.JsonNode
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeoutException
@@ -22,7 +21,6 @@ import java.util.concurrent.TimeoutException
 @Service
 class LxChunithmApiImpl(
     private val base: LxnsBaseService,
-    private val maiDao: MaiDao
 ) : LxChunithmApiService {
     override fun getChunithmBests(friendCode: Long): LxChuBestScore {
         return request { client ->
@@ -30,7 +28,7 @@ class LxChunithmApiImpl(
                 .uri("api/v0/chunithm/player/${friendCode}/bests")
                 .headers(base::insertDeveloperHeader)
                 .toBody<String>()
-            val node = JacksonUtil.toNode(jsonString) as JsonNode
+            val node = JacksonUtil.toNode(jsonString)
             parse<LxChuBestScore>(node, "data", "玩家中二节奏最好成绩")
         }
     }
@@ -41,7 +39,7 @@ class LxChunithmApiImpl(
                 .uri("api/v0/chunithm/player/qq/${qq}")
                 .headers(base::insertDeveloperHeader)
                 .toBody<String>()
-            val node = JacksonUtil.toNode(jsonString) as JsonNode
+            val node = JacksonUtil.toNode(jsonString)
             parse<LxChuUser>(node, "data", "玩家中二节奏信息")
         }
     }
@@ -86,18 +84,18 @@ class LxChunithmApiImpl(
     companion object {
 
         private inline fun <reified T> parse(node: JsonNode, field: String, name: String): T {
-            val success = node.get("success").asText("未知")
+            val success = node.get("success").asString("未知")
 
             if (success != "true") {
                 throw TipsException(
                     """
                     获取${name}失败。
                     失败代码：${node.get("code").asInt(-1)}
-                    失败原因：${node.get("message").asText("未知")}
+                    失败原因：${node.get("message").asString("未知")}
                     """.trimIndent()
                 )
             } else try {
-                return JacksonUtil.parseObject(node[field]!!, T::class.java)
+                return JacksonUtil.parseObject<T>(node[field])!!
             } catch (e: Exception) {
                 log.error("生成${name}失败。", e)
                 return T::class.objectInstance!!

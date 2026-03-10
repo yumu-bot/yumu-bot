@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 class WsController : WebSocketListener() {
     var webSocket: WebSocket? = null
 
-    var BindController: BindController? = null
+    var bindController: BindController? = null
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
         log.info("ws link:{}", response.code)
@@ -42,8 +42,8 @@ class WsController : WebSocketListener() {
                 log.error("parse error", e)
                 return
             }
-            if (BindController != null) {
-                val resp: String = BindController!!.saveBind(code, state[1]!!)
+            if (bindController != null) {
+                val resp: String = bindController!!.saveBind(code, state[1]!!)
                 val p = HashMap<String?, String?>()
                 p.put("response", resp)
                 p.put("echo", echo)
@@ -82,7 +82,7 @@ class WsController : WebSocketListener() {
     }
 
     fun setMsgController(BindController: BindController?) {
-        this.BindController = BindController
+        this.bindController = BindController
     }
 
     companion object {

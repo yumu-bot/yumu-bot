@@ -1,7 +1,7 @@
 package com.now.nowbot.controller
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.JsonNode
 import com.now.nowbot.qq.tencent.TencentAdapter
 import com.now.nowbot.qq.tencent.YumuServer
 import com.yumu.Listener

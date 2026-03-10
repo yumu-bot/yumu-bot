@@ -1,6 +1,5 @@
 package com.now.nowbot.dao
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.entity.ServiceHeritage
 import com.now.nowbot.mapper.ServiceCallStatisticRepository
@@ -121,7 +120,7 @@ import java.time.LocalDateTime
     fun getHeritage(param: String?): ServiceHeritage? {
         if (param == null) return null
 
-        val node = JacksonUtil.parseObject(param, JsonNode::class.java)
+        val node = JacksonUtil.toNode(param)
 
         val bids = node.get("bids")?.mapNotNull { it.asLong() }
         val sids = node.get("sids")?.mapNotNull { it.asLong() }

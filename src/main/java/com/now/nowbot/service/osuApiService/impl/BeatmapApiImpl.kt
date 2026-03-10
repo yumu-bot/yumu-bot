@@ -1,7 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.BeatmapDao
@@ -20,7 +19,6 @@ import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.toBody
 import io.ktor.util.collections.*
-import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -45,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
+import tools.jackson.databind.JsonNode
 
 @Service
 class BeatmapApiImpl(
@@ -80,7 +79,7 @@ class BeatmapApiImpl(
                 Files.readAllBytes(
                     Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("Banner").resolve("c8.png")
                 )
-            } catch (_: okio.IOException) {
+            } catch (_: IOException) {
                 null
             }
         }
@@ -376,7 +375,7 @@ class BeatmapApiImpl(
                 .headers(base::insertHeader)
                 .toBody<String>()
         }
-        val json = JacksonUtil.toNode(jsonString) as JsonNode
+        val json = JacksonUtil.toNode(jsonString)
         return JacksonUtil.parseObjectList(json["beatmaps"], Beatmap::class.java)
     }
 
@@ -416,7 +415,7 @@ class BeatmapApiImpl(
                 .headers(base::insertHeader)
                 .toBody<String>()
         }
-        val json = JacksonUtil.toNode(jsonString) as JsonNode
+        val json = JacksonUtil.toNode(jsonString)
         return JacksonUtil.parseObjectList(json, Beatmapset::class.java)
     }
 
@@ -469,7 +468,7 @@ class BeatmapApiImpl(
                 .toBody<String>()
         }
 
-        val node = JacksonUtil.toNode(jsonString) as JsonNode
+        val node = JacksonUtil.toNode(jsonString)
 
         val most = JacksonUtil.parseObjectList(node, MostPlayed::class.java)
 
@@ -832,7 +831,7 @@ class BeatmapApiImpl(
                     .headers(base::insertHeader)
                     .toBody<String>()
             }
-            JacksonUtil.toNode(jsonString) as JsonNode
+            JacksonUtil.toNode(jsonString)
         } catch (e: Exception) {
             val ex = e.findCauseOfType<RestClientResponseException>()
             if (ex?.statusCode == org.springframework.http.HttpStatus.NOT_FOUND) {
@@ -898,7 +897,7 @@ class BeatmapApiImpl(
             q["page"] = index + 1
 
             q
-        }.toImmutableList()
+        }
 
         val map = ConcurrentHashMap<Int, BeatmapsetSearch>()
 
@@ -1068,7 +1067,7 @@ class BeatmapApiImpl(
                     }.headers(base::insertHeader)
                     .toBody<String>()
             }
-            return JacksonUtil.toNode(jsonString) as JsonNode
+            return JacksonUtil.toNode(jsonString)
         }
 
     /*
@@ -1154,7 +1153,7 @@ class BeatmapApiImpl(
         val jsonString = proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets")
             .toBody<String>()
-        val json = JacksonUtil.toNode(jsonString) as JsonNode
+        val json = JacksonUtil.toNode(jsonString)
         return JacksonUtil.parseObjectList(json, BeatmapsetWithRankTime::class.java)
     }
 

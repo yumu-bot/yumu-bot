@@ -3,7 +3,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.util.JacksonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
@@ -188,8 +187,8 @@ class ScoreStatisticLite(
 ) {
     fun setStatus(score: LazerScore) {
         when(this.mode.toInt()) {
-            -1 -> score.statistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
-            else -> score.maximumStatistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
+            -1 -> score.statistics = JacksonUtil.parseObject(this.data)!!
+            else -> score.maximumStatistics = JacksonUtil.parseObject(this.data)!!
         }
     }
 

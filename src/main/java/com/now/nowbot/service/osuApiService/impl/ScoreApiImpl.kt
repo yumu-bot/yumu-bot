@@ -14,7 +14,6 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.toBody
 import com.now.nowbot.util.toBodyList
-import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.util.UriBuilder
+import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.Files

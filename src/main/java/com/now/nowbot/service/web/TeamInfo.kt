@@ -186,7 +186,13 @@ fun parseTeamInfo(id: Int, html: String): TeamInfo {
 
     while (userMatcher.find()) {
         val json = DataUtil.unescapeHTML(userMatcher.group("json"))
-        users.add(JacksonUtil.parseObject(json, OsuUser::class.java))
+        val u = runCatching {
+            JacksonUtil.parseObject<OsuUser>(json)
+        }.getOrNull()
+
+        u?.let {
+            users.add(u)
+        }
     }
 
     return TeamInfo(

@@ -29,7 +29,7 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
         return jsonString as T
     }
 
-    return JacksonUtil.parseObject(jsonString, T::class.java)
+    return JacksonUtil.parseObject(jsonString)!!
 }
 
 inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBodyList(): List<T> {

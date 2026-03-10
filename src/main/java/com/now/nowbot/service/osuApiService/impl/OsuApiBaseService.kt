@@ -1,6 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.mikuac.shiro.common.utils.JsonUtils
 import com.now.nowbot.config.IocAllReadyRunner
 import com.now.nowbot.config.OsuConfig
@@ -130,7 +130,7 @@ class OsuApiBaseService(
                 .toBody<JsonNode>()
         }, isBackground = false).get()
 
-        botAccessToken = result["access_token"].asText()
+        botAccessToken = result["access_token"].asString()
         tokenExpiresAt = System.currentTimeMillis() + result["expires_in"].asLong() * 1000
     }
 

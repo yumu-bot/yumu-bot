@@ -20,6 +20,7 @@ import org.springframework.http.client.ClientHttpRequestExecution
 import org.springframework.http.client.ClientHttpRequestInterceptor
 import org.springframework.http.client.ClientHttpResponse
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.io.IOException
@@ -43,7 +44,7 @@ class RestClientConfig {
                 .setSoTimeout(Timeout.ofMilliseconds(500))
                 .setSoKeepAlive(true)
                 .setTcpNoDelay(false) // 禁用 Nagle 算法
-                .build();
+                .build()
         }
         val requestConfig = RequestConfig.custom()
             .setResponseTimeout(Timeout.ofSeconds(30))
@@ -53,7 +54,7 @@ class RestClientConfig {
             .setConnectionManager(connectionManager)
             .setDefaultRequestConfig(requestConfig)
 
-        if (config.proxyHost != null) {
+        if (hasProxy) {
             val proxy = HttpHost(
                 config.proxyHost,
                 config.proxyPort
@@ -76,14 +77,22 @@ class RestClientConfig {
     @Bean("restClient")
     @Qualifier("rlient")
     @Primary
-    fun restClient(): RestClient =
+    fun restClient(config: NowbotConfig): RestClient =
         clientBuilder(httpClients)
+            .configureMessageConverters { configurer ->
+                configurer.registerDefaults()
+                    .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+            }
             .build()
 
     @Bean("proxyRestClient")
     @Qualifier("proxyClient")
     fun proxyRestClient(config: NowbotConfig): RestClient =
         clientBuilder(proxyClient(config))
+            .configureMessageConverters { configurer ->
+                configurer.registerDefaults()
+                    .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+            }
             .build()
 
     // 水鱼应该是国内服务器, 不需要代理
@@ -96,20 +105,33 @@ class RestClientConfig {
     ): RestClient =
         clientBuilder(httpClients)
             .baseUrl(divingFishConfig.url)
+            .configureMessageConverters { configurer ->
+                configurer.registerDefaults()
+                    .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+            }
             .build()
 
     @Bean("lxnsApiRestClient")
     @Qualifier("lxnsApiRestClient")
     fun lxnsApiRestClient(
         lxnsConfig: LxnsConfig,
+        config: NowbotConfig
     ): RestClient = clientBuilder(httpClients)
         .baseUrl(lxnsConfig.url)
+        .configureMessageConverters { configurer ->
+            configurer.registerDefaults()
+                .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+        }
         .build()
 
     @Bean("biliApiRestClient")
     @Qualifier("biliApiRestClient")
-    fun biliApiRestClient(): RestClient = clientBuilder(httpClients)
+    fun biliApiRestClient(config: NowbotConfig): RestClient = clientBuilder(httpClients)
         .baseUrl("https://api.bilibili.com/")
+        .configureMessageConverters { configurer ->
+            configurer.registerDefaults()
+                .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+        }
         .build()
 
     @Bean("sbApiRestClient")
@@ -118,6 +140,10 @@ class RestClientConfig {
         config: NowbotConfig
     ): RestClient = clientBuilder(httpClients)
         .baseUrl("https://api.ppy.sb/")
+        .configureMessageConverters { configurer ->
+            configurer.registerDefaults()
+                .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+        }
         .build()
 
     companion object {
@@ -128,7 +154,7 @@ class RestClientConfig {
                 .setSoTimeout(Timeout.ofMilliseconds(100))
                 .setSoKeepAlive(true)
                 .setTcpNoDelay(false)
-                .build();
+                .build()
         }
         val otherRequestConfig: RequestConfig = RequestConfig.custom()
             .setResponseTimeout(Timeout.ofSeconds(10))

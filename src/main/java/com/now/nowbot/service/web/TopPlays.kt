@@ -1,6 +1,5 @@
 package com.now.nowbot.service.web
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
@@ -28,11 +27,11 @@ fun parseTopPlays(html: String): TopPlays {
     if (topPlaysMatcher.find()) {
         val json = DataUtil.unescapeHTML(topPlaysMatcher.group("json"))
 
-        val node = JacksonUtil.toNode(json) as? JsonNode
+        val node = JacksonUtil.toNode(json)
 
-        firstScoreRank = node?.get("first_score_rank")?.asInt(0) ?: 0
+        firstScoreRank = node.get("first_score_rank")?.asInt(0) ?: 0
 
-        scores = node?.get("scores")?.map { JacksonUtil.parseObject(it, LazerScore::class.java) }.orEmpty()
+        scores = node.get("scores").mapNotNull { JacksonUtil.parseObject<LazerScore>(it) }
     } else {
         firstScoreRank = -1
         scores = listOf()

@@ -295,26 +295,21 @@ import kotlin.text.Charsets.UTF_8
 
     @Deprecated("请使用 From Database") private fun getMaimaiFitLibraryFromFile(): MaiFit {
         if (isRegularFile("data-fit.json")) {
-            return parseFile("data-fit.json", MaiFit::class.java) ?: return JacksonUtil.parseObject(
-                maimaiFitLibraryFromAPI,
-                MaiFit::class.java
-            )
+            return parseFile<MaiFit>("data-fit.json") ?:
+            return JacksonUtil.parseObject<MaiFit>(maimaiFitLibraryFromAPI)!!
         } else {
             log.info("舞萌: 本地统计库不存在，获取 API 版本")
-            return JacksonUtil.parseObject(maimaiFitLibraryFromAPI, MaiFit::class.java)
+            return JacksonUtil.parseObject(maimaiFitLibraryFromAPI)!!
         }
     }
 
     @Deprecated("请使用 From Database") private fun getMaimaiAliasLibraryFromFile(): List<MaiAlias> {
         if (isRegularFile("data-aliases.json")) {
-            return parseFile("data-aliases.json", MaimaiAliasResponseBody::class.java)?.aliases
-                ?: return JacksonUtil.parseObject(
-                    maimaiAliasLibraryFromAPI,
-                    MaimaiAliasResponseBody::class.java
-                ).aliases
+            return parseFile<MaimaiAliasResponseBody>("data-aliases.json")?.aliases
+                ?: return JacksonUtil.parseObject<MaimaiAliasResponseBody>(maimaiAliasLibraryFromAPI)!!.aliases
         } else {
             log.info("舞萌: 本地外号库不存在，获取 API 版本")
-            return JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaimaiAliasResponseBody::class.java).aliases
+            return JacksonUtil.parseObject<MaimaiAliasResponseBody>(maimaiAliasLibraryFromAPI)!!.aliases
         }
     }
 
@@ -346,13 +341,13 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun updateMaimaiFitLibraryDatabase() {
-        val fit = JacksonUtil.parseObject(maimaiFitLibraryFromAPI, MaiFit::class.java)
+        val fit = JacksonUtil.parseObject<MaiFit>(maimaiFitLibraryFromAPI)!!
         maiDao.saveMaiFit(fit)
         log.info("舞萌: 统计数据库已更新")
     }
 
     override fun updateMaimaiAliasLibraryDatabase() {
-        val alias = JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaimaiAliasResponseBody::class.java).aliases
+        val alias = JacksonUtil.parseObject<MaimaiAliasResponseBody>(maimaiAliasLibraryFromAPI)!!.aliases
         maiDao.saveMaiAliases(alias)
         log.info("舞萌: 外号数据库已更新")
     }
@@ -478,13 +473,13 @@ import kotlin.text.Charsets.UTF_8
                 .toBody<String>()
         }
 
-    private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
+    private inline fun <reified T> parseFile(fileName: String): T? {
         val file = path.resolve(fileName)
         try {
             val s = Files.readString(file)
 
             if (Files.isRegularFile(file)) {
-                return JacksonUtil.parseObject(s, clazz)
+                return JacksonUtil.parseObject<T>(s)
             } else {
                 log.info("舞萌: 文件${fileName}不存在", )
                 return null

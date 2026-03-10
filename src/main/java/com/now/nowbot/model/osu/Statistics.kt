@@ -7,7 +7,7 @@ import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import kotlin.math.pow
 import kotlin.math.round
@@ -138,7 +138,7 @@ open class Statistics : Cloneable {
     @JsonProperty("variants") fun setVariants(data: JsonNode?) {
         if (data != null && !data.isEmpty) {
             for (m in data) {
-                if (m["variant"].asText() == "4k") {
+                if (m["variant"].asString() == "4k") {
                     countryRank4K = m["country_rank"].asInt()
                     rank4K = m["global_rank"].asInt()
                     pp4K = m["pp"].asDouble()

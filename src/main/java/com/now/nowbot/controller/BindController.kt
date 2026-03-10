@@ -1,6 +1,6 @@
 package com.now.nowbot.controller
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindResponse
 import com.now.nowbot.model.BindUser
@@ -196,8 +196,13 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
         var code: String? = null
 
         try {
-            if (stat != null) data = stat.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            if (body != null) code = body.get("code").asText()
+            if (stat != null) {
+                data = stat.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            }
+
+            if (body != null) {
+                code = body.get("code").asString()
+            }
         } catch (e: Exception) {
             return e.message
         }

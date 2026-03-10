@@ -19,7 +19,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
-import okhttp3.internal.toLongOrDefault
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -173,7 +172,7 @@ import java.time.LocalDateTime
             val dataStrArray = dataStr.trim().split(REG_SEPERATOR.toRegex(), 0)
 
             if (dataStrArray.isEmpty()) return listOf()
-            return dataStrArray.filter { it.isNotBlank() }.map { it.toLongOrDefault(0L) }
+            return dataStrArray.filter { it.isNotBlank() }.map { it.toLongOrNull() ?: 0L }
         }
 
         private fun getBackground(type: CoverType, beatmaps: List<Beatmap>): MessageChain {

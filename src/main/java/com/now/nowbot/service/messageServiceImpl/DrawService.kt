@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.DrawLogLite
@@ -72,12 +71,8 @@ class DrawService(
     }
 
     companion object {
-        private fun getConfig(config: String): DrawConfig? {
-            val jsonData = JacksonUtil.parseObject(
-                config,
-                JsonNode::class.java
-            )
-            if (jsonData == null) return null
+        private fun getConfig(config: String): DrawConfig {
+            val jsonData = JacksonUtil.toNode(config)
 
             return DrawConfig(jsonData)
         }

@@ -1,7 +1,7 @@
 package com.now.nowbot.model.match
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 
@@ -16,5 +16,5 @@ data class MatchLobby(
         get() = params["limit"].asInt()
 
     val sort: String
-        get() = params["sort"].asText()
+        get() = params["sort"].asString()
 }

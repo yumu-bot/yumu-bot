@@ -1,6 +1,6 @@
 package com.now.nowbot.controller
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.now.nowbot.config.BeatmapMirrorConfig
 import com.now.nowbot.util.toBody
 import org.springframework.beans.factory.annotation.Qualifier

@@ -190,7 +190,7 @@ class ScoreDao(
         return statisticRepository
             .getStatistics(beatmapIDs, -1)
             .distinctBy { it.id }
-            .associate { it.id to JacksonUtil.parseObject(it.data, LazerStatistics::class.java) }
+            .associate { it.id to JacksonUtil.parseObject(it.data)!! }
     }
 
     /**

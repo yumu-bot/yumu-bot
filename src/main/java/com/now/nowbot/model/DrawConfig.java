@@ -1,6 +1,6 @@
 package com.now.nowbot.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.now.nowbot.mapper.DrawLogLiteRepository;
 import com.now.nowbot.model.enums.DrawGrade;
 
@@ -33,7 +33,7 @@ public class DrawConfig {
             if (jsonData.has(grade.name())) {
                 var gradeData = jsonData.get(grade.name());
                 var conf = new DrawConfig.Config(
-                        gradeData.get("name").asText("no data"),
+                        gradeData.get("name").asString("no data"),
                         gradeData.get("weight").asInt(100));
                 this.gradeConfigMap.put(grade, conf);
                 if (gradeData.get("cards").isArray() && !gradeData.get("cards").isEmpty()) {
@@ -41,9 +41,9 @@ public class DrawConfig {
                     int weightSum = 0;
                     for (var cardData : gradeData.get("cards")) {
                         var card = new DrawConfig.Card(
-                                cardData.get("name").asText("no data"),
+                                cardData.get("name").asString("no data"),
                                 cardData.get("weight").asInt(100),
-                                cardData.get("info").asText("default")
+                                cardData.get("info").asString("default")
                         );
                         cards.add(card);
                         this.gradeMap.put(card.info(), grade);

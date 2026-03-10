@@ -1,6 +1,5 @@
 package com.now.nowbot.dao
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.entity.BeatmapExtendLite
 import com.now.nowbot.entity.BeatmapLite
 import com.now.nowbot.entity.BeatmapLite.BeatmapHitLengthResult
@@ -302,7 +301,7 @@ class BeatmapDao(
 
         score.beatmap.apply {
             beatmapsetID = x.beatmapsetID
-            failTimes = b.failTimes?.let { JacksonUtil.toNode(it) as? JsonNode }
+            failTimes = b.failTimes?.let { JacksonUtil.toNode(it) }
             maxCombo = b.maxCombo
         }
 
@@ -387,7 +386,7 @@ class BeatmapDao(
         from.apply {
             beatmapsetID = x.beatmapsetID
             beatmapset = set
-            failTimes = b.failTimes?.let { JacksonUtil.toNode(it) as? JsonNode }
+            failTimes = b.failTimes?.let { JacksonUtil.toNode(it) }
             maxCombo = b.maxCombo
         }
 

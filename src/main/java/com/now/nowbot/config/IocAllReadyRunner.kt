@@ -1,6 +1,5 @@
 package com.now.nowbot.config
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.listener.LocalCommandListener
 import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.tencent.YumuServer
@@ -21,7 +20,6 @@ import org.springframework.core.env.Environment
 import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.stereotype.Component
-import java.io.IOException
 import java.util.concurrent.Executor
 
 @Component
@@ -86,11 +84,10 @@ class IocAllReadyRunner(
         if (resource.exists()) {
             try {
                 val b = resource.inputStream.readAllBytes()
-                val node = JacksonUtil.parseObject(b, JsonNode::class.java)
-                    ?: throw IOException()
+                val node = JacksonUtil.toNode(b)
                 val map = SystemInfoService.INFO_MAP
-                map["最近构建时间"] = node.get("git.build.time").asText("未知")
-                map["最近代码版本"] = node.get("git.commit.id.abbrev").asText("未知")
+                map["最近构建时间"] = node.get("git.build.time").asString("未知")
+                map["最近代码版本"] = node.get("git.commit.id.abbrev").asString("未知")
             } catch (e: Exception) {
                 log.error("解析 git json 出错", e)
             }

@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
@@ -71,14 +71,14 @@ class WikiService internal constructor() : MessageService<Matcher> {
                 if (nodeValue.isArray) {
                     // 2. 推荐使用 elements() 迭代器或直接遍历
                     for (element in nodeValue) {
-                        sb.append(" ").append(element.asText())
+                        sb.append(" ").append(element.asString())
                     }
                 }
                 sb.append('\n')
             }
         } else {
             val uk = key.uppercase()
-            val r = WIKI?.findValue(uk)?.asText() ?: throw LogException(
+            val r = WIKI?.findValue(uk)?.asString() ?: throw LogException(
                 "没有找到${key}"
             )
             sb.append(uk).append(':').append('\n')

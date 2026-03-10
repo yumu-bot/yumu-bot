@@ -360,7 +360,7 @@ class OsuUserInfoDao(
             val user = OsuUser()
             user.mode = archive.mode.shortName
             user.id = archive.userID
-            user.userAchievementsCount = archive.achievementsCount ?: 0
+            user.userAchievementsCount = archive.achievementsCount
             user.beatmapPlaycount = archive.beatmapPlaycount
 
             val statistics = InfoLogStatistics()

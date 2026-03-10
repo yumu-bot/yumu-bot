@@ -1,6 +1,6 @@
 package com.now.nowbot.service.osuApiService
 
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode

@@ -1,7 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.JsonNode
 import com.mikuac.shiro.core.BotContainer
 import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp
 import com.now.nowbot.config.FileConfig
@@ -16,12 +14,14 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.JacksonUtil.toTypedObject
 import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
+import tools.jackson.databind.JsonNode
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -47,7 +47,7 @@ class GroupStatisticsService(
             osuApiRestClient.get()
                 .uri(GET_BINDING, qq)
                 .toBody<JsonNode>()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -66,7 +66,7 @@ class GroupStatisticsService(
             osuApiRestClient.get()
                 .uri(GET_BP_URL, osuId)
                 .toBody<JsonNode>()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -108,10 +108,8 @@ class GroupStatisticsService(
             if (Files.isRegularFile(cachePath)) {
                 val jsonStr = Files.readString(cachePath)
 
-                val cache = JacksonUtil.parseObject(
-                    jsonStr,
-                    object : TypeReference<HashMap<Long, Long>>() {
-                    })
+                val cache: HashMap<Long, Long>? = jsonStr.toTypedObject()
+
                 if (cache != null) {
                     UserCache.putAll(cache)
                 }
@@ -130,7 +128,7 @@ class GroupStatisticsService(
                 log.error("出现错误:", e)
             } finally {
                 lock = 0
-                Files.writeString(cachePath, JacksonUtil.toJson(UserCache)!!)
+                Files.writeString(cachePath, JacksonUtil.toJson(UserCache))
             }
         }
 
@@ -151,14 +149,16 @@ class GroupStatisticsService(
         group.sendMessage("开始统计: $groupId")
 
         var groupInfo: List<GroupMemberInfoResp>? = null
+
         for (i in 0..4) {
             try {
                 groupInfo = bot.getGroupMemberList(groupId).data
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 continue
             }
             if (groupInfo == null) break
         }
+
         if (groupInfo == null) throw TipsException("获取群成员失败")
         groupInfo = groupInfo.filter { r: GroupMemberInfoResp -> r.role.equals("member", ignoreCase = true) }
         val checkPoints = groupInfo.size / 5

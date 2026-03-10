@@ -1,6 +1,5 @@
 package com.now.nowbot.service.lxnsApiService.impl
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.model.maimai.LxMaiCollection
 import com.now.nowbot.model.maimai.LxMaiSong
@@ -53,9 +52,9 @@ class LxMaiApiImpl(
                 .headers(base::insertDeveloperHeader)
                 .toBody<String>()
         }
-        val node = JacksonUtil.toNode(jsonString) as JsonNode
+        val node = JacksonUtil.toNode(jsonString)
 
-        return JacksonUtil.parseObjectList(node["songs"]!!, LxMaiSong::class.java)
+        return JacksonUtil.parseObjectList(node.get("songs"), LxMaiSong::class.java)
     }
 
     override fun getMaiSong(songID: Int): MaiSong? {
@@ -221,7 +220,7 @@ class LxMaiApiImpl(
                 .headers(base::insertDeveloperHeader)
                 .toBody<String>()
         }
-        val node = JacksonUtil.toNode(jsonString) as JsonNode
+        val node = JacksonUtil.toNode(jsonString)
 
         val body = if (node.has(types)) {
             node[types]
@@ -229,11 +228,7 @@ class LxMaiApiImpl(
             throw NoSuchElementException.Data()
         }
 
-        return JacksonUtil.parseObjectList(body, LxMaiCollection::class.java)
-            .map {
-                it.type = type
-                it
-            }
+        return JacksonUtil.parseObjectList(body, LxMaiCollection::class.java).onEach { it.type = type }
     }
 
     /**

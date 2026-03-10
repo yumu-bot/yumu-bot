@@ -1,15 +1,14 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.*
-import com.fasterxml.jackson.databind.JsonNode
+import tools.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.botRuntimeException.ModsException
+import com.now.nowbot.util.JacksonUtil.json
 import com.now.nowbot.util.command.LEVEL_MORE
 import com.now.nowbot.util.command.REG_SPACE
-import org.spring.core.json
 import org.springframework.web.util.UriBuilder
 import kotlin.reflect.full.companionObjectInstance
-
 
 sealed interface Mod {
     val type: String

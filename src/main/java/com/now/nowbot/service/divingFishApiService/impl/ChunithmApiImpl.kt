@@ -236,7 +236,7 @@ class ChunithmApiImpl(
     }
 
     override fun updateChunithmAliasLibraryDatabase() {
-        val alias = JacksonUtil.parseObject(chunithmAliasLibraryFromAPI, ChunithmAliasResponseBody::class.java).aliases
+        val alias = JacksonUtil.parseObject<ChunithmAliasResponseBody>(chunithmAliasLibraryFromAPI)!!.aliases
         maiDao.saveChuAliases(alias)
         log.info("中二节奏: 外号数据库已更新")
     }
@@ -258,13 +258,13 @@ class ChunithmApiImpl(
                 .toBody<String>()
         }
 
-    private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
+    private inline fun <reified T> parseFile(fileName: String): T? {
         val file = path.resolve(fileName)
         try {
             val s = Files.readString(file)
 
             if (Files.isRegularFile(file)) {
-                return JacksonUtil.parseObject(s, clazz)
+                return JacksonUtil.parseObject<T>(s)
             } else {
                 log.info("chunithm: 文件{}不存在", fileName)
                 return null

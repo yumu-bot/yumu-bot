@@ -1,11 +1,6 @@
 package com.now.nowbot.config;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.module.kotlin.KotlinFeature;
-import com.fasterxml.jackson.module.kotlin.KotlinModule;
+import com.now.nowbot.util.JacksonUtil;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -20,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,20 +67,23 @@ public class NowbotConfig {
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
     }
 
+//    public ObjectMapper objectMapper() {
+//        return JsonMapper
+//                .builder()
+//                .defaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.ALWAYS))
+//                .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+//                .addModule(new KotlinModule.Builder()
+//                        // 关键：确保不强行锁定原始属性名为最终名称
+//                        .disable(KotlinFeature.KotlinPropertyNameAsImplicitName)
+//                        // 允许将 null 映射为默认参数，这对 Kotlin 友好
+//                        .enable(KotlinFeature.NullIsSameAsDefault)
+//                        .build())
+//                .build();
+//    }
     @Bean
     @Primary
-    public ObjectMapper jacksonObjectMapper() {
-        return JsonMapper
-                .builder()
-                .defaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.ALWAYS))
-                .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-                .addModule(new KotlinModule.Builder()
-                        // 关键：确保不强行锁定原始属性名为最终名称
-                        .disable(KotlinFeature.KotlinPropertyNameAsImplicitName)
-                        // 允许将 null 映射为默认参数，这对 Kotlin 友好
-                        .enable(KotlinFeature.NullIsSameAsDefault)
-                        .build())
-                .build();
+    public JsonMapper objectMapper() {
+        return JacksonUtil.INSTANCE.getMapper();
     }
 
     public static ApplicationContext applicationContext;
