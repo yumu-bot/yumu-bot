@@ -42,10 +42,26 @@ object JacksonUtil {
         } // 特性开关
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-        .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT) // 可见性
+        .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
+        .enumNamingStrategy { _, _, string -> string }
         .changeDefaultVisibility { vc: VisibilityChecker ->
             vc.withVisibility(
-                PropertyAccessor.ALL,
+                PropertyAccessor.FIELD,
+                JsonAutoDetect.Visibility.NONE
+            )
+
+            vc.withVisibility(
+                PropertyAccessor.GETTER,
+                JsonAutoDetect.Visibility.ANY
+            )
+
+            vc.withVisibility(
+                PropertyAccessor.IS_GETTER,
+                JsonAutoDetect.Visibility.ANY
+            )
+
+            vc.withVisibility(
+                PropertyAccessor.SETTER,
                 JsonAutoDetect.Visibility.ANY
             )
         }

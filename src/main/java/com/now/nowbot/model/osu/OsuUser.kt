@@ -101,8 +101,7 @@ open class OsuUser {
     @JsonProperty("playmode")
     var mode: String = ""
 
-    @set:JsonIgnore
-    @get:JsonProperty("mode")
+    @JsonProperty("mode", access = JsonProperty.Access.READ_ONLY)
     var currentOsuMode: OsuMode = OsuMode.DEFAULT
         get() = if (rankHistory != null) {
             getMode(rankHistory!!.mode, defaultOsuMode)

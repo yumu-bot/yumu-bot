@@ -3,6 +3,10 @@ package com.now.nowbot.dao
 import com.now.nowbot.entity.*
 import com.now.nowbot.mapper.*
 import com.now.nowbot.model.maimai.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import kotlin.collections.forEach
@@ -23,23 +27,17 @@ class MaiDao(
     private val lxMaiCollectionLiteRepository: LxMaiCollectionLiteRepository,
     private val lxMaiCollectionSongLiteRepository: LxMaiCollectionRequiredSongLiteRepository
 ) {
+
     fun saveMaiRanking(ranking: List<MaiRanking>) {
-        val ranks = ranking
-            .filterNot { it.name.isBlank() }
 
-        ranks.parallelStream().map { maiRankLiteRepository.saveAndUpdate(it.name, it.rating) }
-
-        /*
-        val actions = rankingLite.map {
-            return@map AsyncMethodExecutor.Runnable {
-                maiRankLiteRepository.saveAndUpdate(it.name, it.rating)
-            }
+        runBlocking {
+            ranking.filterNot { it.name.isBlank() }
+                .map { item ->
+                    async(Dispatchers.IO) { // 在 IO 线程池并行执行
+                        maiRankLiteRepository.saveAndUpdate(item.name, item.rating)
+                    }
+                }.awaitAll() // 等待所有保存操作完成
         }
-
-        AsyncMethodExecutor.awaitRunnableExecute(actions)
-
-         */
-
     }
 
     fun getMaiRanking(name: String): MaiRanking? {
