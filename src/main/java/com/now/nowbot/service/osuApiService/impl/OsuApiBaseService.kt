@@ -23,6 +23,8 @@ import org.springframework.util.MultiValueMap
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import java.io.IOException
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.concurrent.*
@@ -565,8 +567,13 @@ class OsuApiBaseService(
             (if (isFirstTime) "code" else "refresh_token") to token
         )
 
-        val formData = LinkedMultiValueMap<String, String>()
-        b.forEach { (k, v) -> formData.add(k, v) }
+        // 2. 手动进行 URL 编码并拼接成纯字符串
+        // 这一步彻底绝了 Jackson 介入的可能
+        val rawFormString = b.entries.joinToString("&") {
+            val key = URLEncoder.encode(it.key, StandardCharsets.UTF_8.name())
+            val value = URLEncoder.encode(it.value ?: "", StandardCharsets.UTF_8.name())
+            "$key=$value"
+        }
 
         val s = try {
             val jsonString = request { client: RestClient ->
@@ -575,7 +582,7 @@ class OsuApiBaseService(
                     .uri("https://osu.ppy.sh/oauth/token")
                     .accept(MediaType.APPLICATION_JSON)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(formData)
+                    .body(rawFormString)
                     .toBody<String>()
             }
             JsonUtils.parseObject(jsonString).get()
