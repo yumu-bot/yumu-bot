@@ -1175,6 +1175,7 @@ class BeatmapApiImpl(
 
             when {
                 ex == null -> {
+                    log.error("谱面请求：未定义的错误：", e)
                     throw NetworkException.BeatmapException.Undefined(e)
                 }
 
@@ -1215,6 +1216,7 @@ class BeatmapApiImpl(
                 }
 
                 else -> {
+                    log.error("谱面请求：未定义的错误：", e)
                     throw NetworkException.BeatmapException.Undefined(e)
                 }
             }

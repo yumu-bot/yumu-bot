@@ -16,8 +16,8 @@ import java.nio.file.StandardOpenOption
 
 @Service("OsuBeatmapMirrorApiService")
 class OsuBeatmapMirrorApiService(
-    @field:Qualifier("restClient")
-    private val restClient: RestClient,
+    @field:Qualifier("noRetryRestClient")
+    private val noRetryRestClient: RestClient,
     beatmapMirrorConfig: BeatmapMirrorConfig
 ) {
     private val url = beatmapMirrorConfig.url
@@ -27,8 +27,13 @@ class OsuBeatmapMirrorApiService(
 
         if (url.isNullOrEmpty()) return null
 
+
+        // TODO 镜像站有问题，别用了
+        return null
+
+
         val str = try {
-            restClient.get()
+            noRetryRestClient.get()
                 .uri(url) { it.path("/api/mirror/beatmap/osufile/{bid}").build(bid) }
                 .header("X-TOKEN", token)
                 .toBody<String>()
@@ -52,7 +57,7 @@ class OsuBeatmapMirrorApiService(
 
         try {
             val localPath = runCatching {
-                restClient.get()
+                noRetryRestClient.get()
                     .uri(url!!) {
                         it.path("/api/mirror/fileName/bg/{bid}")
                             .build(bid)

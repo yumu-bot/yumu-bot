@@ -85,6 +85,15 @@ class RestClientConfig {
             }
             .build()
 
+    @Bean("noRetryRestClient")
+    fun noRetryRestClient(config: NowbotConfig): RestClient =
+        noRetryClientBuilder(httpClients)
+            .configureMessageConverters { configurer ->
+                configurer.registerDefaults()
+                    .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+            }
+            .build()
+
     @Bean("proxyRestClient")
     @Qualifier("proxyClient")
     fun proxyRestClient(config: NowbotConfig): RestClient =
@@ -192,6 +201,16 @@ class RestClientConfig {
                 .builder()
                 .requestFactory(requestFactory)
                 .requestInterceptor(RestClientRetryInterceptor(3))
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+        }
+
+        fun noRetryClientBuilder(clients: CloseableHttpClient): RestClient.Builder {
+            val requestFactory = HttpComponentsClientHttpRequestFactory(clients)
+            return RestClient
+                .builder()
+                .requestFactory(requestFactory)
+                // 注意：这里不添加 RestClientRetryInterceptor
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
         }

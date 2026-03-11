@@ -91,9 +91,42 @@ class OsuApiBaseService(
         )
     }
 
-    // 兼容 StructuredTaskScope
-    fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
-        return submitRequest(request, isBackground).get()
+    /*
+    * 兼容 StructuredTaskScope 的请求方法
+    * * @param isBackground 是否为后台任务（影响限流配额和熔断器）
+    * @param priority 优先级，数值越小优先级越高
+    * @param timeoutSeconds 请求超时时间
+    * @param request 请求逻辑回调
+    */
+    @Throws(Throwable::class) // 提醒调用者处理异常
+    fun <T : Any> request(
+        isBackground: Boolean = false,
+        request: (RestClient) -> T
+    ): T {
+        val priority: Int = if (isBackground) {
+            20
+        } else {
+            10
+        }
+
+        val timeoutSeconds: Long = 30
+
+
+        // 1. 提交任务到调度器，获取 CompletableFuture
+        val future = requestScheduler.submit(
+            request = request,
+            isBackground = isBackground,
+            priority = priority,
+            timeout = timeoutSeconds
+        )
+
+        return try {
+            future.join()
+        } catch (e: CompletionException) {
+            throw e.cause ?: e
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     private val tokenLock = ReentrantLock()
@@ -123,14 +156,14 @@ class OsuApiBaseService(
         body.add("grant_type", "client_credentials")
         body.add("scope", "public")
 
-        val result = submitRequest({ client ->
+        val result = request(isBackground = false) { client ->
             client.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(body)
                 .toBody<JsonNode>()
-        }, isBackground = false).get()
+        }
 
         botAccessToken = result["access_token"].asString()
         tokenExpiresAt = System.currentTimeMillis() + result["expires_in"].asLong() * 1000
@@ -356,16 +389,18 @@ class OsuApiBaseService(
         }
 
         private fun <T: Any> handleRequestError(task: ApiRequestTask<T>, error: Throwable) {
+            if (task.retryCount < MAX_RETRIES && isRecoverable(error)) {
+                task.retryCount++
+                reEnqueue(task)
+            }
+
             when (error) {
                 is RestClientResponseException -> {
                     if (error.statusCode.value() == 429) {
                         handle429Error(task, error)
+                    } else {
+                        task.retryOrFail(error)
                     }
-                    task.retryOrFail(error)
-                }
-                is IOException -> {
-                    // 网络错误可重试
-                    task.retryOrFail(error)
                 }
                 else -> {
                     task.completeExceptionally(error)
@@ -394,6 +429,40 @@ class OsuApiBaseService(
 
         private fun isTaskExpired(task: ApiRequestTask<*>): Boolean {
             return System.currentTimeMillis() > task.createdAt + (task.timeoutSeconds * 1000)
+        }
+
+        // 在 RequestScheduler 内部添加
+        private fun <T : Any> reEnqueue(task: ApiRequestTask<T>) {
+            val backoffMillis = (1L shl min(task.retryCount, 5)) * 1000L
+
+            // 使用虚拟线程等待后重新入队
+            Thread.ofVirtual().start {
+                try {
+                    Thread.sleep(backoffMillis)
+                    if (!task.timedOut && task.remainingTimeMillis() > 1000) {
+                        taskQueue.put(task) // 重新放回队列，重新竞争限流配额
+                    } else {
+                        task.completeExceptionally(TimeoutException("Retry aborted: No time left"))
+                    }
+                } catch (e: Exception) {
+                    task.completeExceptionally(e)
+                }
+            }
+        }
+
+        private fun isRecoverable(error: Throwable): Boolean {
+            return when (error) {
+                // 1. 响应异常处理
+                is RestClientResponseException -> {
+                    val status = error.statusCode.value()
+                    // 429 代表限流，500/502/503/504 代表服务器抖动，这些都值得重试
+                    status == 429 || status >= 500
+                }
+                // 2. 网络层异常（连接超时、Socket 异常等）
+                is IOException -> true
+                // 3. 其他业务错误（如 400 参数错误, 401 授权错误, 404 不存在）不应重试
+                else -> false
+            }
         }
     }
 

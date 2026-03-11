@@ -13,8 +13,6 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.type.TypeFactory
 import tools.jackson.module.kotlin.KotlinFeature
 import tools.jackson.module.kotlin.KotlinModule
-import tools.jackson.module.kotlin.readValue
-import tools.jackson.module.kotlin.treeToValue
 
 object JacksonUtil {
     private val log: Logger = LoggerFactory.getLogger(JacksonUtil::class.java)
@@ -227,29 +225,36 @@ object JacksonUtil {
     inline fun <reified T> parseObject(body: String, field: String): T? {
         val node: JsonNode = mapper.readTree(body).get(field)
         if (T::class.java == JsonNode::class.java) return node as? T
-        return mapper.treeToValue<T>(node)
+
+        return mapper.convertValue(node, T::class.java)
     }
 
     inline fun <reified T> parseObject(body: ByteArray): T? {
         val node: JsonNode = mapper.readTree(body)
-        if (T::class.java == JsonNode::class.java) return node as? T
-        return mapper.treeToValue<T>(node)
+
+        if (T::class.java == JsonNode::class.java) {
+            return node as? T
+        }
+
+        return mapper.convertValue(node, T::class.java)
     }
 
     inline fun <reified T> parseObject(body: String): T? {
-        return mapper.readValue<T>(body)
+        return mapper.convertValue(body, T::class.java)
     }
 
     inline fun <reified T> parseObject(node: JsonNode?, field: String): T? {
         if (node == null || node.isNull) return null
         val parser = mapper.treeAsTokens(node.get(field))
-        return mapper.readValue<T>(parser)
+
+        return mapper.convertValue(parser, T::class.java)
     }
 
     inline fun <reified T> parseObject(node: JsonNode?): T? {
         if (node == null || node.isNull) return null
         val parser = mapper.treeAsTokens(node)
-        return mapper.readValue<T>(parser)
+
+        return mapper.convertValue(parser, T::class.java)
     }
 
     fun toNode(json: String?): JsonNode {
@@ -273,7 +278,7 @@ object JacksonUtil {
     }
 
     inline fun <reified T> toValue(data: String): T? {
-        return mapper.readValue<T>(data)
+        return mapper.convertValue(data, T::class.java)
     }
 
     fun toJson(data: Any?): String {
@@ -314,6 +319,6 @@ object JacksonUtil {
     inline fun <reified T> JsonNode.json(): T? {
         if (this.isMissingNode || this.isNull) return null
 
-        return mapper.treeToValue<T>(this)
+        return mapper.convertValue(this, T::class.java)
     }
 }

@@ -9,6 +9,7 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.toBody
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
@@ -132,6 +133,7 @@ class MatchApiImpl(
 
             when {
                 ex == null -> {
+                    log.error("比赛请求：未定义的错误：", e)
                     throw NetworkException.MatchException.Undefined(e)
                 }
 
@@ -172,9 +174,14 @@ class MatchApiImpl(
                 }
 
                 else -> {
+                    log.error("比赛请求：未定义的错误：", e)
                     throw NetworkException.MatchException.Undefined(e)
                 }
             }
         }
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(MatchApiImpl::class.java)
     }
 }

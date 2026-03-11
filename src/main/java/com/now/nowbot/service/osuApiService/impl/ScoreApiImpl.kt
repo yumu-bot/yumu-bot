@@ -552,6 +552,7 @@ class ScoreApiImpl(
 
             when {
                 ex == null -> {
+                    log.error("成绩请求：未定义的错误：", e)
                     throw NetworkException.ScoreException.Undefined(e)
                 }
 
@@ -600,6 +601,7 @@ class ScoreApiImpl(
                 }
 
                 else -> {
+                    log.error("成绩请求：未定义的错误：", e)
                     throw NetworkException.ScoreException.Undefined(e)
                 }
             }
