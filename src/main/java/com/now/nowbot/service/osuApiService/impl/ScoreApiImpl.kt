@@ -543,9 +543,14 @@ class ScoreApiImpl(
 
     /**
      * 错误包装
+     * @param isBackground 如果为真，则使用限流策略，如果为 null，则使用不重试的策略
      */
-    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
+    private fun <T: Any> request(isBackground: Boolean? = false, request: (RestClient) -> T): T {
         return try {
+            if (isBackground == null) {
+                return request(base.noRetryRestClient)
+            }
+
             if (isBackground) {
                 base.request(isBackground = true, request)
             } else {
@@ -617,8 +622,8 @@ class ScoreApiImpl(
         crossinline headers: HttpHeaders.() -> Unit,
         retry: Function<UriBuilder, URI>,
     ): T {
-        val call = { target: Function<UriBuilder, URI> ->
-            request { client ->
+        val call = { target: Function<UriBuilder, URI>, isBackground: Boolean? ->
+            request(isBackground) { client ->
                 client.get()
                     .uri(target)
                     .headers { h -> headers(h) }
@@ -627,14 +632,14 @@ class ScoreApiImpl(
         }
 
         return try {
-            call(uri)
+            call(uri, false)
         } catch (e: Throwable) {
             // 解包虚拟线程或包装器可能产生的异常
             val actual = e as? NetworkException.ScoreException.NotFound ?: e.cause
 
             if (actual is NetworkException.ScoreException.NotFound) {
                 log.warn("检测到 404，正在尝试备用请求...")
-                call(retry)
+                call(retry, null)
             } else {
                 throw e
             }

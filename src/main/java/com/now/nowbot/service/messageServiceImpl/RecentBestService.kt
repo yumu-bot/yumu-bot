@@ -92,11 +92,15 @@ class RecentBestService(
 
             val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(dataID.data!!, dataMode.data!!) },
-                { scoreApiService.getBestScores(dataID.data!!, dataMode.data!!, 0, 100) },
+                {
+                    runCatching {
+                        scoreApiService.getBestScores(dataID.data!!, dataMode.data!!, 199, 1)
+                    }.getOrNull()?.firstOrNull()
+                },
             )
 
             user = async.first
-            minimumPP = max((async.second.lastOrNull()?.pp ?: (user.pp / 20)), 10.0)
+            minimumPP = max((async.second?.pp ?: (user.pp / 20.0)), 10.0)
 
         } else {
             val dataUser = InstructionUtil.getUserWithRange(event, matcher, dataMode, isMyself)
@@ -107,9 +111,11 @@ class RecentBestService(
             dayStart = dataUser.getDayStart()
             dayEnd = dataUser.getDayEnd(7)
 
-            val bests = scoreApiService.getBestScores(user.userID, dataMode.data!!, 0, 100)
+            val last = runCatching {
+                scoreApiService.getBestScores(user.userID, dataMode.data!!, 199, 1)
+            }.getOrNull()?.firstOrNull()
 
-            minimumPP = max((bests.lastOrNull()?.pp ?: (user.pp / 20)), 10.0)
+            minimumPP = max((last?.pp ?: (user.pp / 20.0)), 10.0)
         }
 
         val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())

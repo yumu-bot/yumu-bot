@@ -37,6 +37,7 @@ import kotlin.math.min
 @Service
 class OsuApiBaseService(
     @param:Qualifier("osuApiRestClient") val osuApiRestClient: RestClient,
+    @param:Qualifier("noRetryRestClient") val noRetryRestClient: RestClient,
     private val bindDao: BindDao,
     osuConfig: OsuConfig,
     yumuConfig: YumuConfig
