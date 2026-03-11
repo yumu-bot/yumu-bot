@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
@@ -24,6 +25,7 @@ import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 import java.util.*
 import java.util.regex.Matcher
 
@@ -32,6 +34,7 @@ import java.util.regex.Matcher
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
+    private val dao: ServiceCallStatisticsDao
 ) : MessageService<MuRatingService.MuRatingPanelParam>, TencentMessageService<MuRatingService.MuRatingPanelParam> {
 
     data class MuRatingPanelParam(
@@ -51,7 +54,7 @@ import java.util.regex.Matcher
             return false
         }
 
-        data.value = getMuRatingParam(matcher, matchApiService)
+        data.value = getMuRatingParam(event, matcher, matchApiService, dao)
         return true
     }
 
@@ -111,7 +114,7 @@ import java.util.regex.Matcher
             return null
         }
 
-        return getMuRatingParam(matcher, matchApiService)
+        return getMuRatingParam(event, matcher, matchApiService, dao)
     }
 
     override fun reply(event: MessageEvent, param: MuRatingPanelParam): MessageChain? {
@@ -192,21 +195,50 @@ import java.util.regex.Matcher
          * @throws MRAException 错误
          */
         @Throws(MRAException::class)
-        @JvmStatic
-        fun getMuRatingParam(matcher: Matcher, matchApiService: OsuMatchApiService): MuRatingPanelParam {
+        fun getMuRatingParam(event: MessageEvent, matcher: Matcher, matchApiService: OsuMatchApiService, dao: ServiceCallStatisticsDao? = null): MuRatingPanelParam {
             val matchIDStr = matcher.group("matchid")
 
-            if (matchIDStr.isNullOrBlank()) {
-                throw IllegalArgumentException.WrongException.MatchID()
-            }
-
-            val matchID: Long = matchIDStr.toLongOrNull() ?: throw IllegalArgumentException.WrongException.MatchID()
-
+            var matchID: Long? = matchIDStr?.toLongOrNull()
             val skipStr = matcher.group("skip")
             val ignoreStr = matcher.group("ignore")
 
-            val skip = skipStr?.toInt() ?: 0
-            val ignore = ignoreStr?.toInt() ?: 0
+            val skip: Int
+            val ignore: Int
+
+            if (matchID == null) {
+                skip = 0
+                ignore = 0
+                matchID = dao?.getLastMatchID(
+                    groupID = event.subject.contactID,
+                    from = LocalDateTime.now().minusHours(24L)
+                )
+            } else if (matchID < 100) {
+                /**
+                 * 此时有可能没有输入 matchID，但是输入了 skip 和 ignore
+                 */
+                if (ignoreStr.isNullOrBlank()) {
+                    skip = matchID.toInt()
+                    ignore = skipStr?.toInt() ?: 0
+                } else {
+                    skip = skipStr?.toInt() ?: 0
+                    ignore = ignoreStr.toInt()
+                }
+
+                matchID = dao?.getLastMatchID(
+                    groupID = event.subject.contactID,
+                    from = LocalDateTime.now().minusHours(24L)
+                )
+            } else {
+                skip = skipStr?.toInt() ?: 0
+                ignore = ignoreStr?.toInt() ?: 0
+                matchID = dao?.getLastMatchID(
+                    groupID = event.subject.contactID,
+                    from = LocalDateTime.now().minusHours(24L)
+                )
+            }
+
+            if (matchID == null) throw IllegalArgumentException.WrongException.MatchID()
+
             val failed = matcher.group("failed") == null || !matcher.group("failed").equals("f", ignoreCase = true)
             val rematch = matcher.group("rematch") == null || !matcher.group("rematch").equals("r", ignoreCase = true)
 

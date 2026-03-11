@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.match.MatchRating.Companion.applyDTMod
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service
     private val calculateApiService: OsuCalculateApiService,
     private val matchApiService: OsuMatchApiService,
     private val imageService: ImageService,
+    private val dao: ServiceCallStatisticsDao,
 ) : MessageService<MuRatingPanelParam>, TencentMessageService<MuRatingPanelParam> {
 
     override fun isHandle(
@@ -36,12 +38,12 @@ import org.springframework.stereotype.Service
         messageText: String,
         data: DataValue<MuRatingPanelParam>,
     ): Boolean {
-        val m = Instruction.MATCH_NOW.matcher(messageText)
-        if (!m.find()) {
+        val matcher = Instruction.MATCH_NOW.matcher(messageText)
+        if (!matcher.find()) {
             return false
         }
 
-        data.value = MuRatingService.getMuRatingParam(m, matchApiService)
+        data.value = MuRatingService.getMuRatingParam(event, matcher, matchApiService, dao)
         return true
     }
 
@@ -74,7 +76,7 @@ import org.springframework.stereotype.Service
             return null
         }
 
-        return MuRatingService.getMuRatingParam(m, matchApiService)
+        return MuRatingService.getMuRatingParam(event, m, matchApiService, dao)
     }
 
     override fun reply(event: MessageEvent, param: MuRatingPanelParam): MessageChain? {
