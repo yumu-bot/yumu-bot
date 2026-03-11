@@ -13,6 +13,8 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.type.TypeFactory
 import tools.jackson.module.kotlin.KotlinFeature
 import tools.jackson.module.kotlin.KotlinModule
+import tools.jackson.module.kotlin.readValue
+import tools.jackson.module.kotlin.treeToValue
 
 object JacksonUtil {
     private val log: Logger = LoggerFactory.getLogger(JacksonUtil::class.java)
@@ -40,26 +42,10 @@ object JacksonUtil {
         } // 特性开关
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-        .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
-        .enumNamingStrategy { _, _, string -> string }
+        .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT) // 可见性
         .changeDefaultVisibility { vc: VisibilityChecker ->
             vc.withVisibility(
-                PropertyAccessor.FIELD,
-                JsonAutoDetect.Visibility.NONE
-            )
-
-            vc.withVisibility(
-                PropertyAccessor.GETTER,
-                JsonAutoDetect.Visibility.ANY
-            )
-
-            vc.withVisibility(
-                PropertyAccessor.IS_GETTER,
-                JsonAutoDetect.Visibility.ANY
-            )
-
-            vc.withVisibility(
-                PropertyAccessor.SETTER,
+                PropertyAccessor.ALL,
                 JsonAutoDetect.Visibility.ANY
             )
         }
@@ -225,36 +211,29 @@ object JacksonUtil {
     inline fun <reified T> parseObject(body: String, field: String): T? {
         val node: JsonNode = mapper.readTree(body).get(field)
         if (T::class.java == JsonNode::class.java) return node as? T
-
-        return mapper.convertValue(node, T::class.java)
+        return mapper.treeToValue<T>(node)
     }
 
     inline fun <reified T> parseObject(body: ByteArray): T? {
         val node: JsonNode = mapper.readTree(body)
-
-        if (T::class.java == JsonNode::class.java) {
-            return node as? T
-        }
-
-        return mapper.convertValue(node, T::class.java)
+        if (T::class.java == JsonNode::class.java) return node as? T
+        return mapper.treeToValue<T>(node)
     }
 
     inline fun <reified T> parseObject(body: String): T? {
-        return mapper.convertValue(body, T::class.java)
+        return mapper.readValue<T>(body)
     }
 
     inline fun <reified T> parseObject(node: JsonNode?, field: String): T? {
         if (node == null || node.isNull) return null
         val parser = mapper.treeAsTokens(node.get(field))
-
-        return mapper.convertValue(parser, T::class.java)
+        return mapper.readValue<T>(parser)
     }
 
     inline fun <reified T> parseObject(node: JsonNode?): T? {
         if (node == null || node.isNull) return null
         val parser = mapper.treeAsTokens(node)
-
-        return mapper.convertValue(parser, T::class.java)
+        return mapper.readValue<T>(parser)
     }
 
     fun toNode(json: String?): JsonNode {
@@ -278,7 +257,7 @@ object JacksonUtil {
     }
 
     inline fun <reified T> toValue(data: String): T? {
-        return mapper.convertValue(data, T::class.java)
+        return mapper.readValue<T>(data)
     }
 
     fun toJson(data: Any?): String {
