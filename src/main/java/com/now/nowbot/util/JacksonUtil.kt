@@ -24,7 +24,7 @@ object JacksonUtil {
         .enable(KotlinFeature.NullToEmptyCollection)
         .enable(KotlinFeature.NullToEmptyMap)
 
-        .enable(KotlinFeature.NullIsSameAsDefault) // 2. 启用新的严格空值检查逻辑（Jackson 3 推荐）
+        .enable(KotlinFeature.NullIsSameAsDefault)
         .disable(KotlinFeature.StrictNullChecks)
 
         .enable(KotlinFeature.SingletonSupport)
@@ -33,13 +33,13 @@ object JacksonUtil {
         .enable(KotlinFeature.UseJavaDurationConversion)
         .build()
 
-    // 2. 一气呵成构建 final mapper
-    val mapper: JsonMapper = JsonMapper.builder() // 包含性设置
+    val mapper: JsonMapper = JsonMapper.builder()
         .changeDefaultPropertyInclusion { value: JsonInclude.Value ->
             value.withValueInclusion(
                 JsonInclude.Include.NON_NULL
             )
-        } // 特性开关
+        }
+        .enumNamingStrategy { _, _, name -> name }
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
         .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT) // 可见性
@@ -48,10 +48,13 @@ object JacksonUtil {
                 PropertyAccessor.ALL,
                 JsonAutoDetect.Visibility.ANY
             )
+
+            // 也许需要收紧，不然 lazy 委托会扫到 synchronized 自指锁上
+//            vc.withVisibility(
+//                PropertyAccessor.FIELD, JsonAutoDetect.Visibility.PUBLIC_ONLY
+//            )
         }
-        // 命名策略
         .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-        // 注册所有模块（KotlinModule）
         .addModule(KOTLIN_MODULE)
         .build()
 
