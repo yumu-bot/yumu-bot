@@ -576,15 +576,13 @@ class OsuApiBaseService(
         }
 
         val s = try {
-            val jsonString = request { client: RestClient ->
-                client
-                    .post()
-                    .uri("https://osu.ppy.sh/oauth/token")
-                    .accept(MediaType.APPLICATION_JSON)
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(rawFormString)
-                    .toBody<String>()
-            }
+            val jsonString = osuApiRestClient.post()
+                .uri("https://osu.ppy.sh/oauth/token")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(rawFormString)
+                .toBody<String>()
+
             JsonUtils.parseObject(jsonString).get()
         } catch (e: Exception) {
             val ex = e.findCauseOfType<RestClientResponseException>()
