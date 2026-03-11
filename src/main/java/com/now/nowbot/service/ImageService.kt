@@ -6,6 +6,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.toBody
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
@@ -13,11 +14,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.HttpClientErrorException.BadRequest
-import org.springframework.web.client.HttpServerErrorException.InternalServerError
 import org.springframework.web.client.RestClient
 import java.net.SocketException
 
@@ -218,20 +218,24 @@ class ImageService(
         return try {
             request.toBody<ByteArray>()
         } catch (e: Throwable) {
-            if (e is BadRequest || e.cause is BadRequest) {
-                throw NetworkException.RenderModuleException.BadRequest()
-            } else if (e is ReadTimeoutException || e.cause is ReadTimeoutException) {
-                throw NetworkException.RenderModuleException.RequestTimeout()
-            } else if (e is InternalServerError || e.cause is InternalServerError) {
-                throw NetworkException.RenderModuleException.InternalServerError()
-            } else if (e is SocketException || e.cause is SocketException) {
+            val ex = e.findCauseOfType<HttpClientErrorException>()
+
+            if (ex != null) {
+                throw when(ex.statusCode) {
+                    HttpStatus.BAD_REQUEST -> NetworkException.RenderModuleException.BadRequest()
+                    HttpStatus.REQUEST_TIMEOUT -> NetworkException.RenderModuleException.RequestTimeout()
+                    HttpStatus.INTERNAL_SERVER_ERROR -> NetworkException.RenderModuleException.InternalServerError()
+                    else -> {
+                        log.error("渲染模块：其他问题", e)
+                        NetworkException.RenderModuleException.BadGateway()
+                    }
+                }
+            } else if (e.findCauseOfType<SocketException>() != null) {
                 throw NetworkException.RenderModuleException.ServiceUnavailable()
-            } else if (e is HttpClientErrorException) {
-                throw NetworkException.RenderModuleException.BadGateway()
-            } else {
-                log.error("渲染模块：未识别的错误", e)
-                throw NetworkException.RenderModuleException.Undefined(e)
             }
+
+            log.error("渲染模块：未识别的错误", e)
+            throw NetworkException.RenderModuleException.Undefined(e)
         }
     }
 
