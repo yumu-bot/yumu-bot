@@ -36,20 +36,21 @@ class PPPlus {
     var difficulty: Stats? = null
     var performance: Stats? = null
 
-    val skill: Stats by lazy {
-        val d = difficulty ?: return@lazy Stats()
+    val skill: Stats
+        get () {
+            val d = difficulty ?: return Stats()
 
-        Stats(
-            calculateSkillValue(d.aim),
-            calculateSkillValue(d.jumpAim),
-            calculateSkillValue(d.flowAim),
-            calculateSkillValue(d.precision),
-            calculateSkillValue(d.speed),
-            calculateSkillValue(d.stamina),
-            calculateSkillValue(d.accuracy),
-            calculateSkillValue(d.total)
-        )
-    }
+            return Stats(
+                calculateSkillValue(d.aim),
+                calculateSkillValue(d.jumpAim),
+                calculateSkillValue(d.flowAim),
+                calculateSkillValue(d.precision),
+                calculateSkillValue(d.speed),
+                calculateSkillValue(d.stamina),
+                calculateSkillValue(d.accuracy),
+                calculateSkillValue(d.total)
+            )
+        }
 
     var advancedStats: AdvancedStats? = null
 
