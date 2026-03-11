@@ -43,11 +43,12 @@ object JacksonUtil {
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
         .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT) // 可见性
-        .changeDefaultVisibility { vc: VisibilityChecker ->
-            vc.withVisibility(
-                PropertyAccessor.ALL,
-                JsonAutoDetect.Visibility.ANY
-            )
+        .changeDefaultVisibility { vc: VisibilityChecker -> vc
+            .withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE) // 1. 先全部关掉
+            .withVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.PUBLIC_ONLY) // 2. 只开公开字段
+            .withVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.PUBLIC_ONLY) // 3. 只开公开 Getter
+            .withVisibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.PUBLIC_ONLY)
+            .withVisibility(PropertyAccessor.SETTER, JsonAutoDetect.Visibility.PUBLIC_ONLY)
 
             // 也许需要收紧，不然 lazy 委托会扫到 synchronized 自指锁上
 //            vc.withVisibility(

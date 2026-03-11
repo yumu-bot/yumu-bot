@@ -62,16 +62,15 @@ class MapStatisticsService(
         val pp: List<Double>,
         val expected: Expected,
     ) {
-        fun toMap(): Map<String, Any> {
-            val map = mutableMapOf<String, Any>()
-            user?.let { map["user"] = it }
-            map["beatmap"] = beatmap
-            map["density"] = density
-            map["original"] = original
-            map["attributes"] = attributes
-            map["pp"] = pp
-            map["expected"] = expected
-            return map
+        fun toMap(): Map<String, Any> = mutableMapOf(
+            "beatmap" to beatmap,
+            "density" to density,
+            "original" to original,
+            "attributes" to attributes,
+            "pp" to pp,
+            "expected" to expected
+        ).apply {
+            user?.let { put("user", it) }
         }
     }
 
@@ -134,7 +133,7 @@ class MapStatisticsService(
         ANY(REG_NUMBER_DECIMAL.toRegex()),
     }
 
-    private fun getParam(event: MessageEvent, matcher: Matcher): MapParam {
+    private fun getParam(event: MessageEvent, matcher: Matcher, isLazer: Boolean = false): MapParam {
         val conditions = DataUtil.getConditions(matcher.group(FLAG_ANY), Filter.entries.map { it.regex })
 
         val id = getBid(matcher)
@@ -247,7 +246,7 @@ class MapStatisticsService(
 
         val mods = LazerMod.getModsList(matcher.group("mod"))
 
-        val expected = Expected(OsuMode.getConvertableMode(mode, beatmap.mode), accuracy, combo, miss, mods)
+        val expected = Expected(OsuMode.getConvertableMode(mode, beatmap.mode), accuracy, combo, miss, mods, isLazer)
         return MapParam(user, beatmap, expected)
     }
 
@@ -258,7 +257,6 @@ class MapStatisticsService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(MapStatisticsService::class.java)
 
-        @JvmStatic
         fun getPanelE6Image(
             user: OsuUser?,
             beatmap: Beatmap,

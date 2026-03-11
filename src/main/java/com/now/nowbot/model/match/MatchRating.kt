@@ -544,7 +544,6 @@ class MatchRating(
     }
 
     companion object {
-        @JvmStatic
         fun MatchRating.insertMicroUserToScores() {
             this.match.events
                 .filter { it.round != null }
@@ -552,7 +551,6 @@ class MatchRating(
                 .forEach { s -> s.user = this.players[s.userID] ?: MicroUser() }
         }
 
-        @JvmStatic
         fun MatchRating.applyDTMod() {
             this.match.events
                 .filter { it.round?.beatmap != null }
