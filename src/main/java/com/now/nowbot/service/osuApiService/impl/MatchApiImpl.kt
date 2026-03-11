@@ -127,7 +127,11 @@ class MatchApiImpl(
      */
     private fun <T : Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
-            base.request(isBackground, request)
+            if (isBackground) {
+                base.request(isBackground = true, request)
+            } else {
+                request(base.osuApiRestClient)
+            }
         } catch (e: Throwable) {
             val ex = e.findCauseOfType<RestClientResponseException>()
 

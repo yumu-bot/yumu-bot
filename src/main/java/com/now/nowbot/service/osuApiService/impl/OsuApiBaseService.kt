@@ -78,6 +78,7 @@ class OsuApiBaseService(
     private val requestScheduler = RequestScheduler()
 
     // 供外部使用的 API
+    @Deprecated("这个错误包装会把所有网络问题换成超时", level = DeprecationLevel.WARNING)
     fun <T: Any> submitRequest(
         request: (RestClient) -> T,
         isBackground: Boolean = false,
@@ -156,14 +157,13 @@ class OsuApiBaseService(
         body.add("grant_type", "client_credentials")
         body.add("scope", "public")
 
-        val result = request(isBackground = false) { client ->
-            client.post()
-                .uri("https://osu.ppy.sh/oauth/token")
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(body)
-                .toBody<JsonNode>()
-        }
+        val result = this.osuApiRestClient
+            .post()
+            .uri("https://osu.ppy.sh/oauth/token")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .body(body)
+            .toBody<JsonNode>()
 
         botAccessToken = result["access_token"].asString()
         tokenExpiresAt = System.currentTimeMillis() + result["expires_in"].asLong() * 1000

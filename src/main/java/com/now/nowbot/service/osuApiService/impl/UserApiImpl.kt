@@ -360,7 +360,11 @@ import java.util.concurrent.Callable
      */
     private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
-            base.request(isBackground, request)
+            if (isBackground) {
+                base.request(isBackground = true, request)
+            } else {
+                request(base.osuApiRestClient)
+            }
         } catch (e: Throwable) {
             val ex = e.findCauseOfType<RestClientResponseException>()
 
@@ -413,18 +417,15 @@ import java.util.concurrent.Callable
     }
 
     override fun getTeamInfo(id: Int): TeamInfo? {
-        val html = base.request { client: RestClient ->
-            client.get().uri("https://osu.ppy.sh/teams/{id}", id).toBody<String>()
-        }
+        val html = base.osuApiRestClient
+            .get().uri("https://osu.ppy.sh/teams/{id}", id).toBody<String>()
 
         return parseTeamInfo(id, html)
     }
 
     override fun getTopPlays(page: Int, mode: OsuMode): TopPlays? {
-        val html = base.request { client: RestClient ->
-            client.get()
-                .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").toBody<String>()
-        }
+        val html = base.osuApiRestClient
+            .get().uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").toBody<String>()
 
         return parseTopPlays(html)
     }
