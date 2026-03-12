@@ -86,13 +86,46 @@ class RestClientConfig {
             .build()
 
     @Bean("noRetryRestClient")
-    fun noRetryRestClient(config: NowbotConfig): RestClient =
-        noRetryClientBuilder(httpClients)
-            .configureMessageConverters { configurer ->
-                configurer.registerDefaults()
-                    .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
-            }
+    fun noRetryRestClient(config: NowbotConfig): RestClient {
+        val hasProxy = config.proxyHost != null
+        val connectionManager = PoolingHttpClientConnectionManager()
+
+        connectionManager.apply {
+            maxTotal = 50
+            defaultMaxPerRoute = 30
+            defaultSocketConfig = SocketConfig.custom()
+                .setSoTimeout(Timeout.ofMilliseconds(500))
+                .setSoKeepAlive(true)
+                .setTcpNoDelay(false) // 禁用 Nagle 算法
+                .build()
+        }
+        val requestConfig = RequestConfig.custom()
+            .setResponseTimeout(Timeout.ofSeconds(30))
             .build()
+
+        val httpClientBuilder = HttpClients.custom()
+            .setConnectionManager(connectionManager)
+            .setDefaultRequestConfig(requestConfig)
+
+        if (hasProxy) {
+            val proxy = HttpHost(
+                config.proxyHost,
+                config.proxyPort
+            )
+            httpClientBuilder.setProxy(proxy)
+        }
+
+        val httpClient = httpClientBuilder.build()
+
+        val requestFactory = HttpComponentsClientHttpRequestFactory(httpClient)
+
+        return noRetryClientBuilder(httpClient)
+            .requestFactory(requestFactory)
+            .baseUrl("https://osu.ppy.sh/api/v2/")
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+            .build()
+    }
 
     @Bean("proxyRestClient")
     @Qualifier("proxyClient")
