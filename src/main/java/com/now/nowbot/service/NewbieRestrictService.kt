@@ -29,7 +29,7 @@ class NewbieRestrictService(
     // 新人群、杀手群、执行机器人
     private val newbieGroupID = config.newbieGroup
     private val killerGroupID = config.killerGroup
-    private val executorBotID = config.yumuBot
+    private val executorBotID = config.hydrantBot
 
     // 赦免图：No title，竹取飞翔，C type
     private val remitBIDs = config.remitBIDs.toSet()
