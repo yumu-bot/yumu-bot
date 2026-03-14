@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
 import java.util.regex.Matcher
+import kotlin.math.roundToInt
 
 @Service("MU_RATING") class MuRatingService(
     private val matchApiService: OsuMatchApiService,
@@ -62,8 +63,7 @@ import java.util.regex.Matcher
         val mr : MatchRating
 
         try {
-            mr = MatchRating(param.match, param.param, beatmapApiService, calculateApiService)
-            mr.calculate()
+            mr = calculate(param, beatmapApiService, calculateApiService)
         } catch (e: MRAException) {
             throw e
         } catch (e: Exception) {
@@ -86,7 +86,6 @@ import java.util.regex.Matcher
                 throw IllegalStateException.Send("木斗力")
             }
         } else {
-
             val image: ByteArray = imageService.getPanel(mr, "C")
 
             try {
@@ -119,7 +118,6 @@ import java.util.regex.Matcher
 
     override fun reply(event: MessageEvent, param: MuRatingPanelParam): MessageChain? {
         val mr: MatchRating = calculate(param, beatmapApiService, calculateApiService)
-        mr.calculate()
         return MessageChainBuilder().addImage(imageService.getPanel(mr, "C")).build()
     }
 
@@ -146,7 +144,7 @@ import java.util.regex.Matcher
                         "%dW-%dL %d%% (%.2fM) [%.2f] [%s | %s]",
                         p.win,
                         p.lose,
-                        Math.round(p.win.toDouble() * 100 / (p.win + p.lose)),
+                        (p.win.toDouble() * 100 / (p.win + p.lose)).roundToInt(),
                         p.total / 1000000.0,
                         p.rws * 100.0,
                         p.playerClass!!.name,
