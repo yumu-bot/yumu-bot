@@ -231,10 +231,6 @@ import java.util.regex.Matcher
             } else {
                 skip = skipStr?.toInt() ?: 0
                 ignore = ignoreStr?.toInt() ?: 0
-                matchID = dao?.getLastMatchID(
-                    groupID = event.subject.contactID,
-                    from = LocalDateTime.now().minusHours(24L)
-                )
             }
 
             if (matchID == null) throw IllegalArgumentException.WrongException.MatchID()
