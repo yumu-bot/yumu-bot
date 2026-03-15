@@ -1,5 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.dao.BeatmapDao
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -10,37 +13,379 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.service.messageServiceImpl.MapStatisticsService.MapParam
+import com.now.nowbot.service.messageServiceImpl.MapStatisticsService.MapFilter.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.service.osuApiService.OsuUserApiService
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
-import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.BeatmapUtil
-import com.now.nowbot.util.InstructionUtil.getBid
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.command.*
+import com.now.nowbot.util.command.FLAG_ANY
+import com.now.nowbot.util.command.FLAG_BID
+import com.now.nowbot.util.command.FLAG_MOD
+import com.now.nowbot.util.command.FLAG_MODE
+import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
+import com.now.nowbot.util.command.REG_OPERATOR_WITH_SPACE
 import org.intellij.lang.annotations.Language
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.regex.Matcher
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.round
 
 @Service("MAP")
 class MapStatisticsService(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao,
-) : MessageService<MapParam>, TencentMessageService<MapParam> {
+    private val beatmapDao: BeatmapDao,
+    private val bindDao: BindDao
+) : MessageService<MapStatisticsService.MapStatisticsParam>, TencentMessageService<MapStatisticsService.MapStatisticsParam> {
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<MapStatisticsParam>
+    ): Boolean {
+        val matcher = Instruction.MAP.matcher(messageText)
+        val matcher2 = Instruction.MAP_LAZER.matcher(messageText)
+        if (matcher.find()) {
+            data.value = getParam(event, matcher, isLazer = false)
+            return true
+        } else if (matcher2.find()) {
+            data.value = getParam(event, matcher2, isLazer = true)
+            return true
+        }
+
+        return false
+    }
+
+    override fun handleMessage(
+        event: MessageEvent,
+        param: MapStatisticsParam
+    ): ServiceCallStatistic? {
+        val panel = param.getPanelRParam()
+
+        val image = imageService.getPanel(panel, "R")
+
+        event.reply(image)
+
+        return ServiceCallStatistic.build(
+            event,
+            beatmapID = param.beatmap.beatmapID,
+            beatmapsetID = param.beatmapset.beatmapsetID,
+            userID = null,
+            mode = param.expected.mode
+        )
+    }
+
+    override fun accept(
+        event: MessageEvent,
+        messageText: String
+    ): MapStatisticsParam? {
+        return null
+    }
+
+    override fun reply(
+        event: MessageEvent,
+        param: MapStatisticsParam
+    ): MessageChain? {
+        return null
+    }
+
+    private fun getParam(event: MessageEvent, matcher: Matcher, isLazer: Boolean = false): MapStatisticsParam {
+
+        val idStr: String? = matcher.group(FLAG_BID)
+        val anyID: Long? = idStr?.toLongOrNull()
+
+        val existSet = anyID?.let { beatmapDao.existsBeatmapsetFromExtend(anyID) } ?: false
+        val exists = anyID?.let { beatmapDao.existsBeatmapFromExtend(anyID) } ?: false
+
+        val heritage = dao.getLastBeatmapID(
+            event.subject.contactID,
+            null, LocalDateTime.now().minusHours(24L), LocalDateTime.now()
+        )
+
+        val before: String? = if (anyID != null && anyID <= 10000) {
+            if (!existSet && !exists) {
+                idStr
+            } else {
+                null
+            }
+        } else {
+            idStr
+        }
+
+        val groupMode = bindDao.getGroupModeConfig(event)
+
+        val beatmapset: Beatmapset?
+        val beatmapID: Long
+
+        if (exists) {
+            val beatmapsetID = beatmapDao.getBeatmapsetIDFromExtend(anyID)!!
+            beatmapset = fetchBeatmapsetFromBeatmapsetID(beatmapsetID)
+            beatmapID = anyID
+        } else if (existSet) {
+            beatmapset = fetchBeatmapsetFromBeatmapsetID(anyID)
+            beatmapID = beatmapset?.getTopDiff()?.beatmapID ?: 0L
+        } else if (anyID != null) {
+            beatmapset = fetchBeatmapsetFromBeatmapID(anyID)
+            beatmapID = beatmapset?.beatmaps?.find { it.beatmapID == anyID }?.beatmapID
+                ?: beatmapset?.getTopDiff()?.beatmapID ?: 0L
+        } else if (heritage != null) {
+            beatmapID = heritage
+            beatmapset = fetchBeatmapsetFromBeatmapID(heritage)
+        } else {
+            throw IllegalArgumentException.WrongException.BeatmapID()
+        }
+
+        if (beatmapset == null) {
+            throw IllegalArgumentException.WrongException.BeatmapID()
+        }
+
+        val any: String? = matcher.group(FLAG_ANY)
+
+        val (accuracy, combo, misses) = parseAccuracyAndCombo(any, before)
+
+        val beatmap = beatmapset.beatmaps!!.find { it.beatmapID == beatmapID } ?: throw NoSuchElementException.Beatmap(beatmapID)
+
+        val c = if (combo in 0.0..1.0) {
+            (beatmap.maxCombo!! * combo).toInt()
+        } else {
+            combo.toInt()
+        }
+
+        val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
+
+        val inputMode = OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), groupMode)
+        val mode = OsuMode.getConvertableMode(inputMode, beatmap.mode)
+
+        val expected = Expected(mode, accuracy, c, misses, mods, isLazer)
+
+        return MapStatisticsParam(beatmapset, beatmap, expected)
+    }
+
+    enum class MapFilter(@param:Language("RegExp") val regex: Regex) {
+        ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|ac?c?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
+        COMBO("(combo|连击|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
+        MISS("(m(is)?s|[msx0]|不可|红|失误|漏击)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    }
+
+    private fun parseAccuracyAndCombo(input: String?, before: String?): Triple<Double, Double, Int> {
+        val conditions = DataUtil.getConditions(input, MapFilter.entries.map { it.regex })
+
+        var accuracy: Double? = null
+        var combo: Double? = null
+        var misses: Int? = null
+
+        if (conditions.isNotEmpty()) {
+            conditions.mapIndexed { index, cond ->
+                val type = MapFilter.entries[index]
+                val first = cond.firstOrNull()
+
+                when(type) {
+                    ACCURACY -> accuracy = first?.toDoubleOrNull() ?: 1.0
+                    COMBO -> combo = first?.toDoubleOrNull() ?: 1.0
+                    MISS -> misses = first?.toIntOrNull() ?: 0
+                }
+            }
+        }
+
+        val reconstruct = if (!before.isNullOrBlank() && (before.toIntOrNull() ?: 100) < 100) {
+            before + " " + (input ?: "")
+        } else {
+            input ?: ""
+        }
+
+        val remain = reconstruct.replace("[^\\d.\\s]".toRegex(), "")
+            .trim()
+            .split("\\s*".toRegex())
+            .map { it.trim() }
+
+        remain.forEach { r ->
+            if (accuracy == null) {
+                when(val rd = r.toDoubleOrNull()) {
+                    null -> {}
+                    in 0.0..1.0 -> accuracy = rd
+                    in 1.0..100.0 -> accuracy = rd / 100.0
+                    in 100.0..1000.0 -> accuracy = rd / 1000.0
+                    in 1000.0..10000.0 -> accuracy = rd / 10000.0
+                    else -> accuracy = ((rd % 10) / 10).coerceIn(0.0, 1.0)
+                }
+
+                return@forEach
+            }
+
+            if (combo == null) {
+                val rd = r.toDoubleOrNull()
+
+                combo = when (rd) {
+                    null -> combo
+                    in 0.0..1.0 -> rd
+                    else -> rd
+                }
+
+                return@forEach
+            }
+
+            if (misses == null) {
+                val rd = r.toIntOrNull()
+
+                misses = rd
+                return@forEach
+            }
+        }
+
+        return Triple(accuracy ?: 1.0, combo ?: 1.0, misses ?: 0)
+    }
+
+    private fun fetchBeatmapsetFromBeatmapID(beatmapID: Long): Beatmapset? {
+        val beatmap = runCatching {
+            beatmapApiService.getBeatmap(beatmapID)
+        }.getOrNull()
+
+        if (beatmap == null) {
+            return null
+        }
+
+        return runCatching {
+            beatmapApiService.getBeatmapset(beatmap.beatmapsetID)
+        }.getOrNull() ?: runCatching {
+            beatmapApiService.getBeatmapset(beatmapID)
+        }.getOrNull()
+    }
+
+    private fun fetchBeatmapsetFromBeatmapsetID(beatmapsetID: Long): Beatmapset? {
+        val beatmapset = runCatching {
+            beatmapApiService.getBeatmapset(beatmapsetID)
+        }.getOrNull()
+
+        if (beatmapset != null) {
+            return beatmapset
+        }
+
+        return runCatching {
+            beatmapApiService.getBeatmapset(beatmapApiService.getBeatmap(beatmapsetID).beatmapsetID)
+        }.getOrNull()
+    }
+
+    fun MapStatisticsParam.getPanelRParam(): PanelRParam {
+        val ppList = getPPList(beatmap, expected, calculateApiService)
+
+        beatmapset.beatmaps = beatmapset.beatmaps?.let { fullList ->
+            val sortedList = fullList.sortedWith(
+                compareBy<Beatmap> { it.mode.modeValue }.thenBy { it.starRating }
+            )
+
+            val centerIndex = sortedList.indexOfFirst { it.beatmapID == beatmap.beatmapID }
+
+            if (centerIndex != -1) {
+                val start = (centerIndex - 8).coerceAtLeast(0)
+                val end = (centerIndex + 8).coerceAtMost(sortedList.lastIndex)
+
+                sortedList.subList(start, end + 1).forEach { view ->
+                    calculateApiService.applyStarToBeatmap(view,
+                        OsuMode.getConvertableMode(expected.mode, view.mode), expected.mods
+                    )
+
+//                    // 插入标签
+//                    beatmapApiService.extendBeatmapTag(view)
+
+                    BeatmapUtil.applyBeatmapChanges(view, expected.mods)
+                }
+            }
+
+            sortedList
+        }
+
+        BeatmapUtil.applyBeatmapChanges(beatmap, expected.mods)
+
+        return PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails.toMap())
+    }
+
+    data class MapStatisticsParam(val beatmapset: Beatmapset, val beatmap: Beatmap, val expected: Expected)
+
+    data class PanelRParam(
+        val beatmapset: Beatmapset,
+        val beatmap: Beatmap,
+        val expected: Expected,
+
+        @field:JsonProperty("pp_list")
+        val ppList: List<Double>,
+
+        val original: Map<String, Any>,
+    )
+
+    data class Expected(
+        val mode: OsuMode,
+        val accuracy: Double,
+        val combo: Int,
+        val misses: Int,
+        val mods: List<LazerMod>,
+
+        @field:JsonProperty("is_lazer")
+        val isLazer: Boolean = false,
+    )
+
+    companion object {
+        // 等于绘图模块的 calcMap
+        // 注意，0 是 if fc，1-6是 fc，7-12是 nc，acc 分别是100 99 98 96 94 92
+        fun getPPList(
+            beatmap: Beatmap,
+            expected: Expected,
+            calculateApiService: OsuCalculateApiService
+        ): List<Double> {
+            val result = mutableListOf<Double>()
+            val accArray: DoubleArray = doubleArrayOf(100.0, 99.0, 98.0, 96.0, 94.0, 92.0)
+
+            val maxCombo = beatmap.maxCombo ?: expected.combo
+            val mode = expected.mode
+            val mods = expected.mods.ifEmpty { null }
+            val isLazer = expected.isLazer
+
+            result.add(
+                calculateApiService.getAccPP(
+                    beatmapID = beatmap.beatmapID,
+                    mode = mode,
+                    mods = mods,
+                    maxCombo = maxCombo,
+                    misses = null,
+                    isLazer = isLazer,
+                    accuracy = expected.accuracy * 100,
+                ).pp
+            )
+
+
+            val fcPP = calculateApiService.getAccPPList(
+                beatmapID = beatmap.beatmapID,
+                mode = mode,
+                mods = mods,
+                maxCombo = maxCombo,
+                misses = null,
+                isLazer = isLazer,
+                accuracy = accArray,
+            )
+            result.addAll(fcPP)
+            if (expected.misses > 0) {
+                result.addAll(
+                    calculateApiService.getAccPPList(
+                        beatmapID = beatmap.beatmapID,
+                        mode = mode,
+                        mods = mods,
+                        maxCombo = maxCombo,
+                        misses = expected.misses,
+                        isLazer = isLazer,
+                        accuracy = accArray,
+                    )
+                )
+            } else {
+                result.addAll(fcPP)
+            }
+            return result
+        }
+    }
+
+    /*
+
 
     data class MapParam(val user: OsuUser?, val beatmap: Beatmap, val expected: Expected)
 
@@ -126,7 +471,7 @@ class MapStatisticsService(
         }
     }
 
-    enum class Filter(@param:Language("RegExp") val regex: Regex) {
+    enum class MapFilter(@param:Language("RegExp") val regex: Regex) {
         ACCURACY("$REG_NUMBER_DECIMAL[a%％]|[a%％]$REG_NUMBER_DECIMAL".toRegex()),
         COMBO("$REG_NUMBER_DECIMAL[cx×]|[cx×]$REG_NUMBER_DECIMAL".toRegex()),
         MISS("$REG_NUMBER_MORE[\\-m]|[\\-m]$REG_NUMBER_MORE".toRegex()),
@@ -134,7 +479,7 @@ class MapStatisticsService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isLazer: Boolean = false): MapParam {
-        val conditions = DataUtil.getConditions(matcher.group(FLAG_ANY), Filter.entries.map { it.regex })
+        val conditions = DataUtil.getConditions(matcher.group(FLAG_ANY), MapFilter.entries.map { it.regex })
 
         val id = getBid(matcher)
 
@@ -303,60 +648,8 @@ class MapStatisticsService(
             )
         }
 
-        // 等于绘图模块的 calcMap
-        // 注意，0 是 if fc，1-6是 fc，7-12是 nc，acc 分别是100 99 98 96 94 92
-        private fun getPPList(
-            beatmap: Beatmap,
-            expected: Expected,
-            calculateApiService: OsuCalculateApiService,
-        ): List<Double> {
-            val result = mutableListOf<Double>()
-            val accArray: DoubleArray = doubleArrayOf(100.0, 99.0, 98.0, 96.0, 94.0, 92.0)
 
-            val maxCombo = beatmap.maxCombo ?: expected.combo
-            val mode = expected.mode
-            val mods = expected.mods.ifEmpty { null }
-            val isLazer = expected.isLazer
-
-            result.add(
-                calculateApiService.getAccPP(
-                    beatmapID = beatmap.beatmapID,
-                    mode = mode,
-                    mods = mods,
-                    maxCombo = maxCombo,
-                    misses = null,
-                    isLazer = isLazer,
-                    accuracy = expected.accuracy * 100,
-                ).pp
-            )
-
-
-            val fcPP = calculateApiService.getAccPPList(
-                beatmapID = beatmap.beatmapID,
-                mode = mode,
-                mods = mods,
-                maxCombo = maxCombo,
-                misses = null,
-                isLazer = isLazer,
-                accuracy = accArray,
-            )
-            result.addAll(fcPP)
-            if (expected.misses > 0) {
-                result.addAll(
-                    calculateApiService.getAccPPList(
-                        beatmapID = beatmap.beatmapID,
-                        mode = mode,
-                        mods = mods,
-                        maxCombo = maxCombo,
-                        misses = expected.misses,
-                        isLazer = isLazer,
-                        accuracy = accArray,
-                    )
-                )
-            } else {
-                result.addAll(fcPP)
-            }
-            return result
-        }
     }
+
+     */
 }

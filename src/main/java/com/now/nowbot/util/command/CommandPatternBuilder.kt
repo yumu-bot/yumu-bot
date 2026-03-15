@@ -317,7 +317,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     fun appendMod(plusMust: Boolean = false, bodyMust: Boolean = false) {
         val level = if (bodyMust) EXIST else MAYBE
         appendGroup(level) {
-            append(REG_PLUS)
+            append("(${REG_PLUS}|(mods?|模组)${REG_EQUAL})")
             if (!plusMust) append('?')
             appendSpace()
             appendCaptureGroup(FLAG_MOD, REG_MOD, MORE, EXIST)

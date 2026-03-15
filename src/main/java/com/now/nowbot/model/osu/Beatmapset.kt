@@ -275,6 +275,9 @@ class Beatmapset {
     @JsonProperty("user")
     var creatorData: OsuUser? = null
 
+    @JsonProperty("related_tags")
+    var relatedTags: List<Tag> = listOf()
+
     //自己算
     @get:JsonProperty("mappers")
     val mappers: MutableList<OsuUser>

@@ -393,6 +393,18 @@ class BeatmapDao(
         return b.beatmapID
     }
 
+    fun existsBeatmapsetFromExtend(beatmapsetID: Long): Boolean {
+        return extendBeatmapSetRepository.existsByBeatmapsetID(beatmapsetID)
+    }
+
+    fun existsBeatmapFromExtend(beatmapID: Long): Boolean {
+        return extendBeatmapRepository.existsByBeatmapID(beatmapID)
+    }
+
+    fun getBeatmapsetIDFromExtend(beatmapID: Long): Long? {
+        return extendBeatmapRepository.findByBeatmapID(beatmapID)?.beatmapset?.beatmapsetID
+    }
+
     companion object {
         fun fromBeatmapLite(bl: BeatmapLite): Beatmap {
             val b = bl.toBeatmap()

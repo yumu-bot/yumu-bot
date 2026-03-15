@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.*
 import jakarta.persistence.Column
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
@@ -196,7 +197,10 @@ data class Beatmap(
 
     //自己算
     @get:JsonProperty("total_notes")
-    val totalNotes = (circles ?: 0) + (sliders ?: 0) + (spinners ?: 0)
+    val totalNotes = when(this.mode) {
+        CATCH, CATCH_RELAX -> (circles ?: 0) + (sliders ?: 0)
+        else -> (circles ?: 0) + (sliders ?: 0) + (spinners ?: 0)
+    }
 
     data class TagData(
         @field:JsonProperty("tag_id") val id: Int,

@@ -414,6 +414,18 @@ enum class Instruction(val pattern: Pattern) {
         appendMod()
     }),
 
+    MAP_LAZER(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("beatmap\\s*la[zs]er", "map\\s*la[zs]er", "mz")
+
+        appendMode()
+        appendBID()
+        appendSpace()
+        appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_PLUS, MORE)
+        appendSpace()
+
+        appendMod()
+    }),
+
     QUALIFIED_MAP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("qualified", "qua", "q")
         appendMode()

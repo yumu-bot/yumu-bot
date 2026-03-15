@@ -16,6 +16,7 @@ import com.now.nowbot.model.skill.SkillMania
 import com.now.nowbot.model.skill.SkillMania6
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.messageServiceImpl.*
+import com.now.nowbot.service.messageServiceImpl.MapStatisticsService.PanelRParam
 import com.now.nowbot.service.osuApiService.*
 import com.now.nowbot.throwable.botException.MRAException
 import com.now.nowbot.throwable.botException.MapPoolException
@@ -767,15 +768,17 @@ import kotlin.math.min
         try {
             val mode = getMode(modeStr, OsuMode.OSU)
             val beatmap = beatmapApiService.getBeatmap(bid)
+            val beatmapset = beatmapApiService.getBeatmapset(beatmap.beatmapsetID)
             val mods = LazerMod.getModsList(modStr ?: "")
 
             val expected = MapStatisticsService.Expected(
                 mode, accuracy ?: 1.0, combo ?: 0, miss ?: 0, mods, false
             )
 
-            val image = MapStatisticsService.getPanelE6Image(
-                null, beatmap, expected, beatmapApiService, calculateApiService, imageService
-            )
+            val ppList = MapStatisticsService.getPPList(beatmap, expected, calculateApiService)
+            val panel = PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails.toMap())
+
+            val image = imageService.getPanel(panel, "R")
 
             return ResponseEntity(
                 image, getImageHeader(
