@@ -206,12 +206,10 @@ import kotlin.time.Duration.Companion.seconds
 
         val result = getBeatmapStars(details)
 
-        needApply
-            .filter { s -> s.beatmapID in result }
-            .forEach { s ->
-                result[s.beatmapID]?.let { star ->
-                    s.beatmap.starRating = star
-                }
+        needApply.forEach { s ->
+            result[s.beatmapID]?.let { star ->
+                s.beatmap.starRating = star
+            }
         }
     }
 

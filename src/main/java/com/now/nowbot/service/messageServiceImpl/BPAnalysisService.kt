@@ -207,7 +207,10 @@ import kotlin.math.min
                 }
             }
 
-            val clientCount = listOf(bests.count { !it.isLazer }, bests.count { it.isLazer })
+            val clientCount = bests.fold(intArrayOf(0, 0)) { counts, item ->
+                if (item.isLazer) counts[1]++ else counts[0]++
+                counts
+            }.toList()
 
             val map: Map<String, Any> = when(version) {
                 1 -> mapOf(
@@ -312,23 +315,21 @@ import kotlin.math.min
             val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id, mode.data!!) },
                 {
-                    val ss = scoreApiService.getBestScores(id, mode.data!!)
-
-                    BeatmapUtil.applyBeatmapChanges(ss)
-                    calculateApiService.applyStarToScores(ss)
-
-                    ss
+                    scoreApiService.getBestScores(id, mode.data!!).apply {
+                        BeatmapUtil.applyBeatmapChanges(this)
+                        calculateApiService.applyStarToScores(this)
+                    }
                 }
             )
 
             user = async.first
-            bests = async.second.toList()
+            bests = async.second
         } else {
             user = getUserWithoutRange(event, matcher, mode, isMyself)
-            bests = scoreApiService.getBestScores(user.userID, mode.data)
-
-            BeatmapUtil.applyBeatmapChanges(bests)
-            calculateApiService.applyStarToScores(bests)
+            bests = scoreApiService.getBestScores(user.userID, mode.data).apply {
+                BeatmapUtil.applyBeatmapChanges(this)
+                calculateApiService.applyStarToScores(this)
+            }
         }
 
         val mapperIDs = bests.flatMap { it.beatmap.mapperIDs }.toSet()
@@ -359,7 +360,6 @@ import kotlin.math.min
             } catch (e1: Exception) {
                 log.error("最好成绩分析：文字版转换失败", e1)
                 MessageChain(this.getText())
-                // throw IllegalStateException.Fetch("最好成绩分析（文字版）")
             }
         }
     }
