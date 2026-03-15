@@ -2,7 +2,6 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.BeatmapDao
-import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -39,7 +38,7 @@ class MapStatisticsService(
     private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao,
     private val beatmapDao: BeatmapDao,
-    private val bindDao: BindDao
+    // private val bindDao: BindDao
 ) : MessageService<MapStatisticsService.MapStatisticsParam>, TencentMessageService<MapStatisticsService.MapStatisticsParam> {
     override fun isHandle(
         event: MessageEvent,
@@ -115,7 +114,7 @@ class MapStatisticsService(
             idStr
         }
 
-        val groupMode = bindDao.getGroupModeConfig(event)
+        // val groupMode = bindDao.getGroupModeConfig(event)
 
         val beatmapset: Beatmapset?
         val beatmapID: Long
@@ -156,7 +155,7 @@ class MapStatisticsService(
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
-        val inputMode = OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), groupMode)
+        val inputMode = OsuMode.getMode(matcher.group(FLAG_MODE)) // OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), groupMode)
         val mode = OsuMode.getConvertableMode(inputMode, beatmap.mode)
 
         val expected = Expected(mode, accuracy, c, misses, mods, isLazer)
@@ -297,7 +296,7 @@ class MapStatisticsService(
             sortedList
         }
 
-        BeatmapUtil.applyBeatmapChanges(beatmap, expected.mods)
+        // BeatmapUtil.applyBeatmapChanges(beatmap, expected.mods)
 
         return PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails.toMap())
     }
