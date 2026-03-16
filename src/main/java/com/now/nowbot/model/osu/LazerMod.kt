@@ -2832,16 +2832,7 @@ sealed class LazerMod {
         }
 
         fun getModsValue(acronym: String?): Int {
-            return getModsList(acronym)
-                .mapNotNull {
-                    val klass = it::class.companionObjectInstance
-                    return@mapNotNull if (klass is ValueMod) {
-                        klass.value
-                    } else {
-                        null
-                    }
-                }
-                .reduceOrNull { sum, i -> sum or i } ?: 0
+            return getModsValue(getModsList(acronym))
         }
 
         fun getModsValue(mods: List<LazerMod>?): Int {
@@ -2850,6 +2841,8 @@ sealed class LazerMod {
                 val klass = it::class.companionObjectInstance
                 return@mapNotNull if (klass is ValueMod) {
                     klass.value
+                } else if (it is Daycore) {
+                    HalfTime.value
                 } else {
                     null
                 }
