@@ -2,7 +2,6 @@ package com.now.nowbot.throwable.botRuntimeException
 
 import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
-import kotlin.IllegalStateException
 
 open class IllegalStateException(message: String?): TipsRuntimeException(message), BotException {
 
