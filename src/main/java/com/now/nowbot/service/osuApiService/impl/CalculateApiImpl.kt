@@ -7,19 +7,19 @@ import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.LazerScoreForCalculate
 import com.now.nowbot.model.osu.RosuPerformance
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.spring.osu.extended.rosu.JniBeatmap
 import org.spring.osu.extended.rosu.JniPerformanceAttributes
 import org.spring.osu.extended.rosu.JniScoreState
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.map
 import kotlin.collections.set
 import kotlin.time.Duration.Companion.seconds
 
@@ -28,22 +28,27 @@ import kotlin.time.Duration.Companion.seconds
     private val beatmapApiService: OsuBeatmapApiService,
 ) : OsuCalculateApiService {
     companion object {
-        // 如果为真，则会优先获取本地数据库中的星数。否则使用 rosu 或者官网的计算
-        private val LOCAL_STAR = true
 
-        // 如果为真，则会使用 rosu 的计算。否则使用官网的计算
-        private val R_OSU = true
-
-        // 如果为真，则会使用 rosu 的星数。否则使用官网的星数
-        // 仅在 R_OSU 为真时可以使用 rosu。
-        private val R_OSU_STAR = false
-
-        private val log: Logger = LoggerFactory.getLogger(Companion::class.java)
+        // 如果为真，则会启用 rosu。
+        private val R_OSU = false
 
         private fun JniPerformanceAttributes.toRosuPerformance(): RosuPerformance {
             return RosuPerformance(this)
         }
 
+        private val calculatePriority = listOf(
+            CalculateStrategy.LOCAL_DATABASE,
+            CalculateStrategy.LOCAL_API,
+            CalculateStrategy.OFFICIAL_API,
+            CalculateStrategy.R_OSU,
+        )
+    }
+
+    enum class CalculateStrategy {
+        LOCAL_DATABASE,
+        R_OSU,
+        OFFICIAL_API,
+        LOCAL_API
     }
 
     override fun getScorePerfectPP(score: LazerScore): RosuPerformance {
@@ -197,17 +202,21 @@ import kotlin.time.Duration.Companion.seconds
 
     override fun applyStarToScores(scores: Collection<LazerScore>) {
         val needApply = scores.filter { s ->
-            s.beatmapID == 0L || s.mods.isAffectStarRating() || s.beatmap.starRating < 1e-4
+            s.beatmapID != 0L && (s.mods.isAffectStarRating() || s.beatmap.starRating < 1e-4)
         }
 
-        val details = needApply.map {
-            BeatmapDetails(it.beatmapID, it.mode, it.mods, it.beatmap.hasLeaderBoard)
-        }
+        if (needApply.isEmpty()) return
+
+        val details = needApply.map { s ->
+            BeatmapDetails(s.beatmapID, s.mode, s.mods, s.beatmap.hasLeaderBoard)
+        }.distinct()
 
         val result = getBeatmapStars(details)
 
         needApply.forEach { s ->
-            result[s.beatmapID]?.let { star ->
+            val searchKey = BeatmapDetails(s.beatmapID, s.mode, s.mods, s.beatmap.hasLeaderBoard)
+
+            result[searchKey]?.let { star ->
                 s.beatmap.starRating = star
             }
         }
@@ -386,45 +395,91 @@ import kotlin.time.Duration.Companion.seconds
         val mode: OsuMode,
         val mods: List<LazerMod> = emptyList(),
         val hasLeaderBoard: Boolean = false,
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is BeatmapDetails) return false
 
-    private fun getBeatmapStars(details: List<BeatmapDetails>): Map<Long, Double> {
+            if (beatmapID != other.beatmapID) return false
+            if (mode != other.mode) return false
 
-        val valueMods = details.filter {
-            it.mods.isValueMod()
+            if (mods.size != other.mods.size) return false
+
+            return mods.containsAll(other.mods)
         }
 
-        val starMap = mutableMapOf<Long, Double>()
+        override fun hashCode(): Int {
+            var result = beatmapID.hashCode()
+            result = 31 * result + mode.hashCode()
 
-        if (LOCAL_STAR) {
-            valueMods.forEach { d ->
-                scoreDao.getStarRatingCache(d.beatmapID, d.mode, d.mods)?.let {
-                    starMap[d.beatmapID] = it.toDouble()
+            result = 31 * result + mods.sumOf { it.hashCode() }
+
+            return result
+        }
+    }
+
+    private fun getBeatmapStars(
+        details: List<BeatmapDetails>,
+        priority: List<CalculateStrategy> = calculatePriority
+    ): Map<BeatmapDetails, Double> {
+
+        val resultStarMap = mutableMapOf<BeatmapDetails, Double>()
+
+        // 1. 使用 LinkedHashMap 保持原始顺序，同时提供 O(1) 的移除性能
+        // Key 为 beatmapID, Value 为对应的详情对象
+        val remaining = details.associateByTo(LinkedHashMap()) { it }
+
+        for (strategy in priority) {
+            if (remaining.isEmpty()) break
+
+            // 2. 根据策略动态准备输入数据
+            val input = when (strategy) {
+                CalculateStrategy.LOCAL_API, CalculateStrategy.R_OSU -> remaining.values.toList()
+
+                else -> remaining.values.filter { it.mods.isValueMod() }
+            }
+
+            if (input.isEmpty()) continue
+
+            // 3. 执行获取逻辑
+            val found: Map<BeatmapDetails, Double> = when (strategy) {
+                CalculateStrategy.LOCAL_DATABASE -> {
+                    input.mapNotNull { d ->
+                        scoreDao.getStarRatingCache(d.beatmapID, d.mode, d.mods)?.let {
+                            d to it.toDouble()
+                        }
+                    }.toMap()
+                }
+
+                CalculateStrategy.R_OSU -> {
+                    if (R_OSU) {
+                        getBeatmapStarFromLocal(input)
+                    } else emptyMap()
+                }
+
+                CalculateStrategy.OFFICIAL_API -> {
+                    getBeatmapStarFromOfficial(input)
+                }
+
+                CalculateStrategy.LOCAL_API -> {
+                    getBeatmapStarFromLocalAPI(input)
                 }
             }
-        }
 
-        if (R_OSU && R_OSU_STAR) {
-            val missingIds = valueMods.filter { it.beatmapID !in starMap.keys }
-            if (missingIds.isNotEmpty()) {
-                starMap += getBeatmapStarFromLocal(missingIds)
+            // 4. 合并结果并从“待办清单”中移除
+            if (found.isNotEmpty()) {
+                resultStarMap.putAll(found)
+
+                found.keys.forEach { id -> remaining.remove(id) }
             }
         }
 
-        val stillMissing = details.filter { it.beatmapID !in starMap.keys }
-        if (stillMissing.isNotEmpty()) {
-            starMap += getBeatmapStarFromOfficial(stillMissing)
-        }
-
-        return details
-            .filter { it.beatmapID in starMap.keys }
-            .associate { it.beatmapID to (starMap[it.beatmapID] ?: 0.0)
-            }
+        return resultStarMap
     }
 
 
-    private fun getBeatmapStarFromLocal(details: List<BeatmapDetails>): Map<Long, Double> {
-        val starMap = mutableMapOf<Long, Double>()
+    private fun getBeatmapStarFromLocal(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
+        val starMap = mutableMapOf<BeatmapDetails, Double>()
 
         val closeables = ArrayList<AutoCloseable>(details.size * 2)
 
@@ -444,7 +499,7 @@ import kotlin.time.Duration.Companion.seconds
 
                     if (star > 1e-4) {
                         scoreDao.saveStarRatingCacheAsync(nd.beatmapID, nd.mode, nd.mods, star.toFloat(), nd.hasLeaderBoard)
-                        starMap[nd.beatmapID] = star
+                        starMap[nd] = star
                     }
                 }
             } finally {
@@ -455,53 +510,83 @@ import kotlin.time.Duration.Companion.seconds
         return starMap
     }
 
-    /**
-     * 注意，结果顺序不一定是对的
-     */
-    private fun getBeatmapStarFromOfficial(details: List<BeatmapDetails>): ConcurrentHashMap<Long, Double> {
-        val starMap = ConcurrentHashMap<Long, Double>()
+    private fun getBeatmapStarFromOfficial(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
+        val resultMap = ConcurrentHashMap<BeatmapDetails, Double>()
 
-        // 1. 每 15 个谱面分为一组进行处理
         details.chunked(15).forEach { batch ->
             val actions = batch.map { nd ->
                 Callable {
                     runCatching {
-                        // 获取 API 属性
                         val attr = beatmapApiService.getAttributes(nd.beatmapID, nd.mode, nd.mods)
                         val star = attr.starRating
 
                         if (star > 1e-4) {
-                            // 缓存到数据库
                             scoreDao.saveStarRatingCacheAsync(
                                 nd.beatmapID, nd.mode, nd.mods,
                                 star.toFloat(), nd.hasLeaderBoard
                             )
-                            // 写入结果 Map
-                            nd.beatmapID to star
-                        } else {
-                            null
-                        }
-                    }.getOrElse { e ->
-                        log.warn("给谱面应用星级：无法获取谱面 ${nd.beatmapID} 的 API 星数！", e)
-                        null
-                    }
+                            nd to star
+                        } else null
+                    }.getOrNull()
                 }
             }
 
-            // 2. 并发执行这一组任务，设置合理的超时时间（如 20 秒）
             val results = AsyncMethodExecutor.awaitCallableExecute(actions, 20.seconds)
+            results.filterNotNull().forEach { (details, star) -> resultMap[details] = star }
+        }
 
-            // 3. 将本组成功的结果汇总
-            results.forEach { result ->
-                if (result != null) {
-                    val (id, star) = result
-                    starMap[id] = star
-                }
+        val sortedStarMap = LinkedHashMap<BeatmapDetails, Double>()
+        details.forEach { detail ->
+            resultMap[detail]?.let { star ->
+                sortedStarMap[detail] = star
             }
         }
 
-        return starMap
+        return sortedStarMap
     }
+
+    private fun getBeatmapStarFromLocalAPI(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
+        val resultMap = ConcurrentHashMap<BeatmapDetails, Double>()
+
+        details.chunked(15).forEach { batch ->
+            val actions = batch.map { nd ->
+                Callable {
+                    runCatching {
+                        val attr = beatmapApiService.getAttributesFromLocal(nd.beatmapID, nd.mode,
+                            LazerScoreForCalculate(mods = nd.mods))
+                        val star = attr.difficulty.starRating
+
+                        if (star > 1e-4) {
+                            nd to star
+                        } else {
+                            null
+                        }
+                    }.getOrNull()
+                }
+            }
+
+            val results = AsyncMethodExecutor.awaitCallableExecute(actions, 20.seconds).filterNotNull()
+
+            results.forEach { (details, star) ->
+                scoreDao.saveStarRatingCacheAsync(
+                    details.beatmapID, details.mode, details.mods, star.toFloat(), details.hasLeaderBoard
+                )
+
+                resultMap[details] = star
+            }
+        }
+
+        val sortedStarMap = LinkedHashMap<BeatmapDetails, Double>()
+
+        details.forEach { detail ->
+            resultMap[detail]?.let { star ->
+                sortedStarMap[detail] = star
+            }
+        }
+
+        return sortedStarMap
+    }
+
 
 
     private fun getScoreRosuPerformance(score: LazerScore): RosuPerformance {

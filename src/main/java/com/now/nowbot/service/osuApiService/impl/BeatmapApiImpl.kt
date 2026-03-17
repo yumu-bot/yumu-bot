@@ -14,6 +14,7 @@ import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
@@ -26,6 +27,7 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import java.io.IOException
@@ -44,6 +46,9 @@ import java.util.regex.Pattern
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 import tools.jackson.databind.JsonNode
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 
 @Service
 class BeatmapApiImpl(
@@ -817,6 +822,47 @@ class BeatmapApiImpl(
         } catch (_: Exception) {
             BeatmapDifficultyAttributes()
         }
+    }
+
+    @Throws(NoSuchElementException.Beatmap::class)
+    override fun getAttributesFromLocal(beatmapID: Long, mode: OsuMode, score: LazerScoreForCalculate?, isRetry: Boolean): BeatmapCalculateResult {
+        val path = osuDir.resolve("${beatmapID}.osu")
+
+        // 1. 检查本地文件是否存在
+        if (!path.exists()) {
+            // 2. 触发同步下载（确保下载完成后再往下走）
+            val downloadSuccess = downloadBeatmapFile(listOf(beatmapID))
+
+            // 3. 如果下载失败，直接返回错误状态或抛出异常
+            if (downloadSuccess.isEmpty()) {
+                throw NoSuchElementException.Beatmap(beatmapID)
+            }
+        }
+
+        return try {
+            getAttributesFromLocal(BeatmapCalculateRequest(path.absolutePathString(), mode.shortName, score))
+
+        } catch (e: Exception) {
+            // 3. 捕获异常，判断是否为 404（假设异常消息或类型包含 404）
+            val is404 = e.message?.contains("404") == true || e is HttpClientErrorException.NotFound
+
+            if (is404 && !isRetry) {
+                path.deleteIfExists()
+
+                return getAttributesFromLocal(beatmapID, mode, score, true)
+            } else {
+                throw NoSuchElementException.Beatmap(beatmapID)
+            }
+        }
+    }
+
+    private fun getAttributesFromLocal(request: BeatmapCalculateRequest): BeatmapCalculateResult {
+        return base.noRetryRestClient.post().uri {
+                it.scheme("http").host("localhost").port(5000).replacePath("calculate")
+                    .build()
+            }
+            .body(JacksonUtil.toJson(request))
+            .toBody<BeatmapCalculateResult>()
     }
 
     override fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode? {

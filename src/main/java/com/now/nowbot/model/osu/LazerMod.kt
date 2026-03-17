@@ -119,6 +119,20 @@ sealed class LazerMod {
     @get:JsonProperty("color")
     abstract val color: String
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is LazerMod) return false
+        if (acronym != other.acronym) return false
+        if (settings != other.settings) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = acronym.hashCode()
+        result = 31 * result + (settings?.hashCode() ?: 0)
+        return result
+    }
+
     class Easy(
         retries: Float? = null,
     ) : LazerMod() {

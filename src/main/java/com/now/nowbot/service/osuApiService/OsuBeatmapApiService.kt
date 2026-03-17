@@ -147,4 +147,6 @@ interface OsuBeatmapApiService {
 
     // 给 lazerscorelite 用的
     fun applyVersion(scores: Collection<LazerScore>)
+
+    fun getAttributesFromLocal(beatmapID: Long, mode: OsuMode, score: LazerScoreForCalculate? = null, isRetry: Boolean = false): BeatmapCalculateResult
 }
