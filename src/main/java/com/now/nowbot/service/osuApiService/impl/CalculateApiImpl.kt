@@ -38,8 +38,8 @@ import kotlin.time.Duration.Companion.seconds
 
         private val calculatePriority = listOf(
             CalculateStrategy.LOCAL_DATABASE,
-            CalculateStrategy.LOCAL_API,
             CalculateStrategy.OFFICIAL_API,
+            CalculateStrategy.LOCAL_API,
             CalculateStrategy.R_OSU,
         )
     }
