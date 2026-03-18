@@ -30,7 +30,7 @@ import kotlin.time.Duration.Companion.seconds
     companion object {
 
         // 如果为真，则会启用 rosu。
-        private val R_OSU = false
+        private val R_OSU = true
 
         private fun JniPerformanceAttributes.toRosuPerformance(): RosuPerformance {
             return RosuPerformance(this)
