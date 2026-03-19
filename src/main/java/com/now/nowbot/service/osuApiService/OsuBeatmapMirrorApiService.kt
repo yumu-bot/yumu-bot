@@ -55,6 +55,10 @@ class OsuBeatmapMirrorApiService(
     fun getFullBackgroundPath(bid: Long): Path? {
         if (url.isNullOrEmpty()) return null
 
+
+        // TODO 镜像站有问题，别用了
+        return null
+
         try {
             val localPath = runCatching {
                 noRetryRestClient.get()
