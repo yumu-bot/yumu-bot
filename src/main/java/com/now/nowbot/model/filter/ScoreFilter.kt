@@ -80,7 +80,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     MISS("(m(is)?s|0|x|不可|红|失误|漏击)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    MOD("((m(od)?s?)|模组?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MOD$LEVEL_MORE)".toRegex()),
+    MOD("((m(od)?s?)|模组?)(?<n>($REG_OPERATOR_WITH_SPACE|$REG_PLUS)$REG_MOD$LEVEL_MORE)".toRegex()),
 
     RATE("(rate|彩[率比]|黄彩比?|e|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 

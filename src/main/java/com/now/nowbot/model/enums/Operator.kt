@@ -1,6 +1,5 @@
 package com.now.nowbot.model.enums
 
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.REG_EQUAL
 import com.now.nowbot.util.command.REG_EXCLAMATION
 import com.now.nowbot.util.command.REG_GREATER
@@ -37,7 +36,9 @@ enum class Operator(@param:Language("RegExp") val regex: Regex) {
                 }
             }
 
-            throw IllegalArgumentException.WrongException.Operator()
+            return EQ
+
+            // throw IllegalArgumentException.WrongException.Operator()
         }
 
         fun Operator.getText(): String {

@@ -106,6 +106,7 @@ sealed interface ValueMod {
     JsonSubTypes.Type(value = LazerMod.Key9::class, name = "9K"),
     JsonSubTypes.Type(value = LazerMod.Key10::class, name = "10K"),
     JsonSubTypes.Type(value = LazerMod.NoMod::class, name = "NM"),
+    JsonSubTypes.Type(value = LazerMod.FreeMod::class, name = "FM"),
     JsonSubTypes.Type(value = LazerMod.None::class, name = ""),
 )
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -2935,6 +2936,33 @@ sealed class LazerMod {
 
             // 否则添加所有 mods
             filtered.forEach { builder.queryParam("mods[]", it.acronym) }
+        }
+
+        fun List<LazerScore>.filterMod(
+            mods: Collection<LazerMod>,
+            onEmpty: () -> Unit = {}
+        ): List<LazerScore> {
+            if (mods.isEmpty()) return this
+
+            val isNoMod = mods.any { it.acronym == "NM" }
+            val isFreeMod = mods.any { it.acronym  == "FM" }
+
+            val filtered = if (isNoMod) {
+                this.filter { it.mods.isEmpty() }
+            } else if (isFreeMod) {
+                this.filter { it.mods.isNotEmpty() }
+            } else {
+                val preSelectAcronymSet = mods.map { it.acronym }.toSet()
+                this.filter { score ->
+                    val scoreAcronymSet = score.mods.map { it.acronym }.toSet()
+                    scoreAcronymSet.containsAll(preSelectAcronymSet)
+                }
+            }
+
+            return filtered.ifEmpty {
+                onEmpty()
+                emptyList()
+            }
         }
     }
 }

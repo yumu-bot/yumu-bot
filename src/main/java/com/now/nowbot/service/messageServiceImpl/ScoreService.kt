@@ -7,6 +7,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -219,21 +220,15 @@ import kotlin.time.Duration.Companion.seconds
             throw NoSuchElementException.BeatmapScore(data.map.previewName)
         }
 
-        val m = data.mods?.ifEmpty { mods } ?: mods
+        val ms = data.mods?.ifEmpty { mods } ?: mods
 
-        val preSelectAcronymSet = m.map { it.acronym }.toSet()
+        val filtered = data.scores.filterMod(ms,
+            {
+                throw NoSuchElementException.BeatmapScoreFiltered(data.map.previewName)
+            }
+        )
 
-        val filtered = data.scores.filter { score ->
-            val scoreAcronymSet = score.mods.map { it.acronym }.toSet()
-
-            scoreAcronymSet.containsAll(preSelectAcronymSet)
-        }
-
-        if (filtered.isEmpty()) {
-            throw NoSuchElementException.BeatmapScoreFiltered(data.map.previewName)
-        }
-
-        return ScoreParam(data.user, data.map, filtered, data.mode, m,
+        return ScoreParam(data.user, data.map, filtered, data.mode, ms,
             isMultipleScore, isShow, isCompact, isRecordCallStatistics.get())
     }
 
@@ -458,18 +453,12 @@ import kotlin.time.Duration.Companion.seconds
             throw NoSuchElementException.DatabaseBeatmapScore(beatmap.previewName)
         }
 
-        val preSelectAcronymSet = mods.map { it.acronym }.toSet()
-
-        val filtered = scores.filter { score ->
-            val scoreAcronymSet = score.mods.map { it.acronym }.toSet()
-
-            scoreAcronymSet.containsAll(preSelectAcronymSet)
-        }
-
-        if (filtered.isEmpty()) {
-            receipt.recallIn(10 * 1000)
-            throw NoSuchElementException.DatabaseBeatmapScoreWithMod(beatmap.previewName)
-        }
+        val filtered = scores.filterMod(mods,
+            {
+                receipt.recallIn(10 * 1000)
+                throw NoSuchElementException.DatabaseBeatmapScoreWithMod(beatmap.previewName)
+            }
+        )
 
         beatmapApiService.applyBeatmapExtend(filtered)
         beatmapApiService.applyVersion(filtered)
