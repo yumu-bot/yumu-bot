@@ -29,10 +29,10 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
     FESTIVAL("maimai でらっくす FESTiVAL", "祭", "fes", 23000),
     FESTIVAL_PLUS("maimai でらっくす FESTiVAL PLUS", "祝", "fep", -1),
     BUDDIES("maimai でらっくす BUDDiES", "双", "bud", 24000),
-    BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bdp", -1),
+    BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bup", -1),
     PRISM("maimai でらっくす PRiSM", "鏡", "pri", 25000),
     PRISM_PLUS("maimai でらっくす PRiSM PLUS", "稜", "prp", -1),
-    CIRCLE("maimai でらっくす CiRCLE", "", "cir", 26000),
+    CIRCLE("maimai でらっくす CiRCLE", "丸", "cir", 26000),
     CIRCLE_PLUS("maimai でらっくす CiRCLE PLUS", "", "cip", -1),
     ;
 
@@ -129,6 +129,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "ci",
                 "cir",
                 "cle",
+                "丸",
                 "舞萌dx2026",
                 "舞萌2026",
                 "2026",
