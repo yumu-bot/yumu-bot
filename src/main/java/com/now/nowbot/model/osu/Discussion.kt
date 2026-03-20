@@ -39,8 +39,11 @@ data class Discussion(
     @JsonIgnore
     var beatmapset: Beatmapset? = null
 
-    @JsonProperty("beatmapsets") fun parseBeatmapset(data: JsonNode) {
-        beatmapset = JacksonUtil.parseObject<Beatmapset>(data["beatmapsets"].firstOrNull())
+    @JsonProperty("beatmapsets")
+    fun parseBeatmapset(data: JsonNode?) {
+        beatmapset = data?.firstOrNull()?.let {
+            JacksonUtil.parseObject<Beatmapset>(it)
+        }
     }
 
     data class ReviewsConfig(
