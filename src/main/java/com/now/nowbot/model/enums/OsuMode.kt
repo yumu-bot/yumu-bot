@@ -29,6 +29,16 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
         }
     }
 
+    fun toSafeModeValue(): Byte {
+        return when (this) {
+            OSU, OSU_RELAX, OSU_AUTOPILOT -> 0
+            TAIKO, TAIKO_RELAX -> 1
+            CATCH, CATCH_RELAX -> 2
+            MANIA -> 3
+            else -> 0
+        }
+    }
+
     fun isDefault(): Boolean {
         return isDefaultOrNull(this)
     }

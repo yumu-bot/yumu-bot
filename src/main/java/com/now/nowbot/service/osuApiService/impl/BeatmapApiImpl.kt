@@ -3,6 +3,7 @@ package com.now.nowbot.service.osuApiService.impl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
@@ -53,15 +54,17 @@ import kotlin.io.path.exists
 @Service
 class BeatmapApiImpl(
     private val base: OsuApiBaseService,
-    config: FileConfig,
     private val beatmapDao: BeatmapDao,
     private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
     private val beatmapObjectCountMapper: BeatmapObjectCountMapper,
 
     @param:Qualifier("proxyRestClient") private val proxyClient: RestClient,
+
+    fileConfig: FileConfig,
+    private val calculateConfig: OsuLocalCalculateConfig
 ) : OsuBeatmapApiService {
 
-    private val osuDir: Path = Path.of(config.osuFilePath)
+    private val osuDir: Path = Path.of(fileConfig.osuFilePath)
 
     @OptIn(ExperimentalStdlibApi::class)
     override fun asyncDownloadCover(
@@ -802,7 +805,7 @@ class BeatmapApiImpl(
         val body: MutableMap<String, Any> = HashMap()
 
         if (OsuMode.isNotDefaultOrNull(mode)) {
-            body["ruleset_id"] = mode!!.modeValue
+            body["ruleset_id"] = mode!!.toSafeModeValue()
         }
 
         val modsInt = LazerMod.getModsValue(mods)
@@ -843,7 +846,6 @@ class BeatmapApiImpl(
             getAttributesFromLocal(BeatmapCalculateRequest(path.absolutePathString(), mode.shortName, score))
 
         } catch (e: Exception) {
-            // 3. 捕获异常，判断是否为 404（假设异常消息或类型包含 404）
             val is404 = e.message?.contains("404") == true || e is HttpClientErrorException.NotFound
 
             if (is404 && !isRetry) {
@@ -858,7 +860,10 @@ class BeatmapApiImpl(
 
     private fun getAttributesFromLocal(request: BeatmapCalculateRequest): BeatmapCalculateResult {
         return base.noRetryRestClient.post().uri {
-                it.scheme("http").host("localhost").port(5000).replacePath("calculate")
+                it.scheme("http")
+                    .host(calculateConfig.host)
+                    .port(calculateConfig.port)
+                    .replacePath("calculate")
                     .build()
             }
             .body(JacksonUtil.toJson(request))

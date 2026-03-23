@@ -48,6 +48,10 @@ yumu:
     #oauth应用的id与token
     id: 0
     token: ""
+  local: # 本地计算
+    host: "0.0.0.0"
+    port: 23316
+    rosu: false
 
 # dc 机器人的配置, 如果没有可以不用填, 注意访问情况, 可能需要代理
 discord:

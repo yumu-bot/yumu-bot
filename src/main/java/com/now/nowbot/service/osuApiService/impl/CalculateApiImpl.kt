@@ -1,5 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
+import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -14,7 +15,6 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.spring.osu.extended.rosu.JniBeatmap
-import org.spring.osu.extended.rosu.JniPerformanceAttributes
 import org.spring.osu.extended.rosu.JniScoreState
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
@@ -26,23 +26,8 @@ import kotlin.time.Duration.Companion.seconds
 @Service class CalculateApiImpl(
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
+    config: OsuLocalCalculateConfig
 ) : OsuCalculateApiService {
-    companion object {
-
-        // 如果为真，则会启用 rosu。
-        private val R_OSU = true
-
-        private fun JniPerformanceAttributes.toRosuPerformance(): RosuPerformance {
-            return RosuPerformance(this)
-        }
-
-        private val calculatePriority = listOf(
-            CalculateStrategy.LOCAL_DATABASE,
-            CalculateStrategy.OFFICIAL_API,
-            CalculateStrategy.LOCAL_API,
-            CalculateStrategy.R_OSU,
-        )
-    }
 
     enum class CalculateStrategy {
         LOCAL_DATABASE,
@@ -51,8 +36,17 @@ import kotlin.time.Duration.Companion.seconds
         LOCAL_API
     }
 
+    val calculatePriority = listOf(
+        CalculateStrategy.LOCAL_DATABASE,
+        CalculateStrategy.LOCAL_API,
+        CalculateStrategy.OFFICIAL_API,
+        CalculateStrategy.R_OSU,
+    )
+
+    private val enableROsu = config.rosu
+
     override fun getScorePerfectPP(score: LazerScore): RosuPerformance {
-        if (!R_OSU) return RosuPerformance()
+        if (!enableROsu) return RosuPerformance()
 
         val mode = score.mode.toRosuMode()
         val mods = score.mods
@@ -72,11 +66,11 @@ import kotlin.time.Duration.Companion.seconds
             performance.calculate()
         } finally {
             closable.forEach { it.close() }
-        }.toRosuPerformance()
+        }.let { RosuPerformance(it) }
     }
 
     override fun getScoreFullComboPP(score: LazerScore): RosuPerformance {
-        if (!R_OSU) return RosuPerformance()
+        if (!enableROsu) return RosuPerformance()
 
         val mode = score.mode.toRosuMode()
         val mods = score.mods
@@ -108,11 +102,11 @@ import kotlin.time.Duration.Companion.seconds
             }.calculate()
         } finally {
             closable.forEach { it.close() }
-        }.toRosuPerformance()
+        }.let { RosuPerformance(it) }
     }
 
     override fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance? {
-        if (!R_OSU) return null
+        if (!enableROsu) return null
 
         val mode = score.mode.toRosuMode()
 
@@ -239,7 +233,7 @@ import kotlin.time.Duration.Companion.seconds
     }
 
     override fun applyPPToScore(score: LazerScore) {
-        if (score.pp > 1e-4 || !R_OSU) {
+        if (score.pp > 1e-4 || !enableROsu) {
             return
         } else {
             score.pp = getScoreRosuPerformance(score).pp
@@ -267,7 +261,7 @@ import kotlin.time.Duration.Companion.seconds
     }
 
     private fun getScoresPPWithSameBeatmap(scores: Collection<LazerScore>): Map<Long, RosuPerformance> {
-        if (scores.isEmpty() || !R_OSU) return emptyMap()
+        if (scores.isEmpty() || !enableROsu) return emptyMap()
 
         val beatmapID = scores.first().beatmapID
         val mode = scores.first().mode.toRosuMode()
@@ -308,7 +302,7 @@ import kotlin.time.Duration.Companion.seconds
         } finally {
             closable.forEach { it.close() }
         }.associate { (id, attr) ->
-            id to attr.toRosuPerformance()
+            id to attr.let { RosuPerformance(it) }
         }
     }
 
@@ -321,7 +315,7 @@ import kotlin.time.Duration.Companion.seconds
         isLazer: Boolean,
         accuracy: DoubleArray
     ): List<Double> {
-        if (!R_OSU) return emptyList()
+        if (!enableROsu) return emptyList()
 
         val gameMode = mode.toRosuMode()
         val cache = ArrayList<AutoCloseable>(1)
@@ -357,7 +351,7 @@ import kotlin.time.Duration.Companion.seconds
         isLazer: Boolean,
         accuracy: Double
     ): RosuPerformance {
-        if (!R_OSU) return RosuPerformance()
+        if (!enableROsu) return RosuPerformance()
 
         val gameMode = mode.toRosuMode()
         val modsStr = if (mods.isNullOrEmpty().not()) {
@@ -375,7 +369,7 @@ import kotlin.time.Duration.Companion.seconds
                 modsStr?.let { setMods(it) }
                 setAcc(accuracy)
             }
-            performance.calculate().toRosuPerformance()
+            performance.calculate().let { RosuPerformance(it) }
         } finally {
             cache.forEach { it.close() }
         }
@@ -452,7 +446,7 @@ import kotlin.time.Duration.Companion.seconds
                 }
 
                 CalculateStrategy.R_OSU -> {
-                    if (R_OSU) {
+                    if (enableROsu) {
                         getBeatmapStarFromLocal(input)
                     } else emptyMap()
                 }
@@ -590,7 +584,7 @@ import kotlin.time.Duration.Companion.seconds
 
 
     private fun getScoreRosuPerformance(score: LazerScore): RosuPerformance {
-        if (!R_OSU) return RosuPerformance()
+        if (!enableROsu) return RosuPerformance()
 
         val mode = score.mode.toRosuMode()
         val mods = score.mods
@@ -628,7 +622,7 @@ import kotlin.time.Duration.Companion.seconds
             }.calculate()
         } finally {
             closable.forEach { it.close() }
-        }.toRosuPerformance()
+        }.let { RosuPerformance(it) }
     }
 
     private fun getJniBeatmapAndIsConvert(
