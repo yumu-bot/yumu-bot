@@ -38,9 +38,9 @@ import kotlin.time.Duration.Companion.seconds
 
     val calculatePriority = listOf(
         CalculateStrategy.LOCAL_DATABASE,
-        CalculateStrategy.LOCAL_API,
         CalculateStrategy.OFFICIAL_API,
         CalculateStrategy.R_OSU,
+        CalculateStrategy.LOCAL_API,
     )
 
     private val enableROsu = config.rosu
