@@ -152,7 +152,7 @@ import java.util.regex.Matcher
             val name: String?
 
             if (any.contains(Regex(REG_SPACE))) {
-                val s = any.trim().split(Regex("\\s*"))
+                val s = any.split(' ', '\t', '\n').filter { it.isNotBlank() }
 
                 if (s.size == 2) {
                     if (s.first().matches(REG_NUMBER_15.toRegex())) {
@@ -196,8 +196,6 @@ import java.util.regex.Matcher
                     ?: maimaiApiService.getMaimaiAliasSong(id.toString()) // 有的歌曲外号叫 333
                     ?: throw NoSuchElementException.Song(id)
             } else {
-                // 标题搜歌模式
-
                 val possibles = maimaiApiService
                     .getMaimaiPossibleSongs(DataUtil.getStandardisedString(title))
                     .associateBy { it.title.getSimilarity(title) }
@@ -205,6 +203,7 @@ import java.util.regex.Matcher
                     .maxByOrNull { it.key }?.value
 
                 if (possibles != null) {
+
                     song = possibles
                 } else {
                     // 外号模式
