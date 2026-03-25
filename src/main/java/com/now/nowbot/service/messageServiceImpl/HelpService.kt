@@ -77,9 +77,11 @@ class HelpService(
         event: MessageEvent,
         param: HelpParam
     ): ServiceCallStatistic? {
+        val path = "Help/${param.module}.md"
+
         val image = try {
-            imageCacheProvider.getImage(param.module) {
-                imageService.getPanelA6(getMarkdownFile("Help/${param.module}.md"), "help")
+            imageCacheProvider.getImage(path) {
+                imageService.getPanelA6(getMarkdownFile(path), "help")
             }
         } catch (e: Exception) {
             log.error("帮助文档：获取失败", e)
@@ -105,9 +107,11 @@ class HelpService(
     }
 
     override fun reply(event: MessageEvent, param: HelpParam): MessageChain? {
+        val path = "Help/${param.module}.md"
+
         val image = try {
-            imageCacheProvider.getImage(param.module) {
-                imageService.getPanelA6(getMarkdownFile("Help/${param.module}.md"), "help")
+            imageCacheProvider.getImage(path) {
+                imageService.getPanelA6(getMarkdownFile(path), "help")
             }
         } catch (e: Exception) {
             log.error("帮助文档：获取失败", e)
