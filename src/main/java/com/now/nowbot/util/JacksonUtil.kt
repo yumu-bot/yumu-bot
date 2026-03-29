@@ -2,6 +2,7 @@ package com.now.nowbot.util
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.Nulls
 import com.fasterxml.jackson.annotation.PropertyAccessor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -34,6 +35,11 @@ object JacksonUtil {
         .build()
 
     val mapper: JsonMapper = JsonMapper.builder()
+
+        // 不给非空类型赋予 null，让类使用自己的默认值
+        .changeDefaultNullHandling { setterValue ->
+            setterValue.withValueNulls(Nulls.SKIP)
+        }
         .changeDefaultPropertyInclusion { value: JsonInclude.Value ->
             value.withValueInclusion(
                 JsonInclude.Include.NON_NULL

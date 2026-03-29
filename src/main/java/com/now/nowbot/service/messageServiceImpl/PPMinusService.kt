@@ -310,106 +310,50 @@ class PPMinusService(
         val other: OsuUser?
         val myBests: List<LazerScore>
         val otherBests: List<LazerScore>?
-        val mode: OsuMode
+        val mode: OsuMode = if (version == -1) OSU else inputMode.data ?: OSU
 
-        if (isVs) {
-            if (ids.first != null && ids.second != null) {
-                // 双人模式
+        val targetIDs = when {
+            ids.first != null && ids.second != null -> listOf(ids.first!!, ids.second!!)
+            ids.first != null && !isVs -> listOf(ids.first!!)
+            else -> emptyList()
+        }
 
-                mode = if (version == -1) {
-                    OSU
-                } else {
-                    inputMode.data!!
-                }
-
+        if (targetIDs.isNotEmpty()) {
+            val results = if (targetIDs.size == 2) {
                 val async = AsyncMethodExecutor.awaitQuad(
-                    { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
-                    { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode, 0, 100) },
+                    { userApiService.getOsuUser(targetIDs[0], mode) },
+                    { scoreApiService.getBestScores(targetIDs[0], mode, 0, 100) },
+                    { userApiService.getOsuUser(targetIDs[1], mode) },
+                    { scoreApiService.getBestScores(targetIDs[1], mode, 0, 100) }
                 )
 
-                me = async.first.first
-                other = async.second.first
-
-                myBests = async.first.second
-                otherBests = async.second.second
+                listOf(async.first.first to async.first.second, async.second.first to async.second.second)
             } else {
-                // 缺东西，走常规路线
-                val users = InstructionUtil.get2User(event, matcher, inputMode, true)
-
-                mode = if (version == -1) {
-                    OSU
-                } else {
-                    users.first().currentOsuMode
-                }
-
-                me = users.first()
-                other = if (users.size == 2) users.last() else null
-
-                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
-                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode, 0, 100) else null
-            }
-        } else {
-            if (ids.first != null && ids.second != null) {
-                // 双人模式
-
-                mode = if (version == -1) {
-                    OSU
-                } else {
-                    inputMode.data!!
-                }
-
-                val async = AsyncMethodExecutor.awaitQuad(
-                    { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
-                    { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode, 0, 100) },
-                )
-
-                me = async.first.first
-                other = async.second.first
-
-                myBests = async.first.second
-                otherBests = async.second.second
-
-            } else if (ids.first != null) {
-                // 单人模式
-
-                mode = if (version == -1) {
-                    OSU
-                } else {
-                    inputMode.data!!
-                }
-
                 val async = AsyncMethodExecutor.awaitPair(
-                    { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
+                    { userApiService.getOsuUser(targetIDs[0], mode) },
+                    { scoreApiService.getBestScores(targetIDs[0], mode, 0, 100) }
                 )
 
-                me = async.first
-                other = null
-
-                myBests = async.second
-                otherBests = null
-
-            } else {
-                // 缺东西，走常规路线
-
-                val users = InstructionUtil.get2User(event, matcher, inputMode, false)
-
-                mode = if (version == -1) {
-                    OSU
-                } else {
-                    users.first().currentOsuMode
-                }
-
-                me = users.first()
-                other = if (users.size == 2) users.last() else null
-
-                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
-                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode, 0, 100) else null
+                listOf(async.first to async.second)
             }
+
+            me = results[0].first
+            myBests = results[0].second
+            other = results.getOrNull(1)?.first
+            otherBests = results.getOrNull(1)?.second
+
+        } else {
+            val users = InstructionUtil.get2User(event, matcher, inputMode, isVs)
+
+            val m = if (version != -1) {
+                users.first().currentOsuMode
+            } else mode
+
+            me = users.first()
+            myBests = scoreApiService.getBestScores(me.userID, m, 0, 100)
+
+            other = users.getOrNull(1)
+            otherBests = other?.let { scoreApiService.getBestScores(it.userID, mode, 0, 100) }
         }
 
         return PPMinusParam(other != null, me, myBests, other, otherBests, mode, version)

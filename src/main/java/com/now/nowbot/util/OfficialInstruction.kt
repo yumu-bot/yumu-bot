@@ -232,6 +232,18 @@ enum class OfficialInstruction(val pattern: Pattern) {
         append2Name()
     }),
 
+    ETX(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("ex", "et", "etx", "elite(ronix)?")
+        appendModeQQUID()
+        append2Name()
+    }),
+
+    ETX_VS(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("ev", "etx\\s*vs", "elite(ronix)?\\s*v(ersu)?s")
+        appendModeQQUID()
+        append2Name()
+    }),
+
     BADGE(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("bd", "badge")
         appendQQUIDName()

@@ -355,6 +355,32 @@ import java.util.concurrent.Callable
         }
     }
 
+    override fun getEliteronixDuelRating(userID: Long): ETXDuelRating {
+        val response = request { client ->
+            client.get()
+                .uri("https://www.eliteronix.de/elitebotix/api/player-duelrating?u=${userID}")
+                .headers { headers ->
+                base.insertHeader(headers)
+            }.toBody<String>()
+        }
+
+        if (response.isBlank() || !response.trimStart().startsWith("{")) {
+            throw IllegalStateException("API 返回了错误信息: $response (${userID})")
+        }
+
+        return try {
+            val node = JacksonUtil.toNode(response).path("duelRating")
+
+            if (node.isMissingNode || node.isNull) {
+                throw NoSuchElementException("ETX 结果中未找到 duelRating 字段")
+            }
+
+            JacksonUtil.parseObject<ETXDuelRating>(node)!!
+        } catch (e: Exception) {
+            throw RuntimeException("解析 ETX 失败: ${e.message}", e)
+        }
+    }
+
     /**
      * 错误包装
      */

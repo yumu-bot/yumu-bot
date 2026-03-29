@@ -374,6 +374,18 @@ enum class Instruction(val pattern: Pattern) {
         append2Name()
     }),
 
+    ETX(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("elite(ronix)?", "ex", "et", "etx")
+        appendModeQQUID()
+        append2Name()
+    }),
+
+    ETX_VS(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("elite(ronix)?\\s*v(ersu)?s", "ev", "etx\\s*vs")
+        appendModeQQUID()
+        append2Name()
+    }),
+
     BADGE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("badge", "bd")
         appendQQUIDName()

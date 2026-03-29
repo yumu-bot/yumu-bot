@@ -107,4 +107,5 @@ interface OsuUserApiService {
      * @param page 最大 10 页，最小 1 页
      */
     fun getTopPlays(page: Int = 1, mode: OsuMode = OsuMode.OSU): TopPlays?
+    fun getEliteronixDuelRating(userID: Long): ETXDuelRating
 }
