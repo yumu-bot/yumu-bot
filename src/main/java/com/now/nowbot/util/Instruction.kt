@@ -742,6 +742,14 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_TEXT, REG_ANYTHING, MORE)
     }),
 
+    GUESS(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("guess", "g")
+        appendMode()
+        appendQQ()
+        appendUID()
+        appendNameAnyButNoHash()
+    }),
+
     DRAW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("draw", "w")
         appendCaptureGroup("d", REG_NUMBER)
