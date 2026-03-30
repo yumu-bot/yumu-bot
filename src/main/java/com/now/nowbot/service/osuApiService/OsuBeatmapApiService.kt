@@ -149,4 +149,8 @@ interface OsuBeatmapApiService {
     fun applyVersion(scores: Collection<LazerScore>)
 
     fun getAttributesFromLocal(beatmapID: Long, mode: OsuMode, score: LazerScoreForCalculate? = null, isRetry: Boolean = false): BeatmapCalculateResult
+
+    fun applyExtend(beatmaps: Collection<Beatmap>)
+
+    fun applyExtendFromAPI(beatmaps: Collection<Beatmap>)
 }

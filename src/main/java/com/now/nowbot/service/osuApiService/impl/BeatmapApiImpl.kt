@@ -1031,6 +1031,20 @@ class BeatmapApiImpl(
         }
     }
 
+    override fun applyExtendFromAPI(beatmaps: Collection<Beatmap>) {
+        val ids = beatmaps.map { it.beatmapID }.toSet()
+
+        val extends = getBeatmaps(ids)
+
+        beatmapDao.saveExtendedBeatmap(extends)
+
+        val map = extends.associateBy { it.beatmapID }
+
+        beatmaps.forEach { b ->
+            map[b.beatmapID]?.let { extend(b, it) }
+        }
+    }
+
     /**
      * 这个方法本身不存 extended Beatmap
      */
@@ -1067,6 +1081,18 @@ class BeatmapApiImpl(
 
     override fun applyBeatmapExtend(score: LazerScore) {
         applyBeatmapExtend(listOf(score))
+    }
+
+    override fun applyExtend(beatmaps: Collection<Beatmap>) {
+        val existSet = beatmaps.mapNotNull { b ->
+            beatmapDao.extendBeatmap(b)
+        }.toSet()
+
+        val notExistBeatmaps = beatmaps.filterNot { it.beatmapID in existSet }
+
+        if (notExistBeatmaps.isNotEmpty()) {
+            applyExtendFromAPI(notExistBeatmaps)
+        }
     }
 
     override fun getBeatmapsetRankedTime(beatmap: Beatmap): String {

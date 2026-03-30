@@ -1076,66 +1076,6 @@ object DataUtil {
         return (match * 2.0) / (cs.length + ts.length - ((stringLength - 1.0) * 2.0))
     }
 
-    /*
-
-    @JvmStatic
-    // 获取两个字符串的相似度。
-    fun getStringSimilarity(compare: String?, to: String?): Double {
-        if (compare.isNullOrEmpty() || to.isNullOrEmpty()) return 0.0
-
-        val cs = getStandardisedString(compare)
-        val ts = getStandardisedString(to)
-
-        return getSimilarity(cs, ts) * getSimilarity(cs.reversed(), ts.reversed()).pow(0.5)
-    }
-
-    @JvmStatic
-    // 获取字符串与已经格式化后的字符串的相似度。
-    fun getStringSimilarityStandardised(compare: String?, toStandard: String?): Double {
-        if (compare.isNullOrEmpty() || toStandard.isNullOrEmpty()) return 0.0
-
-        val cs = getStandardisedString(compare)
-
-        return getSimilarity(cs, toStandard) * getSimilarity(cs.reversed(), toStandard.reversed()).pow(0.5)
-    }
-    private fun getSimilarity(compare: String, too: String): Double {
-        var to = too
-        val cLength = compare.length
-        val tLength = to.length
-
-        var count = 0.0
-        var sequentMax = 0.0
-        var sequent = 0.0
-        if (compare.isNotBlank() && to.isNotBlank()) {
-
-            outer@ for (v in compare) {
-                for (w in to) {
-                    if (v == w) {
-                        to = to.substring(to.indexOf(w) + 1)
-                        count++
-                        sequent++
-                        continue@outer
-                    }
-                }
-                sequentMax = max(sequent, sequentMax)
-                sequent = 0.0
-            }
-
-            sequentMax = max(sequent, sequentMax)
-
-            // to 1 matched length
-            val m1 = max(tLength - to.length, 1)
-
-            if (cLength > 0 && tLength > 0) {
-                return count * sequentMax / (cLength * m1)
-            }
-        }
-
-        return 0.0
-    }
-
-     */
-
     fun numberTo62(n: Long): String {
         val sb = StringBuilder()
         var number = n

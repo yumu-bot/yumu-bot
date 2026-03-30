@@ -4,7 +4,6 @@ import com.now.nowbot.listener.LocalCommandListener
 import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.messageServiceImpl.MatchListenerService
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.InstructionUtil
@@ -64,7 +63,6 @@ class IocAllReadyRunner(
 
         Runtime.getRuntime().addShutdownHook(Thread({
             APP_ALIVE = false
-            MatchListenerService.stopAllListenerFromReboot()
             (executor as ThreadPoolTaskExecutor).shutdown()
         }, "endThread"))
 
