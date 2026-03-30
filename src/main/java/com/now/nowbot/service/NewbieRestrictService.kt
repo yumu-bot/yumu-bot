@@ -217,7 +217,7 @@ class NewbieRestrictService(
          * 获取禁言时长（分钟）
          */
         private fun getSilence(star: Double): Long {
-            return if (star <= 5.7) {
+            return if (star <= 5.71) {
                 // 未超星
                 0L
             } else if (star < 6.0) {
