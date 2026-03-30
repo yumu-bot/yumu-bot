@@ -42,6 +42,15 @@ import java.time.LocalDateTime
         }
     }
 
+    fun getLast10BeatmapsetIDs(
+        groupID: Long,
+        name: String,
+        from: LocalDateTime,
+        to: LocalDateTime = LocalDateTime.now()
+    ): List<Long> {
+        return serviceCallStatisticRepository.getLast10BeatmapsetIDs(groupID, name, from, to)
+    }
+
     /*
 
     fun getLastBeatmapsetID(

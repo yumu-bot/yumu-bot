@@ -350,7 +350,9 @@ class GuessService(
                 }
 
                 // 之前已经猜过的歌曲 set ID
-                val history = listOf<Long>()
+                val history = serviceCallStatisticsDao.getLast10BeatmapsetIDs(
+                    groupID, "GUESS", LocalDateTime.now().minusMonths(3)
+                )
                 val frequencyMap = history.groupingBy { it }.eachCount()
 
                 val selected = param.scores
