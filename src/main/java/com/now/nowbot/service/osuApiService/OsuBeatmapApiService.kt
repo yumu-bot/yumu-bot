@@ -1,10 +1,9 @@
 package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import tools.jackson.databind.JsonNode
 import java.io.IOException
 
@@ -22,6 +21,8 @@ interface OsuBeatmapApiService {
     fun getBeatmapFileFromDirectory(bid: Long): String?
 
     fun getBeatmapFileByte(bid: Long): ByteArray?
+
+    fun getBeatmapFilePath(bid: Long): String
 
     /**
      * 返回已经下好的谱面，没法下载的就不存在在这个list里了

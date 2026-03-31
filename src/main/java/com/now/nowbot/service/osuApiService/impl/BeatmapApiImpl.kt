@@ -31,6 +31,7 @@ import org.springframework.util.DigestUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
+import tools.jackson.databind.JsonNode
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -44,12 +45,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
-import kotlin.math.min
-import kotlin.time.Duration.Companion.seconds
-import tools.jackson.databind.JsonNode
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
+import kotlin.math.min
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class BeatmapApiImpl(
@@ -228,6 +228,21 @@ class BeatmapApiImpl(
     @Cacheable(value = ["beatmap file"], key = "#bid")
     override fun getBeatmapFileByte(bid: Long): ByteArray? {
         return getBeatmapFileString(bid)?.toByteArray(StandardCharsets.UTF_8)
+    }
+
+    @Cacheable(value = ["beatmap file_path"], key = "#bid")
+    override fun getBeatmapFilePath(bid: Long): String {
+        var str: String? = null
+
+        if (hasBeatmapFileFromDirectory(bid)) {
+            str = osuDir.resolve("$bid.osu").absolutePathString()
+        }
+
+        if (!str.isNullOrBlank()) {
+            writeBeatmapFileToDirectory(getBeatmapFileStringFromOutside(bid), bid)
+        }
+
+        return str ?: osuDir.resolve("$bid.osu").absolutePathString()
     }
 
     override fun downloadBeatmapFile(bids: Collection<Long>): List<Long> {

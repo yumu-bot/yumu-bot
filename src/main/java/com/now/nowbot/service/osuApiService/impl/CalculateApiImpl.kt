@@ -1,33 +1,39 @@
 package com.now.nowbot.service.osuApiService.impl
 
+import com.now.nowbot.config.CosuConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.ScoreDao
-import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.cosu.CosuRequest
+import com.now.nowbot.model.cosu.CosuResponse
+import com.now.nowbot.model.cosu.CosuScore
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
-import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.LazerScoreForCalculate
-import com.now.nowbot.model.osu.RosuPerformance
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.toBody
 import org.spring.osu.extended.rosu.JniBeatmap
 import org.spring.osu.extended.rosu.JniScoreState
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClient
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.map
-import kotlin.collections.set
 import kotlin.time.Duration.Companion.seconds
 
-@Service class CalculateApiImpl(
+@Service
+class CalculateApiImpl(
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
-    config: OsuLocalCalculateConfig
+    config: OsuLocalCalculateConfig,
+    cousConfig: CosuConfig,
+    @param:Qualifier("rlient") private val client: RestClient,
 ) : OsuCalculateApiService {
+
+    val CosuUrl = cousConfig.url
 
     enum class CalculateStrategy {
         LOCAL_DATABASE,
@@ -55,7 +61,8 @@ import kotlin.time.Duration.Companion.seconds
 
         val closable = ArrayList<AutoCloseable>(1)
         return try {
-            val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) } ?: return RosuPerformance()
+            val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) }
+                ?: return RosuPerformance()
             val objects = beatmap.objects
             val performance = beatmap.createPerformance().apply {
                 isLazer(lazer)
@@ -94,7 +101,8 @@ import kotlin.time.Duration.Companion.seconds
 
         val closable = ArrayList<AutoCloseable>(1)
         return try {
-            val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) } ?: return RosuPerformance()
+            val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) }
+                ?: return RosuPerformance()
             beatmap.createPerformance(state).apply {
                 setLazer(lazer)
                 if (change) this.setGameMode(mode)
@@ -223,9 +231,13 @@ import kotlin.time.Duration.Companion.seconds
     ) {
         if (beatmap == null || beatmap.mode.isNotConvertAble(mode)) return
 
-        val map = getBeatmapStars(listOf(
-            BeatmapDetails(beatmap.beatmapID, mode, mods, beatmap.hasLeaderBoard
-            )))
+        val map = getBeatmapStars(
+            listOf(
+                BeatmapDetails(
+                    beatmap.beatmapID, mode, mods, beatmap.hasLeaderBoard
+                )
+            )
+        )
 
         map.values.firstOrNull()?.let {
             beatmap.starRating = it
@@ -360,7 +372,8 @@ import kotlin.time.Duration.Companion.seconds
             null
         }
         val cache = ArrayList<AutoCloseable>(1)
-        val (beatmap, isConvert) = getJniBeatmapAndIsConvert(beatmapID, gameMode) { cache.add(it) } ?: return RosuPerformance()
+        val (beatmap, isConvert) = getJniBeatmapAndIsConvert(beatmapID, gameMode) { cache.add(it) }
+            ?: return RosuPerformance()
         return try {
             val performance = beatmap.createPerformance().apply {
                 setLazer(isLazer)
@@ -381,7 +394,8 @@ import kotlin.time.Duration.Companion.seconds
         mods: List<LazerMod>,
         hasLeaderBoard: Boolean
     ): Double {
-        return getBeatmapStars(listOf(BeatmapDetails(beatmapID, mode, mods, hasLeaderBoard))).values.firstOrNull() ?: 0.0
+        return getBeatmapStars(listOf(BeatmapDetails(beatmapID, mode, mods, hasLeaderBoard))).values.firstOrNull()
+            ?: 0.0
     }
 
     data class BeatmapDetails(
@@ -492,7 +506,13 @@ import kotlin.time.Duration.Companion.seconds
                     val star = difficulty.calculate(beatmap).getStarRating()
 
                     if (star > 1e-4) {
-                        scoreDao.saveStarRatingCacheAsync(nd.beatmapID, nd.mode, nd.mods, star.toFloat(), nd.hasLeaderBoard)
+                        scoreDao.saveStarRatingCacheAsync(
+                            nd.beatmapID,
+                            nd.mode,
+                            nd.mods,
+                            star.toFloat(),
+                            nd.hasLeaderBoard
+                        )
                         starMap[nd] = star
                     }
                 }
@@ -546,8 +566,10 @@ import kotlin.time.Duration.Companion.seconds
             val actions = batch.map { nd ->
                 Callable {
                     runCatching {
-                        val attr = beatmapApiService.getAttributesFromLocal(nd.beatmapID, nd.mode,
-                            LazerScoreForCalculate(mods = nd.mods))
+                        val attr = beatmapApiService.getAttributesFromLocal(
+                            nd.beatmapID, nd.mode,
+                            LazerScoreForCalculate(mods = nd.mods)
+                        )
                         val star = attr.difficulty.starRating
 
                         if (star > 1e-4) {
@@ -582,7 +604,6 @@ import kotlin.time.Duration.Companion.seconds
     }
 
 
-
     private fun getScoreRosuPerformance(score: LazerScore): RosuPerformance {
         if (!enableROsu) return RosuPerformance()
 
@@ -613,7 +634,8 @@ import kotlin.time.Duration.Companion.seconds
 
         val closable = ArrayList<AutoCloseable>(1)
         return try {
-            val (beatmap, isConvert) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) } ?: return RosuPerformance()
+            val (beatmap, isConvert) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) }
+                ?: return RosuPerformance()
             beatmap.createPerformance(state).apply {
                 setLazer(lazer)
                 if (isNotPass) setHitResultPriority(true)
@@ -640,4 +662,21 @@ import kotlin.time.Duration.Companion.seconds
         return beatmap to isConvert
     }
 
+
+    override fun calculateDifficulty(
+        bid: Long,
+        mode: OsuMode,
+        mods: List<LazerMod>?
+    ): CosuResponse {
+        val request = CosuRequest(
+            path = beatmapApiService.getBeatmapFilePath(bid),
+            mode = mode.shortName,
+            score = CosuScore(mods = mods),
+        )
+        return client
+            .post()
+            .uri(CosuUrl)
+            .body(request)
+            .toBody<CosuResponse>()
+    }
 }
