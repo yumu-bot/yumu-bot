@@ -196,6 +196,8 @@ class NewbieRestrictService(
                 report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
             }
         }
+
+        return
     }
 
     private fun report(isReportable: Boolean = false, executorBot: Bot? = null, messageText: String) {
@@ -217,7 +219,7 @@ class NewbieRestrictService(
          * 获取禁言时长（分钟）
          */
         private fun getSilence(star: Double): Long {
-            return if (star <= 10) {
+            return if (star <= 5.71) {
                 // 未超星
                 0L
             } else if (star < 6.0) {
@@ -227,7 +229,7 @@ class NewbieRestrictService(
             }
         }
 
-        private fun getTime(minutes: Long): String {
+        fun getTime(minutes: Long): String {
             return if (minutes >= 1440) {
                 val day = minutes / 1440
                 val hour = (minutes - (day * 1440)) / 60

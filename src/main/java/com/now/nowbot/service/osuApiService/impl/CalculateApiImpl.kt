@@ -3,6 +3,7 @@ package com.now.nowbot.service.osuApiService.impl
 import com.now.nowbot.config.CosuConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.ScoreDao
+import com.now.nowbot.mapper.BeatmapStarRatingCacheRepository
 import com.now.nowbot.model.cosu.CosuRequest
 import com.now.nowbot.model.cosu.CosuResponse
 import com.now.nowbot.model.cosu.CosuScore
@@ -28,6 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 class CalculateApiImpl(
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
+    private val beatmapStarRatingCacheRepository: BeatmapStarRatingCacheRepository,
     config: OsuLocalCalculateConfig,
     cousConfig: CosuConfig,
     @param:Qualifier("rlient") private val client: RestClient,
@@ -668,6 +670,7 @@ class CalculateApiImpl(
         mode: OsuMode,
         mods: List<LazerMod>?
     ): CosuResponse {
+
         val request = CosuRequest(
             path = beatmapApiService.getBeatmapFilePath(bid),
             mode = mode.shortName,
@@ -678,5 +681,32 @@ class CalculateApiImpl(
             .uri(CosuUrl)
             .body(request)
             .toBody<CosuResponse>()
+    }
+
+    override fun getScoreMapStar(
+        score: LazerScore,
+    ): Double {
+
+        var star =
+            if (score.beatmap.starRating == 0.0) beatmapApiService.getBeatmapFromDatabase(score.beatmapID).starRating
+            else score.beatmap.starRating
+        if (score.mods.isEmpty()) return star;
+
+        val mods = score.mods
+        val hasSettings = mods.any { it.settings != null }
+        if (hasSettings) {
+            val result = calculateDifficulty(score.beatmapID, score.mode, mods)
+            return result.difficulty.starRating
+        }
+
+        val modsValue = LazerMod.getModsValue(mods)
+        val dbStar = beatmapStarRatingCacheRepository.getStarRating(score.beatmapID, score.mode.modeValue, modsValue)
+        if (dbStar != null) return dbStar.toDouble()
+
+        val result = calculateDifficulty(score.beatmapID, score.mode, mods)
+        star = result.difficulty.starRating
+
+        beatmapStarRatingCacheRepository.saveAndUpdate(score.beatmapID, score.mode.modeValue, modsValue, star.toFloat())
+        return star
     }
 }

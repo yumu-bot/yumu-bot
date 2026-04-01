@@ -58,4 +58,6 @@ interface OsuCalculateApiService {
     ): Double
 
     fun calculateDifficulty(bid: Long, mode: OsuMode, mods: List<LazerMod>? = null): CosuResponse
+
+    fun getScoreMapStar(score: LazerScore): Double
 }

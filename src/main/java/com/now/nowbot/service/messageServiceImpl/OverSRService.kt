@@ -4,12 +4,12 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-
+import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
 import org.springframework.stereotype.Service
-import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 @Service("OVER_SR") class OverSRService : MessageService<Double> {
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Double>): Boolean {
@@ -40,42 +40,23 @@ import kotlin.math.roundToInt
 
      private fun getMessage(star: Double): String {
         val message = StringBuilder()
-        val silence: Int
+         val silence: Long
 
         if (star < 5.7) {
             throw IllegalArgumentException("未超星。")
         } else if (star < 20.0) { // 超 0.01 星加 10 分钟，6星 以上所有乘以二
             silence = if (star < 6.0) {
-                ((star - 5.7) * 1000).roundToInt()
+                ((star - 5.7) * 1000).roundToLong()
             } else {
-                ((star - 5.7) * 2000).roundToInt()
+                ((star - 5.7) * 2000).roundToLong()
             }
         } else {
             throw IllegalArgumentException.ExceedException.StarRating()
         }
 
         message.append("已超星，预计禁言：")
-        message.append(getSilenceMessage(silence))
+         message.append(NewbieRestrictService.getTime(silence))
 
         return message.toString()
-    }
-
-    companion object {
-        private fun getSilenceMessage(silence: Int): String {
-            return if (silence >= 1440) {
-                val day = silence / 1440
-                val hour = (silence - (day * 1440)) / 60
-                val minute = silence - (day * 1440) - (hour * 60)
-
-                "${day}天${hour}时${minute}分"
-            } else if (silence >= 60.0) {
-                val hour = silence / 60
-                val minute = silence - (hour * 60)
-
-                "${hour}时${minute}分"
-            } else {
-                "${silence}分"
-            }
-        }
     }
 }
