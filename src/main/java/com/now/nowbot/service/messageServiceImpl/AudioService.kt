@@ -11,18 +11,14 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import java.time.LocalDateTime
 
 @Service("AUDIO")
 class AudioService(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val osuApiRestClient: RestClient,
     private val dao: ServiceCallStatisticsDao,
 ) : MessageService<AudioParam> {
 
@@ -117,35 +113,16 @@ class AudioService(
          */
     }
 
-    @Throws(RestClientResponseException::class)
-    private fun getVoice(sid: Number): ByteArray {
-        val url = "https://b.ppy.sh/preview/${sid}.mp3"
-
-        return osuApiRestClient.get().uri(url).toBody<ByteArray>()
-    }
-
     private fun getVoiceFromSID(sid: Long): ByteArray? {
-
-        return try {
-            getVoice(sid)
-        } catch (_: Exception) {
-            null
-        }
+        return beatmapApiService.getVoice(sid)
     }
 
     private fun getVoiceFromBID(bid: Long): ByteArray? {
-        val b =
-            try {
-                beatmapApiService.getBeatmap(bid)
-            } catch (_: Exception) {
-                return null
-            }
+        val b = runCatching {
+            beatmapApiService.getBeatmap(bid)
+        }.getOrNull() ?: return null
 
-        return try {
-            getVoice(b.beatmapsetID)
-        } catch (_: Exception) {
-            null
-        }
+        return beatmapApiService.getVoice(b.beatmapsetID)
     }
 
     companion object {

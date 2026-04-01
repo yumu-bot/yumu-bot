@@ -748,6 +748,7 @@ enum class Instruction(val pattern: Pattern) {
         appendQQ()
         appendUID()
         appendNameAnyButNoHash()
+        appendHashCaptureGroup(FLAG_ID, REG_NUMBER_13)
     }),
 
     DRAW(CommandPatternBuilder.create {

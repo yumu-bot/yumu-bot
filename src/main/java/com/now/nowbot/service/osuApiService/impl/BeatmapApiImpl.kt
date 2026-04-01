@@ -66,6 +66,14 @@ class BeatmapApiImpl(
 
     private val osuDir: Path = Path.of(fileConfig.osuFilePath)
 
+    override fun getVoice(beatmapsetID: Number): ByteArray? {
+        val url = "https://b.ppy.sh/preview/${beatmapsetID}.mp3"
+
+        return runCatching {
+            base.osuApiRestClient.get().uri(url).toBody<ByteArray>()
+        }.getOrNull()
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     override fun asyncDownloadCover(
         covers: List<Covers>,

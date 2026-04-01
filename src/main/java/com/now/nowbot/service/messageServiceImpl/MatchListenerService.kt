@@ -22,13 +22,17 @@ import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
-import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientResponseException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service("MATCH_LISTENER")
 class MatchListenerService(
@@ -42,7 +46,7 @@ class MatchListenerService(
 
     // 状态管理移至实例或单例管理器中 (此处暂留 Service 内但改用并发容器)
     companion object {
-        private val log = KotlinLogging.logger {}
+        private val log = LoggerFactory.getLogger(javaClass)
         const val BREAK_ROUND = 20
         private const val USER_MAX = 3
         private const val GROUP_MAX = 3
@@ -50,25 +54,34 @@ class MatchListenerService(
         private val listeners = ConcurrentHashMap<Long, MatchListener>()
         private val listenerData = CopyOnWriteArraySet<ListenerData>()
 
-        fun stopAllListenerFromReboot() {
-            val items = listeners.values.toList()
-            listenerData.clear()
-            listeners.clear()
+        suspend fun stopAllListenerFromReboot() {
+            val items = listeners.values
 
-            if (items.size >= 20) {
-                items.forEach { listener ->
-                    listener.stop(MatchListener.StopType.SERVER_REBOOT)
-                }
-            } else {
+            log.info("开始停止 ${items.size} 个监听器...")
+
+            coroutineScope {
                 items.forEachIndexed { index, listener ->
-                    // 每 5 个一组，增加一点间隔
-                    if (index > 0 && index % 5 == 0) {
-                        Thread.sleep(500)
-                    }
+                    launch {
+                        try {
+                            if (items.size < 20) {
+                                val delayTime = (index / 5) * 500L
+                                if (delayTime > 0) {
+                                    delay(delayTime.milliseconds)
+                                }
+                            }
 
-                    listener.stop(MatchListener.StopType.SERVER_REBOOT)
+                            listener.stop(MatchListener.StopType.SERVER_REBOOT)
+                        } catch (e: Exception) {
+                            log.error("停止监听 ${listener.match.statistics.matchID} 时出错", e)
+                        }
+                    }
                 }
             }
+
+            listeners.clear()
+            listenerData.clear()
+
+            log.info("所有监听器已清理完毕")
         }
     }
 
@@ -281,7 +294,7 @@ class MatchListenerService(
                 val image = imageService.getPanel(param, panelType)
                 messageEvent.reply(image)
             } catch (e: Exception) {
-                log.error(e) { "比赛监听：图片渲染失败。\n$panelType" }
+                log.error("比赛监听：$panelType 图片渲染失败。", e)
 
                 fallback?.let { messageEvent.reply(it) }
                     ?: throw IllegalStateException.Render("比赛监听")
@@ -313,14 +326,10 @@ class MatchListenerService(
             }
 
             if (shouldNotify) {
-                // 增加 1-5s 随机延迟避免风控
                 Thread.sleep((100..300).random().toLong())
                 messageEvent.reply(MatchException.NormalOperate.Stop(matchID, type))
             }
 
-            // 2. 自动清理逻辑：如果是比赛自然结束(MATCH_END)，且没被 cancelListener 处理过
-            // 我们不直接调用 cancelListener，而是确保它从本地静态 map 中移除
-            // 注意：这里需要根据你的 MatchListener 设计来判断是否需要手动 remove
         }
 
         override fun onGameAbort(beatmapID: Long) {
@@ -328,7 +337,7 @@ class MatchListenerService(
         }
 
         override fun onError(e: Throwable) {
-            log.error(e) { "监听器错误 ID: $matchID" }
+            log.warn("比赛监听：发生错误: $matchID", e)
             when (e) {
                 is RestClientResponseException -> return
                 is TipsRuntimeException -> messageEvent.reply(e.message ?: "未知错误")

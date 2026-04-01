@@ -8,6 +8,8 @@ import tools.jackson.databind.JsonNode
 import java.io.IOException
 
 interface OsuBeatmapApiService {
+    fun getVoice(beatmapsetID: Number): ByteArray?
+
     @OptIn(ExperimentalStdlibApi::class) fun getCover(covers: Covers, type: CoverType): ByteArray?
 
     @OptIn(ExperimentalStdlibApi::class) fun asyncDownloadCoverFromSets(beatmapsets: List<Beatmapset>, type: CoverType) {

@@ -1219,6 +1219,44 @@ object DataUtil {
         }
     }
 
+    private val GENRE_MAP = mapOf(
+        1 to "unspecified",
+        2 to "video game",
+        3 to "anime",
+        4 to "rock",
+        5 to "pop",
+        6 to "other",
+        7 to "novelty",
+        9 to "hip hop",
+        10 to "electronic",
+        11 to "metal",
+        12 to "classical",
+        13 to "folk",
+        14 to "jazz"
+    )
+
+    // Language ID -> 最长英文名
+    private val LANGUAGE_MAP = mapOf(
+        1 to "unspecified",
+        2 to "english",
+        3 to "japanese",
+        4 to "chinese",
+        5 to "instrumental",
+        6 to "korean",
+        7 to "french",
+        8 to "german",
+        9 to "swedish",
+        10 to "spanish",
+        11 to "italian",
+        12 to "russian",
+        13 to "polish",
+        14 to "other"
+    )
+
+    fun getGenreName(id: Byte?): String = GENRE_MAP[id?.toInt()] ?: "unknown"
+
+    fun getLanguageName(id: Byte?): String = LANGUAGE_MAP[id?.toInt()] ?: "unknown"
+
     /**
      * 升级版匹配器
      *
