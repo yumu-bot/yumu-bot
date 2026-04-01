@@ -12,5 +12,7 @@ data class CosuScore(
 
     @field:JsonProperty("statistics") val statistics: CosuStatistics? = null,
 
+    @field:JsonProperty("legacy_total_score") val legacyTotalScore: Int? = null,
+
     @field:JsonProperty("mods") val mods: List<LazerMod>? = null,
 )
