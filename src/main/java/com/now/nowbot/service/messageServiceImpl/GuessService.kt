@@ -13,21 +13,13 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.util.ASyncMessageUtil
-import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.DataUtil
-import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.InstructionUtil
-import com.now.nowbot.util.UserIDUtil
+import com.now.nowbot.util.*
 import com.now.nowbot.util.command.FLAG_NAME
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -118,7 +110,8 @@ class GuessService(
 
         val decrypted: MutableList<Boolean> = CopyOnWriteArrayList(MutableList(scores.size) { false })
 
-        var lastPlayedTime: LocalDateTime = LocalDateTime.now()
+        val startTime: LocalDateTime = LocalDateTime.now()
+        var lastPlayedTime: LocalDateTime = startTime
 
         val remain5Min: Boolean
             get() = lastPlayedTime.plusMinutes(5).isBefore(LocalDateTime.now()) &&
@@ -530,7 +523,9 @@ class GuessService(
         // 没猜出，或是根本没猜的就不放进去了
         return if (decryptedSetIDs.isNotEmpty()) {
             serviceCallStatisticsDao.saveService(
-                ServiceCallStatistic.builds(game.event, beatmapsetIDs = decryptedSetIDs)
+                ServiceCallStatistic.builds(game.event, beatmapsetIDs = decryptedSetIDs).apply {
+                    this.setOther("GUESS", game.startTime.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000, 0L)
+                }
             )
         } else null
     }
