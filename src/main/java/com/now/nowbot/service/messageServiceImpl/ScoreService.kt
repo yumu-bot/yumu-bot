@@ -462,8 +462,11 @@ import kotlin.time.Duration.Companion.seconds
 
         beatmapApiService.applyBeatmapExtend(filtered)
         beatmapApiService.applyVersion(filtered)
+
         BeatmapUtil.applyBeatmapChanges(filtered)
+
         calculateApiService.applyStarToScores(filtered)
+        calculateApiService.applyPPToScores(filtered)
 
         return ScoreData(user, beatmap, filtered, mode, mods)
     }

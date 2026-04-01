@@ -128,7 +128,7 @@ import kotlin.math.floor
             val actions = rulesets.map {
                 Callable {
                     val lastMonth = userApiService.getOsuUser(user.userID, it).monthlyPlaycounts.lastOrNull()?.startDate
-                        ?: OffsetDateTime.MIN.format(formatter2)
+                        ?: "2007-01-01"
 
                     it.modeValue.toInt() to
                             LocalDate.parse(lastMonth, formatter2).atTime(0, 0).atOffset(ZoneOffset.UTC)
@@ -140,7 +140,7 @@ import kotlin.math.floor
             val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value
                 ?: throw NoSuchElementException.PlayerPlay(user.username)
 
-            if (most.format(formatter2) == OffsetDateTime.MIN.format(formatter2)) {
+            if (most.format(formatter2) == "2007-01-01") {
                 throw NoSuchElementException.PlayerPlay(user.username)
             }
 
