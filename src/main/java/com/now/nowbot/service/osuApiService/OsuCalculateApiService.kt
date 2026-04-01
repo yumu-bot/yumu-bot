@@ -1,8 +1,9 @@
 package com.now.nowbot.service.osuApiService
 
-import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.cosu.CosuResponse
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.RosuPerformance
 
@@ -55,4 +56,6 @@ interface OsuCalculateApiService {
         mods: List<LazerMod>,
         hasLeaderBoard: Boolean = false
     ): Double
+
+    fun calculateDifficulty(bid: Long, mode: OsuMode, mods: List<LazerMod>? = null): CosuResponse
 }

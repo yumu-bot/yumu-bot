@@ -15,6 +15,8 @@ yumu:
   mirror: # 谱面镜像站的设定
     url: ~
     api: ~
+  cosu:
+    url: ~
   group:
     # osu! 新人杀手群
     killerGroup: -1
