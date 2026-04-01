@@ -14,6 +14,7 @@ import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.util.ContextUtil
 import jakarta.annotation.Resource
+import kotlinx.coroutines.TimeoutCancellationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeansException
@@ -57,18 +58,24 @@ import kotlin.Throws
 //              佛祖保佑       永不宕机     永无BUG                   //
 ////////////////////////////////////////////////////////////////////
 
-@Shiro @Order(9) @Component("OneBotListener") @Suppress("UNUSED")
+@Shiro
+@Order(9)
+@Component("OneBotListener")
+@Suppress("UNUSED")
 class OneBotListener {
     var log: Logger = LoggerFactory.getLogger(OneBotListener::class.java)
 
     @Resource
     var idempotentService: IdempotentService? = null
 
-    @Throws(BeansException::class) fun init(beanMap: MutableMap<String?, MessageService<*>?>?) {
+    @Throws(BeansException::class)
+    fun init(beanMap: MutableMap<String?, MessageService<*>?>?) {
         messageServiceMap = beanMap
     }
 
-    @GroupMessageHandler @Async fun handle(bot: Bot, onebotEvent: GroupMessageEvent) {
+    @GroupMessageHandler
+    @Async
+    fun handle(bot: Bot, onebotEvent: GroupMessageEvent) {
         val groupId = onebotEvent.groupId
         // val message = ShiroUtils.unescape(onebotEvent.message)
         val messageId = String.format(
@@ -106,7 +113,9 @@ class OneBotListener {
             is SocketTimeoutException,
             is ConnectException,
             is TimeoutException,
-            is UnknownHttpStatusCodeException, -> handleNetworkException(event, e)
+            is TimeoutCancellationException,
+            is UnknownHttpStatusCodeException
+                -> handleNetworkException(event, e)
             is LogException -> log.info(e.message)
             is ExecutionException -> event.reply(MessageChain(e.cause!!.message!!))
             is IllegalArgumentException -> log.error("正则异常", e)

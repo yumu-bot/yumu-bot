@@ -180,7 +180,7 @@ class RestClientConfig {
     @Qualifier("sbApiRestClient")
     fun sbApiRestClient(
         config: NowbotConfig
-    ): RestClient = clientBuilder(httpClients)
+    ): RestClient = clientBuilder(proxyClient(config))
         .baseUrl("https://api.ppy.sb/")
         .configureMessageConverters { configurer ->
             configurer.registerDefaults()
