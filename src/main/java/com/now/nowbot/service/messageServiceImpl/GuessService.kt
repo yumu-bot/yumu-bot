@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers
@@ -47,6 +48,7 @@ class GuessService(
     private val imageService: ImageService,
     private val serviceCallStatisticsDao: ServiceCallStatisticsDao,
     private val calculateApiService: OsuCalculateApiService,
+    private val bindDao: BindDao
 ): MessageService<GuessService.GuessParam> {
 
     companion object {
@@ -574,7 +576,7 @@ class GuessService(
                 val game = GuessGame(param.user, selected, event = event, artist = false, unicode = false)
                 CURRENT_GAMES[groupID] = game
 
-                event.replyGuess(game, "猜歌开始，当前将选用 ${param.user.username} 的最好成绩中的 ${selected.size} 张谱面。")
+                event.replyGuess(game, "猜歌开始，当前将选用 ${param.user.username} 的 ${param.user.currentOsuMode.fullName} 模式下，最好成绩中的 ${selected.size} 张谱面。")
             }
 
             is GuessParam.GuessEndParam -> {
@@ -697,7 +699,7 @@ class GuessService(
     }
 
     fun getStartParam(event: MessageEvent, matcher: Matcher): GuessParam {
-        val mode = InstructionUtil.getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event))
 
         val userID = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
