@@ -665,14 +665,14 @@ class GuessService(
 
             if (i < result.size - 1) reply.append('\n')
 
-            val isLuckyGuess = (game.standardisedLetters.isEmpty() || (
+            val isLuckyGuess = game.standardisedLetters.isEmpty() || (
                     title.replace(Regex("[^a-zA-Z0-9]"), "").all { c ->
                         val std = DataUtil.getStandardisedString(c.toString())
 
                         std !in game.standardisedLetters
-                    })) && game.decrypted[r] == GuessGame.Hint.ALL_LOCKED
+                    })
 
-            if (isLuckyGuess) {
+            if (isLuckyGuess && game.rewards[r] >= 100) {
                 game.rewards[r] = 120
                 reply.append("\n一击即中！\n得分：120")
             } else {
