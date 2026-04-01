@@ -57,7 +57,7 @@ class ServiceSwitchService(
         ),
 
         FUN(listOf("f", "fun", "amuse", "amusement", "娱乐", "玩"),
-            listOf("dice")
+            listOf("dice", "guess")
         ),
 
         MAIMAI(listOf("i", "mai", "maimai", "chu", "chunithm", "舞萌", "舞萌中二", "中二", "中二节奏"),
