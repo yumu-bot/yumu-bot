@@ -766,7 +766,7 @@ class GuessService(
 
         game.decryptAll()
 
-        if (!noGuess && !text.isNullOrEmpty()) {
+        if (noGuess && !text.isNullOrEmpty()) {
             game.event.reply(text)
         } else {
             game.event.replyGuess(game, text)
