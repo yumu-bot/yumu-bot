@@ -10,6 +10,7 @@ import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.GuessService.GuessGame.Hint.*
@@ -49,7 +50,7 @@ class GuessService(
     private val serviceCallStatisticsDao: ServiceCallStatisticsDao,
     private val calculateApiService: OsuCalculateApiService,
     private val bindDao: BindDao
-): MessageService<GuessService.GuessParam> {
+): MessageService<GuessService.GuessParam>, TencentMessageService<GuessService.GuessParam> {
 
     companion object {
         private val KALEIDXSCOPE = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -518,6 +519,7 @@ class GuessService(
                 "user" to user,
                 "scores" to scores.mapIndexed { i, score ->
                     val s = score.beatmapset
+                    val b = score.beatmap
 
                     if (decrypted[i] >= 0) {
                         mapOf(
@@ -526,10 +528,19 @@ class GuessService(
                                 "title_unicode" to encrypt(s.titleUnicode),
                                 "artist" to encrypt(s.artist),
                                 "artist_unicode" to encrypt(s.artistUnicode),
-                                "covers" to s.covers
+                                "creator" to encrypt(s.creator),
+
+                                "covers" to s.covers,
                             ),
 
-                            "beatmap" to score.beatmap,
+                            "beatmap" to mapOf(
+                                "version" to encrypt(b.difficultyName),
+
+                                "id" to b.beatmapID,
+                                "difficulty_rating" to b.starRating,
+                                "ranked" to b.ranked,
+                                "status" to b.status,
+                            )
 
                         )
                     } else {
@@ -750,7 +761,7 @@ class GuessService(
             val title = if (game.unicode) set.titleUnicode else set.title
 
             val decrypt =
-                "${set.artistUnicode} - ${set.titleUnicode}" + if (DataUtil.getStringSimilarity(set.title, set.titleUnicode) < SIMILARITY_THRESHOLD) {
+                "${set.artistUnicode} - ${set.titleUnicode}" + if (DataUtil.getStringSimilarity(set.title, set.titleUnicode, standardised = true) < SIMILARITY_THRESHOLD) {
                     " (${set.title})"
                 } else {
                     ""
@@ -884,5 +895,19 @@ class GuessService(
                 }
             )
         } else null
+    }
+
+    override fun accept(
+        event: MessageEvent,
+        messageText: String
+    ): GuessParam? {
+        return null
+    }
+
+    override fun reply(
+        event: MessageEvent,
+        param: GuessParam
+    ): MessageChain? {
+        return null
     }
 }
