@@ -683,8 +683,8 @@ class GuessService(
         event.replyGuess(game, reply.toString())
 
         guessScope.launch {
+            delay(500.milliseconds)
             if (game.trySettle()) {
-                delay(500.milliseconds)
                 event.replyDone(game, "猜歌结束。", noGuess = true)
             }
         }
@@ -764,7 +764,9 @@ class GuessService(
             .map { it.first.beatmapset.beatmapsetID }
             .toSet()
 
-        if (!noGuess) {
+        if (!noGuess && !text.isNullOrEmpty()) {
+            game.event.reply(text)
+        } else {
             game.decryptAll()
             game.event.replyGuess(game, text)
         }
