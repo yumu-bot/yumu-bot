@@ -764,10 +764,11 @@ class GuessService(
             .map { it.first.beatmapset.beatmapsetID }
             .toSet()
 
+        game.decryptAll()
+
         if (!noGuess && !text.isNullOrEmpty()) {
             game.event.reply(text)
         } else {
-            game.decryptAll()
             game.event.replyGuess(game, text)
         }
 
