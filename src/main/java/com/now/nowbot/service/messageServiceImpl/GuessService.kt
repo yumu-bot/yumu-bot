@@ -52,8 +52,30 @@ class GuessService(
 ): MessageService<GuessService.GuessParam> {
 
     companion object {
-        private val guessScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        private val KALEIDXSCOPE = CoroutineScope(Dispatchers.IO + SupervisorJob())
         private val CURRENT_GAMES = ConcurrentHashMap<Long, GuessGame>()
+
+        private val GUESS_SPECIAL_WORDS_REGEX = Regex(
+            "(?i)[(\\[<~-【]*\\b(" +
+                    // 1. 合作与客串 (Artist/Collaboration)
+                    "vs\\.?|versus|feat\\.?|ft\\.?" + "|" +
+                    // 2. 配音标记 (Voice Actors)
+                    "c\\.?v\\.?|v\\.?o\\.?" + "|" +
+                    // 3. 常见版本前缀 + 常见后缀的组合 (TV Size, Game Ver, etc.)
+                    "(?:tv|game|movie|short|long|extended|cut|spee?d\\s+up|nightcore)\\s+(?:size|edit|cut|ver(?:sion|\\.?)|mix)" + "|" +
+                    // 4. 复合标记 (Combined tags)
+                    "(?:nightcore|spee?d\\s+up)\\s+(&|and)\\s+cut\\s+ver(?:sion|\\.?)" + "|" +
+                    // 5. 长度或版本变体 (Short, Long, etc.)
+                    "short|long|extended" + "|" +
+                    // 6. 通用万能匹配 (#### Ver.)
+                    "[a-z0-9]+\\s+ver(?:sion|\\.?)" +
+                    ")\\b[)\\]>~-】]*"
+        )
+
+        private fun String.getCore(): String {
+            return this.replace(GUESS_SPECIAL_WORDS_REGEX, "")
+                .replace(Regex("[^\\p{L}\\p{N}]"), "")
+        }
 
         private val log: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -347,14 +369,26 @@ class GuessService(
 
             return revealedCount >= validText.length * 0.9
         }
+
         fun encrypt(text: String): String {
             val charArray = text.toCharArray()
 
+            val protectedSymbols = setOf('(', ')', '[', ']', '{', '}', '（', '）', '【', '】', '.')
+
             for (i in charArray.indices) {
                 val c = charArray[i]
+
+                // 1. 如果是空格，原样保留
+                if (c.isWhitespace()) continue
+
+                // 2. 如果是括号类符号，原样保留
+                if (protectedSymbols.contains(c)) continue
+
+                // 3. 核心加密逻辑
                 val std = DataUtil.getStandardisedString(c.toString())
 
-                if (!c.isWhitespace() && std !in standardisedLetters) {
+                // 如果该字符还没被猜出来（不在已解锁集合中），则加密为 #
+                if (std !in standardisedLetters) {
                     charArray[i] = '#'
                 }
             }
@@ -365,6 +399,8 @@ class GuessService(
         fun guess(text: String): List<Int> {
             update()
 
+            val processedInput = text.getCore()
+
             val result = scores.mapIndexed { i, b ->
                 if (decrypted[i] < 0) {
                     return@mapIndexed i to null
@@ -372,8 +408,18 @@ class GuessService(
 
                 val s = b.beatmapset
 
-                val t = DataUtil.getStringSimilarity(s.title, text)
-                val u = DataUtil.getStringSimilarity(s.titleUnicode, text)
+                fun getProcessedSimilarity(title: String): Double {
+                    val processedTitle = title.getCore()
+
+                    return if (processedTitle.length <= 2 || processedInput.length <= 2) {
+                        DataUtil.getStringSimilarity(title, text)
+                    } else {
+                        DataUtil.getStringSimilarity(processedTitle, processedInput)
+                    }
+                }
+
+                val t = getProcessedSimilarity(s.title)
+                val u = getProcessedSimilarity(s.titleUnicode)
 
                 return@mapIndexed i to (t >= GUESS_THRESHOLD || u >= GUESS_THRESHOLD)
             }
@@ -402,6 +448,29 @@ class GuessService(
             update()
 
             decrypted.fill(-1)
+        }
+
+        fun getHintForSpecialWords(input: String): String {
+            val matchedMark = GUESS_SPECIAL_WORDS_REGEX.find(input)?.value?.trim('(', ')', '[', ']', ' ', '~', '-')
+                ?: return "不要蒙混过关，杂鱼！"
+
+            val indices = scores.mapIndexedNotNull { index, score ->
+                val isDecrypted = decrypted[index] < 0
+                if (isDecrypted) return@mapIndexedNotNull null
+
+                val s = score.beatmapset
+                // 检查标题或原名中是否包含玩家输入的那个标记
+                val hasMark = s.title.contains(matchedMark, ignoreCase = true) ||
+                        s.titleUnicode.contains(matchedMark, ignoreCase = true)
+
+                if (hasMark) index + 1 else null
+            }
+
+            return if (indices.isNotEmpty()) {
+                "不要蒙混过关，杂鱼！\n不过，这里确实有 ${indices.size} 个题目符合这条匹配。"
+            } else {
+                "不要蒙混过关，杂鱼！这里没有 $matchedMark。\n大叔下次还是换个词猜吧。"
+            }
         }
 
         fun getTextMessage(): MessageChain {
@@ -506,6 +575,17 @@ class GuessService(
                     throw TipsException("猜歌异常：没有找到这个猜歌信息。")
                 }
 
+                val hasSpecialWords = GUESS_SPECIAL_WORDS_REGEX.containsMatchIn(param.result)
+
+                if (hasSpecialWords) {
+                    val cores = param.result.getCore()
+
+                    if (cores.length < 3) {
+                        event.reply(game.getHintForSpecialWords(param.result))
+                        return null
+                    }
+                }
+
                 val result = game.guess(param.result)
 
                 if (result.isEmpty()) {
@@ -528,6 +608,8 @@ class GuessService(
                     throw TipsException("当前有正在进行中的猜歌，请等待此猜歌流程结束。")
                 }
 
+                event.reply("正在生成题目...")
+
                 // 之前已经猜过的歌曲 set ID
                 val history = serviceCallStatisticsDao.getLast10BeatmapsetIDs(
                     groupID, "GUESS", LocalDateTime.now().minusMonths(3)
@@ -537,7 +619,17 @@ class GuessService(
                 val selected = param.scores
                     .filter { score ->
                         val set = score.beatmapset
-                        maxOf(set.title.length, set.titleUnicode.length) > 3
+
+                        fun getCoreLength(text: String): Int {
+                            val onlyCore = text.replace(GUESS_SPECIAL_WORDS_REGEX, "")
+                            return onlyCore.replace(Regex("[^\\p{L}\\p{N}]"), "").length
+                        }
+
+                        val coreLen = getCoreLength(set.title)
+                        val coreLenUnicode = getCoreLength(set.titleUnicode)
+
+                        // 要求核心长度必须大于 2，否则这歌太难猜（全是标记）或者太容易误触
+                        maxOf(coreLen, coreLenUnicode) >= 3
                     }
                     // 1. 先按你的随机权重降序排列，保证频率低的/随机分高的排在前面
                     .sortedByDescending { score ->
@@ -584,7 +676,7 @@ class GuessService(
                     throw TipsException("无法结束不存在的猜歌。")
                 }
 
-                if (game.event.sender.contactID != event.sender.contactID && Permission.isGroupAdmin(event)) {
+                if (game.event.sender.contactID != event.sender.contactID && !Permission.isGroupAdmin(event)) {
                     throw TipsException("""
                         你倒是猜啊？
                         只有群主、超级管理员或猜歌发起者可以通过 !g 停止当前猜歌。
@@ -648,18 +740,21 @@ class GuessService(
     ) {
         val reply = StringBuilder("$tip\n\n")
 
+        var rewards = 0
+        var bingo = false
+
         result.forEachIndexed { i, r ->
             val b = game.scores[r]
             val set = b.beatmapset
 
             val title = if (game.unicode) set.titleUnicode else set.title
 
-            // 根据 unicode 开关选择显示名称
-            val decrypt = if (game.unicode) {
-                "${set.artistUnicode} - ${set.titleUnicode}"
-            } else {
-                "${set.artist} - ${set.title}"
-            }
+            val decrypt =
+                "${set.artistUnicode} - ${set.titleUnicode}" + if (DataUtil.getStringSimilarity(set.title, set.titleUnicode) < SIMILARITY_THRESHOLD) {
+                    " (${set.title})"
+                } else {
+                    ""
+                }
 
             reply.append("#${r + 1}: $decrypt")
 
@@ -673,16 +768,23 @@ class GuessService(
                     })
 
             if (isLuckyGuess && game.rewards[r] >= 100) {
-                game.rewards[r] = 120
-                reply.append("\n一击即中！\n得分：120")
-            } else {
-                reply.append("\n得分：${game.rewards[r]}")
+                bingo = true
             }
+
+            rewards += game.rewards[r]
         }
+
+        if (bingo) {
+            reply.append("\n\n一击即中！")
+        } else {
+            reply.append("\n")
+        }
+
+        reply.append("\n得分：${rewards}")
 
         event.replyGuess(game, reply.toString())
 
-        guessScope.launch {
+        KALEIDXSCOPE.launch {
             delay(500.milliseconds)
             if (game.trySettle()) {
                 event.replyDone(game, "猜歌结束。", noGuess = true)
@@ -749,7 +851,7 @@ class GuessService(
                 this.reply(text)
             }
 
-            guessScope.launch {
+            KALEIDXSCOPE.launch {
                 delay(500.milliseconds)
                 this@replyGuess.reply(game.getTextMessage())
             }
