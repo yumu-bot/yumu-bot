@@ -92,7 +92,7 @@ class GuessService(
                             try {
                                 delay(200L.milliseconds)
 
-                                g.event.reply("猜歌被迫结束：服务器重启。")
+                                g.event.reply("猜歌被迫结束：服务器重启。\n很抱歉！您可以在一会儿后重新开局。")
 
                                 log.info("在群组 ${g.event.subject.contactID} 的猜词游戏重启通知发送成功")
                             } catch (e: Exception) {
