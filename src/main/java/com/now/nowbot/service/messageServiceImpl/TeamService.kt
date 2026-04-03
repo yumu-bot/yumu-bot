@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.entity.Team
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -8,7 +9,6 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.service.web.TeamInfo
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
@@ -62,8 +62,8 @@ class TeamService(
 
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(
-                "tids" to listOf(team.id),
-                "modes" to listOf(team.ruleset.modeValue)
+                "tids" to listOf(team.teamID),
+                "modes" to listOf(team.statistics?.ruleset ?: team.defaultRuleset ?: 0.toByte())
             ))
         }
     }
@@ -105,9 +105,9 @@ class TeamService(
         }
     }
 
-    private fun TeamInfo.getImage(page: Int = 1): ByteArray {
+    private fun Team.getImage(page: Int = 1): ByteArray {
         val split = DataUtil.splitPage(
-            users,
+            members,
             page = page,
             maxPerPage = 48
         )
@@ -115,18 +115,17 @@ class TeamService(
         return imageService.getPanel(mapOf("team" to this, "page" to split.second, "max_page" to split.third), "A9")
     }
 
-    private fun TeamParam.getTeam(): TeamInfo {
+    private fun TeamParam.getTeam(): Team {
 
         val team = try {
-            userApiService.getTeamInfo(teamID)!!
+            userApiService.getTeam(teamID)
         } catch (_: Exception) {
             if (assumeTeam) {
                 throw NoSuchElementException.TeamID(teamID)
             } else try {
                 val user = userApiService.getOsuUser(teamID.toLong())
 
-                userApiService.getTeamInfo(user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username))
-                    ?: throw NoSuchElementException.PlayerTeam(user.username)
+                userApiService.getTeam(user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username))
             } catch (_: Exception) {
                 throw NoSuchElementException.TeamID(teamID)
             }

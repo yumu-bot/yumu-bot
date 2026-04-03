@@ -2,6 +2,7 @@ package com.now.nowbot.service.osuApiService
 
 import tools.jackson.databind.JsonNode
 import com.google.errorprone.annotations.CanIgnoreReturnValue
+import com.now.nowbot.entity.Team
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
@@ -100,6 +101,8 @@ interface OsuUserApiService {
     }
 
     fun asyncDownloadBackground(users: List<MicroUser>)
+
+    fun getTeam(teamID: Number, mode: OsuMode? = OsuMode.DEFAULT): Team
 
     fun getTeamInfo(id: Int): TeamInfo?
 

@@ -3,6 +3,7 @@ package com.now.nowbot.service.osuApiService.impl
 import tools.jackson.databind.JsonNode
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.entity.Team
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
@@ -23,6 +24,7 @@ import com.now.nowbot.util.toBody
 import kotlinx.io.IOException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.util.UriComponentsBuilder
@@ -355,6 +357,34 @@ import java.util.concurrent.Callable
         }
     }
 
+    override fun getTeam(teamID: Number, mode: OsuMode?): Team {
+        val ruleset = if (OsuMode.isDefaultOrNull(mode)) {
+            ""
+        } else {
+            mode!!.shortName
+        }
+
+        val uri = if (ruleset.isEmpty()) {
+            "teams/$teamID"
+        } else {
+            "teams/$teamID/$ruleset"
+        }
+
+        return runCatching {
+            base.osuApiRestClient
+                .get()
+                .uri(uri)
+                .headers { headers ->
+                    base.insertHeader(headers)
+                }
+                .toBody<Team>()
+        }.onFailure { e ->
+            if (e is HttpClientErrorException) {
+                throw NoSuchElementException.TeamID(teamID)
+            }
+        }.getOrThrow()
+    }
+
     override fun getEliteronixDuelRating(userID: Long): ETXDuelRating {
         val response = request { client ->
             client.get()
@@ -442,6 +472,7 @@ import java.util.concurrent.Callable
         }
     }
 
+    @Deprecated("please use getTeam()")
     override fun getTeamInfo(id: Int): TeamInfo? {
         val html = base.osuApiRestClient
             .get().uri("https://osu.ppy.sh/teams/{id}", id).toBody<String>()

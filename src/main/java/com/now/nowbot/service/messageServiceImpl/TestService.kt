@@ -1,22 +1,18 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
-import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service("TEST")
 class TestService(
-    private val baseService: OsuApiBaseService,
-    private val bindDao: BindDao,
-    private val calculateApiService: OsuCalculateApiService
+    private val userApiService: OsuUserApiService
 ): MessageService<String> {
     override fun isHandle(
         event: MessageEvent,
@@ -34,8 +30,11 @@ class TestService(
     }
 
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
-        val r = calculateApiService.calculateDifficulty(1992112, OsuMode.OSU)
-        log.info("calculateDifficulty: {}", r.toString())
+        val r = userApiService.getOsuUser("siyuyuko")
+
+        val team = userApiService.getTeam(r.team!!.id.toLong())
+
+        log.info("calculateDifficulty: {}", JacksonUtil.toJson(team))
         return null
     }
 
