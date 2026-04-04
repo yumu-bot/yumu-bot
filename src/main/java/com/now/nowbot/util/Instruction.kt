@@ -109,7 +109,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     VIEW_GROUP_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("view\\s*group\\s*mode", "vg")
+        appendCommandsIgnoreAll("view\\s*group\\s*mode", "vm")
         appendCaptureGroup(FLAG_RANGE,
             REG_NUMBER,
             ANY
