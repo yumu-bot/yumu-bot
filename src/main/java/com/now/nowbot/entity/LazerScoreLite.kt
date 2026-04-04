@@ -132,6 +132,7 @@ class LazerScoreLite(
             this.score = lite.lazerScore.toLong()
             this.mode = OsuMode.getMode(lite.mode)
             this.rank = rank
+            this.lazerRank = rank
         }
     }
 

@@ -302,7 +302,7 @@ open class LazerScore(
                 .toFormatter()
 
         private fun getStableRank(score: LazerScore): String {
-            if (!score.passed && score.type !== "sb_score") return "F"
+            if (!score.passed && score.type != "sb_score") return "F"
             if (score.isLazer) return score.lazerRank
 
             val m = score.maximumStatistics
