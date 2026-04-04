@@ -150,7 +150,7 @@ class GroupLeaderBoardService(
         beatmapApiService.applyBeatmapExtendForSameScore(filtered, beatmap)
         calculateApiService.applyPPToScoresWithSameBeatmap(filtered)
 
-        val (split, currentPage, maxPage) = DataUtil.splitPage(filtered, page, 50)
+        val (split, currentPage, maxPage) = DataUtil.splitPage(filtered.sortedByDescending { it.pp }, page, 50)
 
         split.applyMicroUser()
 
