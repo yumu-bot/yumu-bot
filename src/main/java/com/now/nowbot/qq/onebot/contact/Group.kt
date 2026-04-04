@@ -41,7 +41,7 @@ class Group : Contact, Group {
 
     override val allUser: List<GroupContact>
         get() {
-            val data = bot.getGroupMemberList(contactID).getData()
+            val data = bot.getGroupMemberList(contactID).data
             return data.mapNotNull { f: GroupMemberInfoResp? ->
                 f?.let {
                     GroupContact(

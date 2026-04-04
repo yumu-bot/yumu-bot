@@ -116,7 +116,6 @@ class TeamService(
     }
 
     private fun TeamParam.getTeam(): Team {
-
         val team = try {
             userApiService.getTeam(teamID)
         } catch (_: Exception) {

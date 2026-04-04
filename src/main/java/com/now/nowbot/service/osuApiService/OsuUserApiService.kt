@@ -104,6 +104,7 @@ interface OsuUserApiService {
 
     fun getTeam(teamID: Number, mode: OsuMode? = OsuMode.DEFAULT): Team
 
+    @Deprecated("please use getTeam()")
     fun getTeamInfo(id: Int): TeamInfo?
 
     /**

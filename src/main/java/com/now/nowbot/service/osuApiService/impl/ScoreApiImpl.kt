@@ -177,15 +177,19 @@ class ScoreApiImpl(
     }
 
     override fun getScore(scoreID: Long): LazerScore {
-        return request { client ->
+        val score = request { client ->
             client.get().uri {
                 it.path("scores/{scoreID}").build(scoreID)
             }.headers(base::insertHeader).toBody<LazerScore>()
         }
+
+        scoreDao.saveScoreAsync(listOfNotNull(score))
+
+        return score
     }
 
     override fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore? {
-        return retryOn404<BeatmapUserScore>(
+        val score = retryOn404<BeatmapUserScore>(
             { uriBuilder: UriBuilder ->
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
@@ -202,6 +206,10 @@ class ScoreApiImpl(
                     .build(bid, uid)
             },
         )
+
+        scoreDao.saveScoreAsync(listOfNotNull(score.score))
+
+        return score
     }
 
     override fun getBeatmapScore(
@@ -210,7 +218,7 @@ class ScoreApiImpl(
         mode: OsuMode?,
     ): BeatmapUserScore? {
         if (user.isTokenAvailable == null) return getBeatmapScore(bid, user.userID, mode)
-        return retryOn404<BeatmapUserScore>(
+        val score = retryOn404<BeatmapUserScore>(
             {
                 it.path("beatmaps/{bid}/scores/users/{uid}").queryParam("legacy_only", 0)
 
@@ -234,6 +242,10 @@ class ScoreApiImpl(
                 it.build(bid, user.userID)
             },
         )
+
+        scoreDao.saveScoreAsync(listOfNotNull(score.score))
+
+        return score
     }
 
     override fun getBeatmapScore(
@@ -255,11 +267,15 @@ class ScoreApiImpl(
                 .build(bid, uid)
         }
 
-        return retryOn404<BeatmapUserScore>(
+        val score = retryOn404<BeatmapUserScore>(
             uri = buildUri(mode),
             headers = { base.insertHeader(this) },
             retry = buildUri(null)
         )
+
+        scoreDao.saveScoreAsync(listOfNotNull(score.score))
+
+        return score
     }
 
     override fun getBeatmapScore(
@@ -284,11 +300,15 @@ class ScoreApiImpl(
                 .build(bid, user.userID)
         }
 
-        return retryOn404<BeatmapUserScore>(
+        val score = retryOn404<BeatmapUserScore>(
             uri = buildUri(mode),
             headers = { base.insertHeader(this, user) },
             retry = buildUri(null)
         )
+
+        scoreDao.saveScoreAsync(listOfNotNull(score.score))
+
+        return score
     }
 
     data class BeatmapScoreResponse(val scores: List<LazerScore>)
@@ -309,11 +329,15 @@ class ScoreApiImpl(
                 .build(bid, user.userID)
         }
 
-        return retryOn404<BeatmapScoreResponse>(
+        val scores = retryOn404<BeatmapScoreResponse>(
             uri = buildUri(mode),
             headers = { base.insertHeader(this, user) },
             retry = buildUri(null)
         ).scores
+
+        scoreDao.saveScoreAsync(scores)
+
+        return scores
     }
 
     override fun getBeatmapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
@@ -328,11 +352,15 @@ class ScoreApiImpl(
                 .build(bid, uid)
         }
 
-        return retryOn404<BeatmapScoreResponse>(
+        val scores = retryOn404<BeatmapScoreResponse>(
             uri = buildUri(mode),
             headers = { base.insertHeader(this) },
             retry = buildUri(null)
         ).scores
+
+        scoreDao.saveScoreAsync(scores.take(50))
+
+        return scores
     }
 
     override fun getLeaderBoardScore(

@@ -38,27 +38,44 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     """, nativeQuery = true)
     fun exists(ids: Collection<Long>): List<Long>
 
-    @Query("select s.time from LazerScoreLite s where s.userId = :id and s.time between :start and :end")
-    fun getUserAllScoreTime(id: Long, start: OffsetDateTime, end: OffsetDateTime, page: Pageable): List<OffsetDateTime>
+    @Query("select s.time from LazerScoreLite s where s.userId = :userID and s.time between :start and :end")
+    fun getUserAllScoreTime(userID: Long, start: OffsetDateTime, end: OffsetDateTime, page: Pageable): List<OffsetDateTime>
 
     // and s.beatmap_id in (select bid from osu_ranked_beatmap_id)
     @Query("""
         select * from lazer_score_lite s
-        where s.user_id = :id
+        where s.user_id = :userID
         and s.time between :start and :end
         and s.mode = :mode
         and s.pp > 0
         """, nativeQuery = true)
-    fun getUserRankedScore(id: Long, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite>
+    fun getUserRankedScore(userID: Long, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite>
 
     @Query("""
         select * from lazer_score_lite s
-        where s.user_id in (:ids)
+        where s.user_id in (:userIDs)
         and s.time between :start and :end
         and s.mode = :mode
         and s.pp > 0
         """, nativeQuery = true)
-    fun getUsersRankedScore(ids: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite>
+    fun getUsersRankedScore(userIDs: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite>
+
+    // TODO 可能需要优化
+    @Query("""
+    SELECT t.* FROM (
+        SELECT s.*, 
+               ROW_NUMBER() OVER (
+                   PARTITION BY s.user_id 
+                   ORDER BY s.pp DESC, s.accuracy DESC, s.time DESC
+               ) as rn
+        FROM lazer_score_lite s
+        WHERE s.user_id IN (:userIDs)
+          AND s.beatmap_id = :beatmapID
+          AND s.mode = :mode
+    ) t
+    WHERE t.rn = 1
+""", nativeQuery = true)
+    fun getUsersBestScore(userIDs: Collection<Long>, beatmapID: Long, mode: Byte): List<LazerScoreLite>
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {

@@ -467,7 +467,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     LEADER_BOARD(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("leaderboard", "leader", "list", "l")
+        appendCommandsIgnoreAll("leader\\s*board", "leader", "list", "l")
 
         appendMode()
         appendBID()
@@ -476,6 +476,15 @@ enum class Instruction(val pattern: Pattern) {
         appendStarCaptureGroup(FLAG_TYPE, REG_WORD, MORE)
         appendSpace()
 
+        appendMod()
+    }),
+
+    GROUP_LEADER_BOARD(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("group\\s*leaderboard", "group\\s*leader", "g(roup)?\\s*list", "lg")
+
+        appendMode()
+        appendBID()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
         appendMod()
     }),
 

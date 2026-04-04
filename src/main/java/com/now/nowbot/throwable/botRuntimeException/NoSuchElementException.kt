@@ -79,6 +79,12 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class FriendMatched:
         NoSuchElementException("没有找到符合你提供的条件的游戏好友。")
 
+    class GroupBeatmapScore(name: Any):
+        NoSuchElementException("没有找到群内玩家在谱面 $name 内的成绩。")
+
+    class GroupBeatmapScoreFiltered(name: Any):
+        NoSuchElementException("没有找到群内玩家在谱面 $name 内符合条件的成绩。")
+
     class Leaderboard:
         NoSuchElementException("这张谱面没有在线排行榜。")
 
