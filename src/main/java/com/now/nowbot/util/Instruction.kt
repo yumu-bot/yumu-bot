@@ -108,14 +108,13 @@ enum class Instruction(val pattern: Pattern) {
         appendQQUIDName()
     }),
 
-    GROUP_LIST(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("group\\s*list", "gl")
+    VIEW_GROUP_MODE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("view\\s*group\\s*mode", "vg")
         appendCaptureGroup(FLAG_RANGE,
             REG_NUMBER,
             ANY
         )
     }),
-
 
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
@@ -480,7 +479,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     GROUP_LEADER_BOARD(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("group\\s*leaderboard", "group\\s*leader", "g(roup)?\\s*list", "lg")
+        appendCommandsIgnoreAll("group\\s*leaderboard", "group\\s*leader", "g(roup)?\\s*list", "good\\s*luck", "gl", "lg")
 
         appendMode()
         appendBID()

@@ -31,7 +31,7 @@ class SetGroupModeService (
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<SetGroupParam>): Boolean {
         val m = Instruction.SET_GROUP_MODE.matcher(messageText)
-        val m2 = Instruction.GROUP_LIST.matcher(messageText)
+        val m2 = Instruction.VIEW_GROUP_MODE.matcher(messageText)
 
         if (m.find()) {
             data.value = SetGroupParam(
