@@ -27,6 +27,8 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_PAGE
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -116,52 +118,62 @@ class GroupLeaderBoardService(
 
         val m = OsuMode.getConvertableMode(mode, beatmap.mode)
 
-        val mods = InstructionUtil.getMod(matcher)
+        val (ss, user) = runBlocking {
+            val ssDeferred = async {
+                val mods = InstructionUtil.getMod(matcher)
 
-        val bot = botContainer.robots[event.bot?.botID]
-            ?: run {
-                log.warn("群内排行榜：机器人 ${event.bot?.botID} 为空。")
-                throw TipsException("群内排行榜：机器人为空")
-            }
+                val bot = botContainer.robots[event.bot?.botID]
+                    ?: run {
+                        log.warn("群内排行榜：机器人 ${event.bot?.botID} 为空。")
+                        throw TipsException("群内排行榜：机器人为空")
+                    }
 
-        val members = bot.getGroupMemberList(event.subject.contactID, false)?.data
-            ?.mapNotNull { it.userId }
-            ?: run {
-                log.warn("群内排行榜：机器人 ${bot.selfId} 获取 ${event.subject.contactID} 群聊玩家失败。")
-                throw TipsException("群内排行榜：机器人获取群成员失败。")
-            }
+                val members = bot.getGroupMemberList(event.subject.contactID, false)?.data
+                    ?.mapNotNull { it.userId }
+                    ?: run {
+                        log.warn("群内排行榜：机器人 ${bot.selfId} 获取 ${event.subject.contactID} 群聊玩家失败。")
+                        throw TipsException("群内排行榜：机器人获取群成员失败。")
+                    }
 
 //        val members = arrayListOf(1340691940L)
 
-        if (members.isEmpty()) {
-            log.warn("群内排行榜：机器人 ${bot.selfId} 获取 ${event.subject.contactID} 群聊玩家为空。")
-            throw TipsException("群内排行榜：群成员列表是空的。")
+                if (members.isEmpty()) {
+                    log.warn("群内排行榜：机器人 ${bot.selfId} 获取 ${event.subject.contactID} 群聊玩家为空。")
+                    throw TipsException("群内排行榜：群成员列表是空的。")
+                }
+
+                val userIDs = bindDao.getAllQQBindUser(members).map { it.uid }
+
+                val scores = scoreDao.getBeatmapScores(userIDs, beatmapID, m).ifEmpty {
+                    throw NoSuchElementException.GroupBeatmapScore(beatmap.previewName)
+                }
+
+                val filtered = scores.filterMod(mods,
+                    {
+                        throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
+                    })
+
+                beatmapApiService.applyBeatmapExtendForSameScore(filtered, beatmap)
+                calculateApiService.applyPPToScoresWithSameBeatmap(filtered)
+
+                filtered.sortedWith(
+                    compareBy<LazerScore> { if (it.rank == "F") 1 else 0 }
+                        .thenByDescending { it.pp }
+                )
+            }
+
+            val userDeferred = async {
+                runCatching {
+                    userApiService.getOsuUser(bindDao.getBindFromQQOrNull(event.sender.contactID) ?: return@runCatching null, m)
+                }.getOrNull()
+            }
+
+            ssDeferred.await() to userDeferred.await()
         }
 
-        val userIDs = bindDao.getAllQQBindUser(members).map { it.uid }
-
-        val scores = scoreDao.getBeatmapScores(userIDs, beatmapID, m).ifEmpty {
-            throw NoSuchElementException.GroupBeatmapScore(beatmap.previewName)
-        }
-
-        val filtered = scores.filterMod(mods,
-            {
-                throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
-            })
-
-        beatmapApiService.applyBeatmapExtendForSameScore(filtered, beatmap)
-        calculateApiService.applyPPToScoresWithSameBeatmap(filtered)
-
-        val (split, currentPage, maxPage) = DataUtil.splitPage(filtered.sortedWith(
-            compareBy<LazerScore> { if (it.rank == "F") 1 else 0 }
-                .thenByDescending { it.pp }
-        ), page, 50)
+        val (split, currentPage, maxPage) = DataUtil.splitPage(ss, page, 50)
 
         split.applyMicroUser()
-
-        val user = runCatching {
-            userApiService.getOsuUser(bindDao.getBindFromQQOrNull(event.sender.contactID) ?: return@runCatching null, m)
-        }.getOrNull()
 
         return GroupLeaderBoardParam(user, beatmap, m, split, event.subject.contactID, currentPage, maxPage)
     }
