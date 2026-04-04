@@ -10,6 +10,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -56,6 +57,7 @@ class GroupLeaderBoardService(
     }
 
     data class GroupLeaderBoardParam(
+        val user: OsuUser?,
         val beatmap: Beatmap,
         val mode: OsuMode,
         val scores: List<LazerScore>,
@@ -157,7 +159,11 @@ class GroupLeaderBoardService(
 
         split.applyMicroUser()
 
-        return GroupLeaderBoardParam(beatmap, m, split, event.subject.contactID, currentPage, maxPage)
+        val user = runCatching {
+            userApiService.getOsuUser(bindDao.getBindFromQQOrNull(event.sender.contactID) ?: return@runCatching null, m)
+        }.getOrNull()
+
+        return GroupLeaderBoardParam(user, beatmap, m, split, event.subject.contactID, currentPage, maxPage)
     }
     
     companion object {
