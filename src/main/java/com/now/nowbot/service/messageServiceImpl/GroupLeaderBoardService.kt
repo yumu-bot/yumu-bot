@@ -27,6 +27,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_PAGE
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
@@ -118,7 +119,7 @@ class GroupLeaderBoardService(
 
         val m = OsuMode.getConvertableMode(mode, beatmap.mode)
 
-        val (ss, user) = runBlocking {
+        val (ss, user) = runBlocking(Dispatchers.IO) {
             val ssDeferred = async {
                 val mods = InstructionUtil.getMod(matcher)
 
