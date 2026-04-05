@@ -184,7 +184,7 @@ open class NetworkException(message: String?
         }
 
         class GatewayTimeout:
-            MatchException("""
+            UserException("""
                 504 Gateway Timeout
                 网关超时。
             """.trimIndent()) {
@@ -192,7 +192,7 @@ open class NetworkException(message: String?
         }
 
         class Undefined(e: Throwable):
-            MatchException("""
+            UserException("""
                 连接出现未识别的错误。
                 信息如下：${e.message}
             """.trimIndent()) {
@@ -277,7 +277,7 @@ open class NetworkException(message: String?
         }
 
         class GatewayTimeout:
-            MatchException("""
+            BeatmapException("""
                 504 Gateway Timeout
                 网关超时。
             """.trimIndent()) {
@@ -285,7 +285,7 @@ open class NetworkException(message: String?
         }
 
         class Undefined(e: Throwable):
-            MatchException("""
+            BeatmapException("""
                 连接出现未识别的错误。
                 信息如下：${e.message}
             """.trimIndent()) {

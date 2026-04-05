@@ -33,7 +33,7 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
         ) {
             throw org.springframework.web.client.HttpServerErrorException(
                 org.springframework.http.HttpStatus.REQUEST_TIMEOUT,
-                "408 Request Timeout"
+                "Request Timeout 请求超时"
             )
         } else if (
             e.findCauseOfType<IOException>() != null ||
@@ -41,7 +41,7 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
         ) {
             throw org.springframework.web.client.HttpServerErrorException(
                 org.springframework.http.HttpStatus.GATEWAY_TIMEOUT,
-                "504 Gateway Timeout"
+                "Gateway Timeout 网关超时"
             )
         } else {
             throw e
