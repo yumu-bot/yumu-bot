@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestClientResponseException
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
@@ -239,7 +238,7 @@ import kotlin.math.min
 
         try {
             match = matchApiService.getMatch(matchID.toLong(), 10)
-        } catch (_: RestClientResponseException) {
+        } catch (_: HttpClientErrorException) {
             throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
         }
 

@@ -10,14 +10,13 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.toBody
-import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import java.util.*
+import java.util.concurrent.CancellationException
 import kotlin.math.min
 
 @Service
@@ -114,25 +113,29 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
         return try {
             request(base.sbApiRestClient)
         } catch (e: Exception) {
-            val cause = e as? RestClientResponseException ?: e.cause
-            if (cause is RestClientResponseException) {
-                when (cause.statusCode.value()) {
-                    400 -> throw NetworkException.ScoreException.BadRequest()
-                    401 -> throw NetworkException.ScoreException.Unauthorized()
-                    403 -> throw NetworkException.ScoreException.Forbidden()
-                    404 -> throw NetworkException.ScoreException.NotFound()
-                    422 -> throw NetworkException.UserException.UnprocessableEntity()
-                    503 -> throw NetworkException.ScoreException.ServiceUnavailable()
+            val cause = e.findCauseOfType<HttpClientErrorException>()
+
+            when (cause?.statusCode?.value()) {
+                400 -> throw NetworkException.ScoreException.BadRequest()
+                401 -> throw NetworkException.ScoreException.Unauthorized()
+                403 -> throw NetworkException.ScoreException.Forbidden()
+                404 -> throw NetworkException.ScoreException.NotFound()
+                408 -> throw NetworkException.ScoreException.RequestTimeout()
+                422 -> throw NetworkException.UserException.UnprocessableEntity()
+                503 -> throw NetworkException.ScoreException.ServiceUnavailable()
+                504 -> throw NetworkException.ScoreException.GatewayTimeout()
+
+                else -> {
+
+                    if (e !is CancellationException) {
+                        log.error("成绩模块：未定义的错误", e)
+                        throw NetworkException.ScoreException.Undefined(e)
+                    } else {
+                        throw e
+                    }
                 }
             }
 
-            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                throw NetworkException.ScoreException.GatewayTimeout()
-            } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                throw NetworkException.ScoreException.RequestTimeout()
-            } else {
-                throw NetworkException.ScoreException.Undefined(e)
-            }
         }
     }
 

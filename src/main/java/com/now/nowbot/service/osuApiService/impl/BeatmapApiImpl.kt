@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import tools.jackson.databind.JsonNode
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -41,6 +40,7 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -192,7 +192,7 @@ class BeatmapApiImpl(
                     .uri("https://osu.ppy.sh/osu/{bid}", bid)
                     .toBody<String>()
             }
-        } catch (e: RestClientResponseException) {
+        } catch (e: HttpClientErrorException) {
             log.error("osu 谱面 API：请求官网谱面失败: ", e)
             return null
         }
@@ -606,12 +606,8 @@ class BeatmapApiImpl(
         try {
             val map = getBeatmap(bid)
             return map.status.equals("ranked", ignoreCase = true) && map.starRating <= 5.7
-        } catch (e: Exception) {
-            val ex = e.findCauseOfType<RestClientResponseException>()
-            if (ex?.statusCode == org.springframework.http.HttpStatus.NOT_FOUND) {
-                return false
-            }
-            throw e
+        } catch (_: NetworkException.BeatmapException.NotFound) {
+            return false
         }
     }
 
@@ -907,8 +903,8 @@ class BeatmapApiImpl(
             }
             JacksonUtil.toNode(jsonString)
         } catch (e: Exception) {
-            val ex = e.findCauseOfType<RestClientResponseException>()
-            if (ex?.statusCode == org.springframework.http.HttpStatus.NOT_FOUND) {
+            val ex = e.findCauseOfType<HttpClientErrorException>()
+            if (ex?.statusCode?.value() == 404) {
                 return null
             }
             throw e
@@ -1275,53 +1271,27 @@ class BeatmapApiImpl(
                 request(base.osuApiRestClient)
             }
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<RestClientResponseException>()
+            val ex = e.findCauseOfType<HttpClientErrorException>()
 
-            when {
-                ex == null -> {
-                    log.error("谱面请求：未定义的错误：", e)
-                    throw NetworkException.BeatmapException.Undefined(e)
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
-                    throw NetworkException.BeatmapException.BadRequest()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
-                    throw NetworkException.BeatmapException.Unauthorized()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
-                    throw NetworkException.BeatmapException.Forbidden()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
-                    throw NetworkException.BeatmapException.NotFound()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
-                    throw NetworkException.BeatmapException.TooManyRequests()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
-                    throw NetworkException.BeatmapException.InternalServerError()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
-                    throw NetworkException.BeatmapException.BadGateWay()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
-                    throw NetworkException.BeatmapException.ServiceUnavailable()
-                }
-
-                e.findCauseOfType<java.net.SocketException>() != null -> {
-                    throw NetworkException.BeatmapException.GatewayTimeout()
-                }
+            when (ex?.statusCode?.value()) {
+                400 -> throw NetworkException.BeatmapException.BadRequest()
+                401 -> throw NetworkException.BeatmapException.Unauthorized()
+                403 -> throw NetworkException.BeatmapException.Forbidden()
+                404 -> throw NetworkException.BeatmapException.NotFound()
+                408 -> throw NetworkException.BeatmapException.RequestTimeout()
+                429 -> throw NetworkException.BeatmapException.TooManyRequests()
+                500 -> throw NetworkException.BeatmapException.InternalServerError()
+                502 -> throw NetworkException.BeatmapException.BadGateWay()
+                503 -> throw NetworkException.BeatmapException.ServiceUnavailable()
+                504 -> throw NetworkException.BeatmapException.GatewayTimeout()
 
                 else -> {
-                    log.error("谱面请求：未定义的错误：", e)
-                    throw NetworkException.BeatmapException.Undefined(e)
+                    if (e !is CancellationException) {
+                        log.error("谱面请求：未定义的错误：", e)
+                        throw NetworkException.BeatmapException.Undefined(e)
+                    } else {
+                        throw e
+                    }
                 }
             }
         }

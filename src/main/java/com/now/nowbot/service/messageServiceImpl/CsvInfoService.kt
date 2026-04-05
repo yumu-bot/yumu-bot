@@ -18,7 +18,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestClientResponseException
 import java.nio.charset.StandardCharsets
 
 @Service("CSV_INFO")
@@ -79,9 +78,6 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
                     throw CsvInfoException(CsvInfoException.Type.CI_Fetch_SleepingInterrupted, s)
                 }
             } catch (e: HttpClientErrorException) {
-                log.error("玩家信息表：网络因素无法获取", e)
-                sb.append('\n').append(s).append(',').append(-1)
-            } catch (e: RestClientResponseException) {
                 log.error("玩家信息表：网络因素无法获取", e)
                 sb.append('\n').append(s).append(',').append(-1)
             } catch (e: Exception) {

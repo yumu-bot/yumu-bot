@@ -27,7 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.HttpClientErrorException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.max
@@ -46,7 +46,7 @@ class MatchListenerService(
 
     // 状态管理移至实例或单例管理器中 (此处暂留 Service 内但改用并发容器)
     companion object {
-        private val log = LoggerFactory.getLogger(javaClass)
+        private val log = LoggerFactory.getLogger(MatchListenerService::class.java)
         const val BREAK_ROUND = 20
         private const val USER_MAX = 3
         private const val GROUP_MAX = 3
@@ -339,7 +339,7 @@ class MatchListenerService(
         override fun onError(e: Throwable) {
             log.warn("比赛监听：发生错误: $matchID", e)
             when (e) {
-                is RestClientResponseException -> return
+                is HttpClientErrorException -> return
                 is TipsRuntimeException -> messageEvent.reply(e.message ?: "未知错误")
                 else -> messageEvent.reply("监听期间出现错误, id: $matchID")
             }

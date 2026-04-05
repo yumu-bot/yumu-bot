@@ -8,18 +8,16 @@ import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.toBody
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import java.net.SocketException
+import java.util.concurrent.CancellationException
 
 @Service("NOWBOT_IMAGE")
 class ImageService(
@@ -214,28 +212,35 @@ class ImageService(
             request.body(entity.body!!)
         }
 
-        // 在这里封好可能出现的（已知原因的）错误，确保错误不会传递下去
-        return try {
-            request.toBody<ByteArray>()
+        try {
+            val b = request.toBody<ByteArray>()
+
+            if (b.isEmpty()) {
+                throw NetworkException.RenderModuleException.NoContent()
+            }
+
+            return b
         } catch (e: Throwable) {
             val ex = e.findCauseOfType<HttpClientErrorException>()
 
-            if (ex != null) {
-                throw when(ex.statusCode) {
-                    HttpStatus.BAD_REQUEST -> NetworkException.RenderModuleException.BadRequest()
-                    HttpStatus.REQUEST_TIMEOUT -> NetworkException.RenderModuleException.RequestTimeout()
-                    HttpStatus.INTERNAL_SERVER_ERROR -> NetworkException.RenderModuleException.InternalServerError()
-                    else -> {
-                        log.error("渲染模块：其他问题", e)
-                        NetworkException.RenderModuleException.BadGateway()
+            when(ex?.statusCode?.value()) {
+                400 -> throw NetworkException.RenderModuleException.BadRequest()
+                // 408 -> throw NetworkException.RenderModuleException.RequestTimeout()
+                408 -> throw NetworkException.RenderModuleException.ServiceUnavailable()
+                500 -> throw NetworkException.RenderModuleException.InternalServerError()
+                502 -> throw NetworkException.RenderModuleException.BadGateway()
+                504 -> throw NetworkException.RenderModuleException.GatewayTimeout()
+
+                else -> {
+                    if (e !is CancellationException) {
+                        log.error("渲染模块：未识别的错误", e)
+                        throw NetworkException.RenderModuleException.Undefined(e)
+                    } else {
+                        throw e
                     }
                 }
-            } else if (e.findCauseOfType<SocketException>() != null) {
-                throw NetworkException.RenderModuleException.ServiceUnavailable()
             }
 
-            log.error("渲染模块：未识别的错误", e)
-            throw NetworkException.RenderModuleException.Undefined(e)
         }
     }
 

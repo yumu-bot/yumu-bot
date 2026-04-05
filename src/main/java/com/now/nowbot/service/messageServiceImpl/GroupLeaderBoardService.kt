@@ -207,6 +207,6 @@ class GroupLeaderBoardService(
     }
     
     companion object {
-        private val log = LoggerFactory.getLogger(javaClass)
+        private val log = LoggerFactory.getLogger(GroupLeaderBoardService::class.java)
     }
 }

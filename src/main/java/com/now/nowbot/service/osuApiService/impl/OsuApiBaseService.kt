@@ -20,6 +20,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import java.io.IOException
@@ -396,7 +397,7 @@ class OsuApiBaseService(
             }
 
             when (error) {
-                is RestClientResponseException -> {
+                is HttpClientErrorException -> {
                     if (error.statusCode.value() == 429) {
                         handle429Error(task, error)
                     } else {
@@ -409,7 +410,7 @@ class OsuApiBaseService(
             }
         }
 
-        private fun <T: Any> handle429Error(task: ApiRequestTask<T>, error: RestClientResponseException) {
+        private fun <T: Any> handle429Error(task: ApiRequestTask<T>, error: HttpClientErrorException) {
             val retryAfter = error.responseHeaders?.getFirst("Retry-After")?.toLongOrNull() ?: 5L
             val waitUntil = System.currentTimeMillis() + (retryAfter * 1000) + 5000 // 额外5秒缓冲
 
@@ -637,11 +638,9 @@ class OsuApiBaseService(
             (if (isFirstTime) "code" else "refresh_token") to token
         )
 
-        // 2. 手动进行 URL 编码并拼接成纯字符串
-        // 这一步彻底绝了 Jackson 介入的可能
         val rawFormString = b.entries.joinToString("&") {
             val key = URLEncoder.encode(it.key, StandardCharsets.UTF_8.name())
-            val value = URLEncoder.encode(it.value ?: "", StandardCharsets.UTF_8.name())
+            val value = URLEncoder.encode(it.value, StandardCharsets.UTF_8.name())
             "$key=$value"
         }
 
@@ -655,60 +654,36 @@ class OsuApiBaseService(
 
             JsonUtils.parseObject(jsonString).get()
         } catch (e: Exception) {
-            val ex = e.findCauseOfType<RestClientResponseException>()
+            val ex = e.findCauseOfType<HttpClientErrorException>()
 
-            if (ex != null) {
-                when(ex.statusCode) {
-                    org.springframework.http.HttpStatus.BAD_REQUEST -> {
-                        throw NetworkException.UserException.BadRequest()
-                    }
+            when(ex?.statusCode?.value()) {
+                400 -> throw NetworkException.UserException.BadRequest()
 
-                    org.springframework.http.HttpStatus.UNAUTHORIZED -> {
-                        bindDao.downgradeBind(user.userID)
-                        log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
-                        throw NetworkException.UserException.Unauthorized()
-                    }
-
-                    org.springframework.http.HttpStatus.FORBIDDEN -> {
-                        throw NetworkException.UserException.Forbidden()
-                    }
-
-                    org.springframework.http.HttpStatus.NOT_FOUND -> {
-                        throw NetworkException.UserException.NotFound()
-                    }
-
-                    org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
-                        throw NetworkException.UserException.TooManyRequests()
-                    }
-
-                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
-                        throw NetworkException.UserException.InternalServerError()
-                    }
-
-                    org.springframework.http.HttpStatus.BAD_GATEWAY -> {
-                        throw NetworkException.UserException.BadGateWay()
-                    }
-
-                    org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
-                        throw NetworkException.UserException.ServiceUnavailable()
-                    }
-
-                    else -> {
-                        throw NetworkException.UserException.Undefined(ex)
-                    }
+                401 -> {
+                    bindDao.downgradeBind(user.userID)
+                    log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
+                    throw NetworkException.UserException.Unauthorized()
                 }
 
+                403 -> throw NetworkException.UserException.Forbidden()
+                404 -> throw NetworkException.UserException.NotFound()
+                408 -> throw NetworkException.UserException.RequestTimeout()
+                429 -> throw NetworkException.UserException.TooManyRequests()
+                500 -> throw NetworkException.UserException.InternalServerError()
+                502 -> throw NetworkException.UserException.BadGateWay()
+                503 -> throw NetworkException.UserException.ServiceUnavailable()
+                504 -> throw NetworkException.UserException.GatewayTimeout()
+
+                else -> {
+                    if (e !is CancellationException) {
+                        log.error("刷新玩家令牌：未知错误", e)
+                        throw NetworkException.UserException.Undefined(e)
+                    } else {
+                        throw e
+                    }
+                }
             }
 
-            if (e.findCauseOfType<java.net.SocketException>() != null) {
-                throw NetworkException.UserException.GatewayTimeout()
-            } else if (e.findCauseOfType<TimeoutException>() != null) {
-                log.error("刷新玩家令牌：超时错误", e)
-                throw NetworkException.UserException.RequestTimeout()
-            } else {
-                log.error("刷新玩家令牌：未知错误", e)
-                throw NetworkException.UserException.Undefined(e)
-            }
         }
 
         val accessToken: String = s["access_token"].asString()
@@ -736,8 +711,8 @@ class OsuApiBaseService(
             try {
                 val t = getBotToken()
                 log.info("成功获取到 osu! 提供给机器人的令牌：${t.take(10)}...")
-            } catch (e: TimeoutException) {
-                log.error("获取令牌失败：可能是您没有填写正确的客户端编号和信息！")
+            } catch (e: HttpClientErrorException) {
+                log.error("获取令牌失败：${e.statusCode.value()}\n可能是您没有填写正确的客户端编号和信息！")
             } catch (e: Exception) {
                 log.error("获取令牌失败：", e)
             }

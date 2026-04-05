@@ -7,13 +7,11 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import java.util.*
 
 @Service
@@ -40,26 +38,22 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
         return try {
             request(base.sbApiRestClient)
         } catch (e: Exception) {
-            val cause = e as? RestClientResponseException ?: e.cause
-            if (cause is RestClientResponseException) {
-                when (cause.statusCode.value()) {
-                    400 -> throw NetworkException.BeatmapException.BadRequest()
-                    401 -> throw NetworkException.BeatmapException.Unauthorized()
-                    403 -> throw NetworkException.BeatmapException.Forbidden()
-                    404 -> throw NetworkException.BeatmapException.NotFound()
-                    429 -> throw NetworkException.BeatmapException.TooManyRequests()
-                    500 -> throw NetworkException.BeatmapException.InternalServerError()
-                    502 -> throw NetworkException.BeatmapException.BadGateWay()
-                    503 -> throw NetworkException.BeatmapException.ServiceUnavailable()
+            val cause = e.findCauseOfType<HttpClientErrorException>()
+            when (cause?.statusCode?.value()) {
+                400 -> throw NetworkException.BeatmapException.BadRequest()
+                401 -> throw NetworkException.BeatmapException.Unauthorized()
+                403 -> throw NetworkException.BeatmapException.Forbidden()
+                404 -> throw NetworkException.BeatmapException.NotFound()
+                408 -> throw NetworkException.BeatmapException.RequestTimeout()
+                429 -> throw NetworkException.BeatmapException.TooManyRequests()
+                500 -> throw NetworkException.BeatmapException.InternalServerError()
+                502 -> throw NetworkException.BeatmapException.BadGateWay()
+                503 -> throw NetworkException.BeatmapException.ServiceUnavailable()
+                504 -> throw NetworkException.BeatmapException.GatewayTimeout()
+                else -> {
+                    log.error("谱面模块：未定义的错误", e)
+                    throw NetworkException.BeatmapException.Undefined(e)
                 }
-            }
-
-            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                throw NetworkException.BeatmapException.GatewayTimeout()
-            } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                throw NetworkException.BeatmapException.RequestTimeout()
-            } else {
-                throw NetworkException.BeatmapException.Undefined(e)
             }
         }
     }

@@ -9,19 +9,19 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.web.TeamInfo
 import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
-import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.HttpClientErrorException
 
 interface OsuUserApiService {
     fun getAvatarByte(user: OsuUser): ByteArray
 
     fun isPlayerExist(name: String): Boolean
 
-    @Throws(RestClientResponseException::class)
+    @Throws(HttpClientErrorException::class)
     fun getOauthUrl(state: String): String {
         return getOauthUrl(state, false)
     }
 
-    @Throws(RestClientResponseException::class)
+    @Throws(HttpClientErrorException::class)
     fun getOauthUrl(state: String, full: Boolean): String
 
     @Throws(BindException::class)
@@ -34,26 +34,26 @@ interface OsuUserApiService {
 
     fun applyBindUserDetails(user: BindUser)
 
-    @Throws(RestClientResponseException::class)
+    @Throws(HttpClientErrorException::class)
     fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser
 
-    @Throws(RestClientResponseException::class)
+    @Throws(HttpClientErrorException::class)
     fun getOsuUser(name: String, mode: OsuMode): OsuUser
 
-    @Throws(RestClientResponseException::class)
+    @Throws(HttpClientErrorException::class)
     fun getOsuUser(id: Long, mode: OsuMode): OsuUser
 
-    @Throws(RestClientResponseException::class)
+    @Throws(HttpClientErrorException::class)
     fun getOsuUser(user: BindUser): OsuUser {
         return getOsuUser(user, user.mode)
     }
 
-    @Throws(RestClientResponseException::class)
+    @Throws(HttpClientErrorException::class)
     fun getOsuUser(name: String): OsuUser {
         return getOsuUser(name, OsuMode.DEFAULT)
     }
 
-    @Throws(RestClientResponseException::class)
+    @Throws(HttpClientErrorException::class)
     fun getOsuUser(id: Long): OsuUser {
         return getOsuUser(id, OsuMode.DEFAULT)
     }

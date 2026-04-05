@@ -1,6 +1,8 @@
 package com.now.nowbot.util
 
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import org.springframework.web.client.HttpClientErrorException
+import java.io.IOException
 
 inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBody(): T {
     if (T::class == ByteArray::class) {
@@ -17,11 +19,32 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
             }
         } as T
     }
-    val jsonString = exchange { _, response ->
-        if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {
-            throw HttpClientErrorException(response.statusCode, response.statusText, response.body.readAllBytes(), null)
+    val jsonString = try {
+        exchange { _, response ->
+            if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {
+                throw HttpClientErrorException(response.statusCode, response.statusText, response.body.readAllBytes(), null)
+            } else {
+                String(response.body.readAllBytes(), Charsets.UTF_8)
+            }
+        }
+    } catch (e: Exception) {
+        if (e.findCauseOfType<java.net.SocketTimeoutException>() != null ||
+            e.findCauseOfType<java.net.SocketException>() != null
+        ) {
+            throw org.springframework.web.client.HttpServerErrorException(
+                org.springframework.http.HttpStatus.REQUEST_TIMEOUT,
+                "408 Request Timeout"
+            )
+        } else if (
+            e.findCauseOfType<IOException>() != null ||
+            e.findCauseOfType<java.net.ConnectException>() != null
+        ) {
+            throw org.springframework.web.client.HttpServerErrorException(
+                org.springframework.http.HttpStatus.GATEWAY_TIMEOUT,
+                "504 Gateway Timeout"
+            )
         } else {
-            String(response.body.readAllBytes(), Charsets.UTF_8)
+            throw e
         }
     }
 
@@ -34,11 +57,33 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
 
 inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBodyList(): List<T> {
 
-    val jsonString = exchange { _, response ->
-        if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {
-            throw HttpClientErrorException(response.statusCode, response.statusText, response.body.readAllBytes(), null)
+    val jsonString = try {
+        exchange { _, response ->
+            if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {
+                // 注意：Spring 6+ 建议使用 HttpStatusCodeException 的子类
+                throw HttpClientErrorException(response.statusCode, response.statusText, response.body.readAllBytes(), null)
+            } else {
+                String(response.body.readAllBytes(), Charsets.UTF_8)
+            }
+        }
+    } catch (e: Exception) {
+        if (e.findCauseOfType<java.net.SocketTimeoutException>() != null ||
+            e.findCauseOfType<java.net.SocketException>() != null
+        ) {
+            throw org.springframework.web.client.HttpServerErrorException(
+                org.springframework.http.HttpStatus.REQUEST_TIMEOUT,
+                "408 Request Timeout"
+            )
+        } else if (
+            e.findCauseOfType<IOException>() != null ||
+            e.findCauseOfType<java.net.ConnectException>() != null
+        ) {
+            throw org.springframework.web.client.HttpServerErrorException(
+                org.springframework.http.HttpStatus.GATEWAY_TIMEOUT,
+                "504 Gateway Timeout"
+            )
         } else {
-            String(response.body.readAllBytes(), Charsets.UTF_8)
+            throw e
         }
     }
 

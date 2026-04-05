@@ -21,7 +21,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestClientResponseException
 import java.nio.charset.StandardCharsets
 import java.util.regex.Matcher
 import kotlin.math.round
@@ -475,7 +474,7 @@ class SeriesRatingService(
                         m.toString(),
                     )
                 }
-            } catch (e: RestClientResponseException) {
+            } catch (e: HttpClientErrorException) {
                 failTimes++
                 if (failTimes > 3) {
                     log.error("SRA 查询次数超限", e)

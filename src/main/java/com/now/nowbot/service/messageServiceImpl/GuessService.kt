@@ -78,7 +78,7 @@ class GuessService(
                 .replace(Regex("[^\\p{L}\\p{N}]"), "")
         }
 
-        private val log: Logger = LoggerFactory.getLogger(javaClass)
+        private val log: Logger = LoggerFactory.getLogger(GuessService::class.java)
 
         const val SIMILARITY_THRESHOLD = 0.7
         const val GUESS_THRESHOLD = 0.5

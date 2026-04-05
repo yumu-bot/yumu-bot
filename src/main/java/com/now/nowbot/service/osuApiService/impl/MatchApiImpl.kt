@@ -11,8 +11,9 @@ import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.toBody
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
+import java.util.concurrent.CancellationException
 
 @Service
 class MatchApiImpl(
@@ -133,53 +134,29 @@ class MatchApiImpl(
                 request(base.osuApiRestClient)
             }
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<RestClientResponseException>()
+            val ex = e.findCauseOfType<HttpClientErrorException>()
 
-            when {
-                ex == null -> {
-                    log.error("比赛请求：未定义的错误：", e)
-                    throw NetworkException.MatchException.Undefined(e)
-                }
+            when(ex?.statusCode?.value()) {
+                400 -> throw NetworkException.MatchException.BadRequest()
+                401 -> throw NetworkException.MatchException.Unauthorized()
+                403 -> throw NetworkException.MatchException.Forbidden()
+                404 -> throw NetworkException.MatchException.NotFound()
+                408 -> throw NetworkException.MatchException.RequestTimeout()
 
-                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
-                    throw NetworkException.MatchException.BadRequest()
-                }
+                429 -> throw NetworkException.MatchException.TooManyRequests()
 
-                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
-                    throw NetworkException.MatchException.Unauthorized()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
-                    throw NetworkException.MatchException.Forbidden()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
-                    throw NetworkException.MatchException.NotFound()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
-                    throw NetworkException.MatchException.TooManyRequests()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
-                    throw NetworkException.MatchException.InternalServerError()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
-                    throw NetworkException.MatchException.BadGateway()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
-                    throw NetworkException.MatchException.ServiceUnavailable()
-                }
-
-                e.findCauseOfType<java.net.SocketException>() != null -> {
-                    throw NetworkException.MatchException.GatewayTimeout()
-                }
+                500 -> throw NetworkException.MatchException.InternalServerError()
+                502 -> throw NetworkException.MatchException.BadGateway()
+                503 -> throw NetworkException.MatchException.ServiceUnavailable()
+                504 -> throw NetworkException.MatchException.GatewayTimeout()
 
                 else -> {
-                    log.error("比赛请求：未定义的错误：", e)
-                    throw NetworkException.MatchException.Undefined(e)
+                    if (e !is CancellationException) {
+                        log.error("比赛请求：未定义的错误：", e)
+                        throw NetworkException.MatchException.Undefined(e)
+                    } else {
+                        throw e
+                    }
                 }
             }
         }

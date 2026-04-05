@@ -15,11 +15,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import java.io.IOException
 import java.nio.file.Files
 import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
 import kotlin.math.abs
 import kotlin.text.Charsets.UTF_8
 
@@ -132,7 +133,7 @@ import kotlin.text.Charsets.UTF_8
                 client.get().uri("covers/$song.png")
                     .toBody<ByteArray>()
             }
-        } catch (e: RestClientResponseException) {
+        } catch (e: HttpClientErrorException) {
             if (e.statusCode.value() == 404) {
                 request { client ->
                     client.get().uri("covers/00000.png")
@@ -295,8 +296,7 @@ import kotlin.text.Charsets.UTF_8
 
     @Deprecated("请使用 From Database") private fun getMaimaiFitLibraryFromFile(): MaiFit {
         if (isRegularFile("data-fit.json")) {
-            return parseFile<MaiFit>("data-fit.json") ?:
-            return JacksonUtil.parseObject<MaiFit>(maimaiFitLibraryFromAPI)!!
+            return parseFile<MaiFit>("data-fit.json") ?: JacksonUtil.parseObject<MaiFit>(maimaiFitLibraryFromAPI)!!
         } else {
             log.info("舞萌: 本地统计库不存在，获取 API 版本")
             return JacksonUtil.parseObject(maimaiFitLibraryFromAPI)!!
@@ -306,7 +306,7 @@ import kotlin.text.Charsets.UTF_8
     @Deprecated("请使用 From Database") private fun getMaimaiAliasLibraryFromFile(): List<MaiAlias> {
         if (isRegularFile("data-aliases.json")) {
             return parseFile<MaimaiAliasResponseBody>("data-aliases.json")?.aliases
-                ?: return JacksonUtil.parseObject<MaimaiAliasResponseBody>(maimaiAliasLibraryFromAPI)!!.aliases
+                ?: JacksonUtil.parseObject<MaimaiAliasResponseBody>(maimaiAliasLibraryFromAPI)!!.aliases
         } else {
             log.info("舞萌: 本地外号库不存在，获取 API 版本")
             return JacksonUtil.parseObject<MaimaiAliasResponseBody>(maimaiAliasLibraryFromAPI)!!.aliases
@@ -353,31 +353,31 @@ import kotlin.text.Charsets.UTF_8
     }
 
     @Throws(
-        RestClientResponseException::class
+        HttpClientErrorException::class
     ) override fun getMaimaiSongScore(qq: Long, songID: Int): MaiScore {
         return MaiScore()
     }
 
     @Throws(
-        RestClientResponseException::class
+        HttpClientErrorException::class
     ) override fun getMaimaiSongsScore(qq: Long, songIDs: List<Int>): List<MaiScore> {
         return listOf()
     }
 
     @Throws(
-        RestClientResponseException::class
+        HttpClientErrorException::class
     ) override fun getMaimaiSongScore(username: String, songID: Int): MaiScore {
         return MaiScore()
     }
 
     @Throws(
-        RestClientResponseException::class
+        HttpClientErrorException::class
     ) override fun getMaimaiSongsScore(username: String, songIDs: List<Int>): List<MaiScore> {
         return listOf()
     }
 
     @Throws(
-        RestClientResponseException::class
+        HttpClientErrorException::class
     ) override fun getMaimaiFullScores(qq: Long): MaiBestScore {
         return request { client ->
             client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("qq", qq).build() }
@@ -387,7 +387,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     @Throws(
-        RestClientResponseException::class
+        HttpClientErrorException::class
     ) override fun getMaimaiFullScores(username: String): MaiBestScore {
         return request { client ->
             client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build() }
@@ -531,7 +531,7 @@ import kotlin.text.Charsets.UTF_8
     private fun <T : Any> request(request: (RestClient) -> T): T {
         return try {
             request(base.divingFishApiRestClient)
-        } catch (e: RestClientResponseException) {
+        } catch (e: HttpClientErrorException) {
             when (e.statusCode.value()) {
                 400 -> throw NetworkException.DivingFishException.BadRequest()
                 401 -> throw NetworkException.DivingFishException.Unauthorized()
@@ -539,14 +539,19 @@ import kotlin.text.Charsets.UTF_8
                 408 -> throw NetworkException.DivingFishException.RequestTimeout()
                 500 -> throw NetworkException.DivingFishException.InternalServerError()
                 502 -> throw NetworkException.DivingFishException.BadGateway()
+                504 -> throw NetworkException.DivingFishException.GatewayTimeout()
                 else -> {
                     log.error("水鱼查分器：获取失败", e)
                     throw NetworkException.DivingFishException.Undefined(e)
                 }
             }
         } catch (e: Exception) {
-            log.error("水鱼查分器：获取失败", e)
-            throw NetworkException.DivingFishException.Undefined(e)
+            if (e !is CancellationException) {
+                log.error("水鱼查分器：获取失败", e)
+                throw NetworkException.DivingFishException.Undefined(e)
+            } else {
+                throw e
+            }
         }
     }
 

@@ -11,12 +11,10 @@ import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import tools.jackson.databind.JsonNode
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.util.concurrent.TimeoutException
+import java.util.concurrent.CancellationException
 
 @Service
 class LxChunithmApiImpl(
@@ -52,30 +50,26 @@ class LxChunithmApiImpl(
         return try {
             request(base.lxnsApiRestClient)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<RestClientResponseException>()
+            val ex = e.findCauseOfType<HttpClientErrorException>()
 
-            if (ex != null) {
-                when (ex.statusCode.value()) {
-                    502 -> throw NetworkException.LxnsException.BadGateway()
-                    500 -> throw NetworkException.LxnsException.InternalServerError()
-                    401 -> throw NetworkException.LxnsException.Unauthorized()
-                    403 -> throw NetworkException.LxnsException.Forbidden()
-                    404 -> throw NetworkException.LxnsException.NotFound()
-                    429 -> throw NetworkException.LxnsException.TooManyRequests()
-                    503 -> throw NetworkException.LxnsException.ServiceUnavailable()
-                    else -> {
+            when (ex?.statusCode?.value()) {
+                502 -> throw NetworkException.LxnsException.BadGateway()
+                500 -> throw NetworkException.LxnsException.InternalServerError()
+                401 -> throw NetworkException.LxnsException.Unauthorized()
+                403 -> throw NetworkException.LxnsException.Forbidden()
+                404 -> throw NetworkException.LxnsException.NotFound()
+                408 -> throw NetworkException.LxnsException.RequestTimeout()
+                429 -> throw NetworkException.LxnsException.TooManyRequests()
+                503 -> throw NetworkException.LxnsException.ServiceUnavailable()
+                504 -> throw NetworkException.LxnsException.GatewayTimeout()
+
+                else -> {
+                    if (e !is CancellationException) {
                         log.error("落雪咖啡屋：获取失败", e)
                         throw NetworkException.LxnsException.Undefined(e)
+                    } else {
+                        throw e
                     }
-                }
-            } else {
-                if (e.findCauseOfType<SocketTimeoutException>() != null || e.findCauseOfType<TimeoutException>() != null) {
-                    throw NetworkException.LxnsException.RequestTimeout()
-                } else if (e.findCauseOfType<IOException>() != null) {
-                    throw NetworkException.LxnsException.GatewayTimeout()
-                } else {
-                    log.error("落雪咖啡屋：获取失败", e)
-                    throw NetworkException.LxnsException.Undefined(e)
                 }
             }
         }

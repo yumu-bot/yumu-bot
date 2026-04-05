@@ -15,10 +15,11 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import java.io.IOException
 import java.nio.file.Files
+import java.util.concurrent.CancellationException
 import kotlin.text.Charsets.UTF_8
 
 @Service
@@ -315,7 +316,7 @@ class ChunithmApiImpl(
     private fun <T : Any> request(request: (RestClient) -> T): T {
         return try {
             request(base.divingFishApiRestClient)
-        } catch (e: RestClientResponseException) {
+        } catch (e: HttpClientErrorException) {
             when (e.statusCode.value()) {
                 400 -> throw NetworkException.DivingFishException.BadRequest()
                 401 -> throw NetworkException.DivingFishException.Unauthorized()
@@ -329,8 +330,12 @@ class ChunithmApiImpl(
                 }
             }
         } catch (e: Exception) {
-            log.error("水鱼查分器：获取失败", e)
-            throw NetworkException.DivingFishException.Undefined(e)
+            if (e !is CancellationException) {
+                log.error("水鱼查分器：获取失败", e)
+                throw NetworkException.DivingFishException.Undefined(e)
+            } else {
+                throw e
+            }
         }
     }
 

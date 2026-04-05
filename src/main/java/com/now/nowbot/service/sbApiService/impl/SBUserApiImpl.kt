@@ -18,9 +18,10 @@ import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import java.util.*
+import java.util.concurrent.CancellationException
 
 @Service
 class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDao): SBUserApiService {
@@ -163,8 +164,9 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
         return try {
             request(base.sbApiRestClient)
         } catch (e: Exception) {
-            val cause = e as? RestClientResponseException ?: e.cause
-            if (cause is RestClientResponseException) {
+            val cause = e.findCauseOfType<HttpClientErrorException>()
+
+            if (cause != null) {
                 when (cause.statusCode.value()) {
                     400 -> throw NetworkException.UserException.BadRequest()
                     401 -> throw NetworkException.UserException.Unauthorized()
@@ -183,7 +185,13 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
             } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
                 throw NetworkException.UserException.RequestTimeout()
             } else {
-                throw NetworkException.UserException.Undefined(e)
+
+                if (e !is CancellationException) {
+                    log.error("玩家模块：未定义的错误", e)
+                    throw NetworkException.UserException.Undefined(e)
+                } else {
+                    throw e
+                }
             }
         }
     }

@@ -26,13 +26,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.util.UriComponentsBuilder
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
 
 @Service class UserApiImpl(
     private val base: OsuApiBaseService, private val bindDao: BindDao, private val userInfoDao: OsuUserInfoDao
@@ -422,51 +422,25 @@ import java.util.concurrent.Callable
                 request(base.osuApiRestClient)
             }
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<RestClientResponseException>()
+            val ex = e.findCauseOfType<HttpClientErrorException>()
 
-            when {
-                ex == null -> {
-                    throw  NetworkException.UserException.Undefined(e)
-                }
+            when (ex?.statusCode?.value()) {
+                400 -> throw NetworkException.UserException.BadRequest()
+                401 -> throw NetworkException.UserException.Unauthorized()
+                403 -> throw NetworkException.UserException.Forbidden()
+                404 -> throw NetworkException.UserException.NotFound()
+                408 -> throw NetworkException.UserException.RequestTimeout()
+                429 -> throw NetworkException.UserException.TooManyRequests()
+                500 -> throw NetworkException.UserException.InternalServerError()
+                502 -> throw NetworkException.UserException.BadGateWay()
+                503 -> throw NetworkException.UserException.ServiceUnavailable()
+                504 -> throw NetworkException.UserException.GatewayTimeout()
 
-                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
-                    throw NetworkException.UserException.BadRequest()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
-                    throw NetworkException.UserException.Unauthorized()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
-                    throw NetworkException.UserException.Forbidden()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
-                    throw NetworkException.UserException.NotFound()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
-                    throw NetworkException.UserException.TooManyRequests()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
-                    throw NetworkException.UserException.InternalServerError()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
-                    throw NetworkException.UserException.BadGateWay()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
-                    throw NetworkException.UserException.ServiceUnavailable()
-                }
-
-                e.findCauseOfType<java.net.SocketException>() != null -> {
-                    throw NetworkException.UserException.GatewayTimeout()
-                }
-
-                else -> {
+                else -> if (e !is CancellationException) {
+                    log.error("玩家模块：未定义的错误", e)
                     throw NetworkException.UserException.Undefined(e)
+                } else {
+                    throw e
                 }
             }
         }

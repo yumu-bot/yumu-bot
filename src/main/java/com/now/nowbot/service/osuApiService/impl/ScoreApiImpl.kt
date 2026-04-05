@@ -18,8 +18,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.util.UriBuilder
 import java.io.IOException
 import java.net.URI
@@ -29,6 +29,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.RejectedExecutionException
 import java.util.function.Function
 import kotlin.text.HexFormat
@@ -585,61 +586,36 @@ class ScoreApiImpl(
                 request(base.osuApiRestClient)
             }
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<RestClientResponseException>()
+            val ex = e.findCauseOfType<HttpClientErrorException>()
 
-            when {
-                ex == null -> {
-                    log.error("成绩请求：未定义的错误：", e)
-                    throw NetworkException.ScoreException.Undefined(e)
-                }
+            when(ex?.statusCode?.value()) {
+                400 -> throw NetworkException.ScoreException.BadRequest()
+                401 -> throw NetworkException.ScoreException.Unauthorized()
+                403 -> throw NetworkException.ScoreException.Forbidden()
+                404 -> throw NetworkException.ScoreException.NotFound()
+                422 -> throw NetworkException.ScoreException.UnprocessableEntity()
+                429 -> throw NetworkException.ScoreException.TooManyRequests()
+                500 -> throw NetworkException.ScoreException.InternalServerError()
+                502 -> throw NetworkException.ScoreException.BadGateway()
+                503 -> throw NetworkException.ScoreException.ServiceUnavailable()
 
-                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
-                    throw NetworkException.ScoreException.BadRequest()
-                }
+                else -> when {
+                    e.findCauseOfType<RejectedExecutionException>() != null -> {
+                        throw NetworkException.ScoreException.TooManyRequests()
+                    }
 
-                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
-                    throw NetworkException.ScoreException.Unauthorized()
-                }
+                    e.findCauseOfType<java.net.SocketException>() != null -> {
+                        throw NetworkException.ScoreException.GatewayTimeout()
+                    }
 
-                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
-                    throw NetworkException.ScoreException.Forbidden()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
-                    throw NetworkException.ScoreException.NotFound()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
-                    throw NetworkException.ScoreException.TooManyRequests()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
-                    throw NetworkException.ScoreException.InternalServerError()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
-                    throw NetworkException.ScoreException.BadGateway()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY -> {
-                    throw NetworkException.ScoreException.UnprocessableEntity()
-                }
-
-                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
-                    throw NetworkException.ScoreException.ServiceUnavailable()
-                }
-
-                e.findCauseOfType<RejectedExecutionException>() != null -> {
-                    throw NetworkException.ScoreException.TooManyRequests()
-                }
-                
-                e.findCauseOfType<java.net.SocketException>() != null -> {
-                    throw NetworkException.ScoreException.GatewayTimeout()
-                }
-
-                else -> {
-                    log.error("成绩请求：未定义的错误：", e)
-                    throw NetworkException.ScoreException.Undefined(e)
+                    else -> {
+                        if (e !is CancellationException) {
+                            log.error("成绩请求：未定义的错误：", e)
+                            throw NetworkException.ScoreException.Undefined(e)
+                        } else {
+                            throw e
+                        }
+                    }
                 }
             }
         }
