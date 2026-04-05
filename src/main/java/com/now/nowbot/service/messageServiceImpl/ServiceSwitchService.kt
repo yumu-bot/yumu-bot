@@ -45,7 +45,7 @@ class ServiceSwitchService(
         ),
 
         BEATMAP(listOf("b", "beatmap", "maps", "beatmaps", "谱面", "图"),
-            listOf("map", "audio", "explore", "qualified_map", "nomination", "map_minus", "leader_board", "get_cover", "refresh_file")
+            listOf("map", "audio", "explore", "qualified_map", "nomination", "map_minus", "leader_board", "group_leader_board", "get_cover", "refresh_file")
         ),
 
         MATCH(listOf("m", "match", "tour", "tournament", "matches", "multiplayer", "mp", "比赛", "房间"),

@@ -23,6 +23,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
@@ -31,6 +32,7 @@ import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_PAGE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -134,9 +136,15 @@ class GroupLeaderBoardService(
 
         val m = OsuMode.getConvertableMode(mode, beatmap.mode)
 
+        val mods = InstructionUtil.getMod(matcher)
+
         val (ss, user) = runBlocking(Dispatchers.IO) {
-            val ssDeferred = async {
-                val mods = InstructionUtil.getMod(matcher)
+            launch {
+                BeatmapUtil.applyBeatmapChanges(beatmap, mods)
+                calculateApiService.applyStarToBeatmap(beatmap, m, mods)
+            }
+
+            val scoresDeferred = async {
 
                 val bot = botContainer.robots[event.bot?.botID]
                     ?: run {
@@ -151,7 +159,7 @@ class GroupLeaderBoardService(
                         throw TipsException("群内排行榜：机器人获取群成员失败。")
                     }
 
-//        val members = arrayListOf(1340691940L)
+                // arrayListOf(1340691940L)
 
                 if (members.isEmpty()) {
                     log.warn("群内排行榜：机器人 ${bot.selfId} 获取 ${event.subject.contactID} 群聊玩家为空。")
@@ -188,7 +196,7 @@ class GroupLeaderBoardService(
                 }.getOrNull()
             }
 
-            ssDeferred.await() to userDeferred.await()
+            scoresDeferred.await() to userDeferred.await()
         }
 
         val (split, currentPage, maxPage) = DataUtil.splitPage(ss, page, 50)
