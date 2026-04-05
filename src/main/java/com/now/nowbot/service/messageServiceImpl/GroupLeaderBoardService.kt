@@ -7,6 +7,7 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
 import com.now.nowbot.model.osu.LazerScore
@@ -25,6 +26,7 @@ import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationExceptio
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
+import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_PAGE
 import kotlinx.coroutines.Dispatchers
@@ -106,11 +108,24 @@ class GroupLeaderBoardService(
             throw UnsupportedOperationException.NotGroup()
         }
 
+        val any = matcher.group(FLAG_ANY) ?: ""
+
+        val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
+
+        // 如果不加井号，则有时候范围会被匹配到这里来
+        val rangeInConditions = conditions.lastOrNull().orEmpty()
+        val hasRangeInConditions = rangeInConditions.isNotEmpty()
+        val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
+
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
+            throw IllegalArgumentException.WrongException.Cabbage()
+        }
+
+        val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: rangeInConditions.firstOrNull()?.toIntOrNull() ?: 1
+
         val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event)).data
 
         val id = matcher.group(FLAG_BID)?.toLongOrNull()
-
-        val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
 
         val beatmapID = id ?: dao.getLastBeatmapID(event.subject.contactID, null,
             LocalDateTime.now().minusHours(24L)) ?: throw IllegalArgumentException.WrongException.BeatmapID()
@@ -149,13 +164,17 @@ class GroupLeaderBoardService(
                     throw NoSuchElementException.GroupBeatmapScore(beatmap.previewName)
                 }
 
-                val filtered = scores.filterMod(mods,
+                beatmapApiService.applyBeatmapExtendForSameScore(scores, beatmap)
+                calculateApiService.applyPPToScoresWithSameBeatmap(scores)
+
+                val filteredScores = ScoreFilter.filterScores(List(scores.size) { it + 1 }.zip(scores).toMap(), conditions).values.toList().ifEmpty {
+                    throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
+                }
+
+                val filtered = filteredScores.filterMod(mods,
                     {
                         throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
                     })
-
-                beatmapApiService.applyBeatmapExtendForSameScore(filtered, beatmap)
-                calculateApiService.applyPPToScoresWithSameBeatmap(filtered)
 
                 filtered.sortedWith(
                     compareBy<LazerScore> { if (it.rank == "F") 1 else 0 }

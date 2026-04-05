@@ -101,12 +101,6 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
             val boolean = condition.boolean
             val str = condition.condition
 
-            // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
-            val longPlus = if (long in 1..< 100) {
-                long * 1000L
-            } else {
-                long
-            }
 
             return when (filter) {
                 USERNAME -> fit(operator, it.username, str)
@@ -136,7 +130,7 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
                 SUPPORT_LEVEL -> fit(operator,
                     (it.supportLevel ?: (-1).toByte()).toLong(), long)
 
-                PP -> fit(operator, it.statistics?.pp?.roundToLong(), longPlus)
+                PP -> fit(operator, it.statistics?.pp?.roundToLong(), long)
 
                 ACCURACY -> {
                     val acc = when {
@@ -165,9 +159,9 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
 
                     fit(operator, it.statistics?.globalRank ?: Long.MAX_VALUE, rk)
                 }
-                PLAY_COUNT -> fit(operator, it.statistics?.playCount, longPlus)
-                PLAY_TIME -> fit(operator, it.statistics?.playCount, longPlus)
-                TOTAL_HITS -> fit(operator, it.statistics?.playCount, longPlus)
+                PLAY_COUNT -> fit(operator, it.statistics?.playCount, long)
+                PLAY_TIME -> fit(operator, it.statistics?.playTime, long)
+                TOTAL_HITS -> fit(operator, it.statistics?.totalHits, long)
                 else -> false
             }
         }

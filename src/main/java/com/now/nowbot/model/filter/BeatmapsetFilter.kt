@@ -107,13 +107,6 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
             val double = condition.double
             val str = condition.condition
 
-            // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
-            val longPlus = if (long in 1..< 100) {
-                long * 1000L
-            } else {
-                long
-            }
-
             val bs = s.beatmaps.orEmpty()
 
             return when(filter) {
@@ -218,7 +211,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                 }
                 CREATED_TIME -> fitTime(operator, s.submittedDate.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond(), str)
                 RANKED_TIME -> fitTime(operator, s.rankedDate?.atZoneSameInstant(ZoneOffset.UTC)?.toEpochSecond() ?: return false, str)
-                PLAY_COUNT -> fit(operator, s.playCount, longPlus)
+                PLAY_COUNT -> fit(operator, s.playCount, long)
                 FAVOURITE -> fit(operator, s.favouriteCount, long)
 
                 else -> false

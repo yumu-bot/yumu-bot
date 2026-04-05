@@ -483,6 +483,7 @@ enum class Instruction(val pattern: Pattern) {
 
         appendMode()
         appendBID()
+        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
         appendMod()
     }),

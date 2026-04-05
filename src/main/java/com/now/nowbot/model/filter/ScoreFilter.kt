@@ -261,13 +261,6 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             val str = condition.condition
             val dec = condition.hasDecimal
 
-            // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
-            val longPlus = if (long in 1..< 100) {
-                long * 1000L
-            } else {
-                long
-            }
-
             return when (filter) {
                 CREATOR -> fit(operator, it.beatmapset.creator, str)
 
@@ -336,7 +329,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 CS -> fit(operator, it.beatmap.cs?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 OD -> fit(operator, it.beatmap.od?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 HP -> fit(operator, it.beatmap.hp?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
-                PERFORMANCE -> fit(operator, it.pp.roundToLong(), longPlus) //fit(operator, it.pp, double, digit = 0, isRound = true, isInteger = true)
+                PERFORMANCE -> fit(operator, it.pp.roundToLong(), long) //fit(operator, it.pp, double, digit = 0, isRound = true, isInteger = true)
                 RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
 
