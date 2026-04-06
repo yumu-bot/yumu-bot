@@ -34,7 +34,7 @@ class RestClientConfig {
     @Bean("osuApiRestClient")
     @Qualifier("osuApiRestClient")
     fun osuApiRestClient(config: NowbotConfig): RestClient {
-        val hasProxy = config.proxyHost != null
+        val hasProxy = config.proxyHost != null && config.proxyPort != 0
         val connectionManager = PoolingHttpClientConnectionManager()
 
         connectionManager.apply {
