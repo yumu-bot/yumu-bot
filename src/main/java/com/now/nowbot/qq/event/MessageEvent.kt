@@ -38,6 +38,10 @@ interface MessageEvent : Event {
         return this.subject.sendImage(url)
     }
 
+    fun reply(any: Any): MessageReceipt {
+        return this.subject.sendMessage(any.toString())
+    }
+
     fun replyVoice(voice: ByteArray): MessageReceipt {
         return this.subject.sendVoice(voice)
     }

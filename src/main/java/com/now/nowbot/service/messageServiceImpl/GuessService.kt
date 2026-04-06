@@ -4,6 +4,7 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Covers
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -93,7 +94,7 @@ class GuessService(
                             try {
                                 delay(200L.milliseconds)
 
-                                g.event.reply("猜歌被迫结束：服务器重启。\n很抱歉！您可以在一会儿后重新开局。")
+                                g.event.reply(GuessReply.Restart)
 
                                 log.info("在群组 ${g.event.subject.contactID} 的猜词游戏重启通知发送成功")
                             } catch (e: Exception) {
@@ -102,6 +103,171 @@ class GuessService(
                         }
                     }
             }
+        }
+    }
+
+    // 超级稳定™ 的抗腾讯检测回复类
+    open class GuessReply(private val mixin: List<List<String>>) {
+        override fun toString(): String {
+            return mixin.joinToString("") { mix ->
+                if (mix.isNotEmpty()) {
+                    mix.random()
+                } else {
+                    ""
+                }
+            }.ifEmpty { "总之这是一条回复。" }
+        }
+
+        data object Restart: GuessReply(
+            listOf(
+                listOf("猜歌游戏", "本局猜歌", "正在进行的猜歌"),
+                listOf("遇到服务器重启", "因为系统维护", "由于老大要睡觉"),
+                listOf("已被迫中断。", "暂时无法继续。", "已经终止。", "已经结束了（我是来退出这个乐队的）。"),
+                listOf("请稍后再试。", "很快就会恢复！", "抱歉！"),
+            )
+        )
+
+        data object NearingTimeout: GuessReply(
+            listOf(
+                listOf(
+                    "猜歌即将自动结束。",
+                    "很长时间没有人继续猜歌了。"
+                ),
+                listOf(
+                    "如果还想参加，可以输入 !g 字母或歌名。",
+                    "人家还想一起玩呢。"
+                ),
+                listOf("\n"),
+                listOf(
+                    "如果不知道怎么猜，可以输入 !g #序号 来获取提示。但要注意这样可能会损失得分。",
+                    "如果不想猜，猜歌发起者和管理们可以输入 !g 来关闭。也可以等待它自行关闭。"
+                ),
+            )
+        )
+
+        data object Timeout: GuessReply(
+            listOf(
+                listOf(
+                    "由于长时间无人操作，",
+                    "由于不想被冷群，"
+                ),
+                listOf(
+                    "猜歌已经自动结束。",
+                    "猜歌已经被终止。"
+                ),
+                listOf("\n"),
+                listOf(
+                    "期待您的下次游玩！",
+                    "多留意帮助文档的娱乐功能，好处多多哦。"
+                ),
+            )
+        )
+
+        data object Guessed: GuessReply(
+            listOf(
+                listOf(
+                    "这张谱面已经被猜出来了，", "你想获取别人已经拿走的得分吗？", "不要重复猜了，"
+                ),
+                IDIOT
+            )
+        )
+
+        data object ManyTips: GuessReply(
+            listOf(
+                listOf(
+                    "已经给了你足够多的提示了，", "你需要我把答案直接喂给你吗？", "已经是我奶奶都能猜出来的难度了，"
+                ),
+                IDIOT
+            )
+        )
+
+        data object Incorrect: GuessReply(
+            listOf(
+                SORRY,
+                listOf(
+                    "没有猜中歌曲呢。", "差一点点就能猜中了。", "好像不是这个答案呢。"
+                )
+            )
+        )
+
+        data object IncorrectMuch: GuessReply(
+            listOf(
+                listOf(
+                    "开了这么多都猜不中，真是", "还是乖乖认输吧，", "要不要来点提示？"
+                ),
+                IDIOT
+            )
+        )
+
+        data object Correct: GuessReply(
+            listOf(
+                listOf("您已经猜中以下谱面：", "其中一个答案已经展现：", "您已经参悟了其中的真谛：", "某个答案已为您揭晓：")
+            )
+        )
+
+        data object Initializing: GuessReply(
+            listOf(
+                listOf("正在", "即将", "马上"),
+                listOf("生成题目", "抓捕小猪", "构思野史", "思考人生", "刷 PP", "联系 peppy", "接入 OpenClaw", "擦皮鞋", "对抗神经网络"),
+                listOf("...")
+            )
+        )
+
+        data class Start(val username: String, val mode: OsuMode, val size: Int): GuessReply(
+            listOf(
+                listOf("猜歌开始！", "生成完成！", "游戏开始！"),
+                listOf("\n"),
+                listOf("当前将选用 $username 的 ${mode.fullName} 模式下，最好成绩中的 $size 张谱面。")
+            )
+        )
+
+        data object MustGuess: GuessReply(
+            listOf(
+                listOf("你倒是猜啊？", "就算你求我，我也不会直接告诉你答案的。"),
+                listOf("\n"),
+                listOf("如果想放弃的话，", "如果想停止猜歌，听好了，${IDIOT.random()}"),
+                listOf("\n"),
+                listOf("只有猜歌发起者和管理们才可以 !g 停止猜歌。"),
+                listOf("\n"),
+                listOf("你也可以等待一会儿，猜歌会因为超时而结束。")
+            )
+        )
+
+        data object StopCheck: GuessReply(
+            listOf(
+                listOf(
+                    "您确定要结束当前的猜歌吗？",
+                    "您真的要马上结束吗？"
+                ),
+                listOf(
+                    "再考虑一下？",
+                    "人家还想一起玩呢。"
+                ),
+                listOf("\n"),
+                listOf(
+                    "发送 OK 就能忍痛离开。",
+                    "发送 OK 就可以停止了哦。"
+                ),
+            )
+        )
+
+        data object Bingo: GuessReply(
+            listOf(
+                listOf("一击即中！", "一\uD83D\uDC14\uD83D\uDC14中！", "这么厉害！？", "这么强？！", "？！文厶虽！？", "？！强强！？")
+            )
+        )
+
+        companion object {
+            // 后面这三个是猪
+            val IDIOT: List<String> = listOf(
+                "小笨蛋！", "杂鱼！", "小猪！", "\uD83D\uDC37！", "\uD83D\uDC16！", "\uD83D\uDC3D！"
+            )
+
+            val SORRY: List<String> = listOf(
+                "很可惜，", "很抱歉，", "遗憾的是，"
+            )
+
+            // val PREFIX = listOf("", "诶，", "那个... ", "报告！", "呜呜，", "提醒一下：")
         }
     }
 
@@ -130,19 +296,15 @@ class GuessService(
             val entry = iterator.next()
             val game = entry.value
 
-            if (game.overtimeIn5Min && !game.send5Min.get()) {
-                game.event.reply("""
-                    猜歌还有 5 分钟自动结束。如果想参加可以输入 !g 字母或歌名。
-                    您也可以输入 !g #序号 来获取对应题目的提示。
-                    但注意：获取提示后，再猜出结果的得分会减少。
-                """.trimIndent())
-                game.send5Min.set(true)
+            if (game.nearingTimeout && !game.reminded.get()) {
+                game.event.reply(GuessReply.NearingTimeout)
+                game.reminded.set(true)
             }
 
-            if (game.overtime) {
+            if (game.timeout) {
                 iterator.remove()
 
-                game.event.replyDone(game, "由于长时间无人操作，猜歌已经自动结束。期待您的下次游玩！")
+                game.event.replyDone(game, GuessReply.Timeout)
             }
         }
     }
@@ -166,17 +328,17 @@ class GuessService(
         val startTime: LocalDateTime = LocalDateTime.now()
         var lastPlayedTime: LocalDateTime = startTime
 
-        var send5Min: AtomicBoolean = AtomicBoolean(false)
+        var reminded: AtomicBoolean = AtomicBoolean(false)
 
-        val overtimeIn5Min: Boolean
+        val nearingTimeout: Boolean
             get() = lastPlayedTime.plusMinutes(5).isBefore(LocalDateTime.now())
 
-        val overtime: Boolean
+        val timeout: Boolean
             get() = lastPlayedTime.plusMinutes(10).isBefore(LocalDateTime.now())
 
         fun update() {
             this.lastPlayedTime = LocalDateTime.now()
-            this.send5Min.set(false)
+            this.reminded.set(false)
         }
 
         enum class Hint {
@@ -191,11 +353,10 @@ class GuessService(
             COVER,
 
             ;
-            // 计算当前枚举项对应的位
+
             val mask: Int get() = 1 shl this.ordinal
 
             companion object {
-                // 计算所有位都开启时的最大值 (511)
                 val ALL_LOCKED: Int = entries.fold(0) { acc, hint -> acc or hint.mask }
 
                 fun isLocked(mask: Int, hint: Hint): Boolean = (mask and hint.mask) != 0
@@ -211,12 +372,9 @@ class GuessService(
 
             if (currentMask < 0) return 0
 
-            // 1. 计算提示次数带来的权重衰减 (50, 25, 12...)
             val guessedHints = Hint.entries.size - Hint.getRemaining(currentMask).size
             val baseScore = 100 shr guessedHints
 
-            // 2. 计算字符展示比例带来的修正
-            // 逻辑：如果展示了 40% 的字符，则分数只剩原有的 60%
             val score = scores[index]
 
             val uniqueChars = if (unicode) {
@@ -245,13 +403,13 @@ class GuessService(
             val currentMask = decrypted[index]
 
             if (currentMask < 0) {
-                throw TipsException("这张谱面已经被猜出来了，杂鱼！")
+                throw TipsException(GuessReply.Guessed)
             }
 
             val remaining = Hint.getRemaining(currentMask)
 
             if (remaining.size <= 2) {
-                throw TipsException("已经给了你足够多的提示了，杂鱼！")
+                throw TipsException(GuessReply.ManyTips)
             }
 
             val hint = remaining.random()
@@ -453,7 +611,7 @@ class GuessService(
 
         fun getHintForSpecialWords(input: String): String {
             val matchedMark = GUESS_SPECIAL_WORDS_REGEX.find(input)?.value?.trim('(', ')', '[', ']', ' ', '~', '-')
-                ?: return "不要蒙混过关，杂鱼！"
+                ?: return "不要蒙混过关，${GuessReply.IDIOT.random()}"
 
             val indices = scores.mapIndexedNotNull { index, score ->
                 val isDecrypted = decrypted[index] < 0
@@ -468,9 +626,15 @@ class GuessService(
             }
 
             return if (indices.isNotEmpty()) {
-                "不要蒙混过关，杂鱼！\n不过，这里确实有 ${indices.size} 个题目符合这条匹配。"
+                """
+                    不要蒙混过关，${GuessReply.IDIOT.random()}
+                    不过，这里确实有 ${indices.size} 个题目符合这条匹配。
+                """.trimIndent()
             } else {
-                "不要蒙混过关，杂鱼！这里没有 $matchedMark。\n大叔下次还是换个词猜吧。"
+                """
+                    不要蒙混过关，${GuessReply.IDIOT.random()}这里没有 $matchedMark。
+                    ${listOf("大叔", "大姐姐").random()}下次还是换个词猜吧。
+                """.trimIndent()
             }
         }
 
@@ -601,16 +765,12 @@ class GuessService(
 
                 if (result.isEmpty()) {
                     if (game.revealedLetters.size <= 8) {
-                        if (param.select != null) {
-                            throw TipsException("#${param.select} 不是这个答案呢。")
-                        } else {
-                            throw TipsException("没有猜中歌曲呢。")
-                        }
+                        throw TipsException(GuessReply.Incorrect)
                     } else {
-                        throw TipsException("开了这么多词都猜不中，真是杂鱼。")
+                        throw TipsException(GuessReply.IncorrectMuch)
                     }
                 } else {
-                    handleDecrypted(game, event, "您已经猜中以下谱面：", result)
+                    handleDecrypted(game, event, GuessReply.Correct.toString(), result)
                 }
             }
 
@@ -619,7 +779,7 @@ class GuessService(
                     throw TipsException("当前有正在进行中的猜歌，请等待此猜歌流程结束。")
                 }
 
-                event.reply("正在生成题目...")
+                event.reply(GuessReply.Initializing)
 
                 // 之前已经猜过的歌曲 set ID
                 val history = serviceCallStatisticsDao.getLast10BeatmapsetIDs(
@@ -679,7 +839,7 @@ class GuessService(
                 val game = GuessGame(param.user, selected, event = event, artist = false, unicode = false)
                 CURRENT_GAMES[groupID] = game
 
-                event.replyGuess(game, "猜歌开始，当前将选用 ${param.user.username} 的 ${param.user.currentOsuMode.fullName} 模式下，最好成绩中的 ${selected.size} 张谱面。")
+                event.replyGuess(game, GuessReply.Start(param.user.username, param.user.currentOsuMode, selected.size))
             }
 
             is GuessParam.GuessEndParam -> {
@@ -688,14 +848,10 @@ class GuessService(
                 }
 
                 if (game.event.sender.contactID != event.sender.contactID && !Permission.isGroupAdmin(event)) {
-                    throw TipsException("""
-                        你倒是猜啊？
-                        只有群主、超级管理员或猜歌发起者可以通过 !g 停止当前猜歌。
-                        您也可以等待 10 分钟，猜歌会因为超时而结束。
-                    """.trimIndent())
+                    throw TipsException(GuessReply.MustGuess)
                 }
 
-                val receipt = event.reply("您确定要结束当前的猜歌吗？回复 OK 确认。")
+                val receipt = event.reply(GuessReply.StopCheck)
                 receipt.recallIn(30 * 1000)
 
                 val lock = ASyncMessageUtil.getLock(event, 30 * 1000)
@@ -714,9 +870,9 @@ class GuessService(
             is GuessParam.GuessOpenParam -> {
                 if (game == null) throw TipsException("猜歌异常：没有找到这个猜歌信息。")
 
-                val revealed = game.reveal(param.char, { result ->
+                val revealed = game.reveal(param.char) { result ->
                     handleDecrypted(game, event, "以下谱面已自动解开：", result)
-                })
+                }
 
                 if (revealed == false) {
                     throw TipsException("""
@@ -786,7 +942,7 @@ class GuessService(
         }
 
         if (bingo) {
-            reply.append("\n\n一击即中！")
+            reply.append("\n\n${GuessReply.Bingo}")
         } else {
             reply.append("\n")
         }
@@ -846,19 +1002,19 @@ class GuessService(
         }
     }
 
-    private fun MessageEvent.replyGuess(game: GuessGame, text: String? = null) {
+    private fun MessageEvent.replyGuess(game: GuessGame, text: Any? = null) {
 
         runCatching {
             val image = imageService.getPanel(game.toMap(), "A8")
 
-            if (text?.isNotBlank() == true) {
-                this.reply(image, text)
+            if (text?.toString()?.isNotBlank() == true) {
+                this.reply(image, text.toString())
             } else {
                 this.reply(image)
             }
 
         }.onFailure {
-            if (text?.isNotBlank() == true) {
+            if (text?.toString()?.isNotBlank() == true) {
                 this.reply(text)
             }
 
@@ -870,7 +1026,7 @@ class GuessService(
     }
 
     private fun MessageEvent.replyDone(
-        game: GuessGame, text: String? = "猜歌结束。", noGuess: Boolean = false
+        game: GuessGame, text: Any? = "猜歌结束。", noGuess: Boolean = false
     ): ServiceCallStatistic? {
         val decryptedSetIDs = game.scores.zip(game.decrypted)
             .filter { it.second < 0 }
@@ -879,7 +1035,7 @@ class GuessService(
 
         game.decryptAll()
 
-        if (noGuess && !text.isNullOrEmpty()) {
+        if (noGuess && text != null) {
             game.event.reply(text)
         } else {
             game.event.replyGuess(game, text)

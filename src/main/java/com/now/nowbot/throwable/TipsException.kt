@@ -15,6 +15,10 @@ open class TipsException : Exception, BotException {
         this.message = message
     }
 
+    constructor(any: Any) {
+        this.message = any.toString()
+    }
+
     constructor(message: String, vararg args: Any?) {
         this.message = String.format(message, *args)
     }
