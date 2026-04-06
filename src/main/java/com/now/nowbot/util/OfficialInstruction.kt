@@ -267,6 +267,18 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendMod()
     }),
 
+    MAP_LAZER(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("mz", "map\\s*lazer", "beatmap\\s*lazer", "lazer\\s*map")
+
+        appendMode()
+        appendBID()
+        appendSpace()
+        appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_PLUS, MORE)
+        appendSpace()
+
+        appendMod()
+    }),
+
     QUALIFIED_MAP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("q", "qualified")
         appendMode()

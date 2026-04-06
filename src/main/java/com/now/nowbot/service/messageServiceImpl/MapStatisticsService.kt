@@ -20,6 +20,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
@@ -81,14 +82,25 @@ class MapStatisticsService(
         event: MessageEvent,
         messageText: String
     ): MapStatisticsParam? {
-        return null
+
+        val matcher = OfficialInstruction.MAP.matcher(messageText)
+        val matcher2 = OfficialInstruction.MAP_LAZER.matcher(messageText)
+        if (matcher.find()) {
+            return getParam(event, matcher, isLazer = false)
+        } else if (matcher2.find()) {
+            return getParam(event, matcher2, isLazer = true)
+        } else return null
     }
 
     override fun reply(
         event: MessageEvent,
         param: MapStatisticsParam
     ): MessageChain? {
-        return null
+        val panel = param.getPanelRParam()
+
+        val image = imageService.getPanel(panel, "R")
+
+        return MessageChain(image)
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isLazer: Boolean = false): MapStatisticsParam {
