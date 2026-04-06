@@ -118,7 +118,7 @@ class GuessService(
             }.ifEmpty { "总之这是一条回复。" }
         }
 
-        data object Restart: GuessReply(
+        object Restart: GuessReply(
             listOf(
                 listOf("猜歌游戏", "本局猜歌", "正在进行的猜歌"),
                 listOf("遇到服务器重启", "因为系统维护", "由于老大要睡觉"),
@@ -127,7 +127,7 @@ class GuessService(
             )
         )
 
-        data object NearingTimeout: GuessReply(
+        object NearingTimeout: GuessReply(
             listOf(
                 listOf(
                     "猜歌即将自动结束。",
@@ -145,7 +145,7 @@ class GuessService(
             )
         )
 
-        data object Timeout: GuessReply(
+        object Timeout: GuessReply(
             listOf(
                 listOf(
                     "由于长时间无人操作，",
@@ -163,7 +163,7 @@ class GuessService(
             )
         )
 
-        data object Guessed: GuessReply(
+        object Guessed: GuessReply(
             listOf(
                 listOf(
                     "这张谱面已经被猜出来了，", "你想获取别人已经拿走的得分吗？", "不要重复猜了，"
@@ -172,7 +172,7 @@ class GuessService(
             )
         )
 
-        data object ManyTips: GuessReply(
+        object ManyTips: GuessReply(
             listOf(
                 listOf(
                     "已经给了你足够多的提示了，", "你需要我把答案直接喂给你吗？", "已经是我奶奶都能猜出来的难度了，"
@@ -181,7 +181,7 @@ class GuessService(
             )
         )
 
-        data object Incorrect: GuessReply(
+        object Incorrect: GuessReply(
             listOf(
                 SORRY,
                 listOf(
@@ -190,7 +190,7 @@ class GuessService(
             )
         )
 
-        data object IncorrectMuch: GuessReply(
+        object IncorrectMuch: GuessReply(
             listOf(
                 listOf(
                     "开了这么多都猜不中，真是", "还是乖乖认输吧，", "要不要来点提示？"
@@ -199,13 +199,13 @@ class GuessService(
             )
         )
 
-        data object Correct: GuessReply(
+        object Correct: GuessReply(
             listOf(
                 listOf("您已经猜中以下谱面：", "其中一个答案已经展现：", "您已经参悟了其中的真谛：", "某个答案已为您揭晓：")
             )
         )
 
-        data object Initializing: GuessReply(
+        object Initializing: GuessReply(
             listOf(
                 listOf("正在", "即将", "马上"),
                 listOf("生成题目", "抓捕小猪", "构思野史", "思考人生", "刷 PP", "联系 peppy", "接入 OpenClaw", "擦皮鞋", "对抗神经网络"),
@@ -213,7 +213,7 @@ class GuessService(
             )
         )
 
-        data class Start(val username: String, val mode: OsuMode, val size: Int): GuessReply(
+        class Start(val username: String, val mode: OsuMode, val size: Int): GuessReply(
             listOf(
                 listOf("猜歌开始！", "生成完成！", "游戏开始！"),
                 listOf("\n"),
@@ -221,7 +221,7 @@ class GuessService(
             )
         )
 
-        data object MustGuess: GuessReply(
+        object MustGuess: GuessReply(
             listOf(
                 listOf("你倒是猜啊？", "就算你求我，我也不会直接告诉你答案的。"),
                 listOf("\n"),
@@ -233,7 +233,7 @@ class GuessService(
             )
         )
 
-        data object StopCheck: GuessReply(
+        object StopCheck: GuessReply(
             listOf(
                 listOf(
                     "您确定要结束当前的猜歌吗？",
@@ -251,7 +251,7 @@ class GuessService(
             )
         )
 
-        data object Bingo: GuessReply(
+        object Bingo: GuessReply(
             listOf(
                 listOf("一击即中！", "一\uD83D\uDC14\uD83D\uDC14中！", "这么厉害！？", "这么强？！", "？！文厶虽！？", "？！强强！？")
             )
