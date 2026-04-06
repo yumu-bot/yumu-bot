@@ -64,7 +64,7 @@ class LazerScoreLite(
         score.beatmapID,
         JacksonUtil.objectToJson(score.mods),
         (score.pp).toFloat(),
-        score.lazerAccuracy.toFloat(),
+        score.accuracy.toFloat(),
         score.maxCombo,
         score.endedTime,
         score.perfectCombo,
@@ -80,7 +80,7 @@ class LazerScoreLite(
         val lite = this
 
         val mods = if (lite.mods.isNullOrBlank()) {
-            emptyList<LazerMod>()
+            emptyList()
         } else {
             JacksonUtil.parseObjectList(lite.mods, LazerMod::class.java)
         }

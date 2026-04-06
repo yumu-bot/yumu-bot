@@ -76,6 +76,14 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     WHERE t.rn = 1
 """, nativeQuery = true)
     fun getUsersBestScore(userIDs: Collection<Long>, beatmapID: Long, mode: Byte): List<LazerScoreLite>
+
+    @Query("""
+    SELECT * FROM lazer_score_lite 
+    WHERE accuracy <= 0 
+    ORDER BY time DESC 
+    LIMIT :limit OFFSET :offset
+""", nativeQuery = true)
+    fun findInvalidAccuracyScores(limit: Int, offset: Int): List<LazerScoreLite>
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {

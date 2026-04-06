@@ -326,7 +326,6 @@ class MatchListenerService(
             }
 
             if (shouldNotify) {
-                Thread.sleep((100..300).random().toLong())
                 messageEvent.reply(MatchException.NormalOperate.Stop(matchID, type))
             }
 

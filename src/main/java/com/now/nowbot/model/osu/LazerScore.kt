@@ -62,7 +62,7 @@ open class LazerScore(
     @field:JsonProperty("rank")
     var lazerRank: String = "F",
 
-    // solo_score 不区分是否是新老客户端
+    // score_mania
     @field:JsonProperty("type")
     var type: String = "solo_score",
 
