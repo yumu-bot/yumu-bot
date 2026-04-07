@@ -16,16 +16,21 @@ import com.now.nowbot.model.enums.OsuMode.TAIKO_RELAX
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.util.JacksonUtil
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.time.Duration.Companion.seconds
 
 @Service("TEST")
 class TestService(
     private val repository: LazerScoreRepository,
     private val statisticRepository: LazerScoreStatisticRepository,
+    private val beatmapApiService: OsuBeatmapApiService
 ): MessageService<String> {
     override fun isHandle(
         event: MessageEvent,
@@ -73,83 +78,102 @@ class TestService(
 //
 //        val s = ls.map { it.accuracy }
 
+        @Transactional
+        fun fixZeroAccuracyScores(offset: Int = 0): Int {
+            val liteScores = repository.findInvalidAccuracyScores(100, offset)
+            if (liteScores.isEmpty()) return 0
+
+            val success = mutableListOf<Long>()
+            val failed = mutableListOf<Long>()
+
+            val modes = beatmapApiService.getBeatmaps(liteScores.map { it.beatmapId }).associate { it.beatmapID to it.mode.modeValue }
+
+            liteScores.forEach { lite ->
+                val stat = statisticRepository.getStatistics(listOf(lite.id), -1)
+                    .firstOrNull()?.let { JacksonUtil.parseObject<LazerStatistics>(it.data) }
+                    ?: run {
+                        log.info("${lite.id} failed")
+                        failed.add(lite.id)
+                        return@forEach
+                    }
+
+
+                val maxStat = if (lite.rankByte > 0) {
+                    stat.constructMaxStatistics(OsuMode.getMode(lite.mode))
+                } else {
+                    statisticRepository.getStatistics(listOf(lite.beatmapId), modes[lite.beatmapId] ?: run {
+                        log.info("${lite.beatmapId} failed")
+                        failed.add(lite.beatmapId)
+                        return@forEach
+                    })
+                        .firstOrNull()?.let { JacksonUtil.parseObject<LazerStatistics>(it.data) }
+                        ?: run {
+                            log.info("${lite.beatmapId} failed")
+                            failed.add(lite.beatmapId)
+                            return@forEach
+                        }
+                }
+
+                val fixedAcc = calc(stat, maxStat, lite.legacyScore == 0, OsuMode.getMode(lite.mode)) ?: run {
+                    failed.add(lite.id)
+                    log.info("${lite.id} failed: calc returned null")
+                    return@forEach
+                }
+
+                // 修改点 1：如果是合法的准确率 (包含 0.0)，才去更新。如果你不想更新为 0 的数据，请把它加入 failed
+                if (fixedAcc >= 0.0 && fixedAcc <= 1.0 && !fixedAcc.isNaN()) {
+                    success.add(lite.id)
+                    log.info("${lite.id} succeed with acc: $fixedAcc")
+                    repository.updateAccuracy(lite.id, fixedAcc.toFloat())
+                } else {
+                    // 修改点 2：堵住逻辑漏洞，捕捉异常值
+                    failed.add(lite.id)
+                    log.info("${lite.id} failed: invalid acc calculated ($fixedAcc): $stat, $maxStat, ${OsuMode.getMode(lite.mode)}")
+                }
+            }
+
+            log.info("fix success: ${success.joinToString(",")}, failed: ${failed.joinToString(",")}")
+
+            // 修改点 3：一定要返回真正被修改的条数，而不是查询出来的条数！
+            return success.size
+        }
+
         var current: Int
         var batch = 0
         val maxBatches = 3000 // 安全阈值，防止死循环
 
-        do {
-            // 确保 fixZeroAccuracyScores 返回的是本次成功修复并保存的条数
-            current = fixZeroAccuracyScores(batch * 100)
-            batch++
+        runBlocking {
+            do {
+                // 确保 fixZeroAccuracyScores 返回的是本次成功修复并保存的条数
+                current = fixZeroAccuracyScores(batch * 100)
+                batch++
 
-            log.info("Batch {}: Fixed {} scores", batch, current)
+                log.info("Batch {}: Fixed {} scores", batch, current)
 
-            // 如果某次修复数量为 0，说明数据库里已经没有 accuracy <= 0 的数据了，提前退出
-            if (current == 0) {
-                log.info("Optimization complete: No more invalid scores found.")
-                break
+                // 如果某次修复数量为 0，说明数据库里已经没有 accuracy <= 0 的数据了，提前退出
+                if (current == 0) {
+                    log.info("Optimization complete: No more invalid scores found.")
+                    break
+                }
+
+                delay(3.seconds)
+            } while (batch < maxBatches)
+
+            if (batch >= maxBatches) {
+                log.warn("Reached maximum batch limit ($maxBatches). Some scores may still be unfixed.")
             }
-
-        } while (batch < maxBatches)
-
-        if (batch >= maxBatches) {
-            log.warn("Reached maximum batch limit ($maxBatches). Some scores may still be unfixed.")
         }
 
         return null
+
+
     }
 
-    @Transactional
-    fun fixZeroAccuracyScores(offset: Int = 0): Int {
-        // 1. 取出异常数据 (例如前 100 条)
-        val liteScores = repository.findInvalidAccuracyScores(100, offset)
-        if (liteScores.isEmpty()) return 0
 
-        // 2. 获取对应的统计数据 (hits 数)
-        // 注意：LazerScoreStatisticRepository 里的 getStatistics 需要能匹配这些 ID
-
-        val success = mutableListOf<Long>()
-        val failed = mutableListOf<Long>()
-
-        liteScores.forEach { lite ->
-            val stat = statisticRepository.getStatistics(listOf(lite.id), lite.mode.toByte())
-                .firstOrNull()?.let { JacksonUtil.parseObject<LazerStatistics>(it.data) }
-                ?: run {
-                    failed.add(lite.id)
-                    return@forEach
-                }
-
-            val maxStat = if (lite.rankByte > 0) {
-                stat.constructMaxStatistics(OsuMode.getMode(lite.mode))
-            } else {
-                statisticRepository.getStatistics(listOf(lite.id), -1)
-                    .firstOrNull()?.let { JacksonUtil.parseObject<LazerStatistics>(it.data) }
-                    ?: run {
-                        failed.add(lite.id)
-                        return@forEach
-                    }
-            }
-
-            val fixedAcc = calc(stat, maxStat, lite.legacyScore == 0, OsuMode.getMode(lite.mode)) ?: run {
-                failed.add(lite.id)
-                return@forEach
-            }
-
-            if (fixedAcc > 0 && fixedAcc <= 1.0) {
-                success.add(lite.id)
-                lite.accuracy = fixedAcc.toFloat()
-            }
-        }
-
-        log.info("fix success: {}, failed: {}", success.size, failed.size)
-
-        // 6. 批量存回数据库
-        return repository.saveAll(liteScores).size
-    }
 
     private fun calc(stat: LazerStatistics, maxStat: LazerStatistics, isLazer: Boolean = false, mode: OsuMode): Double? {
-        val m = stat
-        val s = maxStat
+        val s = stat
+        val m = maxStat
 
         var total = m.great
 

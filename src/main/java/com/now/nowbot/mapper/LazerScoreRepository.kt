@@ -4,7 +4,9 @@ import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.ScoreStatisticLite
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
@@ -84,6 +86,11 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     LIMIT :limit OFFSET :offset
 """, nativeQuery = true)
     fun findInvalidAccuracyScores(limit: Int, offset: Int): List<LazerScoreLite>
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("update LazerScoreLite s set s.accuracy = :acc where s.id = :id")
+    fun updateAccuracy(id: Long, acc: Float)
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {
