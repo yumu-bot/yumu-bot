@@ -17,7 +17,6 @@ import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.util.JacksonUtil
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,7 +25,6 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.PreparedStatement
-import kotlin.time.Duration.Companion.milliseconds
 
 @Service("TEST")
 class TestService(
@@ -81,8 +79,8 @@ class TestService(
 //        val s = ls.map { it.accuracy }
 
         @Transactional
-        fun fixZeroAccuracyScores(limit: Int): Int {
-            val liteScores = repository.findInvalidAccuracyScores(limit)
+        fun fixZeroAccuracyScores(limit: Int, offset: Int): Int {
+            val liteScores = repository.findInvalidAccuracyScores(limit, offset)
             if (liteScores.isEmpty()) return 0
 
             val success = mutableListOf<Long>()
@@ -126,27 +124,29 @@ class TestService(
             return success.size
         }
 
-        var current: Int
         var batch = 0
         val maxBatches = 3000 // 安全阈值，防止死循环
         var all = 0
+        var offset = 0
 
         runBlocking {
             do {
-                // 确保 fixZeroAccuracyScores 返回的是本次成功修复并保存的条数
-                current = fixZeroAccuracyScores(800)
-                batch++
-                all += current
+                val result = fixZeroAccuracyScores(800, offset)
 
-                log.info("Batch ${batch}: Fixing $current, Fixed $all ")
+                offset += 800 - result
+
+                batch++
+                all += result
+
+                log.info("Batch ${batch}: Fixing $result, Fixed $all ")
 
                 // 如果某次修复数量为 0，说明数据库里已经没有 accuracy <= 0 的数据了，提前退出
-                if (current == 0) {
-                    log.info("Optimization complete: No more invalid scores found.")
+                if (result == 0) {
+                    log.info("Optimization complete: No more invalid scores found. total failed: $offset")
                     break
                 }
 
-                delay(500.milliseconds)
+                //delay(500.milliseconds)
             } while (batch < maxBatches)
 
             if (batch >= maxBatches) {

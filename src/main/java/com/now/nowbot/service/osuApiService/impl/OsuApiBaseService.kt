@@ -176,7 +176,7 @@ class OsuApiBaseService(
         headers.setAll(
             mapOf(
                 "Authorization" to "Bearer $actualToken",
-                "x-api-version" to "20251027",
+                "x-api-version" to "20260408",
                 "User-Agent" to "osu!"
             )
         )
@@ -187,7 +187,7 @@ class OsuApiBaseService(
         headers.setAll(
             mapOf(
                 "Authorization" to "Bearer $actualToken",
-                "x-api-version" to "20251027",
+                "x-api-version" to "20260408",
                 "User-Agent" to "osu!"
             )
         )

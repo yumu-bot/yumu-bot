@@ -83,9 +83,9 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     SELECT * FROM lazer_score_lite 
     WHERE accuracy <= 0 
     ORDER BY time DESC 
-    LIMIT :limit
+    LIMIT :limit OFFSET :offset
 """, nativeQuery = true)
-    fun findInvalidAccuracyScores(limit: Int): List<LazerScoreLite>
+    fun findInvalidAccuracyScores(limit: Int, offset: Int): List<LazerScoreLite>
 
     @Modifying(clearAutomatically = true)
     @Transactional
