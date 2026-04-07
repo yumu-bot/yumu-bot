@@ -24,7 +24,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service("TEST")
 class TestService(
@@ -86,8 +86,6 @@ class TestService(
             val success = mutableListOf<Long>()
             val failed = mutableListOf<Long>()
 
-            val modes = beatmapApiService.getBeatmaps(liteScores.map { it.beatmapId }).associate { it.beatmapID to it.mode.modeValue }
-
             liteScores.forEach { lite ->
                 val stat = statisticRepository.getStatistics(listOf(lite.id), -1)
                     .firstOrNull()?.let { JacksonUtil.parseObject<LazerStatistics>(it.data) }
@@ -97,24 +95,7 @@ class TestService(
                         return@forEach
                     }
 
-
-                val maxStat = if (lite.rankByte > 0) {
-                    stat.constructMaxStatistics(OsuMode.getMode(lite.mode))
-                } else {
-                    statisticRepository.getStatistics(listOf(lite.beatmapId), modes[lite.beatmapId] ?: run {
-                        log.info("${lite.beatmapId} failed")
-                        failed.add(lite.beatmapId)
-                        return@forEach
-                    })
-                        .firstOrNull()?.let { JacksonUtil.parseObject<LazerStatistics>(it.data) }
-                        ?: run {
-                            log.info("${lite.beatmapId} failed")
-                            failed.add(lite.beatmapId)
-                            return@forEach
-                        }
-                }
-
-                val fixedAcc = calc(stat, maxStat, lite.legacyScore == 0, OsuMode.getMode(lite.mode)) ?: run {
+                val fixedAcc = calc(stat, lite.legacyScore == 0, OsuMode.getMode(lite.mode)) ?: run {
                     failed.add(lite.id)
                     log.info("${lite.id} failed: calc returned null")
                     return@forEach
@@ -123,16 +104,16 @@ class TestService(
                 // 修改点 1：如果是合法的准确率 (包含 0.0)，才去更新。如果你不想更新为 0 的数据，请把它加入 failed
                 if (fixedAcc >= 0.0 && fixedAcc <= 1.0 && !fixedAcc.isNaN()) {
                     success.add(lite.id)
-                    log.info("${lite.id} succeed with acc: $fixedAcc")
+                    // log.info("${lite.id} succeed with acc: $fixedAcc")
                     repository.updateAccuracy(lite.id, fixedAcc.toFloat())
                 } else {
                     // 修改点 2：堵住逻辑漏洞，捕捉异常值
                     failed.add(lite.id)
-                    log.info("${lite.id} failed: invalid acc calculated ($fixedAcc): $stat, $maxStat, ${OsuMode.getMode(lite.mode)}")
+                    log.info("${lite.id} failed: invalid acc calculated ($fixedAcc): $stat, ${OsuMode.getMode(lite.mode)}")
                 }
             }
 
-            log.info("fix success: ${success.joinToString(",")}, failed: ${failed.joinToString(",")}")
+            log.info("fix success: ${success.size}, failed: ${failed.joinToString(",")}")
 
             // 修改点 3：一定要返回真正被修改的条数，而不是查询出来的条数！
             return success.size
@@ -156,7 +137,7 @@ class TestService(
                     break
                 }
 
-                delay(3.seconds)
+                delay(500.milliseconds)
             } while (batch < maxBatches)
 
             if (batch >= maxBatches) {
@@ -171,39 +152,38 @@ class TestService(
 
 
 
-    private fun calc(stat: LazerStatistics, maxStat: LazerStatistics, isLazer: Boolean = false, mode: OsuMode): Double? {
-        val s = stat
-        val m = maxStat
-
-        var total = m.great
-
-        if (m.great == 0 && m.perfect == 0) return null
+    private fun calc(stat: LazerStatistics, isLazer: Boolean = false, mode: OsuMode): Double? {
 
         return when (mode) {
             OSU, OSU_RELAX, OSU_AUTOPILOT -> {
-                val hit = s.great + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
-                hit / total
+                val hit = stat.great + 1.0 / 3 * stat.ok + 1.0 / 6 * stat.meh
+                val total = stat.great + stat.ok + stat.meh + stat.miss
+
+                1.0 * hit / total.coerceAtLeast(1)
             }
 
             TAIKO, TAIKO_RELAX -> {
-                (s.great + 1.0 / 2 * s.ok) / total
+                val hit = (stat.great + 1.0 / 2 * stat.ok)
+                val total = stat.great + stat.ok + stat.miss
+
+                1.0 * hit / total.coerceAtLeast(1)
             }
 
             CATCH, CATCH_RELAX -> {
-                val hit = s.great + s.largeTickHit + s.smallTickHit
-                total = m.great + m.largeTickHit + m.smallTickHit
+                val hit = stat.great + stat.largeTickHit + stat.smallTickHit
+                val total = stat.great + stat.largeTickHit + stat.smallTickHit + stat.largeTickMiss + stat.smallTickMiss + stat.miss
 
-                1.0 * hit / total
+                1.0 * hit / total.coerceAtLeast(1)
             }
 
             MANIA -> {
                 val hit = if (isLazer) {
-                    s.perfect + 300.0 / 305.0 * s.great + 200.0 / 305.0 * s.good + 100.0 / 305.0 * s.ok + 50.0 / 305.0 * s.meh
+                    stat.perfect + 300.0 / 305.0 * stat.great + 200.0 / 305.0 * stat.good + 100.0 / 305.0 * stat.ok + 50.0 / 305.0 * stat.meh
                 } else {
-                    s.perfect + s.great + 2.0 / 3 * s.good + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
+                    stat.perfect + stat.great + 2.0 / 3 * stat.good + 1.0 / 3 * stat.ok + 1.0 / 6 * stat.meh
                 }
-                total = m.perfect
-                hit / total
+                val total = stat.perfect + stat.great + stat.good + stat.ok + stat.meh + stat.miss
+                1.0 * hit / total.coerceAtLeast(1)
             }
 
             else -> 0.0
