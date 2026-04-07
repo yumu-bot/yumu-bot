@@ -16,21 +16,23 @@ import com.now.nowbot.model.enums.OsuMode.TAIKO_RELAX
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.util.JacksonUtil
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.jdbc.core.BatchPreparedStatementSetter
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.sql.PreparedStatement
 import kotlin.time.Duration.Companion.milliseconds
 
 @Service("TEST")
 class TestService(
     private val repository: LazerScoreRepository,
     private val statisticRepository: LazerScoreStatisticRepository,
-    private val beatmapApiService: OsuBeatmapApiService
+    private val jdbcTemplate: JdbcTemplate
 ): MessageService<String> {
     override fun isHandle(
         event: MessageEvent,
@@ -79,39 +81,44 @@ class TestService(
 //        val s = ls.map { it.accuracy }
 
         @Transactional
-        fun fixZeroAccuracyScores(offset: Int = 0): Int {
-            val liteScores = repository.findInvalidAccuracyScores(100, offset)
+        fun fixZeroAccuracyScores(limit: Int): Int {
+            val liteScores = repository.findInvalidAccuracyScores(limit)
             if (liteScores.isEmpty()) return 0
 
             val success = mutableListOf<Long>()
             val failed = mutableListOf<Long>()
 
-            liteScores.forEach { lite ->
+            val pair = liteScores.mapNotNull { lite ->
                 val stat = statisticRepository.getStatistics(listOf(lite.id), -1)
                     .firstOrNull()?.let { JacksonUtil.parseObject<LazerStatistics>(it.data) }
                     ?: run {
                         log.info("${lite.id} failed")
                         failed.add(lite.id)
-                        return@forEach
+                        return@mapNotNull  null
                     }
 
                 val fixedAcc = calc(stat, lite.legacyScore == 0, OsuMode.getMode(lite.mode)) ?: run {
                     failed.add(lite.id)
                     log.info("${lite.id} failed: calc returned null")
-                    return@forEach
+                    return@mapNotNull null
                 }
 
                 // 修改点 1：如果是合法的准确率 (包含 0.0)，才去更新。如果你不想更新为 0 的数据，请把它加入 failed
                 if (fixedAcc >= 0.0 && fixedAcc <= 1.0 && !fixedAcc.isNaN()) {
                     success.add(lite.id)
                     // log.info("${lite.id} succeed with acc: $fixedAcc")
-                    repository.updateAccuracy(lite.id, fixedAcc.toFloat())
+
+                    //repository.updateAccuracy(lite.id, fixedAcc.toFloat())
+                    return@mapNotNull lite.id to fixedAcc.toFloat()
                 } else {
                     // 修改点 2：堵住逻辑漏洞，捕捉异常值
                     failed.add(lite.id)
                     log.info("${lite.id} failed: invalid acc calculated ($fixedAcc): $stat, ${OsuMode.getMode(lite.mode)}")
+                    return@mapNotNull null
                 }
             }
+
+            batchUpdate(pair)
 
             log.info("fix success: ${success.size}, failed: ${failed.joinToString(",")}")
 
@@ -122,14 +129,16 @@ class TestService(
         var current: Int
         var batch = 0
         val maxBatches = 3000 // 安全阈值，防止死循环
+        var all = 0
 
         runBlocking {
             do {
                 // 确保 fixZeroAccuracyScores 返回的是本次成功修复并保存的条数
-                current = fixZeroAccuracyScores(batch * 100)
+                current = fixZeroAccuracyScores(800)
                 batch++
+                all += current
 
-                log.info("Batch {}: Fixed {} scores", batch, current)
+                log.info("Batch ${batch}: Fixing $current, Fixed $all ")
 
                 // 如果某次修复数量为 0，说明数据库里已经没有 accuracy <= 0 的数据了，提前退出
                 if (current == 0) {
@@ -150,7 +159,17 @@ class TestService(
 
     }
 
-
+    private fun batchUpdate(updates: List<Pair<Long, Float>>) {
+        val sql = "UPDATE lazer_score_lite SET accuracy = ? WHERE id = ?"
+        jdbcTemplate.batchUpdate(sql, object : BatchPreparedStatementSetter {
+            override fun setValues(ps: PreparedStatement, i: Int) {
+                val (id, acc) = updates[i]
+                ps.setFloat(1, acc)
+                ps.setLong(2, id)
+            }
+            override fun getBatchSize() = updates.size
+        })
+    }
 
     private fun calc(stat: LazerStatistics, isLazer: Boolean = false, mode: OsuMode): Double? {
 
