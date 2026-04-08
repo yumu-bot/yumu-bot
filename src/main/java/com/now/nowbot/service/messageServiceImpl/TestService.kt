@@ -79,9 +79,9 @@ class TestService(
 //        val s = ls.map { it.accuracy }
 
         @Transactional
-        fun fixZeroAccuracyScores(limit: Int, offset: Int): Int {
+        fun fixZeroAccuracyScores(limit: Int, offset: Int): Pair<Int, Int> {
             val liteScores = repository.findInvalidAccuracyScores(limit, offset)
-            if (liteScores.isEmpty()) return 0
+            if (liteScores.isEmpty()) return 0 to 0
 
             val success = mutableListOf<Long>()
             val failed = mutableListOf<Long>()
@@ -102,7 +102,7 @@ class TestService(
                 }
 
                 // 修改点 1：如果是合法的准确率 (包含 0.0)，才去更新。如果你不想更新为 0 的数据，请把它加入 failed
-                if (fixedAcc >= 0.0 && fixedAcc <= 1.0 && !fixedAcc.isNaN()) {
+                if (fixedAcc in 0.0..1.0 && !fixedAcc.isNaN()) {
                     success.add(lite.id)
                     // log.info("${lite.id} succeed with acc: $fixedAcc")
 
@@ -120,8 +120,7 @@ class TestService(
 
             log.info("fix success: ${success.size}, failed: ${failed.joinToString(",")}")
 
-            // 修改点 3：一定要返回真正被修改的条数，而不是查询出来的条数！
-            return success.size
+            return success.size to failed.size
         }
 
         var batch = 0
@@ -133,18 +132,18 @@ class TestService(
             do {
                 val result = fixZeroAccuracyScores(800, offset)
 
-                offset += 800 - result
+                offset += result.second
 
                 batch++
-                all += result
-
-                log.info("Batch ${batch}: Fixing $result, Fixed $all ")
+                all += result.first
 
                 // 如果某次修复数量为 0，说明数据库里已经没有 accuracy <= 0 的数据了，提前退出
-                if (result == 0) {
+                if (result.first == 0) {
                     log.info("Optimization complete: No more invalid scores found. total failed: $offset")
                     break
                 }
+
+                log.info("Batch ${batch}: Fixing $result, Fixed $all ")
 
                 //delay(500.milliseconds)
             } while (batch < maxBatches)
