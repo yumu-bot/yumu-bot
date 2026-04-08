@@ -102,7 +102,7 @@ class TestService(
                 }
 
                 // 修改点 1：如果是合法的准确率 (包含 0.0)，才去更新。如果你不想更新为 0 的数据，请把它加入 failed
-                if (fixedAcc in 0.0..1.0 && !fixedAcc.isNaN()) {
+                if (fixedAcc > 0.0 && fixedAcc <= 1.0 && !fixedAcc.isNaN()) {
                     success.add(lite.id)
                     // log.info("${lite.id} succeed with acc: $fixedAcc")
 
