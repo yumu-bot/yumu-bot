@@ -59,7 +59,7 @@ class RestClientConfig {
                 config.proxyHost,
                 config.proxyPort
             )
-//            httpClientBuilder.setProxy(proxy)
+            httpClientBuilder.setProxy(proxy)
         }
 
         val httpClient = httpClientBuilder.build()
