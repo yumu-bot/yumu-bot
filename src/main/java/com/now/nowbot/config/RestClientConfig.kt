@@ -54,7 +54,7 @@ class RestClientConfig {
             .setConnectionManager(connectionManager)
             .setDefaultRequestConfig(requestConfig)
 
-        if (hasProxy) {
+        if (hasProxy && USE_PROXY) {
             val proxy = HttpHost(
                 config.proxyHost,
                 config.proxyPort
@@ -107,7 +107,7 @@ class RestClientConfig {
             .setConnectionManager(connectionManager)
             .setDefaultRequestConfig(requestConfig)
 
-        if (hasProxy) {
+        if (hasProxy && USE_PROXY) {
             val proxy = HttpHost(
                 config.proxyHost,
                 config.proxyPort
@@ -189,6 +189,8 @@ class RestClientConfig {
         .build()
 
     companion object {
+        const val USE_PROXY = false
+
         val otherConnectionPoolManager = PoolingHttpClientConnectionManager().apply {
             maxTotal = 1000
             defaultMaxPerRoute = 200
@@ -207,10 +209,17 @@ class RestClientConfig {
                 config.proxyHost,
                 config.proxyPort
             )
+
             return HttpClients.custom()
                 .setConnectionManager(otherConnectionPoolManager)
                 .setDefaultRequestConfig(otherRequestConfig)
-                .setProxy(proxy)
+                .let {
+                    if (USE_PROXY) {
+                        it.setProxy(proxy)
+                    } else {
+                        it
+                    }
+                }
                 .build()
         }
 
