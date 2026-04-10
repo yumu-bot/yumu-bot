@@ -57,10 +57,30 @@ class FixBorderRankService(
 
                 // 开启并发任务
                 launch(Dispatchers.IO) {
-                    log.info("[线程 $index 开始处理区间: $rangeStart -> $rangeEnd")
-                    val (fix, skip) = fixBorderRank(index, rangeStart, rangeEnd)
+                    log.info("[$index] start: $rangeStart -> $rangeEnd")
 
-                    log.info("[线程 $index 处理完成: fix $fix, skip $skip")
+                    var totalFix = 0L
+                    var totalSkip = 0L
+                    var current = rangeStart // 记录物理 ID 指针
+                    var batch = 0L
+
+                    // 只要当前的指针还没触达区间终点，就继续
+                    while (current < rangeEnd) {
+                        val (fixed, f, k) = fixBorderRank(index, current, rangeEnd)
+
+                        if (f + k == 0 || fixed >= current) {
+                            break
+                        }
+
+                        log.info("[$index] success: $f, skip: $k, now: $current")
+
+                        current = fixed
+                        totalFix += f
+                        totalSkip += k
+                        batch++
+                    }
+
+                    log.info("[$index] all done, success: $totalFix, skip $totalSkip")
                 }
             }
 
@@ -71,9 +91,10 @@ class FixBorderRankService(
 
     }
 
-    private fun fixBorderRank(index: Int, limit: Long, offset: Long): Pair<Int, Int> {
-        val lites = repository.findByIDRange(limit, offset)
-        if (lites.isEmpty()) return 0 to 0
+    private fun fixBorderRank(index: Int, start: Long, end: Long): Triple<Long, Int, Int> {
+        val lites = repository.findByIDRange(start, end)
+        if (start > end) return Triple(end, 0, 0)
+        if (lites.isEmpty()) return Triple(start + 1000, 0, 0)
 
         val success = mutableListOf<Long>()
         val skip = mutableListOf<Long>()
@@ -124,9 +145,7 @@ class FixBorderRankService(
 
         batchUpdate(pair)
 
-        log.info("[$index] fix success: ${success.size}, skip: ${skip.size}")
-
-        return success.size to skip.size
+        return Triple(lites.maxOfOrNull { it.id } ?: end, success.size, skip.size)
     }
 
     private fun batchUpdate(updates: List<Pair<Long, Byte>>) {
