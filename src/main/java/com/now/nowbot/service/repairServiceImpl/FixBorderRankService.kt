@@ -46,10 +46,10 @@ class FixBorderRankService(
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
 
         val ranges = listOf(
-            (2000L to 1600000000L),
-            (1600000001L to 3200000000L),
-            (3200000001L to 4800000000L),
-            (4800000001L to 6600000000L),
+            (5600000000L to 5900000000L),
+            (5900000001L to 6200000000L),
+            (6200000001L to 6400000000L),
+            (6400000001L to 6600000000L),
         )
 
         runBlocking {
