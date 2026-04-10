@@ -66,15 +66,15 @@ class FixBorderRankService(
 
                     // 只要当前的指针还没触达区间终点，就继续
                     while (current < rangeEnd) {
-                        val (fixed, f, k) = fixBorderRank(index, current, rangeEnd)
+                        val (next, f, k) = fixBorderRank(index, current, rangeEnd)
 
-                        if (f + k == 0 || fixed >= current) {
+                        if (f + k == 0 || next <= current) {
                             break
                         }
 
                         log.info("[$index] success: $f, skip: $k, now: $current")
 
-                        current = fixed
+                        current = next
                         totalFix += f
                         totalSkip += k
                         batch++
@@ -94,7 +94,7 @@ class FixBorderRankService(
     private fun fixBorderRank(index: Int, start: Long, end: Long): Triple<Long, Int, Int> {
         val lites = repository.findByIDRange(start, end)
         if (start > end) return Triple(end, 0, 0)
-        if (lites.isEmpty()) return Triple(start + 1000, 0, 0)
+        if (lites.isEmpty()) return Triple(start + 1000, 0, 1000)
 
         val success = mutableListOf<Long>()
         val skip = mutableListOf<Long>()
