@@ -91,6 +91,17 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     @Transactional
     @Query("update LazerScoreLite s set s.accuracy = :acc where s.id = :id")
     fun updateAccuracy(id: Long, acc: Float)
+
+    @Query(
+        """
+        SELECT * FROM lazer_score_lite
+        WHERE id >= :firstID AND id <= :lastID
+        AND rank_byte IN (6, 5, 4, 3, 2)
+        AND mode IN (0, 1)
+        ORDER BY id
+        LIMIT 1000
+    """, nativeQuery = true)
+    fun findByIDRange(firstID: Long, lastID: Long): List<LazerScoreLite>
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {

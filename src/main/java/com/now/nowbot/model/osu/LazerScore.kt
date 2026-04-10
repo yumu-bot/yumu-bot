@@ -323,20 +323,20 @@ open class LazerScore(
                     val is50Over1P = (s.meh * 100 > score.scoreHit)
                     when {
                         p300 > 1.0 - 1e-6 -> "X"
-                        p300 >= 0.9 -> if (hasMiss) "A" else if (is50Over1P) "A" else "S"
-                        p300 >= 0.8 -> if (hasMiss) "B" else "A"
-                        p300 >= 0.7 -> if (hasMiss) "C" else "B"
-                        p300 >= 0.6 -> "C"
+                        p300 > 0.9 -> if (hasMiss) "A" else if (is50Over1P) "A" else "S"
+                        p300 > 0.8 -> if (hasMiss) "B" else "A"
+                        p300 > 0.7 -> if (hasMiss) "C" else "B"
+                        p300 > 0.6 -> "C"
                         else -> "D"
                     }
                 }
 
                 TAIKO, TAIKO_RELAX -> when {
                     p300 > 1.0 - 1e-6 -> "X"
-                    p300 >= 0.9 -> if (hasMiss) "A" else "S"
-                    p300 >= 0.8 -> if (hasMiss) "B" else "A"
-                    p300 >= 0.7 -> if (hasMiss) "C" else "B"
-                    p300 >= 0.6 -> "C"
+                    p300 > 0.9 -> if (hasMiss) "A" else "S"
+                    p300 > 0.8 -> if (hasMiss) "B" else "A"
+                    p300 > 0.7 -> if (hasMiss) "C" else "B"
+                    p300 > 0.6 -> "C"
                     else -> "D"
                 }
 

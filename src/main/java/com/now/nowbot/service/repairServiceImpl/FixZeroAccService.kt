@@ -1,20 +1,13 @@
-package com.now.nowbot.service.messageServiceImpl
+package com.now.nowbot.service.repairServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.mapper.LazerScoreRepository
 import com.now.nowbot.mapper.LazerScoreStatisticRepository
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.CATCH
-import com.now.nowbot.model.enums.OsuMode.CATCH_RELAX
-import com.now.nowbot.model.enums.OsuMode.MANIA
-import com.now.nowbot.model.enums.OsuMode.OSU
-import com.now.nowbot.model.enums.OsuMode.OSU_AUTOPILOT
-import com.now.nowbot.model.enums.OsuMode.OSU_RELAX
-import com.now.nowbot.model.enums.OsuMode.TAIKO
-import com.now.nowbot.model.enums.OsuMode.TAIKO_RELAX
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.messageServiceImpl.TestService
 import com.now.nowbot.util.JacksonUtil
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
@@ -143,28 +136,28 @@ class FixZeroAccService(
     private fun calc(stat: LazerStatistics, isLazer: Boolean = false, mode: OsuMode): Double? {
 
         return when (mode) {
-            OSU, OSU_RELAX, OSU_AUTOPILOT -> {
+            OsuMode.OSU, OsuMode.OSU_RELAX, OsuMode.OSU_AUTOPILOT -> {
                 val hit = stat.great + 1.0 / 3 * stat.ok + 1.0 / 6 * stat.meh
                 val total = stat.great + stat.ok + stat.meh + stat.miss
 
                 1.0 * hit / total.coerceAtLeast(1)
             }
 
-            TAIKO, TAIKO_RELAX -> {
+            OsuMode.TAIKO, OsuMode.TAIKO_RELAX -> {
                 val hit = (stat.great + 1.0 / 2 * stat.ok)
                 val total = stat.great + stat.ok + stat.miss
 
                 1.0 * hit / total.coerceAtLeast(1)
             }
 
-            CATCH, CATCH_RELAX -> {
+            OsuMode.CATCH, OsuMode.CATCH_RELAX -> {
                 val hit = stat.great + stat.largeTickHit + stat.smallTickHit
                 val total = stat.great + stat.largeTickHit + stat.smallTickHit + stat.largeTickMiss + stat.smallTickMiss + stat.miss
 
                 1.0 * hit / total.coerceAtLeast(1)
             }
 
-            MANIA -> {
+            OsuMode.MANIA -> {
                 val hit = if (isLazer) {
                     stat.perfect + 300.0 / 305.0 * stat.great + 200.0 / 305.0 * stat.good + 100.0 / 305.0 * stat.ok + 50.0 / 305.0 * stat.meh
                 } else {
