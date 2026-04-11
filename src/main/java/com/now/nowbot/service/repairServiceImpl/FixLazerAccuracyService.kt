@@ -119,8 +119,8 @@ class FixLazerAccuracyService(
                 return@mapNotNull null
             }
 
-            val max = maxStats[lite.id] ?: run {
-                log.info("[$index] ${lite.id} failed: max not found")
+            val max = maxStats[lite.beatmapId] ?: run {
+                log.info("[$index] ${lite.beatmapId} failed: max not found")
                 return@mapNotNull null
             }
 
