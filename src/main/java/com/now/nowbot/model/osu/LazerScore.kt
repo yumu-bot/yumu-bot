@@ -374,7 +374,7 @@ open class LazerScore(
             val m = score.maximumStatistics
             val s = score.statistics
 
-            val total: Int = if (score.passed) {
+            val total: Double = if (score.passed) {
                 when(score.mode) {
                     OSU, OSU_RELAX, OSU_AUTOPILOT -> s.great + s.ok + s.meh + s.miss
                     TAIKO, TAIKO_RELAX -> s.great + s.ok + s.miss
@@ -386,9 +386,9 @@ open class LazerScore(
                     MANIA -> m.perfect
                     else -> m.great
                 }
-            }
+            }.toDouble()
 
-            if (total == 0 && !score.passed) return score.lazerAccuracy
+            if (total == 0.0 && !score.passed) return score.lazerAccuracy
 
             val hit: Double = when(score.mode) {
                 OSU, OSU_RELAX, OSU_AUTOPILOT -> s.great + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
