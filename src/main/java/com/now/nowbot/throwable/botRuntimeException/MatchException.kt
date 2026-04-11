@@ -62,6 +62,9 @@ open class MatchException(message: String) : TipsRuntimeException(message), BotE
     open class MatchAlreadyEnd(matchID: Any):
         MatchException("比赛 $matchID 早就结束了...")
 
+    open class MatchAlreadyListen(matchID: Any):
+        MatchException("比赛 $matchID 已经在监听中...")
+
     open class MaxListenerInGroup:
         MatchException("这个群的监听实例已到达最大数量。")
 

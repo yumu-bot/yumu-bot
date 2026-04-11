@@ -182,6 +182,10 @@ class MatchListenerService(
         if (listenerData.count { it.userID == userID } >= USER_MAX)
             throw MatchException.MaxListenerByUser()
 
+        if (listenerData.any { it.groupID == groupID && it.listener.matchID == param.id }) {
+            throw MatchException.MatchAlreadyListen(param.id)
+        }
+
         val implement = MatchAdapterImpl(
             beatmapApiService, calculateApiService, imageService, event, param.id, param.skip
         )

@@ -367,40 +367,39 @@ open class LazerScore(
         }
 
         private fun getStableAccuracy(score: LazerScore): Double {
-            if (score.isLazer) return score.lazerAccuracy
-
             val m = score.maximumStatistics
             val s = score.statistics
 
-            var total = m.great
-
-            if (m.great == 0 && m.perfect == 0) return score.lazerAccuracy
-
-            return when (score.mode) {
-                OSU, OSU_RELAX, OSU_AUTOPILOT -> {
-                    val hit = s.great + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
-                    hit / total
+            val total: Int = if (score.passed) {
+                when(score.mode) {
+                    OSU, OSU_RELAX, OSU_AUTOPILOT -> s.great + s.ok + s.meh + s.miss
+                    TAIKO, TAIKO_RELAX -> s.great + s.ok + s.miss
+                    CATCH, CATCH_RELAX -> s.great + s.largeTickHit + s.smallTickHit + s.largeTickMiss + s.smallTickMiss + s.miss
+                    else -> s.perfect + s.great + s.good + s.ok + s.meh + s.miss
                 }
-
-                TAIKO, TAIKO_RELAX -> {
-                    (s.great + 1.0 / 2 * s.ok) / total
+            } else {
+                when(score.mode) {
+                    MANIA -> m.perfect
+                    else -> m.great
                 }
+            }
 
-                CATCH, CATCH_RELAX -> {
-                    val hit = s.great + s.largeTickHit + s.smallTickHit
-                    total = m.great + m.largeTickHit + m.smallTickHit
+            if (total == 0 && !score.passed) return score.lazerAccuracy
 
-                    1.0 * hit / total
-                }
-
-                MANIA -> {
-                    val hit = s.perfect + s.great + 2.0 / 3 * s.good + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
-                    total = m.perfect
-                    hit / total
+            val hit: Double = when(score.mode) {
+                OSU, OSU_RELAX, OSU_AUTOPILOT -> s.great + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
+                TAIKO, TAIKO_RELAX -> s.great + 1.0 / 2 * s.ok
+                CATCH, CATCH_RELAX -> (s.great + s.largeTickHit + s.smallTickHit) * 1.0
+                MANIA -> if (score.isLazer) {
+                    s.perfect + 300.0 / 305.0 * s.great + 200.0 / 305.0 * s.good + 100.0 / 305.0 * s.ok + 50.0 / 305.0 * s.meh
+                } else {
+                    s.perfect + s.great + 2.0 / 3 * s.good + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
                 }
 
                 else -> 0.0
             }
+
+            return (hit / total).coerceIn(0.0..1.0)
         }
     }
 }
