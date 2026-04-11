@@ -1,5 +1,6 @@
 package com.now.nowbot.model.enums
 
+import com.fasterxml.jackson.annotation.JsonValue
 import java.util.*
 
 enum class OsuMode(val fullName: String, val shortName: String, val charName: String, val modeValue: Byte) {
@@ -18,6 +19,9 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
     override fun toString(): String {
         return fullName
     }
+
+    @JsonValue
+    fun value() = this.shortName
 
     fun toRosuMode(): org.spring.osu.OsuMode {
         return when (this) {
