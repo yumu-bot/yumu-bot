@@ -367,6 +367,10 @@ open class LazerScore(
         }
 
         private fun getStableAccuracy(score: LazerScore): Double {
+            if (score.isLazer && score.lazerAccuracy > 0.0 && score.lazerAccuracy <= 1.0) {
+                return score.lazerAccuracy
+            }
+
             val m = score.maximumStatistics
             val s = score.statistics
 
