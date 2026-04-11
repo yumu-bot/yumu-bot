@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.*
+import com.now.nowbot.model.enums.OsuMode.CATCH
+import com.now.nowbot.model.enums.OsuMode.CATCH_RELAX
 import jakarta.persistence.Column
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
@@ -263,8 +264,7 @@ data class Beatmap(
             if (data == null) return listOf(0)
 
             return if (data.hasNonNull(fieldName) && data[fieldName].isArray) {
-                data[fieldName].map { it.asInt(0) }
-
+                (data[fieldName] as kotlin.collections.Iterable<JsonNode>).map { it -> it.asInt(0) }
             } else listOf()
         }
 
