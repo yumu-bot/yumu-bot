@@ -236,17 +236,23 @@ class MaiVersusService(
         val loserIDs = if (status == MaiVersusStatus.DOOMED || status == MaiVersusStatus.DOMINATE) {
             // 水图
             loserData
+                .asSequence()
                 .filter { it.score.songID % 10000 !in winnerSet }
                 .sortedBy { it.rating - it.score.rating }
+                .sortedByDescending { it.score.index }
                 .take(5)
                 .map { it.score.songID % 10000 }
+                .toList()
         } else {
             // 实力
             loserData
+                .asSequence()
                 .filter { it.score.songID % 10000 !in winnerSet }
                 .sortedByDescending { it.rating - it.score.rating }
+                .sortedByDescending { it.score.index }
                 .take(5)
                 .map { it.score.songID % 10000 }
+                .toList()
         }
 
         val (m5, o5) = if (delta >= 0) {
