@@ -1,6 +1,5 @@
 package com.now.nowbot.service.repairServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.mapper.LazerScoreRepository
 import com.now.nowbot.mapper.LazerScoreStatisticRepository
@@ -17,10 +16,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.BatchPreparedStatementSetter
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.stereotype.Service
 import java.sql.PreparedStatement
 
-@Service
+//@Service
 class FixLazerAccuracyService(
     private val repository: LazerScoreRepository,
     private val statisticRepository: LazerScoreStatisticRepository,
@@ -31,12 +29,12 @@ class FixLazerAccuracyService(
         messageText: String,
         data: MessageService.DataValue<String>
     ): Boolean {
-        val fix = "!" + "fl"
-
-        if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
-            data.value = messageText.replace(fix, "")
-            return true
-        }
+//        val fix = "!" + "fl"
+//
+//        if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
+//            data.value = messageText.replace(fix, "")
+//            return true
+//        }
 
         return false
     }

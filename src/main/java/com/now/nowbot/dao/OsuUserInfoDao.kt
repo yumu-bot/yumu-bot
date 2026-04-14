@@ -5,7 +5,7 @@ import com.now.nowbot.entity.OsuUserInfoArchiveLite.InfoArchive
 import com.now.nowbot.mapper.OsuUserInfoPercentilesLiteRepository
 import com.now.nowbot.mapper.OsuUserInfoRepository
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.InfoLogStatistics
+import com.now.nowbot.model.calculate.InfoLogStatistics
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
@@ -390,7 +390,8 @@ class OsuUserInfoDao(
             user.statistics = statistics
             archive.rankHistory?.let {
                 user.rankHistory = OsuUser.RankHistory(archive.mode.shortName,
-                    JacksonUtil.parseObjectList(archive.rankHistory, Long::class.java).orEmpty())
+                    JacksonUtil.parseObjectList(archive.rankHistory, Long::class.java)
+                )
             }
 
             return user

@@ -15,12 +15,12 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.MaimaiUtil
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.min
 
 @Service("MAI_DIST") class MaiDistributionService(
     private val maimaiApiService: MaimaiApiService,
@@ -170,35 +170,7 @@ import kotlin.math.min
 
             val achievements = score.achievements
 
-            return getRating(star, achievements)
-        }
-
-        // star 就是定数 (ds)
-        private fun getRating(star: Double, achievements: Double): Int {
-
-            // 评级系数，100.5 以上就是 22.4
-            val accLevel = when {
-                achievements >= 100.5 -> 22.4
-                achievements in 100.0.rangeUntil(100.5) -> 21.6
-                achievements in 99.5.rangeUntil(100.0) -> 21.1
-                achievements in 99.0.rangeUntil(99.5) -> 20.8
-                achievements in 98.0.rangeUntil(99.0) -> 20.3
-                achievements in 97.0.rangeUntil(98.0) -> 20.0
-                achievements in 94.0.rangeUntil(97.0) -> 16.8
-                achievements in 90.0.rangeUntil(94.0) -> 15.2
-                achievements in 80.0.rangeUntil(90.0) -> 13.6
-                achievements in 75.0.rangeUntil(80.0) -> 12.0
-                achievements in 70.0.rangeUntil(75.0) -> 11.2
-                achievements in 60.0.rangeUntil(70.0) -> 9.6
-                achievements in 50.0.rangeUntil(60.0) -> 8.0
-                achievements in 40.0.rangeUntil(50.0) -> 6.4
-                achievements in 30.0.rangeUntil(40.0) -> 4.8
-                achievements in 20.0.rangeUntil(30.0) -> 3.2
-                achievements in 10.0.rangeUntil(20.0) -> 1.6
-                else -> 0.0
-            }
-
-            return (star * min(achievements, 100.5) / 100.0 * accLevel).toInt()
+            return MaimaiUtil.getRating(star, achievements)
         }
     }
 }

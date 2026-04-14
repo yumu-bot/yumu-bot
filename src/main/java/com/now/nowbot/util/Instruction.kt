@@ -962,6 +962,7 @@ enum class Instruction(val pattern: Pattern) {
         appendNameAnyButNoHash()
         appendHashCaptureGroup(FLAG_VERSION, REG_ANYTHING, contentLevel = MORE, prefixLevel = MAYBE)
     }),
+
     MAI_SEEK(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*(seek)", "mk")
         appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
@@ -989,6 +990,12 @@ enum class Instruction(val pattern: Pattern) {
         appendNameAnyButNoHash()
         appendSpace()
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+    }),
+
+    MAI_VERSUS(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*v(ersu)?s", "xvs?", "x\\s*video")
+        appendModeQQUID()
+        append2Name()
     }),
 
     MAI_AP(CommandPatternBuilder.create {

@@ -52,6 +52,12 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class BestScoreTheoretical:
         NoSuchElementException("您（选中）的最好成绩已经全是理论值了！")
 
+    class Compare:
+        NoSuchElementException("""
+            请输入要对比的对象！
+            可以输入对方的玩家名，或是艾特对方，或是输入 qq= 加上对方的 QQ。
+        """.trimIndent())
+
     class Data:
         NoSuchElementException("数据是空的！")
 

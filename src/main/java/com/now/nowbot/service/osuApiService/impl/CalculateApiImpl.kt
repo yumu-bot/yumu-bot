@@ -1,12 +1,16 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.now.nowbot.config.CosuConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.ScoreDao
-import com.now.nowbot.mapper.BeatmapStarRatingCacheRepository
-import com.now.nowbot.model.cosu.CosuRequest
-import com.now.nowbot.model.cosu.CosuResponse
-import com.now.nowbot.model.cosu.CosuScore
+import com.now.nowbot.model.calculate.CosuScore
+import com.now.nowbot.model.calculate.CalculatePerformance
+import com.now.nowbot.model.calculate.CosuPerformance
+import com.now.nowbot.model.calculate.CosuScore.Companion.toCosuScore
+import com.now.nowbot.model.calculate.EmptyFullPerformance
+import com.now.nowbot.model.calculate.EmptyPerformance
+import com.now.nowbot.model.calculate.FullCalculatePerformance
+import com.now.nowbot.model.calculate.FullCosuPerformance
+import com.now.nowbot.model.calculate.RosuPerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
@@ -15,12 +19,12 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
-import com.now.nowbot.util.toBody
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.spring.osu.extended.rosu.JniBeatmap
 import org.spring.osu.extended.rosu.JniScoreState
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestClient
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
@@ -29,32 +33,56 @@ import kotlin.time.Duration.Companion.seconds
 class CalculateApiImpl(
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
-    private val beatmapStarRatingCacheRepository: BeatmapStarRatingCacheRepository,
     config: OsuLocalCalculateConfig,
-    cousConfig: CosuConfig,
-    @param:Qualifier("rlient") private val client: RestClient,
 ) : OsuCalculateApiService {
-
-    val CosuUrl = cousConfig.url
 
     enum class CalculateStrategy {
         LOCAL_DATABASE,
         R_OSU,
         OFFICIAL_API,
-        LOCAL_API
+        C_OSU
     }
 
     val calculatePriority = listOf(
         CalculateStrategy.LOCAL_DATABASE,
         CalculateStrategy.OFFICIAL_API,
         CalculateStrategy.R_OSU,
-        CalculateStrategy.LOCAL_API,
+        // CalculateStrategy.C_OSU,
     )
 
-    private val enableROsu = config.rosu
+    private val enableRosu = config.rosu
 
-    override fun getScorePerfectPP(score: LazerScore): RosuPerformance {
-        if (!enableROsu) return RosuPerformance()
+    override fun getScorePerfectPP(
+        score: LazerScore
+    ): CalculatePerformance {
+        val priority = calculatePriority
+
+        for (strategy in priority) {
+            val found: CalculatePerformance? = when (strategy) {
+                CalculateStrategy.R_OSU -> getScorePerfectPPFromRosu(score)
+
+                CalculateStrategy.C_OSU -> getScorePerfectPPFromCosu(score)
+
+                else -> null
+            }
+
+
+            if (found != null) {
+                return found
+            }
+        }
+
+        return EmptyPerformance
+    }
+
+    private fun getScorePerfectPPFromCosu(score: LazerScore): CosuPerformance? {
+        val cs = score.toCosuScore(CosuScore.ScoreType.PERFECT)
+
+        return beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs).performance
+    }
+
+    private fun getScorePerfectPPFromRosu(score: LazerScore): RosuPerformance? {
+        if (!enableRosu) return null
 
         val mode = score.mode.toRosuMode()
         val mods = score.mods
@@ -64,7 +92,7 @@ class CalculateApiImpl(
         val closable = ArrayList<AutoCloseable>(1)
         return try {
             val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) }
-                ?: return RosuPerformance()
+                ?: return null
             val objects = beatmap.objects
             val performance = beatmap.createPerformance().apply {
                 isLazer(lazer)
@@ -78,8 +106,29 @@ class CalculateApiImpl(
         }.let { RosuPerformance(it) }
     }
 
-    override fun getScoreFullComboPP(score: LazerScore): RosuPerformance {
-        if (!enableROsu) return RosuPerformance()
+    override fun getScoreFullComboPP(score: LazerScore): CalculatePerformance {
+
+        val priority = calculatePriority
+
+        for (strategy in priority) {
+            val found: CalculatePerformance? = when (strategy) {
+                CalculateStrategy.R_OSU -> getScoreFullComboPPFromRosu(score)
+
+                CalculateStrategy.C_OSU -> getScoreFullComboPPFromCosu(score)
+
+                else -> null
+            }
+
+            if (found != null) {
+                return found
+            }
+        }
+
+        return EmptyPerformance
+    }
+
+    private fun getScoreFullComboPPFromRosu(score: LazerScore): RosuPerformance? {
+        if (!enableRosu) return null
 
         val mode = score.mode.toRosuMode()
         val mods = score.mods
@@ -104,7 +153,7 @@ class CalculateApiImpl(
         val closable = ArrayList<AutoCloseable>(1)
         return try {
             val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) }
-                ?: return RosuPerformance()
+                ?: return null
             beatmap.createPerformance(state).apply {
                 setLazer(lazer)
                 if (change) this.setGameMode(mode)
@@ -115,8 +164,64 @@ class CalculateApiImpl(
         }.let { RosuPerformance(it) }
     }
 
-    override fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance? {
-        if (!enableROsu) return null
+    private fun getScoreFullComboPPFromCosu(score: LazerScore): CosuPerformance? {
+        val cs = score.toCosuScore(CosuScore.ScoreType.FULL_COMBO)
+
+        return beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs).performance
+    }
+
+    override fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): FullCalculatePerformance? {
+
+        val priority = calculatePriority
+
+        for (strategy in priority) {
+            val found: FullCalculatePerformance? = when (strategy) {
+                CalculateStrategy.R_OSU -> getScoreStatisticsWithFullAndPerfectPPFromRosu(score)
+
+                CalculateStrategy.C_OSU -> getScoreStatisticsWithFullAndPerfectPPFromCosu(score)
+
+                else -> null
+            }
+
+            if (found != null) {
+                return found
+            }
+        }
+
+        return EmptyFullPerformance
+
+    }
+
+    private fun getScoreStatisticsWithFullAndPerfectPPFromCosu(score: LazerScore): FullCosuPerformance? {
+        val cs = score.toCosuScore()
+        val fc = score.toCosuScore(CosuScore.ScoreType.FULL_COMBO)
+        val pf = score.toCosuScore(CosuScore.ScoreType.PERFECT)
+
+        // 将 runBlocking 的结果直接返回给外部
+        return runBlocking(Dispatchers.IO) {
+            val performanceDeferred = async {
+                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs).performance
+            }
+            val fcPPDeferred = async {
+                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, fc).performance?.pp
+            }
+            val pfPPDeferred = async {
+                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, pf).performance?.pp
+            }
+
+            // 等待所有结果，如果任一结果为 null，则 runBlocking 返回 null
+            val perf = performanceDeferred.await() ?: return@runBlocking null
+            val fcPP = fcPPDeferred.await() ?: return@runBlocking null
+            val pfPP = pfPPDeferred.await() ?: return@runBlocking null
+
+            // 在协程作用域内完成构建
+            FullCosuPerformance(perf, fcPP, pfPP)
+        }
+    }
+
+
+    private fun getScoreStatisticsWithFullAndPerfectPPFromRosu(score: LazerScore): RosuPerformance.FullRosuPerformance? {
+        if (!enableRosu) return null
 
         val mode = score.mode.toRosuMode()
 
@@ -247,7 +352,7 @@ class CalculateApiImpl(
     }
 
     override fun applyPPToScore(score: LazerScore) {
-        if (score.pp > 1e-4 || !enableROsu) {
+        if (score.pp > 1e-4 || !enableRosu) {
             return
         } else {
             score.pp = getScoreRosuPerformance(score).pp
@@ -275,7 +380,7 @@ class CalculateApiImpl(
     }
 
     private fun getScoresPPWithSameBeatmap(scores: Collection<LazerScore>): Map<Long, RosuPerformance> {
-        if (scores.isEmpty() || !enableROsu) return emptyMap()
+        if (scores.isEmpty() || !enableRosu) return emptyMap()
 
         val beatmapID = scores.first().beatmapID
         val mode = scores.first().mode.toRosuMode()
@@ -316,7 +421,7 @@ class CalculateApiImpl(
         } finally {
             closable.forEach { it.close() }
         }.associate { (id, attr) ->
-            id to attr.let { RosuPerformance(it) }
+            id to RosuPerformance(attr)
         }
     }
 
@@ -329,7 +434,7 @@ class CalculateApiImpl(
         isLazer: Boolean,
         accuracy: DoubleArray
     ): List<Double> {
-        if (!enableROsu) return emptyList()
+        if (!enableRosu) return emptyList()
 
         val gameMode = mode.toRosuMode()
         val cache = ArrayList<AutoCloseable>(1)
@@ -365,7 +470,7 @@ class CalculateApiImpl(
         isLazer: Boolean,
         accuracy: Double
     ): RosuPerformance {
-        if (!enableROsu) return RosuPerformance()
+        if (!enableRosu) return RosuPerformance()
 
         val gameMode = mode.toRosuMode()
         val modsStr = if (mods.isNullOrEmpty().not()) {
@@ -384,7 +489,7 @@ class CalculateApiImpl(
                 modsStr?.let { setMods(it) }
                 setAcc(accuracy)
             }
-            performance.calculate().let { RosuPerformance(it) }
+            RosuPerformance(performance.calculate())
         } finally {
             cache.forEach { it.close() }
         }
@@ -444,7 +549,7 @@ class CalculateApiImpl(
 
             // 2. 根据策略动态准备输入数据
             val input = when (strategy) {
-                CalculateStrategy.LOCAL_API, CalculateStrategy.R_OSU -> remaining.values.toList()
+                CalculateStrategy.C_OSU, CalculateStrategy.R_OSU -> remaining.values.toList()
 
                 else -> remaining.values.filter { it.mods.isValueMod() }
             }
@@ -462,7 +567,7 @@ class CalculateApiImpl(
                 }
 
                 CalculateStrategy.R_OSU -> {
-                    if (enableROsu) {
+                    if (enableRosu) {
                         getBeatmapStarFromLocal(input)
                     } else emptyMap()
                 }
@@ -471,8 +576,8 @@ class CalculateApiImpl(
                     getBeatmapStarFromOfficial(input)
                 }
 
-                CalculateStrategy.LOCAL_API -> {
-                    getBeatmapStarFromLocalAPI(input)
+                CalculateStrategy.C_OSU -> {
+                    getBeatmapStarFromCosu(input)
                 }
             }
 
@@ -561,7 +666,7 @@ class CalculateApiImpl(
         return sortedStarMap
     }
 
-    private fun getBeatmapStarFromLocalAPI(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
+    private fun getBeatmapStarFromCosu(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
         val resultMap = ConcurrentHashMap<BeatmapDetails, Double>()
 
         details.chunked(15).forEach { batch ->
@@ -570,7 +675,7 @@ class CalculateApiImpl(
                     runCatching {
                         val attr = beatmapApiService.getAttributesFromLocal(
                             nd.beatmapID, nd.mode,
-                            LazerScoreForCalculate(mods = nd.mods)
+                            CosuScore(mods = nd.mods)
                         )
                         val star = attr.difficulty.starRating
 
@@ -607,7 +712,7 @@ class CalculateApiImpl(
 
 
     private fun getScoreRosuPerformance(score: LazerScore): RosuPerformance {
-        if (!enableROsu) return RosuPerformance()
+        if (!enableRosu) return RosuPerformance()
 
         val mode = score.mode.toRosuMode()
         val mods = score.mods
@@ -662,51 +767,5 @@ class CalculateApiImpl(
             false
         }
         return beatmap to isConvert
-    }
-
-
-    override fun calculateDifficulty(
-        bid: Long,
-        mode: OsuMode,
-        mods: List<LazerMod>?
-    ): CosuResponse {
-
-        val request = CosuRequest(
-            path = beatmapApiService.getBeatmapFilePath(bid),
-            mode = mode.shortName,
-            score = CosuScore(mods = mods),
-        )
-        return client
-            .post()
-            .uri(CosuUrl)
-            .body(request)
-            .toBody<CosuResponse>()
-    }
-
-    override fun getScoreMapStar(
-        score: LazerScore,
-    ): Double {
-
-        var star =
-            if (score.beatmap.starRating == 0.0) beatmapApiService.getBeatmapFromDatabase(score.beatmapID).starRating
-            else score.beatmap.starRating
-        if (score.mods.isEmpty()) return star;
-
-        val mods = score.mods
-        val hasSettings = mods.any { it.settings != null }
-        if (hasSettings) {
-            val result = calculateDifficulty(score.beatmapID, score.mode, mods)
-            return result.difficulty.starRating
-        }
-
-        val modsValue = LazerMod.getModsValue(mods)
-        val dbStar = beatmapStarRatingCacheRepository.getStarRating(score.beatmapID, score.mode.modeValue, modsValue)
-        if (dbStar != null) return dbStar.toDouble()
-
-        val result = calculateDifficulty(score.beatmapID, score.mode, mods)
-        star = result.difficulty.starRating
-
-        beatmapStarRatingCacheRepository.saveAndUpdate(score.beatmapID, score.mode.modeValue, modsValue, star.toFloat())
-        return star
     }
 }

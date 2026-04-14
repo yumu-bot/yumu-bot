@@ -6,8 +6,8 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.osu.PPPlus
-import com.now.nowbot.model.osu.PPPlus.AdvancedStats
+import com.now.nowbot.model.calculate.PPPlus
+import com.now.nowbot.model.calculate.PPPlus.AdvancedStats
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService

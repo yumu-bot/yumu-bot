@@ -1,4 +1,4 @@
-package com.now.nowbot.model.osu
+package com.now.nowbot.model.calculate
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonFormat

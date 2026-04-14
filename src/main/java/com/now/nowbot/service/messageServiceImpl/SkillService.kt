@@ -128,84 +128,50 @@ import kotlin.math.sqrt
         val otherBests: List<LazerScore>?
         val mode: OsuMode
 
-        if (isVs) {
-            if (ids.first != null && ids.second != null) {
-                // 双人模式
+        val id1 = ids.first
+        val id2 = ids.second
 
-                mode = inputMode.data!!
+        if (id1 != null && id2 != null) {
+            // 双人模式 (无论 isVs 是真或假，双人逻辑完全一致)
+            mode = inputMode.data!!
 
-                val async = AsyncMethodExecutor.awaitQuad(
-                    { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScoresSerial(ids.first!!, mode) },
-                    { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScoresSerial(ids.second!!, mode) },
-                )
+            val async = AsyncMethodExecutor.awaitQuad(
+                { userApiService.getOsuUser(id1, mode) },
+                { scoreApiService.getBestScoresSerial(id1, mode) },
+                { userApiService.getOsuUser(id2, mode) },
+                { scoreApiService.getBestScoresSerial(id2, mode) }
+            )
 
-                me = async.first.first
-                other = async.second.first
+            me = async.first.first
+            myBests = async.first.second
+            other = async.second.first
+            otherBests = async.second.second
 
-                myBests = async.first.second
-                otherBests = async.second.second
-            } else {
-                // 缺东西，走常规路线
-                val users = InstructionUtil.get2User(event, matcher, inputMode, true)
+        } else if (!isVs && id1 != null) {
+            // 单人模式 (仅当不是 isVs 且只提供了第一个 id 时)
+            mode = inputMode.data!!
 
-                mode = OsuMode.getMode(inputMode.data!!, users.first().currentOsuMode)
+            val async = AsyncMethodExecutor.awaitPair(
+                { userApiService.getOsuUser(id1, mode) },
+                { scoreApiService.getBestScores(id1, mode) }
+            )
 
-                me = users.first()
-                other = if (users.size == 2) users.last() else null
+            me = async.first
+            myBests = async.second
+            other = null
+            otherBests = null
 
-                myBests = scoreApiService.getBestScores(me.userID, mode)
-                otherBests = other?.let { scoreApiService.getBestScores(other.userID, mode) }
-            }
         } else {
-            if (ids.first != null && ids.second != null) {
-                // 双人模式
+            // 缺东西，走常规路线 (合并两种情况，直接传入 isVs 变量)
+            val users = InstructionUtil.get2User(event, matcher, inputMode, isVs)
 
-                mode = inputMode.data!!
+            me = users.first()
+            other = users.getOrNull(1)
 
-                val async = AsyncMethodExecutor.awaitQuad(
-                    { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScoresSerial(ids.first!!, mode) },
-                    { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScoresSerial(ids.second!!, mode) },
-                )
+            mode = OsuMode.getMode(inputMode.data!!, me.currentOsuMode)
 
-                me = async.first.first
-                other = async.second.first
-
-                myBests = async.first.second
-                otherBests = async.second.second
-
-            } else if (ids.first != null) {
-                // 单人模式
-
-                mode = inputMode.data!!
-
-                val async = AsyncMethodExecutor.awaitPair(
-                    { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode) },
-                )
-
-                me = async.first
-                other = null
-
-                myBests = async.second
-                otherBests = null
-
-            } else {
-                // 缺东西，走常规路线
-
-                val users = InstructionUtil.get2User(event, matcher, inputMode, false)
-
-                mode = OsuMode.getMode(inputMode.data!!, users.first().currentOsuMode)
-
-                me = users.first()
-                other = if (users.size == 2) users.last() else null
-
-                myBests = scoreApiService.getBestScores(me.userID, mode)
-                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode) else null
-            }
+            myBests = scoreApiService.getBestScores(me.userID, mode)
+            otherBests = other?.let { scoreApiService.getBestScores(it.userID, mode) }
         }
 
         return SkillParam(isVs, me, myBests, other, otherBests, mode)

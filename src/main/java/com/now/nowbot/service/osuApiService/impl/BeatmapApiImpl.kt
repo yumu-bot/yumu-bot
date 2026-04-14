@@ -8,6 +8,9 @@ import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.calculate.CosuRequest
+import com.now.nowbot.model.calculate.CosuResponse
+import com.now.nowbot.model.calculate.CosuScore
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
@@ -847,7 +850,7 @@ class BeatmapApiImpl(
     }
 
     @Throws(NoSuchElementException.Beatmap::class)
-    override fun getAttributesFromLocal(beatmapID: Long, mode: OsuMode, score: LazerScoreForCalculate?, isRetry: Boolean): BeatmapCalculateResult {
+    override fun getAttributesFromLocal(beatmapID: Long, mode: OsuMode, score: CosuScore?, isRetry: Boolean): CosuResponse {
         val path = osuDir.resolve("${beatmapID}.osu")
 
         // 1. 检查本地文件是否存在
@@ -862,7 +865,7 @@ class BeatmapApiImpl(
         }
 
         return try {
-            getAttributesFromLocal(BeatmapCalculateRequest(path.absolutePathString(), mode.shortName, score))
+            getAttributesFromLocal(CosuRequest(path.absolutePathString(), mode.shortName, score))
 
         } catch (e: Exception) {
             val is404 = e.message?.contains("404") == true || e is HttpClientErrorException.NotFound
@@ -877,7 +880,7 @@ class BeatmapApiImpl(
         }
     }
 
-    private fun getAttributesFromLocal(request: BeatmapCalculateRequest): BeatmapCalculateResult {
+    private fun getAttributesFromLocal(request: CosuRequest): CosuResponse {
         return base.noRetryRestClient.post().uri {
                 it.scheme("http")
                     .host(calculateConfig.host)
@@ -886,7 +889,7 @@ class BeatmapApiImpl(
                     .build()
             }
             .body(JacksonUtil.toJson(request))
-            .toBody<BeatmapCalculateResult>()
+            .toBody<CosuResponse>()
     }
 
     override fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode? {

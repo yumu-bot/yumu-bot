@@ -1,6 +1,8 @@
 package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.calculate.CosuResponse
+import com.now.nowbot.model.calculate.CosuScore
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
@@ -151,7 +153,7 @@ interface OsuBeatmapApiService {
     // 给 lazerscorelite 用的
     fun applyVersion(scores: Collection<LazerScore>)
 
-    fun getAttributesFromLocal(beatmapID: Long, mode: OsuMode, score: LazerScoreForCalculate? = null, isRetry: Boolean = false): BeatmapCalculateResult
+    fun getAttributesFromLocal(beatmapID: Long, mode: OsuMode, score: CosuScore? = null, isRetry: Boolean = false): CosuResponse
 
     fun applyExtend(beatmaps: Collection<Beatmap>)
 

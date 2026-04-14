@@ -1,15 +1,19 @@
-package com.now.nowbot.model.osu
+package com.now.nowbot.model.calculate
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.spring.osu.extended.rosu.*
+import org.spring.osu.extended.rosu.CatchPerformanceAttributes
+import org.spring.osu.extended.rosu.JniPerformanceAttributes
+import org.spring.osu.extended.rosu.ManiaPerformanceAttributes
+import org.spring.osu.extended.rosu.OsuPerformanceAttributes
+import org.spring.osu.extended.rosu.TaikoPerformanceAttributes
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import kotlin.reflect.full.memberProperties
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-open class RosuPerformance(result: JniPerformanceAttributes? = null) {
+open class RosuPerformance(result: JniPerformanceAttributes? = null) : CalculatePerformance {
     @JsonProperty("pp")
     var pp: Double = 0.0
 
@@ -84,11 +88,12 @@ open class RosuPerformance(result: JniPerformanceAttributes? = null) {
             return this.replace("([a-z])([A-Z])".toRegex(), "$1_$2").lowercase()
         }
     }
-    class FullRosuPerformance(result: JniPerformanceAttributes): RosuPerformance(result) {
+
+    class FullRosuPerformance(result: JniPerformanceAttributes): RosuPerformance(result), FullCalculatePerformance {
         @JsonProperty("full_pp")
-        var fullPP:Double?= null
+        override var fullPP: Double? = null
 
         @JsonProperty("perfect_pp")
-        var perfectPP:Double?= null
+        override var perfectPP: Double? = null
     }
 }

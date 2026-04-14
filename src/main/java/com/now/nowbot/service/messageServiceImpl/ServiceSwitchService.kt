@@ -61,7 +61,7 @@ class ServiceSwitchService(
         ),
 
         MAIMAI(listOf("i", "mai", "maimai", "chu", "chunithm", "舞萌", "舞萌中二", "中二", "中二节奏"),
-            listOf("mai_audio", "mai_bp", "mai_score", "mai_dist", "mai_find", "mai_version", "mai_filter", "chu_bp", "mai_seek")
+            listOf("mai_audio", "mai_bp", "mai_score", "mai_dist", "mai_find", "mai_version", "mai_versus", "mai_filter", "chu_bp", "mai_seek")
         ),
 
         AID(listOf("a", "aid", "other", "辅助"),

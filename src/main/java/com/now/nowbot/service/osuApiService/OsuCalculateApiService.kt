@@ -1,18 +1,19 @@
 package com.now.nowbot.service.osuApiService
 
-import com.now.nowbot.model.cosu.CosuResponse
+import com.now.nowbot.model.calculate.CalculatePerformance
+import com.now.nowbot.model.calculate.FullCalculatePerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.RosuPerformance
+import com.now.nowbot.model.calculate.RosuPerformance
 
 interface OsuCalculateApiService {
-    fun getScorePerfectPP(score: LazerScore): RosuPerformance
+    fun getScorePerfectPP(score: LazerScore): CalculatePerformance
 
-    fun getScoreFullComboPP(score: LazerScore): RosuPerformance
+    fun getScoreFullComboPP(score: LazerScore): CalculatePerformance
 
-    fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance?
+    fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): FullCalculatePerformance?
 
     fun applyStarToScore(score: LazerScore)
 
@@ -56,8 +57,4 @@ interface OsuCalculateApiService {
         mods: List<LazerMod>,
         hasLeaderBoard: Boolean = false
     ): Double
-
-    fun calculateDifficulty(bid: Long, mode: OsuMode, mods: List<LazerMod>? = null): CosuResponse
-
-    fun getScoreMapStar(score: LazerScore): Double
 }

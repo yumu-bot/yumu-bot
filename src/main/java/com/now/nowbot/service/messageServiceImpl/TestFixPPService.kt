@@ -2,6 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.calculate.CosuPerformance
+import com.now.nowbot.model.calculate.RosuPerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -164,7 +166,14 @@ import kotlin.math.roundToInt
 
                     // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
                     if (isChoke || has1pMiss) {
-                        s.pp = calculateApiService.getScoreFullComboPP(s).pp
+                        val fc = calculateApiService.getScoreFullComboPP(s)
+
+                        s.pp = when(fc) {
+                            is RosuPerformance -> fc.pp
+                            is CosuPerformance -> fc.pp
+
+                            else -> 0.0
+                        }
                     }
                 }
 

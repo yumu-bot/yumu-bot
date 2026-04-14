@@ -5,7 +5,7 @@ import com.now.nowbot.mapper.PerformancePlusLiteRepository
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.PPPlus
+import com.now.nowbot.model.calculate.PPPlus
 import com.now.nowbot.service.PerformancePlusAPIService
 import com.now.nowbot.service.messageServiceImpl.PPPlusService
 import org.slf4j.LoggerFactory
