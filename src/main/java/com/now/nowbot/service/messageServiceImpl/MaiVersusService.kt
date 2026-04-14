@@ -252,8 +252,9 @@ class MaiVersusService(
             loserData
                 .asSequence()
                 .filter { it.score.songID % 10000 !in winnerSet }
-                .sortedByDescending { it.rating - it.score.rating }
                 .sortedByDescending { it.score.index }
+                .take(10)
+                .shuffled()
                 .take(5)
                 .map { it.score.songID % 10000 }
                 .toList()
