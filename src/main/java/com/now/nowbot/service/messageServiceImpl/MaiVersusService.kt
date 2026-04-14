@@ -228,8 +228,9 @@ class MaiVersusService(
         // 实力
         val winnerIDs = winnerData
             .asSequence()
-            .sortedByDescending { it.rating - it.score.rating }
             .sortedByDescending { it.score.index }
+            .take(10)
+            .shuffled()
             .take(5)
             .map { it.score.songID % 10000 }
             .toList()
