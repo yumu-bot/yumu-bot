@@ -4,31 +4,41 @@ import com.mikuac.shiro.common.utils.MsgUtils
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.dto.action.common.ActionData
 import com.mikuac.shiro.dto.action.common.MsgId
-import com.mikuac.shiro.dto.action.response.LoginInfoResp
-import com.mikuac.shiro.exception.ShiroException
-import com.mikuac.shiro.exception.ShiroException.SendMessageException
-import com.mikuac.shiro.exception.ShiroException.SessionCloseException
 import com.now.nowbot.config.OneBotConfig
 import com.now.nowbot.qq.contact.Contact
 import com.now.nowbot.qq.message.*
 import com.now.nowbot.qq.message.Message.JsonMessage
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt
-import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.util.QQMsgUtil
 
 open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
 
-    override var name: String?  = "Unknown"
+    override var name: String? = "Unknown"
 
     override fun sendMessage(msg: MessageChain): OneBotMessageReceipt {
-        try {
-            ifNewBot
-        } catch (_: NullPointerException) {
-            Contact.log.error("获取 bot 信息为空, 可能为返回数据超时, 但是仍然尝试发送")
-        } catch (e: LogException) {
-            Contact.log.error("无法获取 bot, 放弃发送消息：{}", msg.rawMessage, e)
-        }
+        return try {
+            executeSend(msg)
+        } catch (e: Exception) {
+            Contact.log.warn("发送消息异常，尝试恢复 Bot 实例...", e)
 
+            if (tryRecoverBot()) {
+                try {
+                    executeSend(msg)
+                } catch (retryEx: Exception) {
+                    Contact.log.error("Bot 实例恢复后再次发送失败", retryEx)
+                    OneBotMessageReceipt.create()
+                }
+            } else {
+                Contact.log.error("当前 bot 离线, 且未找到代替 bot，放弃发送：{}", msg.rawMessage)
+                OneBotMessageReceipt.create()
+            }
+        }
+    }
+
+    /**
+     * 核心的发送逻辑（从原 sendMessage 中剥离）
+     */
+    private fun executeSend(msg: MessageChain): OneBotMessageReceipt {
         val id: Long
         val d: ActionData<MsgId?>?
 
@@ -68,12 +78,18 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
             }
         }
 
-        if (d?.data?.messageId != null) {
-            return OneBotMessageReceipt.create(bot, d.data!!.messageId, this)
-        } else {
-            if (msg.messageList.any { it is ImageMessage }) {
-                val status = if (bot.canSendImage()?.status != null) "正常" else "无法获取"
+        val messageID = d?.data?.messageId
 
+        if (messageID != null) {
+            return OneBotMessageReceipt.create(bot, messageID, this)
+        } else {
+            val status = try {
+                if (bot.canSendImage()?.status != null) "正常" else "无法获取"
+            } catch (_: Exception) {
+                "状态异常/掉线"
+            }
+
+            if (msg.messageList.any { it is ImageMessage }) {
                 Contact.log.info("发送消息：账号 ${bot.selfId} 在 $id 发送图片时获取回执失败。发送图片状态：$status")
             } else {
                 Contact.log.info("发送消息：账号 ${bot.selfId} 在 $id 发送此消息时获取回执失败：\n${getMsg4Chain(msg).take(100)}")
@@ -83,51 +99,22 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
         }
     }
 
-    private fun testBot(): Boolean {
-        val info: ActionData<LoginInfoResp> = try {
-            bot.loginInfo
-        } catch (e: NullPointerException) {
-            Contact.log.error("Shiro 框架：无法获取 Bot 实例的登录信息", e)
-            return false
-        } catch (e: ShiroException) {
-            Contact.log.error("Shiro 框架异常", e)
-            return false
-        } catch (e: Exception) {
-            Contact.log.error("未知异常", e)
-            return false
-        }
+    /**
+     * 替代原有的 ifNewBot 和 testBot。
+     * 不再发送网络请求，只做内存级别的实例查找替换。
+     */
+    private fun tryRecoverBot(): Boolean {
+        val container = OneBotConfig.getBotContainer().robots
 
-        try {
-            info.data
-        } catch (e: SendMessageException) {
-            Contact.log.error("Shiro 框架：发送消息失败", e)
-            return false
-        } catch (e: SessionCloseException) {
-            Contact.log.error("Shiro 框架：失去与 Bot 实例的连接", e)
-            return false
-        } catch (_: NullPointerException) {
-            // com.now.nowbot.qq.contact.Contact
-            // 获取bot信息为空, 可能为返回数据超时, 但是仍然尝试发送
-            return false
-        } catch (e: Exception) {
-            Contact.log.error("test bot only", e)
-            return false
-        }
-
-        return true
-    }
-
-    private val ifNewBot: Unit
-        get() {
-            if (testBot()) {
-                return
-            } else if (OneBotConfig.getBotContainer().robots.containsKey(bot.selfId)) {
-                bot = OneBotConfig.getBotContainer().robots[bot.selfId] ?: return
-                if (testBot()) { return }
+        if (container.containsKey(bot.selfId)) {
+            val newBot = container[bot.selfId]
+            if (newBot != null) {
+                this.bot = newBot
+                return true
             }
-            // 移除冗余
-            throw LogException("当前 bot 离线, 且未找到代替 bot")
         }
+        return false
+    }
 
     companion object {
         protected fun getMsg4Chain(messageChain: MessageChain): String {
