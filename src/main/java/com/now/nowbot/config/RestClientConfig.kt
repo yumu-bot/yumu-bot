@@ -96,7 +96,7 @@ class RestClientConfig {
             defaultSocketConfig = SocketConfig.custom()
                 .setSoTimeout(Timeout.ofMilliseconds(500))
                 .setSoKeepAlive(true)
-                .setTcpNoDelay(false) // 禁用 Nagle 算法
+                .setTcpNoDelay() // 禁用 Nagle 算法
                 .build()
         }
         val requestConfig = RequestConfig.custom()
@@ -189,7 +189,7 @@ class RestClientConfig {
         .build()
 
     companion object {
-        const val USE_PROXY = false
+        const val USE_PROXY = true
 
         val otherConnectionPoolManager = PoolingHttpClientConnectionManager().apply {
             maxTotal = 1000
