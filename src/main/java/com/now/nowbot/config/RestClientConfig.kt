@@ -189,7 +189,7 @@ class RestClientConfig {
         .build()
 
     companion object {
-        const val USE_PROXY = false
+        const val USE_PROXY = true
 
         val otherConnectionPoolManager = PoolingHttpClientConnectionManager().apply {
             maxTotal = 1000
