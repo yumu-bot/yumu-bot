@@ -59,7 +59,6 @@ class FixAllRankService(
 
             // 只要当前的指针还没触达区间终点，就继续
             while (current < 6600000000L) {
-                log.info("[0] 尝试处理起点: $current")
                 val (next, f, k) = fixAllRank(0, current, 6600000000L)
 
                 log.info("[0] success: $f, skip: $k, now: $current")
