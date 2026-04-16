@@ -131,12 +131,13 @@ class FixAllRankService(
 
         if (pair.isNotEmpty()) {
             batchUpdate(pair)
-
-            val maxId = lites.maxOf { it.id }
-            return Triple(maxId, success.size, skip.size)
-        } else {
-            return Triple(end, success.size, 1000)
         }
+
+        // 无论 pair 是否为空，只要 lites 不为空，就应该拿这一批的最大 ID 往下走
+        val maxId = lites.maxOf { it.id }
+
+        // 返回 maxId + 1 避免重复查询最后一条
+        return Triple(maxId + 1, success.size, skip.size)
 
     }
 
