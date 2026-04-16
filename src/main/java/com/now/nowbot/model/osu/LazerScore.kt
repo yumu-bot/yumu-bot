@@ -193,7 +193,7 @@ open class LazerScore(
     @get:JsonProperty("legacy_rank")
     @set:JsonIgnore
     var rank: String = ""
-        get() = field.ifBlank { getStableRank(this) }
+        get() = field.ifBlank { getStandardisedRank(this) }
 
     // 傻逼 Lazer
     @get:JsonProperty("legacy_accuracy")
@@ -301,67 +301,142 @@ open class LazerScore(
             DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd").appendLiteral("T").appendPattern("HH:mm:ss")
                 .toFormatter()
 
-        private fun getStableRank(score: LazerScore): String {
-            if (!score.passed && score.type != "sb_score") return "F"
-            if (score.isLazer) return score.lazerRank
+        private fun getStandardisedRank(score: LazerScore): String {
+            if (!score.passed && score.type != "sb_score") {
+                return "F"
+            }
 
-            val m = score.maximumStatistics
-            val s = score.statistics
-
-            // matchScore 无法计算
-            if (m.great == 0 && m.perfect == 0) {
+            /*
+            if (score.isLazer) {
                 return score.lazerRank
             }
 
-            val accuracy = score.accuracy
-            val p300 = 1.0 * s.great / m.great
-            val hasMiss = s.miss > 0
+             */
 
-            // 浮点数比较使用 `==` 容易出bug, 一般5-7位小数就够了
-            var rank = when (score.mode) {
-                OSU, OSU_RELAX, OSU_AUTOPILOT -> {
-                    val is50Over1P = (s.meh * 100 > score.scoreHit)
-                    when {
-                        p300 > 1.0 - 1e-6 -> "X"
-                        p300 > 0.9 -> if (hasMiss) "A" else if (is50Over1P) "A" else "S"
-                        p300 > 0.8 -> if (hasMiss) "B" else "A"
-                        p300 > 0.7 -> if (hasMiss) "C" else "B"
-                        p300 > 0.6 -> "C"
-                        else -> "D"
-                    }
-                }
+            val s = score.statistics
 
-                TAIKO, TAIKO_RELAX -> when {
-                    p300 > 1.0 - 1e-6 -> "X"
-                    p300 > 0.9 -> if (hasMiss) "A" else "S"
-                    p300 > 0.8 -> if (hasMiss) "B" else "A"
-                    p300 > 0.7 -> if (hasMiss) "C" else "B"
-                    p300 > 0.6 -> "C"
-                    else -> "D"
-                }
+            val mode = score.mode.toSafeModeValue().toInt()
 
-                CATCH, CATCH_RELAX -> when {
-                    accuracy > 1.0 - 1e-6 -> "X"
-                    accuracy > 0.98 -> "S"
-                    accuracy > 0.94 -> "A"
-                    accuracy > 0.90 -> "B"
-                    accuracy > 0.85 -> "C"
-                    else -> "D"
-                }
-
-                MANIA -> when {
-                    (s.great + s.perfect) == m.perfect -> "X"
-                    accuracy > 0.95 -> "S"
-                    accuracy > 0.90 -> "A"
-                    accuracy > 0.80 -> "B"
-                    accuracy > 0.70 -> "C"
-                    else -> "D"
-                }
-
-                else -> "F"
+            val total = when(mode) {
+                1 -> s.great + s.ok + s.miss
+                2 -> s.great + s.largeTickHit + s.smallTickHit + s.largeTickMiss + s.smallTickMiss + s.miss
+                3 -> s.perfect + s.great + s.good + s.ok + s.meh + s.miss
+                else -> s.great + s.ok + s.meh + s.miss
             }
 
-            if (score.mods.containsHidden() && (rank == "S" || rank == "X")) rank += "H"
+            val hasMiss = s.miss > 0
+
+            val rank = if (score.isLazer) {
+                // lazer
+                when (mode) {
+                    2 -> {
+                        val hit = s.great + s.largeTickHit + s.smallTickHit
+
+                        when {
+                            hit == total -> "X"
+                            hit * 100 > total * 98 -> "S"
+                            hit * 100 > total * 94 -> "A"
+                            hit * 100 > total * 90 -> "B"
+                            hit * 100 > total * 85 -> "C"
+                            else -> "D"
+                        }
+                    }
+
+                    3 -> {
+                        val judgement = s.perfect * 305 + s.great * 300 + s.good * 200 + s.ok * 100 + s.meh * 50 + 0
+                        val max = total * 305
+
+                        when {
+                            s.perfect + s.great == total -> "X"
+                            judgement * 100 > max * 95 -> "S"
+                            judgement * 100 > max * 90 -> "A"
+                            judgement * 100 > max * 80 -> "B"
+                            judgement * 100 > max * 70 -> "C"
+                            else -> "D"
+                        }
+                    }
+
+                    else -> {
+                        val judgement = if (mode == 1) {
+                            s.great * 300 + s.ok * 150 + 0
+                        } else {
+                            s.great * 300 + s.ok * 100 + s.meh * 50 + 0
+                        }
+
+                        val max = total * 300
+
+                        when {
+                            judgement == max -> "X"
+                            judgement * 100 > max * 95 -> if (hasMiss) "A" else "S"
+
+                            judgement * 100 > max * 90 -> "A"
+                            judgement * 100 > max * 80 -> "B"
+                            judgement * 100 > max * 70 -> "C"
+                            else -> "D"
+                        }
+                    }
+                }
+            } else {
+                // stable
+                when (mode) {
+
+                    1 -> when {
+                        s.great == total -> "X"
+                        s.great * 10 > total * 9 -> if (hasMiss) "A" else "S"
+                        s.great * 10 > total * 8 -> if (hasMiss) "B" else "A"
+                        s.great * 10 > total * 7 -> if (hasMiss) "C" else "B"
+                        s.great * 10 > total * 6 -> "C"
+                        else -> "D"
+                    }
+
+                    2 -> {
+                        val hit = s.great + s.largeTickHit + s.smallTickHit
+
+                        when {
+                            hit == total -> "X"
+                            hit * 100 > total * 98 -> "S"
+                            hit * 100 > total * 94 -> "A"
+                            hit * 100 > total * 90 -> "B"
+                            hit * 100 > total * 85 -> "C"
+                            else -> "D"
+                        }
+                    }
+
+                    3 -> {
+                        val judgement = s.perfect * 300 + s.great * 300 + s.good * 200 + s.ok * 100 + s.meh * 50 + 0
+
+                        when {
+                            judgement == total * 300 -> "X"
+                            judgement * 100 > total * 300 * 95 -> "S"
+                            judgement * 100 > total * 300 * 90 -> "A"
+                            judgement * 100 > total * 300 * 80 -> "B"
+                            judgement * 100 > total * 300 * 70 -> "C"
+                            else -> "D"
+                        }
+                    }
+
+                    else -> {
+                        val is50Over1P = (s.meh * 100 > total)
+
+                        when {
+                            s.great == total -> "X"
+
+                            s.great * 10 > total * 9 -> if (hasMiss || is50Over1P) {
+                                "A"
+                            } else {
+                                "S"
+                            }
+
+                            s.great * 10 > total * 8 -> if (hasMiss) "B" else "A"
+                            s.great * 10 > total * 7 -> if (hasMiss) "C" else "B"
+                            s.great * 10 > total * 6 -> "C"
+                            else -> "D"
+                        }
+                    }
+                }
+            }
+
+            if (score.mods.containsHidden() && (rank == "S" || rank == "X")) return rank + "H"
 
             return rank
         }

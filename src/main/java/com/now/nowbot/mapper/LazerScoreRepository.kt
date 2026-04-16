@@ -96,7 +96,6 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
         """
         SELECT * FROM lazer_score_lite
         WHERE id >= :firstID AND id <= :lastID
-        AND legacy_score_id = 0
         ORDER BY id
         LIMIT 1000
     """, nativeQuery = true)

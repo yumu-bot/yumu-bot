@@ -96,7 +96,7 @@ class RestClientConfig {
             defaultSocketConfig = SocketConfig.custom()
                 .setSoTimeout(Timeout.ofMilliseconds(500))
                 .setSoKeepAlive(true)
-                .setTcpNoDelay() // 禁用 Nagle 算法
+                .setTcpNoDelay(false) // 禁用 Nagle 算法
                 .build()
         }
         val requestConfig = RequestConfig.custom()
