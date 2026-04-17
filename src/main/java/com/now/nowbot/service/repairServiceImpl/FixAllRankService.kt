@@ -18,7 +18,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import java.sql.PreparedStatement
 
-@Service
+//@Service
 class FixAllRankService(
     private val repository: LazerScoreRepository,
     private val statisticRepository: LazerScoreStatisticRepository,
@@ -29,12 +29,12 @@ class FixAllRankService(
         messageText: String,
         data: MessageService.DataValue<String>
     ): Boolean {
-        val fix = "!" + "fb"
-
-        if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
-            data.value = messageText.replace(fix, "")
-            return true
-        }
+//        val fix = "!" + "fb"
+//
+//        if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
+//            data.value = messageText.replace(fix, "")
+//            return true
+//        }
 
         return false
     }
