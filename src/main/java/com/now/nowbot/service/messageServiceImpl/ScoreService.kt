@@ -30,11 +30,15 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.InstructionUtil.getBid
 import com.now.nowbot.util.InstructionUtil.getMod
 import com.now.nowbot.util.InstructionUtil.getMode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.time.Duration.Companion.seconds
@@ -182,7 +186,13 @@ import kotlin.time.Duration.Companion.seconds
 
         val data: ScoreData = when {
             number in 1L ..< 1000_0000L -> {
-                getFromBeatmapID(number, userID, inputMode, event, messageText, matcher)
+                val d = getFromBeatmapID(number, userID, inputMode, event, messageText, matcher)
+
+                if (d.scores.isNotEmpty()) {
+                    d
+                } else {
+                    getFromBeatmapset(d, event)
+                }
             }
 
             number >= 1000_0000L -> {
@@ -208,7 +218,7 @@ import kotlin.time.Duration.Companion.seconds
                         d
                     } else {
                         isRecordCallStatistics.set(false)
-                        getFromSearch(d.user, d.map, d.mode, d.mods ?: mods, event)
+                        getFromBeatmapset(d, event)
                     }
                 } else {
                     getFromRecentScore(userID, inputMode, event, messageText, matcher)
@@ -222,11 +232,9 @@ import kotlin.time.Duration.Companion.seconds
 
         val ms = data.mods?.ifEmpty { mods } ?: mods
 
-        val filtered = data.scores.filterMod(ms,
-            {
-                throw NoSuchElementException.BeatmapScoreFiltered(data.map.previewName)
-            }
-        )
+        val filtered = data.scores.filterMod(ms) {
+            throw NoSuchElementException.BeatmapScoreFiltered(data.map.previewName)
+        }
 
         return ScoreParam(data.user, data.map, filtered, data.mode, ms,
             isMultipleScore, isShow, isCompact, isRecordCallStatistics.get())
@@ -374,11 +382,15 @@ import kotlin.time.Duration.Companion.seconds
         return ScoreData(user, map, scores, mode)
     }
 
-    private fun getFromSearch(user: OsuUser, map: Beatmap, mode: OsuMode, mods: List<LazerMod>, event: MessageEvent): ScoreData {
+    private fun getFromBeatmapset(data: ScoreData, event: MessageEvent): ScoreData {
+        return getFromBeatmapset(data.user, data.map, data.mode, data.mods, event)
+    }
+
+    private fun getFromBeatmapset(user: OsuUser, map: Beatmap, mode: OsuMode, mods: List<LazerMod>?, event: MessageEvent): ScoreData {
 
         val mixin = listOf(
             listOf("没有获取到您在这个难度上的成绩。", "您的成绩可能在其他难度内。"),
-            listOf("正在查询此谱面中，其他难度上相比最好的成绩。", "正在搜寻所有难度..."),
+            listOf("正在查询此谱面中，其他难度上相比最好的成绩。", "正在搜寻所有难度。"),
             listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。")
         )
 
@@ -386,63 +398,87 @@ import kotlin.time.Duration.Companion.seconds
 
         receipt.recallIn(60 * 1000)
 
-        val set = beatmapApiService.getBeatmapset(map.beatmapsetID)
+        val (passed, set) = runBlocking(Dispatchers.IO) {
+            val includeConverts = map.mode.isConvertAble(mode)
 
-        val maps = (set.beatmaps.orEmpty()).dropWhile { it.beatmapID == map.beatmapID }
+            val passedDeferred = async {
+                beatmapApiService.getBeatmapPassed(
+                    user.userID,
+                    listOf(map.beatmapsetID),
+                    mode,
+                    excludeConverts = !includeConverts,
+                    isLegacy = null,
+                    noDiffReductionMods = false
+                )
+            }
 
-        if (maps.size >= 16) {
+            val setDeferred = async {
+                beatmapApiService.getBeatmapset(map.beatmapsetID)
+            }
+
+            passedDeferred.await() to setDeferred.await()
+        }
+
+        if (passed.size >= 16) {
             receipt.recallIn(10 * 1000)
 
             val mixin2 = listOf(
-                listOf("检测到此谱面含有大量难度。", "这张谱面难度好多啊。"),
+                listOf("检测到您在此谱面留有大量不同难度的成绩。", "这张谱面难度好多啊，你肯定刷了很久。"),
+                listOf("\n"),
                 listOf("因此，", "所以，", "为了避免鸿儒 ppy 老冯，"),
-                listOf("只会尝试查询主难度往下 16 个难度内的成绩。", "太低难度内的成绩不会纳入考虑。", "只会搜寻主难附近难度内的成绩。")
+                listOf("只会尝试在星数较高的 16 个成绩中查询。", "星数太低的成绩不会纳入考虑。")
             )
 
-            event.reply(mixin2.joinToString("\n") { it.random() }).recallIn(60 * 1000)
+            event.reply(mixin2.joinToString("") { it.random() }).recallIn(60 * 1000)
+        } else if (passed.isEmpty()) {
+            throw NoSuchElementException.BeatmapScore(set.previewName)
         }
 
-        val beatmaps = maps.sortedByDescending { it.starRating }
+        val beatmaps = passed.sortedByDescending { it.starRating }
             .take(16)
 
         val scores = mutableListOf<LazerScore>()
 
         var count = 0
 
-        for (b4 in beatmaps.chunked(4)) {
-            val works = b4.map {
-                Callable {
-                    try {
-                        scoreApiService.getBeatmapScore(it.beatmapID, user.userID, mode, mods)
-                    } catch (_: Exception) {
-                        null
+        runBlocking(Dispatchers.IO) {
+            val chunkedBeatmaps = beatmaps.chunked(4)
+
+            for ((_, b4) in chunkedBeatmaps.withIndex()) {
+                // 1. 并发请求当前批次的 4 个谱面成绩
+                val b4Scores = b4.map { beatmap ->
+                    async(Dispatchers.IO) {
+                        runCatching {
+                            scoreApiService.getBeatmapScore(beatmap.beatmapID, user.userID, mode, mods)
+                        }.getOrNull()?.score
                     }
+                }.awaitAll().filterNotNull() // 等待全部完成并过滤掉失败/null
+
+                count += b4.size
+
+                // 2. 检查是否拿到成绩
+                if (b4Scores.isNotEmpty()) {
+                    scores.addAll(b4Scores)
+                    // break
+                } else if (count < beatmaps.size) {
+                    delay(2.seconds)
                 }
-            }
-
-            val b4Scores = AsyncMethodExecutor
-                .awaitList(works)
-                .mapNotNull { it?.score }
-
-            count += b4.size
-
-            if (b4Scores.isNotEmpty()) {
-                scores.addAll(b4Scores)
-                break
-            } else if (count < beatmaps.size) {
-                // 避免大量查询卡爆
-                Thread.sleep(3.seconds.inWholeMilliseconds)
             }
         }
 
         // 成绩筛选机制：取 pp x 星数 最好的
-        val better = scores.maxByOrNull { it.pp * it.beatmap.starRating }
-            ?: throw NoSuchElementException.BeatmapScore(map.beatmapset!!.previewName)
+        val best = scores.maxWithOrNull(
+            compareBy<LazerScore> {
+                it.pp * it.beatmap.starRating
+            }.thenBy {
+                it.beatmap.starRating
+            }
+        ) ?: throw NoSuchElementException.BeatmapScore(set.previewName)
 
         // better 的 beatmap 可能和上面的不一样，并且没有 max combo
-        beatmapApiService.applyBeatmapExtend(better)
+        beatmapApiService.applyBeatmapExtend(best)
 
-        return ScoreData(user, better.beatmap, listOf(better), mode)
+        return ScoreData(user, best.beatmap, listOf(best), mode, mods)
     }
 
     private fun getFromDatabase(user: OsuUser, beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>, event: MessageEvent): ScoreData {
@@ -463,12 +499,10 @@ import kotlin.time.Duration.Companion.seconds
             throw NoSuchElementException.DatabaseBeatmapScore(beatmap.previewName)
         }
 
-        val filtered = scores.filterMod(mods,
-            {
-                receipt.recallIn(10 * 1000)
-                throw NoSuchElementException.DatabaseBeatmapScoreWithMod(beatmap.previewName)
-            }
-        )
+        val filtered = scores.filterMod(mods) {
+            receipt.recallIn(10 * 1000)
+            throw NoSuchElementException.DatabaseBeatmapScoreWithMod(beatmap.previewName)
+        }
 
         beatmapApiService.applyBeatmapExtend(filtered)
         beatmapApiService.applyVersion(filtered)

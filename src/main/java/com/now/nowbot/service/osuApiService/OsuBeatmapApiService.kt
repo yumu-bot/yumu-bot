@@ -114,6 +114,15 @@ interface OsuBeatmapApiService {
         user: BindUser? = null
     ): BeatmapsetSearch
 
+    fun getBeatmapPassed(
+        userID: Long,
+        beatmapsetIDs: List<Long>,
+        mode: OsuMode? = OsuMode.DEFAULT,
+        excludeConverts: Boolean? = true,
+        isLegacy: Boolean? = false,
+        noDiffReductionMods: Boolean? = false,
+    ): List<Beatmap>
+
     // 给同一张图的成绩添加完整的谱面
     fun applyBeatmapExtendForSameScore(scores: Collection<LazerScore>, beatmap: Beatmap)
 

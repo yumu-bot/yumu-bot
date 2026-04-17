@@ -54,7 +54,7 @@ data class SBUser(
         val sb = this
 
         if (OsuMode.isNotDefaultOrNull(mode)) {
-            sb.currentMode = mode!!
+            sb.currentMode = mode
         }
 
         val code = sb.country.uppercase()

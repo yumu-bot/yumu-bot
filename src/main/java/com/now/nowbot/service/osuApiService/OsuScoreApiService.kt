@@ -115,7 +115,7 @@ interface OsuScoreApiService {
 
     fun getBeatmapScore(bid: Long, user: BindUser, mode: OsuMode?): BeatmapUserScore?
 
-    fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?, mods: Collection<LazerMod?>): BeatmapUserScore?
+    fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?, mods: Collection<LazerMod?>?): BeatmapUserScore?
 
     fun getBeatmapScore(
         bid: Long,

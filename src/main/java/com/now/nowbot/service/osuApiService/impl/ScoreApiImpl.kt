@@ -253,7 +253,7 @@ class ScoreApiImpl(
         bid: Long,
         uid: Long,
         mode: OsuMode?,
-        mods: Collection<LazerMod?>,
+        mods: Collection<LazerMod?>?,
     ): BeatmapUserScore? {
 
         fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->

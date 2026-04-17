@@ -2,6 +2,8 @@ package com.now.nowbot.model.enums
 
 import com.fasterxml.jackson.annotation.JsonValue
 import java.util.*
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 enum class OsuMode(val fullName: String, val shortName: String, val charName: String, val modeValue: Byte) {
     OSU("osu!standard", "osu", "o", 0),
@@ -55,7 +57,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
      * 当且仅当这是转谱组合时（主模式搭配输入的其他模式）
      */
     fun isConvertAble(mode: OsuMode?): Boolean {
-        return this == OSU && (mode == TAIKO || mode == CATCH || mode == MANIA)
+        return this.toSafeModeValue() == 0.toByte() && (mode?.toSafeModeValue() != 0.toByte())
     }
 
     /**
@@ -63,7 +65,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
      * 它位于 ConvertAble 和 NotConvertAble 之间
      */
     fun isEqualOrDefault(mode: OsuMode?): Boolean {
-        return mode == DEFAULT || this == mode
+        return mode == DEFAULT || this.toSafeModeValue() == mode?.toSafeModeValue()
     }
 
     /**
@@ -97,9 +99,10 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             return mode
         }
 
-        @JvmStatic fun getMode(mode: OsuMode?, default: OsuMode?): OsuMode {
+        @JvmStatic
+        fun getMode(mode: OsuMode?, default: OsuMode?): OsuMode {
             if (isDefaultOrNull(mode)) return default ?: DEFAULT
-            return mode!!
+            return mode
         }
 
         /**
@@ -108,13 +111,16 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
          * @param selfMode 一般是玩家自己绑定的游戏模式
          * @param groupMode 群聊绑定游戏模式
          */
-        @JvmStatic fun getMode(mode: OsuMode?, selfMode: OsuMode?, groupMode: OsuMode?): OsuMode {
-            if (isNotDefaultOrNull(mode)) return mode!!
-            if (isNotDefaultOrNull(groupMode)) return groupMode!!
+
+        @JvmStatic
+        fun getMode(mode: OsuMode?, selfMode: OsuMode?, groupMode: OsuMode?): OsuMode {
+            if (isNotDefaultOrNull(mode)) return mode
+            if (isNotDefaultOrNull(groupMode)) return groupMode
             return selfMode ?: DEFAULT
         }
 
-        @JvmStatic fun getMode(name: String?): OsuMode {
+        @JvmStatic
+        fun getMode(name: String?): OsuMode {
             return when (name?.replace(" ", "")?.trim()?.lowercase()) {
                 "taiko", "t", "1", "osu!taiko" -> TAIKO
                 "catch", "catchthebeat", "ctb", "c", "fruits", "fruit", "f", "2", "osu!catch" -> CATCH
@@ -129,7 +135,8 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             }
         }
 
-        @JvmStatic fun getMode(num: Number?): OsuMode {
+        @JvmStatic
+        fun getMode(num: Number?): OsuMode {
             return when (num?.toInt()) {
                 0 -> OSU
                 1 -> TAIKO
@@ -143,12 +150,22 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             }
         }
 
-        @JvmStatic fun isDefaultOrNull(mode: OsuMode?): Boolean {
+        @JvmStatic
+        @OptIn(ExperimentalContracts::class)
+        fun isDefaultOrNull(mode: OsuMode?): Boolean {
+            contract {
+                returns(false) implies (mode != null)
+            }
             return mode == null || mode == DEFAULT
         }
 
-        @JvmStatic fun isNotDefaultOrNull(mode: OsuMode?): Boolean {
-            return isDefaultOrNull(mode).not()
+        @JvmStatic
+        @OptIn(ExperimentalContracts::class)
+        fun isNotDefaultOrNull(mode: OsuMode?): Boolean {
+            contract {
+                returns(true) implies (mode != null)
+            }
+            return mode != null && mode != DEFAULT
         }
 
         /**
@@ -158,7 +175,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             return if (isDefaultOrNull(convert) || (map != null && map != OSU && map != DEFAULT)) {
                 map ?: DEFAULT
             } else {
-                convert ?: DEFAULT
+                convert
             }
         }
 

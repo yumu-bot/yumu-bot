@@ -1,6 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import tools.jackson.databind.JsonNode
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.common.utils.JsonUtils
 import com.now.nowbot.config.IocAllReadyRunner
 import com.now.nowbot.config.OsuConfig
@@ -152,6 +152,14 @@ class OsuApiBaseService(
         return botAccessToken!!
     }
 
+    private data class TokenResponse(
+        @field:JsonProperty("access_token")
+        val accessToken: String,
+
+        @field:JsonProperty("expires_in")
+        val expiresInSecond: Long,
+    )
+
     private fun refreshBotToken() {
         val body: MultiValueMap<String, String> = LinkedMultiValueMap()
         body.add("client_id", oauthID.toString())
@@ -165,10 +173,10 @@ class OsuApiBaseService(
             .accept(MediaType.APPLICATION_JSON)
             .contentType(MediaType.APPLICATION_FORM_URLENCODED)
             .body(body)
-            .toBody<JsonNode>()
+            .toBody<TokenResponse>()
 
-        botAccessToken = result["access_token"].asString()
-        tokenExpiresAt = System.currentTimeMillis() + result["expires_in"].asLong() * 1000
+        botAccessToken = result.accessToken
+        tokenExpiresAt = System.currentTimeMillis() + result.expiresInSecond * 1000L
     }
 
     fun insertHeader(headers: HttpHeaders, token: String? = null) {

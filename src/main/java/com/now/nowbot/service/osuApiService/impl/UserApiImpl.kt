@@ -362,7 +362,7 @@ import java.util.concurrent.CancellationException
         val ruleset = if (OsuMode.isDefaultOrNull(mode)) {
             ""
         } else {
-            mode!!.shortName
+            mode.shortName
         }
 
         val uri = if (ruleset.isEmpty()) {

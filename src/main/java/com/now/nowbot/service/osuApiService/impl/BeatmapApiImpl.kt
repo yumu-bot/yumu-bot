@@ -827,7 +827,7 @@ class BeatmapApiImpl(
         val body: MutableMap<String, Any> = HashMap()
 
         if (OsuMode.isNotDefaultOrNull(mode)) {
-            body["ruleset_id"] = mode!!.toSafeModeValue()
+            body["ruleset_id"] = mode.toSafeModeValue()
         }
 
         val modsInt = LazerMod.getModsValue(mods)
@@ -1022,6 +1022,42 @@ class BeatmapApiImpl(
         search.sortBeatmapDiff()
 
         return search
+    }
+
+    private data class BeatmapPassedResponse(
+        @field:JsonProperty("beatmaps_passed")
+        val beatmapsPassed: List<Beatmap>
+    )
+
+    override fun getBeatmapPassed(userID: Long, beatmapsetIDs: List<Long>, mode: OsuMode?, excludeConverts: Boolean?, isLegacy: Boolean?, noDiffReductionMods: Boolean?): List<Beatmap> {
+
+        val resp = request { client ->
+            client.get().uri { uri -> uri.path("users/${userID}/beatmaps-passed")
+                .queryParam("beatmapset_ids[]", *beatmapsetIDs.toTypedArray())
+
+                excludeConverts?.let { ex ->
+                    uri.queryParam("exclude_converts", ex)
+                }
+
+                isLegacy?.let { l ->
+                    uri.queryParam("is_legacy", l)
+                }
+
+                noDiffReductionMods?.let { no ->
+                    uri.queryParam("no_diff_reduction", no)
+                }
+
+                if (OsuMode.isNotDefaultOrNull(mode)) {
+                    uri.queryParam("ruleset_id", mode.shortName)
+                }
+
+                uri.build()
+            }
+                .headers(base::insertHeader)
+                .toBody<BeatmapPassedResponse>()
+        }
+
+        return resp.beatmapsPassed
     }
 
     // 给同一张图的成绩添加完整的谱面
