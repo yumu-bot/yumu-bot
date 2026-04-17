@@ -376,11 +376,13 @@ import kotlin.time.Duration.Companion.seconds
 
     private fun getFromSearch(user: OsuUser, map: Beatmap, mode: OsuMode, mods: List<LazerMod>, event: MessageEvent): ScoreData {
 
-        val receipt = event.reply("""
-            没有获取到您在这个难度上的成绩。
-            正在查询此谱面中，其他难度上相比最好的成绩。
-            这可能需要一段时间。
-        """.trimIndent())
+        val mixin = listOf(
+            listOf("没有获取到您在这个难度上的成绩。", "您的成绩可能在其他难度内。"),
+            listOf("正在查询此谱面中，其他难度上相比最好的成绩。", "正在搜寻所有难度..."),
+            listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。")
+        )
+
+        val receipt = event.reply(mixin.joinToString("\n") { it.random() })
 
         receipt.recallIn(60 * 1000)
 
@@ -390,10 +392,14 @@ import kotlin.time.Duration.Companion.seconds
 
         if (maps.size >= 16) {
             receipt.recallIn(10 * 1000)
-            event.reply("""
-                检测到此谱面含有大量难度。
-                因此，只会尝试查询主难度往下 16 个难度内的成绩。
-            """.trimIndent()).recallIn(60 * 1000)
+
+            val mixin2 = listOf(
+                listOf("检测到此谱面含有大量难度。", "这张谱面难度好多啊。"),
+                listOf("因此，", "所以，", "为了避免鸿儒 ppy 老冯，"),
+                listOf("只会尝试查询主难度往下 16 个难度内的成绩。", "太低难度内的成绩不会纳入考虑。", "只会搜寻主难附近难度内的成绩。")
+            )
+
+            event.reply(mixin2.joinToString("\n") { it.random() }).recallIn(60 * 1000)
         }
 
         val beatmaps = maps.sortedByDescending { it.starRating }
@@ -440,11 +446,15 @@ import kotlin.time.Duration.Companion.seconds
     }
 
     private fun getFromDatabase(user: OsuUser, beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>, event: MessageEvent): ScoreData {
-        val receipt = event.reply("""
-            谱面 ${beatmap.previewName} 没有榜，无法通过官网获取成绩。
-            正在查询数据库中存储的成绩。
-            这可能需要一段时间。
-        """.trimIndent())
+
+        val mixin3 = listOf(
+            listOf("谱面 ${beatmap.previewName} 没有榜，", "这张谱面没有官网排行榜，"),
+            listOf("无法通过官网获取成绩。", "ppy 不会提供任何成绩。"),
+            listOf("正在查询数据库中存储的成绩。", "我需要查一查资料。", "从历史记录中应该能找到一点蛛丝马迹。"),
+            listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。")
+        )
+
+        val receipt = event.reply(mixin3.joinToString("\n") { it.random() })
 
         val scores = scoreDao.getBeatmapScores(user, beatmap, mode)
 
