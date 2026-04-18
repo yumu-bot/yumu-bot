@@ -10,7 +10,7 @@ import org.springframework.validation.annotation.Validated
 class OsuLocalCalculateConfig {
     var host: String = "localhost"
 
-    var port: Int = 5000
+    var port: Int = 23316
 
     // 如果为真，则会启用 rosu。
     var rosu: Boolean = false

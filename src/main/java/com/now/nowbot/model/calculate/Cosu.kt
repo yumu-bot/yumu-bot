@@ -155,12 +155,15 @@ data class CosuScore(
                 this.legacyScore
             }
 
+            val max = maximumStatistics
+
             return when (type) {
                 ScoreType.FULL_COMBO -> CosuScore(
                     accuracy = accuracy,
                     maxCombo = beatmap.maxCombo,
-                    statistics = statistics.apply {
+                    statistics = statistics.copy().apply {
                         val misses = this.miss
+
                         when(mode) {
                             OsuMode.MANIA -> {
                                 val rate = if (this.perfect + this.great > 0) {
@@ -169,7 +172,7 @@ data class CosuScore(
                                     -1.0
                                 }
 
-                                if (rate < 0) {
+                                if (rate < 0.0) {
                                     this.perfect += misses
                                 } else {
                                     val perfect = (rate * misses).toInt()
@@ -182,9 +185,11 @@ data class CosuScore(
                             }
 
                             OsuMode.CATCH, OsuMode.CATCH_RELAX -> {
-                                this.great += this.miss
+                                val tickMisses = this.largeTickMiss
+
+                                this.great += misses
                                 this.miss = 0
-                                this.largeTickHit += this.largeTickMiss
+                                this.largeTickHit += tickMisses
                                 this.largeTickMiss = 0
                             }
 
@@ -192,8 +197,8 @@ data class CosuScore(
                                 this.great += misses
                                 this.miss = 0
 
-                                if (maximumStatistics.sliderTailHit > 0) {
-                                    this.sliderTailHit = maximumStatistics.sliderTailHit
+                                if (max.sliderTailHit > 0) {
+                                    this.sliderTailHit = max.sliderTailHit
                                 }
 
                                 this.largeTickHit += this.largeTickMiss
@@ -209,8 +214,8 @@ data class CosuScore(
                     accuracy = 1.0,
                     maxCombo = beatmap.maxCombo,
                     statistics = when(mode) {
-                        OsuMode.MANIA -> if (this.maximumStatistics.perfect > 0) {
-                            this.maximumStatistics
+                        OsuMode.MANIA -> if (max.perfect > 0) {
+                            max
                         } else {
                             val t = this.statistics
 
@@ -219,8 +224,8 @@ data class CosuScore(
                             )
                         }
 
-                        else -> if (this.maximumStatistics.great > 0) {
-                            this.maximumStatistics
+                        else -> if (max.great > 0) {
+                            max
                         } else {
                             val t = this.statistics
 

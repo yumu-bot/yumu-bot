@@ -2648,11 +2648,23 @@ sealed class LazerMod {
             DoubleTime::class, Daycore::class, HalfTime::class, Nightcore::class,
             WindUp::class, WindDown::class,
             Hidden::class, Flashlight::class,
-            TouchDevice::class, DifficultyAdjust::class, AdaptiveSpeed::class
+            TouchDevice::class, DifficultyAdjust::class, AdaptiveSpeed::class, Magnetised::class,
+            Relax::class, Autopilot::class
+        )
+
+        val unsupportedClasses = setOf(
+            Relax::class, Autopilot::class, Autoplay::class
         )
 
         inline fun <reified T: LazerMod> List<T>.isValueMod(): Boolean {
             return this.all { it.settings == null && it::class.companionObjectInstance is ValueMod }
+        }
+
+        /**
+         * 注意，OFFICIAL_API 是不支持 Relax 星数计算的
+         */
+        inline fun <reified T: LazerMod> List<T>.isOfficialCalculateAbleMod(): Boolean {
+            return this.isValueMod() && this.none { it::class in unsupportedClasses }
         }
 
         /**

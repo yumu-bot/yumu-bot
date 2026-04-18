@@ -29,7 +29,8 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
         }
     } catch (e: Exception) {
         if (e.findCauseOfType<java.net.SocketTimeoutException>() != null ||
-            e.findCauseOfType<java.net.SocketException>() != null
+            e.findCauseOfType<java.net.SocketException>() != null ||
+            e.findCauseOfType<org.springframework.web.client.ResourceAccessException>() != null
         ) {
             throw org.springframework.web.client.HttpServerErrorException(
                 org.springframework.http.HttpStatus.REQUEST_TIMEOUT,

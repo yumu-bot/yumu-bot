@@ -14,13 +14,14 @@ import com.now.nowbot.model.calculate.RosuPerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
-import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
+import com.now.nowbot.model.osu.LazerMod.Companion.isOfficialCalculateAbleMod
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.spring.osu.extended.rosu.JniBeatmap
 import org.spring.osu.extended.rosu.JniScoreState
@@ -43,11 +44,14 @@ class CalculateApiImpl(
         C_OSU
     }
 
-    val calculatePriority = listOf(
+    /**
+     * 计算优先级，从上往下
+     */
+    val calculatePriority = setOf<CalculateStrategy>(
         CalculateStrategy.LOCAL_DATABASE,
-        CalculateStrategy.OFFICIAL_API,
-        CalculateStrategy.R_OSU,
         // CalculateStrategy.C_OSU,
+        CalculateStrategy.OFFICIAL_API,
+        CalculateStrategy.R_OSU
     )
 
     private val enableRosu = config.rosu
@@ -352,6 +356,34 @@ class CalculateApiImpl(
     }
 
     override fun applyPPToScore(score: LazerScore) {
+        val priority = calculatePriority
+
+        for (strategy in priority) {
+            when (strategy) {
+                CalculateStrategy.R_OSU -> applyPPToScoreFromRosu(score)
+
+                CalculateStrategy.C_OSU -> applyPPToScoreFromCosu(score)
+
+                else -> return
+            }
+        }
+
+        return
+    }
+
+    override fun applyPPToScores(scores: Collection<LazerScore>) {
+        runBlocking(Dispatchers.IO) {
+            val deferred = scores.map {
+                async {
+                    applyPPToScore(it)
+                }
+            }
+
+            deferred.awaitAll()
+        }
+    }
+
+    private fun applyPPToScoreFromRosu(score: LazerScore) {
         if (score.pp > 1e-4 || !enableRosu) {
             return
         } else {
@@ -359,14 +391,14 @@ class CalculateApiImpl(
         }
     }
 
-    override fun applyPPToScores(scores: Collection<LazerScore>) {
-        val actions = scores.map {
-            Callable {
-                applyPPToScore(it)
-            }
-        }
+    private fun applyPPToScoreFromCosu(score: LazerScore) {
+        if (score.pp > 1e-4) {
+            return
+        } else {
+            val pp = beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, score.toCosuScore()).performance?.pp
 
-        AsyncMethodExecutor.awaitCallableExecute(actions)
+            pp?.let { score.pp = it }
+        }
     }
 
     override fun applyPPToScoresWithSameBeatmap(scores: Collection<LazerScore>) {
@@ -375,11 +407,45 @@ class CalculateApiImpl(
         val attrs = getScoresPPWithSameBeatmap(noPPs)
 
         noPPs.forEach { score ->
-            attrs[score.scoreID]?.pp?.let { score.pp = it }
+            when (val cp = attrs[score.scoreID]) {
+                is RosuPerformance -> score.pp = cp.pp
+                is CosuPerformance -> score.pp = cp.pp
+                else -> {}
+            }
         }
     }
 
-    private fun getScoresPPWithSameBeatmap(scores: Collection<LazerScore>): Map<Long, RosuPerformance> {
+    private fun getScoresPPWithSameBeatmap(scores: Collection<LazerScore>): Map<Long, CalculatePerformance> {
+        val priority = calculatePriority
+
+
+        for (strategy in priority) {
+            val found = when (strategy) {
+                CalculateStrategy.R_OSU -> getScoresPPWithSameBeatmapFromRosu(scores)
+
+                CalculateStrategy.C_OSU -> getScoresPPWithSameBeatmapFromCosu(scores)
+
+                else -> emptyMap()
+            }
+
+            if (found.isNotEmpty()) {
+                return found
+            }
+        }
+
+        return emptyMap()
+    }
+
+    private fun getScoresPPWithSameBeatmapFromCosu(scores: Collection<LazerScore>): Map<Long, CosuPerformance> {
+        return scores.mapNotNull { score ->
+            val cs = score.toCosuScore()
+            val pp = beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs).performance
+
+            pp?.let { score.scoreID to pp }
+        }.toMap()
+    }
+
+    private fun getScoresPPWithSameBeatmapFromRosu(scores: Collection<LazerScore>): Map<Long, RosuPerformance> {
         if (scores.isEmpty() || !enableRosu) return emptyMap()
 
         val beatmapID = scores.first().beatmapID
@@ -535,8 +601,8 @@ class CalculateApiImpl(
 
     private fun getBeatmapStars(
         details: List<BeatmapDetails>,
-        priority: List<CalculateStrategy> = calculatePriority
     ): Map<BeatmapDetails, Double> {
+        val priority = calculatePriority
 
         val resultStarMap = mutableMapOf<BeatmapDetails, Double>()
 
@@ -551,7 +617,7 @@ class CalculateApiImpl(
             val input = when (strategy) {
                 CalculateStrategy.C_OSU, CalculateStrategy.R_OSU -> remaining.values.toList()
 
-                else -> remaining.values.filter { it.mods.isValueMod() }
+                else -> remaining.values.filter { it.mods.isOfficialCalculateAbleMod() }
             }
 
             if (input.isEmpty()) continue
@@ -596,17 +662,17 @@ class CalculateApiImpl(
     private fun getBeatmapStarFromLocal(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
         val starMap = mutableMapOf<BeatmapDetails, Double>()
 
-        val closeables = ArrayList<AutoCloseable>(details.size * 2)
+        val closeable = ArrayList<AutoCloseable>(details.size * 2)
 
         details.forEach { nd ->
             try {
                 val (beatmap, _) = getJniBeatmapAndIsConvert(nd.beatmapID, nd.mode.toRosuMode()) {
-                    closeables.add(it)
+                    closeable.add(it)
                 } ?: (null to false)
 
                 if (beatmap != null) {
                     val difficulty = beatmap.createDifficulty().apply {
-                        closeables.add(this)
+                        closeable.add(this)
                         if (nd.mods.isNotEmpty()) setMods(JacksonUtil.toJson(nd.mods))
                     }
 
@@ -624,7 +690,7 @@ class CalculateApiImpl(
                     }
                 }
             } finally {
-                closeables.forEach { it.close() }
+                closeable.forEach { it.close() }
             }
         }
 
