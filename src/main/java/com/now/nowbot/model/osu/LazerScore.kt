@@ -360,10 +360,16 @@ open class LazerScore(
                         val judgement = if (mode == 1) {
                             s.great * 300 + s.ok * 150 + 0
                         } else {
-                            s.great * 300 + s.ok * 100 + s.meh * 50 + 0
+                            s.great * 300 + s.ok * 100 + s.meh * 50 + 0 + s.sliderTailHit * 150 + s.largeTickHit * 30
                         }
 
-                        val max = total * 300
+                        val max = if (mode == 1) {
+                            total * 300
+                        } else {
+                            val m = score.maximumStatistics
+
+                            m.great * 300 + m.sliderTailHit * 150 + m.largeTickHit * 30
+                        }
 
                         when {
                             judgement == max -> "X"

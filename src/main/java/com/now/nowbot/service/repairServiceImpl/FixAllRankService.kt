@@ -18,7 +18,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import java.sql.PreparedStatement
 
-//@Service
+@Service
 class FixAllRankService(
     private val repository: LazerScoreRepository,
     private val statisticRepository: LazerScoreStatisticRepository,
@@ -29,12 +29,12 @@ class FixAllRankService(
         messageText: String,
         data: MessageService.DataValue<String>
     ): Boolean {
-//        val fix = "!" + "fb"
-//
-//        if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
-//            data.value = messageText.replace(fix, "")
-//            return true
-//        }
+        val fix = "!" + "fb"
+
+        if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
+            data.value = messageText.replace(fix, "")
+            return true
+        }
 
         return false
     }
@@ -53,15 +53,25 @@ class FixAllRankService(
         var current = 0L // 记录物理 ID 指针
         var batch = 0L
 
+        var ff = 0
+        var kk = 0
+
         try {
             log.info("[0] 任务启动")
             log.info("[0] start: 0L -> 6600000000L")
 
             // 只要当前的指针还没触达区间终点，就继续
             while (current < 6600000000L) {
-                val (next, f, k) = fixAllRank(0, current, 6600000000L)
+                val (next, f, k) = fixPerfectRank(0, current, 6600000000L)
 
-                log.info("[0] success: $f, skip: $k, now: $current")
+                ff += f
+                kk += k
+
+                if (batch % 10 == 0L) {
+                    log.info("[0] success, batch: $batch, finished: $ff, skip: $kk, now: $current")
+                    ff = 0
+                    kk = 0
+                }
 
                 if (next <= current) {
                     break
@@ -72,17 +82,16 @@ class FixAllRankService(
                 totalSkip += k
                 batch++
             }
-            log.info("[0] 循环正常结束")
         } catch (e: Throwable) {
-            log.error("[0] 致命错误!!", e)
+            log.error("[0] fatal error:", e)
         } finally {
-            log.info("[0] 协程最终生命周期结束")
+            log.info("[0] finished: $totalFix, skip: $totalSkip")
         }
 
         return null
     }
 
-    private fun fixAllRank(index: Int, start: Long, end: Long): Triple<Long, Int, Int> {
+    private fun fixPerfectRank(index: Int, start: Long, end: Long): Triple<Long, Int, Int> {
         val lites = repository.findByIDRange(start, end)
         if (start > end) return Triple(end, 0, 0)
         if (lites.isEmpty()) return Triple(end, 0, 0)
@@ -93,10 +102,27 @@ class FixAllRankService(
         val stats = statisticRepository.getStatistics(lites.map { it.id }, -1)
             .associate { it.id to JacksonUtil.parseObject<LazerStatistics>(it.data)!! }
 
+        val beatmaps = lites.map { it.mode.toByte() to it.beatmapId }
+            .groupBy({ it.first }, { it.second })
+
+        val maxStats: Map<Long, LazerStatistics> = beatmaps.flatMap { (mode, bids) ->
+            statisticRepository.getStatistics(bids, mode).map { entity ->
+
+                val stat = JacksonUtil.parseObject<LazerStatistics>(entity.data)!!
+
+                entity.id to stat
+            }
+        }.toMap()
+
         val pair = lites.mapNotNull { lite ->
 
             val stat = stats[lite.id] ?: run {
                 log.info("[$index] ${lite.id} failed: stats not found")
+                return@mapNotNull null
+            }
+
+            val max = maxStats[lite.beatmapId] ?: run {
+                log.info("[$index] ${lite.beatmapId} failed: max stats not found")
                 return@mapNotNull null
             }
 
@@ -116,7 +142,7 @@ class FixAllRankService(
             }
 
             val calculatedRank =
-                rankToByte(getStandardisedRank(stat, lite.passed,  lite.mode.toInt(), lite.legacyScoreId == 0L,
+                rankToByte(getStandardisedRank(stat, max, lite.passed,  lite.mode.toInt(), lite.legacyScoreId == 0L,
                     JacksonUtil.parseObjectList(lite.mods, LazerMod::class.java)))
 
             if (calculatedRank != lite.rankByte) {
@@ -152,17 +178,10 @@ class FixAllRankService(
         })
     }
 
-    private fun getStandardisedRank(s: LazerStatistics, passed: Boolean, mode: Int, isLazer: Boolean = false, mods: List<LazerMod>): String {
+    private fun getStandardisedRank(s: LazerStatistics, m: LazerStatistics, passed: Boolean, mode: Int, isLazer: Boolean = false, mods: List<LazerMod>): String {
         if (!passed) {
             return "F"
         }
-
-        /*
-        if (score.isLazer) {
-            return score.lazerRank
-        }
-
-         */
 
         val total = when(mode) {
             1 -> s.great + s.ok + s.miss
@@ -207,10 +226,14 @@ class FixAllRankService(
                     val judgement = if (mode == 1) {
                         s.great * 300 + s.ok * 150 + 0
                     } else {
-                        s.great * 300 + s.ok * 100 + s.meh * 50 + 0
+                        s.great * 300 + s.ok * 100 + s.meh * 50 + 0 + s.sliderTailHit * 150 + s.largeTickHit * 30
                     }
 
-                    val max = total * 300
+                    val max = if (mode == 1) {
+                        total * 300
+                    } else {
+                        m.great * 300 + m.sliderTailHit * 150 + m.largeTickHit * 30
+                    }
 
                     when {
                         judgement == max -> "X"
