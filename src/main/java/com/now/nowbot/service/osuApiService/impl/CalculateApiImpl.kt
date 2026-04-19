@@ -21,7 +21,6 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.spring.osu.extended.rosu.JniBeatmap
 import org.spring.osu.extended.rosu.JniScoreState
@@ -372,15 +371,13 @@ class CalculateApiImpl(
     }
 
     override fun applyPPToScores(scores: Collection<LazerScore>) {
-        runBlocking(Dispatchers.IO) {
-            val deferred = scores.map {
-                async {
-                    applyPPToScore(it)
-                }
+        val actions = scores.map {
+            Callable {
+                applyPPToScore(it)
             }
-
-            deferred.awaitAll()
         }
+
+        AsyncMethodExecutor.awaitCallableExecute(actions)
     }
 
     private fun applyPPToScoreFromRosu(score: LazerScore) {
