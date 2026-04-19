@@ -21,6 +21,7 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.spring.osu.extended.rosu.JniBeatmap
 import org.spring.osu.extended.rosu.JniScoreState
@@ -212,7 +213,6 @@ class CalculateApiImpl(
                 beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, pf).performance?.pp
             }
 
-            // 等待所有结果，如果任一结果为 null，则 runBlocking 返回 null
             val perf = performanceDeferred.await() ?: return@runBlocking null
             val fcPP = fcPPDeferred.await() ?: return@runBlocking null
             val pfPP = pfPPDeferred.await() ?: return@runBlocking null
@@ -363,7 +363,7 @@ class CalculateApiImpl(
 
                 CalculateStrategy.C_OSU -> applyPPToScoreFromCosu(score)
 
-                else -> return
+                else -> continue
             }
         }
 
@@ -371,30 +371,36 @@ class CalculateApiImpl(
     }
 
     override fun applyPPToScores(scores: Collection<LazerScore>) {
-        val actions = scores.map {
-            Callable {
-                applyPPToScore(it)
+        runBlocking(Dispatchers.IO) {
+            val deferred = scores.map {
+                async {
+                    applyPPToScore(it)
+                }
             }
-        }
 
-        AsyncMethodExecutor.awaitCallableExecute(actions)
+            deferred.awaitAll()
+        }
     }
 
-    private fun applyPPToScoreFromRosu(score: LazerScore) {
+    private fun applyPPToScoreFromRosu(score: LazerScore): Double {
         if (score.pp > 1e-4 || !enableRosu) {
-            return
+            return -1.0
         } else {
-            score.pp = getScoreRosuPerformance(score).pp
+            val pp = getScoreRosuPerformance(score).pp
+            score.pp = pp
+            return pp
         }
     }
 
-    private fun applyPPToScoreFromCosu(score: LazerScore) {
+    private fun applyPPToScoreFromCosu(score: LazerScore): Double {
         if (score.pp > 1e-4) {
-            return
+            return -1.0
         } else {
             val pp = beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, score.toCosuScore()).performance?.pp
 
             pp?.let { score.pp = it }
+
+            return pp ?: -1.0
         }
     }
 
@@ -830,5 +836,9 @@ class CalculateApiImpl(
             false
         }
         return beatmap to isConvert
+    }
+
+    companion object {
+        // private val log: Logger = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
     }
 }
