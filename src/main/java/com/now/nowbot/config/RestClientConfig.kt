@@ -213,13 +213,14 @@ class RestClientConfig {
             return HttpClients.custom()
                 .setConnectionManager(otherConnectionPoolManager)
                 .setDefaultRequestConfig(otherRequestConfig)
-                .let {
-                    if (USE_PROXY) {
-                        it.setProxy(proxy)
-                    } else {
-                        it
-                    }
-                }
+                .setProxy(proxy)
+//                .let {
+//                    if (USE_PROXY) {
+//                        it.setProxy(proxy)
+//                    } else {
+//                        it
+//                    }
+//                }
                 .build()
         }
 
