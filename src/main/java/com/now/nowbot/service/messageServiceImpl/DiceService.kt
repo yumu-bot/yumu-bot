@@ -665,6 +665,8 @@ import kotlin.text.trim
                         }
 
                         WHETHER -> {
+                            left.replace(ADVERB_BEFORE_ABA_REGEX, "")
+
                             iis = matcher.group("c3")
                             not = matcher.group("m3")
 
@@ -677,6 +679,17 @@ import kotlin.text.trim
                             } catch (_: RuntimeException) {
                                 split = null
                                 continue
+                            }
+                        }
+
+                        EVEN -> {
+                            not = when {
+                                right.contains(MUST_NOT_REGEX) -> "没"
+                                right.contains(MUST_NO_REGEX) -> "不"
+                                right.contains(MUST_REVERSE_REGEX) -> "不能"
+                                right.contains(MUST_NONE_REGEX) -> ""
+                                right.endsWith("过") || right.endsWith("了") -> "没"
+                                else -> "不"
                             }
                         }
 
@@ -784,7 +797,7 @@ import kotlin.text.trim
                     WHO -> "我知道，芝士雪豹。"
                     REAL -> "我觉得，是假的。"
                     BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！"
-                    EVEN -> "当然不%s啦！"
+                    EVEN -> "当然%s%s啦！"
                     ASSUME -> "没有如果。"
                     COULD, WHETHER -> "%s%s%s%s。"
                     CONDITION -> "不是。"
@@ -920,8 +933,12 @@ import kotlin.text.trim
                         return String.format(rightFormat, left, ((right.toIntOrNull() ?: 0) + 1).toString())
                     }
 
-                    BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN, MULTIPLE -> {
+                    BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, MULTIPLE -> {
                         return String.format(rightFormat, right)
+                    }
+
+                    EVEN -> {
+                        return String.format(rightFormat, not, right)
                     }
 
                     OR -> {
@@ -1100,6 +1117,18 @@ import kotlin.text.trim
         private val QUOTATION = "\"".toRegex()
 
         private val QUOTATION_SKIP = ("\\" + "\"").toRegex()
+
+        // 1. 强制“没”的规则 (基于状态、完成、存在)
+        private val MUST_NOT_REGEX = "^([有在来去看吃用喝打玩拿见听写通拉到住掉下神][过完了]+|(看完|做完|听到|找到|学会|看明白|结束|开始|发生|出现|有))".toRegex()
+
+        // 2. 强制“不”的规则 (基于意愿、能力、习惯)
+        private val MUST_NO_REGEX = "^([想愿敢能会是好快慢])".toRegex()
+
+        private val MUST_REVERSE_REGEX = "^([不没])".toRegex()
+
+        private val MUST_NONE_REGEX = "^(不能)".toRegex()
+
+        private val ADVERB_BEFORE_ABA_REGEX = "[还再都就真要]$".toRegex()
 
         // 避免撇号影响结果，比如 It's time to go bed
         private fun transferApostrophe(s: String?): String {
