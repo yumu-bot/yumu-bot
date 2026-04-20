@@ -558,7 +558,7 @@ class GuessService(
 
                 // 如果该字符还没被猜出来（不在已解锁集合中），则加密为 #
                 if (std !in standardisedLetters) {
-                    charArray[i] = '#'
+                    charArray[i] = '*'
                 }
             }
 
