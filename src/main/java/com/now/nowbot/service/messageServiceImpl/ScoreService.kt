@@ -486,11 +486,12 @@ import kotlin.time.Duration.Companion.seconds
         val mixin3 = listOf(
             listOf("谱面 ${beatmap.previewName} 没有榜，", "这张谱面没有官网排行榜，"),
             listOf("无法通过官网获取成绩。", "ppy 不会提供任何成绩。"),
+            listOf("\n"),
             listOf("正在查询数据库中存储的成绩。", "我需要查一查资料。", "从历史记录中应该能找到一点蛛丝马迹。"),
             listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。")
         )
 
-        val receipt = event.reply(mixin3.joinToString("\n") { it.random() })
+        val receipt = event.reply(mixin3.joinToString("") { it.random() })
 
         val scores = scoreDao.getBeatmapScores(user, beatmap, mode)
 

@@ -196,6 +196,15 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             你可能把谱面号和玩家名输反了。
             """.trimIndent())
 
+    class Quickplay:
+        NoSuchElementException("没有找到快速对局。")
+
+    class QuickplaySelected:
+        NoSuchElementException("没有找到特定的快速对局。")
+
+    class QuickplayEvent:
+        NoSuchElementException("这场快速对局内没有成绩。")
+
     class RecentBestNoRecorded(name: String):
         NoSuchElementException("玩家 $name 可能没有绑定，因此没有最近记录成绩。")
 

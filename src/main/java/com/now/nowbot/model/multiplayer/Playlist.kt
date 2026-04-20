@@ -44,7 +44,7 @@ data class Playlist(
     val ownerID: Long,
 
     @field:JsonProperty("playlist_order")
-    val order: Int,
+    val order: Int?,
 
     @field:JsonProperty("played_at")
     val playedTime: OffsetDateTime,
@@ -72,6 +72,17 @@ data class Playlist(
 
         @field:JsonProperty("started_at")
         val startedTime: OffsetDateTime,
+    )
+
+    data class PlaylistItemStats(
+        @field:JsonProperty("count_active")
+        val active: Int,
+
+        @field:JsonProperty("count_total")
+        val total: Int,
+
+        @field:JsonProperty("ruleset_ids")
+        val rulesets: List<Int>,
     )
 
 }

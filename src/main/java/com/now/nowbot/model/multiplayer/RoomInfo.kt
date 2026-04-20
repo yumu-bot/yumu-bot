@@ -17,13 +17,13 @@ data class RoomInfo(
     val name: String,
 
     @field:JsonProperty("category")
-    val category: String, // normal，看起来可以放月赛或每日挑战之类的东西
+    val category: String, // 只有normal?
 
     @field:JsonProperty("status")
-    val status: String, // playing
+    val status: String, // playing, idle
 
     @field:JsonProperty("type")
-    val type: String, // head_to_head
+    val type: String, // head_to_head, ranked_play, matchmaking
 
     @field:JsonProperty("user_id")
     val userID: Long,
@@ -50,7 +50,7 @@ data class RoomInfo(
     val hasPassword: Boolean,
 
     @field:JsonProperty("queue_mode")
-    val queueMode: String, // all_players_round_robin
+    val queueMode: String, // all_players_round_robin, host_only
 
     @field:JsonProperty("auto_skip")
     val autoSkip: Boolean,
@@ -59,7 +59,7 @@ data class RoomInfo(
     @field:JsonProperty("current_user_score")
     val currentUserScore: RoomScore?,
 
-    // 只有在获取 room/xxx 的时候有
+    // 只有在获取 room/xxx、user/quickplay 的时候有
     @field:JsonProperty("host")
     val host: MicroUser?,
 
@@ -69,5 +69,30 @@ data class RoomInfo(
 
     // 只有在获取 room/xxx 的时候有
     @field:JsonProperty("recent_participants")
-    val recentParticipants: List<MicroUser>?
+    val recentParticipants: List<MicroUser>?,
+
+    // 只有在获取 user/quickplay 的时候有
+    @field:JsonProperty("pinned")
+    val pinned: Boolean?,
+
+    // 只有在获取 user/quickplay 的时候有
+    @field:JsonProperty("current_playlist_item")
+    val currentPlaylistItem: Playlist?,
+
+    // 只有在获取 user/quickplay 的时候有
+    @field:JsonProperty("difficulty_range")
+    val difficultyRange: DifficultyRange?,
+
+    // 只有在获取 user/quickplay 的时候有
+    @field:JsonProperty("playlist_item_stats")
+    val playlistItemStats: Playlist.PlaylistItemStats?,
+
+    ) {
+    data class DifficultyRange(
+        @field:JsonProperty("max")
+        val max: Float,
+
+        @field:JsonProperty("min")
+        val min: Float,
     )
+}

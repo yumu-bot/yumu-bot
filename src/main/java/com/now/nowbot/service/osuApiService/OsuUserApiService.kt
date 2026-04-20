@@ -7,6 +7,7 @@ import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.ETXDuelRating
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.service.web.Quickplay
 import com.now.nowbot.service.web.TeamInfo
 import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
@@ -112,5 +113,8 @@ interface OsuUserApiService {
      * @param page 最大 10 页，最小 1 页
      */
     fun getTopPlays(page: Int = 1, mode: OsuMode = OsuMode.OSU): TopPlays?
+
+    fun getQuickplay(userID: Long): Quickplay
+
     fun getEliteronixDuelRating(userID: Long): ETXDuelRating
 }

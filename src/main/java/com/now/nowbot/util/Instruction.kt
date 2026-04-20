@@ -705,6 +705,11 @@ enum class Instruction(val pattern: Pattern) {
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_12, MAYBE)
     }),
 
+    QUICK_PLAY(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("quick\\s*play", "rank(ed)?\\s*play", "qp", "rp")
+        appendModeQQUIDNameRange()
+    }),
+
     MAP_POOL(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mappool", "po")
         appendMode()

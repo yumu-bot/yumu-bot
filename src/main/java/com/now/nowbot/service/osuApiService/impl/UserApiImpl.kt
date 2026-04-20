@@ -10,6 +10,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.web.Quickplay
 import com.now.nowbot.service.web.TeamInfo
 import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.service.web.parseTeamInfo
@@ -460,6 +461,16 @@ import java.util.concurrent.CancellationException
             .get().uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").toBody<String>()
 
         return parseTopPlays(html)
+    }
+
+    override fun getQuickplay(userID: Long): Quickplay {
+
+        // 笑死，这里 Accept 填 json 居然真给 json 了
+        val resp = base.osuApiRestClient
+            .get().uri("https://osu.ppy.sh/users/$userID/quickplay")
+            .toBody<Quickplay>()
+
+        return resp
     }
 
     @OptIn(ExperimentalStdlibApi::class) override fun asyncDownloadAvatar(users: List<MicroUser>) {
