@@ -92,7 +92,10 @@ class GuessLite {
 }
 
 @Entity
-@Table(name = "guesser", indexes = [Index(name = "idx_guesser_id", columnList = "guesser_id, beatmap_id, group_id")])
+@Table(name = "guesser", indexes = [
+    Index(name = "idx_guesser_id", columnList = "guesser_id, beatmap_id, group_id"),
+    Index(name = "idx_guesser_guess_id", columnList = "guess_id")
+])
 class GuesserLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
