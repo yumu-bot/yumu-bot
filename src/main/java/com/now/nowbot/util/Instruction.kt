@@ -765,6 +765,10 @@ enum class Instruction(val pattern: Pattern) {
         appendHashCaptureGroup(FLAG_ID, REG_NUMBER_13)
     }),
 
+    GUESS_GIVE_UP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("guess\\s*(give\\s*up)|good\\s*game", "gg")
+    }),
+
     DRAW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("draw", "w")
         appendCaptureGroup("d", REG_NUMBER)

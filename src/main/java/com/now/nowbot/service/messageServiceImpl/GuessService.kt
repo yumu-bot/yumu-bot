@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.GuessDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
@@ -165,7 +164,7 @@ class GuessService(
                 listOf("\n"),
                 listOf(
                     "如果不知道怎么猜，可以输入 !g #序号 来获取提示。但要注意这样可能会损失得分。",
-                    "如果不想猜，猜歌发起者和管理们可以输入 !g 来关闭。也可以等待它自行关闭。"
+                    "如果不想猜，可以输入 !gg 来关闭。也可以等待它自行关闭。"
                 ),
             )
         )
@@ -261,7 +260,7 @@ class GuessService(
         object Initializing: GuessReply(
             listOf(
                 listOf("正在", "即将", "马上"),
-                listOf("生成题目", "抓捕小猪", "构思野史", "思考人生", "刷 PP", "联系 peppy", "接入 OpenClaw", "擦皮鞋", "对抗神经网络"),
+                listOf("生成题目", "抓捕小猪", "构思野史", "思考人生", "刷 PP", "氛围编程", "联系 peppy", "调试 OpenClaw", "给你擦皮鞋", "接入神经网络"),
                 listOf("...")
             )
         )
@@ -278,9 +277,9 @@ class GuessService(
             listOf(
                 listOf("你倒是猜啊？", "就算你求我，我也不会直接告诉你答案的。"),
                 listOf("\n"),
-                listOf("如果想放弃的话，", "如果想停止猜歌，听好了，${IDIOT.random()}"),
+                listOf("如果想放弃的话，", "听好了，${IDIOT.random()}"),
                 listOf("\n"),
-                listOf("只有猜歌发起者和管理们才可以通过输入 !g 停止猜歌。"),
+                listOf("输入 !gg，再输入 OK 就可以放弃猜歌了。"),
                 listOf("\n"),
                 listOf("你也可以等待一会儿，猜歌会因为超时而结束。")
             )
@@ -299,20 +298,23 @@ class GuessService(
                 listOf("\n"),
                 listOf(
                     "发送 OK 就能忍痛离开。",
-                    "发送 OK 就可以停止了哦。"
+                    "发送 OK 就可以主动放弃。"
                 ),
             )
         )
 
         object Bingo: GuessReply(
             listOf(
-                listOf("一击即中！", "一\uD83D\uDC14\uD83D\uDC14中！", "这么厉害！？", "这么强？！", "？！文厶虽！？", "？！强强！？")
+                listOf(
+                    "一击即中！", "一\uD83D\uDC14\uD83D\uDC14中！",
+                    "这么厉害！？", "这么强？！", "？！文厶虽！？", "？！强强！？", "holy sh*t?!", "！？弓虽弓？！"
+                )
             )
         )
 
         object Cheat: GuessReply(
             listOf(
-                listOf("不要投机取巧，", "不要蒙混过关，", "收起你的小巧思，", "收起你的小伎俩，"),
+                listOf("不要投机取巧，", "不要蒙混过关，", "收起你的小巧思，", "收起你的小伎俩，", "别想逃课哦，"),
                 IDIOT
             )
         )
@@ -364,7 +366,7 @@ class GuessService(
             if (game.timeout) {
                 iterator.remove()
 
-                game.event.replyDone(game, GuessReply.Timeout)
+                game.event.saveAndReplyDone(game, GuessReply.Timeout)
             }
         }
     }
@@ -829,15 +831,19 @@ class GuessService(
         data: MessageService.DataValue<GuessParam>
     ): Boolean {
         val matcher = Instruction.GUESS.matcher(messageText)
+        val matcher2 = Instruction.GUESS_GIVE_UP.matcher(messageText)
 
-        if (!matcher.find()) {
-            return false
+        if (matcher.find()) {
+            val isGuessing = CURRENT_GAMES.keys.contains(event.subject.contactID)
+
+            data.value = getParam(event, matcher, isGuessing)
+            return true
+        } else if (matcher2.find()) {
+            data.value = GuessParam.GuessEndParam
+            return true
         }
 
-        val isGuessing = CURRENT_GAMES.keys.contains(event.subject.contactID)
-
-        data.value = getParam(event, matcher, isGuessing)
-        return true
+        return false
     }
 
     override fun handleMessage(
@@ -972,9 +978,9 @@ class GuessService(
                     throw TipsException("无法结束不存在的猜歌。")
                 }
 
-                if (game.event.sender.contactID != event.sender.contactID && !Permission.isGroupAdmin(event)) {
-                    throw TipsException(GuessReply.MustGuess)
-                }
+//                if (game.event.sender.contactID != event.sender.contactID && !Permission.isGroupAdmin(event)) {
+//                    throw TipsException(GuessReply.MustGuess)
+//                }
 
                 val receipt = event.reply(GuessReply.StopCheck)
                 receipt.recallIn(30 * 1000)
@@ -984,7 +990,7 @@ class GuessService(
                 val ev = lock.get()
 
                 if (ev != null && ev.rawMessage.contains("OK", ignoreCase = true)) {
-                    ev.replyDone(game)
+                    ev.saveAndReplyDone(game)
                 } else {
                     receipt.recall()
                 }
@@ -1081,7 +1087,7 @@ class GuessService(
         KALEIDXSCOPE.launch {
             delay(500.milliseconds)
             if (game.trySettle()) {
-                event.replyDone(game, "猜歌结束。", noGuess = true)
+                event.saveAndReplyDone(game, "猜歌结束。", noGuess = true)
             }
         }
     }
@@ -1135,7 +1141,8 @@ class GuessService(
         return if (select != null && anything.isEmpty()) {
             GuessParam.GuessTipParam(select - 1)
         } else if (anything.isEmpty()) {
-            GuessParam.GuessEndParam
+            throw TipsException(GuessReply.MustGuess)
+            // GuessParam.GuessEndParam
         } else if (anything.length == 1) {
             GuessParam.GuessOpenParam(anything[0])
         } else {
@@ -1166,7 +1173,7 @@ class GuessService(
         }
     }
 
-    private fun MessageEvent.replyDone(
+    private fun MessageEvent.saveAndReplyDone(
         game: GuessGame, text: Any? = "猜歌结束。", noGuess: Boolean = false
     ): ServiceCallStatistic? {
         guessDao.save(game)

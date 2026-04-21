@@ -3,7 +3,6 @@ package com.now.nowbot.qq.onebot.contact
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.dto.action.common.ActionData
 import com.mikuac.shiro.dto.action.response.DownloadFileResp
-import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp
 import com.now.nowbot.qq.contact.Contact.Companion.log
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.util.QQMsgUtil.botInLocal
@@ -35,25 +34,19 @@ class Group : Contact, Group {
         }
 
     override fun getUser(qq: Long): com.now.nowbot.qq.contact.GroupContact {
-        val data = bot.getGroupMemberInfo(contactID, qq, false).getData()
+        val data = bot.getGroupMemberInfo(this.contactID, qq, false).getData()
         return GroupContact(bot, data.userId, this.contactID, data.nickname, data.role)
     }
 
     override val allUser: List<GroupContact>
         get() {
-            val data = bot.getGroupMemberList(contactID).data
-            return data.mapNotNull { f: GroupMemberInfoResp? ->
-                f?.let {
-                    GroupContact(
-                        bot,
-                        f.userId,
-                        this.contactID,
-                        f.nickname,
-                        f.role
-                    )
-                }
+            val data = bot.getGroupMemberList(this.contactID, false).data ?: return emptyList()
+
+            return data.mapNotNull { resp ->
+                GroupContact(bot, resp.userId, this.contactID, resp.nickname, resp.role)
             }
         }
+
 
     override fun sendFile(data: ByteArray, name: String) {
         val url = if (botInLocal(bot.selfId)) {
