@@ -47,7 +47,7 @@ data class Playlist(
     val order: Int?,
 
     @field:JsonProperty("played_at")
-    val playedTime: OffsetDateTime,
+    val playedTime: OffsetDateTime?,
 
     // 只有 room/xxx/events 有
     @field:JsonProperty("details")
