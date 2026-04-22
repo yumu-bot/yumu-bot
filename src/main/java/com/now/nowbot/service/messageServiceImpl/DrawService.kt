@@ -47,8 +47,8 @@ class DrawService(
         val clist: MutableList<DrawConfig.Card> = LinkedList()
         // 10 连
         for (i in 0..< tenTimes) {
-            val gradeList = defaultConfig!!.getGrade10(bindUser.userID, drawLogLiteRepository)
-            val cards = gradeList.stream().map { grade: DrawGrade? -> defaultConfig.getCard(grade) }.toList()
+            val gradeList = defaultConfig.getGrade10(bindUser.userID, drawLogLiteRepository)
+            val cards = gradeList.map { grade: DrawGrade? -> defaultConfig.getCard(grade) }
             val cardLites = ArrayList<DrawLogLite>(gradeList.size)
             for (j in gradeList.indices) {
                 cardLites.add(DrawLogLite(cards[i], gradeList[j], bindUser.userID))
@@ -58,7 +58,7 @@ class DrawService(
         }
         // 单抽
         (0 ..< times).forEach { _ ->
-            val grade = defaultConfig!!.getGrade(bindUser.userID, drawLogLiteRepository)
+            val grade = defaultConfig.getGrade(bindUser.userID, drawLogLiteRepository)
             val card = defaultConfig.getCard(grade)
             drawLogLiteRepository.save(DrawLogLite(card, grade, bindUser.userID))
             clist.add(card)
@@ -171,6 +171,6 @@ class DrawService(
             }
             
             """.trimIndent()
-        val defaultConfig: DrawConfig? = getConfig(config)
+        val defaultConfig: DrawConfig = getConfig(config)
     }
 }

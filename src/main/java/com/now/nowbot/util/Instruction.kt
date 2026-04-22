@@ -395,6 +395,11 @@ enum class Instruction(val pattern: Pattern) {
         appendModeQQUIDNameRange()
     }),
 
+    QUICK_PLAY_INFO(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("quick\\s*play\\s*info", "rank(ed)?\\s*play\\s*info", "qi", "ri", "iq", "ir")
+        appendModeQQUIDNameRange()
+    }),
+
     GET_ID(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("get\\s*id", "gi")
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
@@ -766,7 +771,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     GUESS_GIVE_UP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("guess\\s*(give\\s*up)|good\\s*game", "gg")
+        appendCommandsIgnoreAll("guess\\s*(give\\s*up)|good\\s*game", "gg", "ggwp")
     }),
 
     DRAW(CommandPatternBuilder.create {

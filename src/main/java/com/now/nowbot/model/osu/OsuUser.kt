@@ -291,6 +291,12 @@ open class OsuUser {
         @field:JsonProperty("first_placements")
         var firstPlacements: Int = 0,
 
+        @field:JsonProperty("is_rating_provisional")
+        var provisional: Boolean = true,
+
+        @field:JsonProperty("plays")
+        var plays: Int = 0,
+
         @field:JsonProperty("pool_id")
         var poolID: Int = 0,
 
@@ -312,6 +318,8 @@ open class OsuUser {
     )
 
     data class MatchmakingPool(
+        @field:JsonProperty("active")
+        var active: Boolean = false,
 
         @field:JsonProperty("id")
         var poolID: Long = 0L,
