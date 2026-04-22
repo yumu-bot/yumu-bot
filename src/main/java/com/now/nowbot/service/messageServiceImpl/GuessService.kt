@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.E
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.random.Random
@@ -643,8 +642,7 @@ class GuessService(
                 val statusT = evaluate(s.title, processedInput)
                 val statusU = evaluate(s.titleUnicode, processedInput)
 
-                // 取两者中表现最好的状态 (利用 Kotlin 枚举的 ordinal 特性)
-                val bestStatus = maxOf(statusT, statusU, compareBy { it.ordinal })
+                val bestStatus = maxOf(statusT, statusU)
 
                 if (bestStatus != GuessResultStatus.NOT_CLOSE) {
                     matchResults.add(i to bestStatus)
@@ -911,6 +909,7 @@ class GuessService(
                 val history = serviceCallStatisticsDao.getLast10BeatmapsetIDs(
                     groupID, "GUESS", LocalDateTime.now().minusMonths(3)
                 )
+
                 val frequencyMap = history.groupingBy { it }.eachCount()
 
                 val selected = param.scores
@@ -928,19 +927,21 @@ class GuessService(
                         // 要求核心长度必须大于 2，否则这歌太难猜（全是标记）或者太容易误触
                         maxOf(coreLen, coreLenUnicode) in 3..30
                     }
-                    // 1. 先按你的随机权重降序排列，保证频率低的/随机分高的排在前面
-                    .sortedByDescending { score ->
+                    // 先将 score 和它的固定随机权重绑定在一起
+                    .map { score ->
                         val count = frequencyMap[score.beatmapset.beatmapsetID] ?: 0
-                        val penalty = ln(E + count * 2)
-                        Random.nextDouble().pow(penalty)
+                        val penalty = ln(kotlin.math.E + count * 2)
+                        val weight = Random.nextDouble().pow(penalty)
+                        score to weight
                     }
-                    // 2. 执行相似度去重
+                    .sortedByDescending { it.second }
+                    .map { it.first }
                     .let { sortedList ->
                         val result = mutableListOf<LazerScore>()
-                        for (bm in sortedList) {
+                        for (s in sortedList) {
                             if (result.size >= 10) break
 
-                            val currentTitle = bm.beatmapset.title
+                            val currentTitle = s.beatmapset.title
 
                             // 检查是否与已加入结果集的标题太像
                             val isTooSimilar = result.any { existing ->
@@ -948,7 +949,7 @@ class GuessService(
                             }
 
                             if (!isTooSimilar) {
-                                result.add(bm)
+                                result.add(s)
                             }
                         }
                         result
@@ -978,9 +979,12 @@ class GuessService(
                     throw TipsException("无法结束不存在的猜歌。")
                 }
 
-//                if (game.event.sender.contactID != event.sender.contactID && !Permission.isGroupAdmin(event)) {
-//                    throw TipsException(GuessReply.MustGuess)
-//                }
+                /*
+                if (game.event.sender.contactID != event.sender.contactID && !Permission.isGroupAdmin(event)) {
+                    throw TipsException(GuessReply.MustGuess)
+                }
+
+                 */
 
                 val receipt = event.reply(GuessReply.StopCheck)
                 receipt.recallIn(30 * 1000)

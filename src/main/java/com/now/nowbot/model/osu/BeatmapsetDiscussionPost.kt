@@ -21,13 +21,13 @@ class BeatmapsetDiscussionPost(
     val deletedAt: OffsetDateTime?,
 
     @field:JsonProperty("deleted_by_id")
-    val deletedBy: Long,
+    val deletedBy: Long?,
 
     @field:JsonProperty("id")
     val postID: Long,
 
     @field:JsonProperty("last_editor_id")
-    val lastEditorID: Long,
+    val lastEditorID: Long?,
 
     @field:JsonProperty("message")
     val message: String,
