@@ -1,6 +1,7 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.util.DataUtil.findCauseOfType
+import com.now.nowbot.util.DataUtil.isCauseOfType
 import org.springframework.web.client.HttpClientErrorException
 import java.io.IOException
 
@@ -28,17 +29,17 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
             }
         }
     } catch (e: Exception) {
-        if (e.findCauseOfType<java.net.SocketTimeoutException>() != null ||
-            e.findCauseOfType<java.net.SocketException>() != null ||
-            e.findCauseOfType<org.springframework.web.client.ResourceAccessException>() != null
+        if (e.isCauseOfType<java.net.SocketTimeoutException>() ||
+            e.isCauseOfType<java.net.SocketException>() ||
+            e.isCauseOfType<org.springframework.web.client.ResourceAccessException>()
         ) {
             throw org.springframework.web.client.HttpServerErrorException(
                 org.springframework.http.HttpStatus.REQUEST_TIMEOUT,
                 "Request Timeout 请求超时"
             )
         } else if (
-            e.findCauseOfType<IOException>() != null ||
-            e.findCauseOfType<java.net.ConnectException>() != null
+            e.isCauseOfType<IOException>() ||
+            e.isCauseOfType<java.net.ConnectException>()
         ) {
             throw org.springframework.web.client.HttpServerErrorException(
                 org.springframework.http.HttpStatus.GATEWAY_TIMEOUT,

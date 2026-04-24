@@ -1713,6 +1713,10 @@ object DataUtil {
             .replace("&#160;".toRegex(), " ")
     }
 
+    inline fun <reified T: Throwable> Throwable.isCauseOfType(): Boolean {
+        return this.findCauseOfType<T>() != null
+    }
+
     /**
      * 找到底层的目标错误类，如果没找到就返回 null
      */

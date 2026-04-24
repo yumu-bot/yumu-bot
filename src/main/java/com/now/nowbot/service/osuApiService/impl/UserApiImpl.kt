@@ -467,7 +467,7 @@ import java.util.concurrent.CancellationException
 
         // 笑死，这里 Accept 填 json 居然真给 json 了
         val resp = base.osuApiRestClient
-            .get().uri("https://osu.ppy.sh/users/$userID/quickplay")
+            .get().uri("https://osu.ppy.sh/users/$userID/ranked-play")
             .toBody<Quickplay>()
 
         return resp
