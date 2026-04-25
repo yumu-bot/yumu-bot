@@ -264,6 +264,11 @@ enum class Instruction(val pattern: Pattern) {
         appendModeQQUIDName()
     }),
 
+    BP_HISTORY(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("bp\\s*history", "bh")
+        appendModeQQUIDName()
+    }),
+
     // #3 osu! 玩家指令
     INFO(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("information", "info", "i")

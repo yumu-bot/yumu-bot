@@ -87,6 +87,12 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
 """, nativeQuery = true)
     fun findInvalidAccuracyScores(limit: Int, offset: Int): List<LazerScoreLite>
 
+    @Query("""
+    SELECT * FROM lazer_score_lite 
+    WHERE id IN (:scoreIDs)
+""", nativeQuery = true)
+    fun getScoresFromIDs(scoreIDs: Collection<Long>): List<LazerScoreLite>
+
     @Modifying(clearAutomatically = true)
     @Transactional
     @Query("update LazerScoreLite s set s.accuracy = :acc where s.id = :id")

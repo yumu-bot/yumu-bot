@@ -212,6 +212,10 @@ class ScoreDao(
         return scoreRepository.getCountBetween(userID, mode.modeValue, LocalDateTime.of(time, LocalTime.MIN), LocalDateTime.of(time, LocalTime.MAX))
     }
 
+    fun getScoresFromIDs(scoreIDs: Collection<Long>): List<LazerScore> {
+        return scoreRepository.getScoresFromIDs(scoreIDs).applyStatistics()
+    }
+
     fun Collection<LazerScoreLite>.applyStatistics(): List<LazerScore> {
         if (this.isEmpty()) return emptyList()
 

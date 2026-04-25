@@ -37,7 +37,7 @@ class ServiceSwitchService(
         ),
 
         SCORE(listOf("s", "scores", "成绩", "分数"),
-            listOf("set_mode", "sb_set_mode", "set_group_mode", "score_pr", "sb_score_pr", "pr_card", "uu_pr", "score", "sb_score", "uu_score", "bp", "sb_bp", "today_bp", "sb_today_bp", "bp_analysis", "uu_ba", "bp_analysis_legacy", "bp_fix", "top_plays", "recent_best")
+            listOf("set_mode", "sb_set_mode", "set_group_mode", "score_pr", "sb_score_pr", "pr_card", "uu_pr", "score", "sb_score", "uu_score", "bp", "sb_bp", "today_bp", "sb_today_bp", "bp_analysis", "uu_ba", "bp_analysis_legacy", "bp_fix", "top_plays", "recent_best", "bp_history")
         ),
 
         PLAYER(listOf("p", "player", "players", "user", "users", "玩家", "用户"),

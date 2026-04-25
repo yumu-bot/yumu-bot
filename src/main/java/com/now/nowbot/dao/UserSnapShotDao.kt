@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import org.springframework.stereotype.Component
 import org.springframework.util.DigestUtils
+import java.time.LocalDateTime
 
 @Component
 class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository) {
@@ -35,5 +36,17 @@ class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository
     fun getHash(scores: Collection<LazerScore>): String {
         val currentDataString = scores.joinToString(",") { "${it.beatmapID}:${it.scoreID}" }
         return DigestUtils.md5DigestAsHex(currentDataString.toByteArray())
+    }
+
+    fun getCount(userID: Long, mode: OsuMode): Long {
+        return snapshotRepository.getCount(userID, mode.modeValue)
+    }
+
+    fun getCreatedAt(userID: Long, mode: OsuMode, offset: Int = 0, limit: Int = 5): List<LocalDateTime> {
+        return snapshotRepository.getCreatedAt(userID, mode.modeValue, offset, limit)
+    }
+
+    fun getWithOffset(userID: Long, mode: OsuMode, offset: Int = 0): UserBestSnapshot? {
+        return snapshotRepository.getWithOffset(userID, mode.modeValue, offset)
     }
 }

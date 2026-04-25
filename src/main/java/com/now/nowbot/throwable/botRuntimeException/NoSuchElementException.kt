@@ -256,6 +256,12 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class SeriesRound:
         NoSuchElementException("没有找到这一系列赛里的对局。")
 
+    class Snapshot:
+        NoSuchElementException("没有可以追溯的预览切片。")
+
+    class SnapshotSelected:
+        NoSuchElementException("没有找到特定的预览切片。")
+
     class Song(name: Any):
         NoSuchElementException("没有找到歌曲 $name。")
 

@@ -2,6 +2,7 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.ScoreDao
+import com.now.nowbot.dao.UserSnapShotDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
@@ -39,6 +40,7 @@ import kotlin.text.toHexString
 class ScoreApiImpl(
     private val base: OsuApiBaseService,
     private val scoreDao: ScoreDao,
+    private val userSnapShotDao: UserSnapShotDao,
 ) : OsuScoreApiService {
     override fun getCovers(
         scores: List<LazerScore>,
@@ -123,12 +125,20 @@ class ScoreApiImpl(
 //
 //        return firstBatch + secondBatch
 
-        return AsyncMethodExecutor.awaitList(
+        val scores = AsyncMethodExecutor.awaitList(
             listOf(
                 Callable { getBests(id, mode, offset, step) },
                 Callable { getBests(id, mode, offset + step, limit - step) }
             )
         ).flatten()
+
+        Thread.startVirtualThread {
+            if (offset == 0 && limit == 200) {
+                userSnapShotDao.upsertSnapshot(scores)
+            }
+        }
+
+        return scores
 
 //        // 使用你现有的工具方法进行并发
 //        val result = AsyncMethodExecutor.awaitPairCallableExecute(
