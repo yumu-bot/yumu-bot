@@ -23,7 +23,9 @@ interface UserBestSnapshotRepository: JpaRepository<UserBestSnapshot, Long> {
     fun getCreatedAt(userID: Long, modeByte: Byte, offset: Int, limit: Int): List<LocalDateTime>
 
     @Query("""
-        SELECT s From UserBestSnapshot s WHERE s.userID = :userID AND s.mode = :modeByte ORDER BY s.createdAt DESC OFFSET :offset
+        SELECT s From UserBestSnapshot s WHERE s.userID = :userID AND s.mode = :modeByte 
+    ORDER BY s.createdAt DESC 
+    OFFSET :offset
     """)
-    fun getWithOffset(userID: Long, modeByte: Byte, offset: Int): UserBestSnapshot?
+    fun getWithOffset(userID: Long, modeByte: Byte, offset: Int): List<UserBestSnapshot>
 }

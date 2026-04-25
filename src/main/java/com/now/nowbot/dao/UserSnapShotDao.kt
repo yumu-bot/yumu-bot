@@ -47,6 +47,6 @@ class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository
     }
 
     fun getWithOffset(userID: Long, mode: OsuMode, offset: Int = 0): UserBestSnapshot? {
-        return snapshotRepository.getWithOffset(userID, mode.modeValue, offset)
+        return snapshotRepository.getWithOffset(userID, mode.modeValue, offset).firstOrNull()
     }
 }
