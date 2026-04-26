@@ -21,8 +21,8 @@ import java.util.concurrent.CancellationException
 
 @Service("NOWBOT_IMAGE")
 class ImageService(
-    @field:Qualifier("restClient")
-    private val restClient: RestClient
+    @field:Qualifier("imageRestClient")
+    private val imageRestClient: RestClient
 ) {
     /**
      * @param name 面板的内部编号，并非功能编号
@@ -52,7 +52,7 @@ class ImageService(
         val headers = defaultHeader
 
         val body: Map<String, Any> = mapOf("md" to markdown, "width" to 1500)
-        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        val httpEntity = HttpEntity(body, headers)
         return doPost("md", httpEntity)
     }
 
@@ -67,7 +67,7 @@ class ImageService(
         val headers = defaultHeader
 
         val body: Map<String, Any> = mapOf("md" to markdown, "width" to width)
-        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        val httpEntity = HttpEntity(body, headers)
         return doPost("md", httpEntity)
     }
 
@@ -146,7 +146,7 @@ class ImageService(
             "score" to score,
             "panel" to "score"
         )
-        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        val httpEntity = HttpEntity(body, headers)
         return doPost("panel_Gamma", httpEntity)
     }
 
@@ -190,7 +190,7 @@ class ImageService(
         val body = mapOf(
             "beatmap" to beatmap, "round" to round, "mod" to mod, "position" to position, "hasBG" to hasBG
         )
-        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        val httpEntity = HttpEntity(body, headers)
         return doPost("panel_Delta", httpEntity)
     }
 
@@ -207,7 +207,11 @@ class ImageService(
 
     private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
 
-        val request = restClient.post().uri(IMAGE_PATH + path).headers { it.addAll(entity.headers) }
+        val request = imageRestClient
+            .post()
+            .uri(IMAGE_PATH + path)
+            .headers { it.addAll(entity.headers) }
+
         if (entity.hasBody()) {
             request.body(entity.body!!)
         }

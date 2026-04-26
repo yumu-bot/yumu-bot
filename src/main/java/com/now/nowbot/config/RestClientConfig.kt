@@ -75,7 +75,7 @@ class RestClientConfig {
     }
 
     @Bean("restClient")
-    @Qualifier("rlient")
+    @Qualifier("restClient")
     @Primary
     fun restClient(config: NowbotConfig): RestClient =
         clientBuilder(httpClients)
@@ -188,6 +188,23 @@ class RestClientConfig {
         }
         .build()
 
+    @Bean("imageRestClient")
+    @Qualifier("imageRestClient")
+    fun imageRestClient(
+        config: NowbotConfig
+    ): RestClient = clientBuilder(
+        HttpClients
+            .custom()
+            .setDefaultRequestConfig(imageRequestConfig)
+            .setConnectionManager(imageConnectionPoolManager)
+            .build()
+    )
+        .configureMessageConverters { configurer ->
+            configurer.registerDefaults()
+                .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+        }
+        .build()
+
     companion object {
         const val USE_PROXY = false
 
@@ -195,13 +212,28 @@ class RestClientConfig {
             maxTotal = 1000
             defaultMaxPerRoute = 200
             defaultSocketConfig = SocketConfig.custom()
-                .setSoTimeout(Timeout.ofMilliseconds(100))
+                .setSoTimeout(Timeout.ofSeconds(5))
                 .setSoKeepAlive(true)
                 .setTcpNoDelay(false)
                 .build()
         }
+
         val otherRequestConfig: RequestConfig = RequestConfig.custom()
             .setResponseTimeout(Timeout.ofSeconds(10))
+            .build()
+
+        val imageConnectionPoolManager = PoolingHttpClientConnectionManager().apply {
+            maxTotal = 1000
+            defaultMaxPerRoute = 200
+            defaultSocketConfig = SocketConfig.custom()
+                .setSoTimeout(Timeout.ofSeconds(30))
+                .setSoKeepAlive(true)
+                .setTcpNoDelay(true)
+                .build()
+        }
+
+        val imageRequestConfig: RequestConfig = RequestConfig.custom()
+            .setResponseTimeout(Timeout.ofSeconds(20))
             .build()
 
         fun proxyClient(config: NowbotConfig): CloseableHttpClient {
