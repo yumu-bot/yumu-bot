@@ -40,6 +40,14 @@ open class NetworkException(message: String?
             override val code = 400
         }
 
+        class NotFound:
+            RenderModuleException("""
+                404 Not Found
+                没有找到渲染模块面板。
+            """.trimIndent()) {
+            override val code = 404
+        }
+
         class RequestTimeout:
             RenderModuleException("""
                 408 Request Timeout

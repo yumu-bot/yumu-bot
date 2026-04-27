@@ -641,6 +641,13 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
     }),
 
+    VIEW(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("view", "v")
+        appendBID()
+        appendSpace()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+    }),
+
     // #5 osu! 比赛指令
     MATCH_LISTENER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("make\\s*love", "(match)?listen(er)?", "ml", "li")

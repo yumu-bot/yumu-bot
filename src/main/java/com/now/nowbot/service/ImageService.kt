@@ -229,7 +229,7 @@ class ImageService(
 
             when(ex?.statusCode?.value()) {
                 400 -> throw NetworkException.RenderModuleException.BadRequest()
-                // 408 -> throw NetworkException.RenderModuleException.RequestTimeout()
+                404 -> throw NetworkException.RenderModuleException.NotFound()
                 408 -> throw NetworkException.RenderModuleException.ServiceUnavailable()
                 500 -> throw NetworkException.RenderModuleException.InternalServerError()
                 502 -> throw NetworkException.RenderModuleException.BadGateway()
