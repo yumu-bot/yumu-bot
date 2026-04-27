@@ -377,6 +377,13 @@ enum class OfficialInstruction(val pattern: Pattern) {
         }
     ),
 
+    VIEW(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("view", "v")
+        appendBID()
+        appendSpace()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+    }),
+
     // #5 osu! 比赛指令
 
     MU_RATING(CommandPatternBuilder.create {
