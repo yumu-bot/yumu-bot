@@ -26,23 +26,13 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
     // 存储挂起的请求：MessageId -> Future
     private val pendingRequests = ConcurrentHashMap<String, CompletableFuture<ByteArray>>()
 
-    init {
-        scheduler.scheduleAtFixedRate({
-            activeSessions.values.forEach { session ->
-                if (session.isOpen) {
-                    try {
-                        session.sendMessage(TextMessage("{\"type\":\"PING\"}"))
-                    } catch (_: Exception) {
-                        log.warn("心跳发送失败: ${session.id}")
-                    }
-                }
-            }
-        }, 30, 30, TimeUnit.SECONDS)
-    }
-
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         try {
             val response = objectMapper.readTree(message.payload)
+
+            if (response.has("type") && response.get("type").asString() == "HEARTBEAT") {
+                return
+            }
 
             if (response.has("type") && response.get("type").asString() == "AUTH") {
                 val pid = response.get("pid").asInt()

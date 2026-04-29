@@ -8,10 +8,15 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
+import java.io.Serializable
 
 @Entity
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-class UserProfileLite {
+class UserProfileLite: Serializable {
+
+    companion object {
+        private const val serialVersionUID: Long = 10086L
+    }
 
     @Id
     @JsonIgnore
