@@ -7,6 +7,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean
+import kotlin.time.Duration.Companion.minutes
 
 @Configuration
 @EnableWebSocket
@@ -23,12 +24,11 @@ class RenderWebSocketConfig(
     fun createWebSocketContainer(): ServletServerContainerFactoryBean {
         val container = ServletServerContainerFactoryBean()
 
-        // 设置文本消息和二进制消息的最大缓冲区 (这里设为 10MB)
-        container.maxTextMessageBufferSize = 20 * 1024 * 1024
-        container.maxBinaryMessageBufferSize = 20 * 1024 * 1024
+        container.maxTextMessageBufferSize = 1 * 1024 * 1024
+        container.maxBinaryMessageBufferSize = 5 * 1024 * 1024
 
         // 设置空闲超时时间
-        container.maxSessionIdleTimeout = 3 * 60 * 1000L // 3分钟
+        container.maxSessionIdleTimeout = 1.minutes.inWholeMilliseconds
 
         return container
     }

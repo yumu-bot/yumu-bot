@@ -8,12 +8,14 @@ import java.util.concurrent.ConcurrentHashMap
 import com.now.nowbot.util.JacksonUtil
 import jakarta.annotation.PreDestroy
 import org.springframework.web.socket.BinaryMessage
+import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 
 @Component
 class RenderWebSocketHandler : TextWebSocketHandler() {
@@ -37,7 +39,24 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             if (response.has("type") && response.get("type").asString() == "AUTH") {
                 val pid = response.get("pid").asInt()
 
-                activeSessions[pid] = session
+                // 使用 compute 确保原子性：存入新 Session，关掉旧 Session
+                activeSessions.compute(pid) { _, existingSession ->
+                    if (existingSession != null && existingSession.id != session.id) {
+                        log.info("渲染服务器：检测到重复连接 [PID: $pid]，正在关闭旧连接 ${existingSession.id}")
+                        try {
+                            if (existingSession.isOpen) {
+                                existingSession.close(CloseStatus(4001, "Replaced by new process connection"))
+                            }
+                        } catch (e: Exception) {
+                            log.error("关闭旧 Session 失败", e)
+                        }
+                    }
+                    session
+                }
+
+                // 可以在 session 属性里记一下这个 pid，方便 closed 时清理
+                session.attributes["PID"] = pid
+
                 log.info("渲染服务器：进程验证成功 [PID: $pid, Session: ${session.id}]")
                 return
             }
@@ -122,6 +141,29 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
         }
 
         return future
+    }
+
+    private val anonymousConnectionCount = AtomicInteger(0)
+
+    override fun afterConnectionEstablished(session: WebSocketSession) {
+        // 如果还没认证的连接超过 10 个，直接拒绝新连接，保护内存
+        if (anonymousConnectionCount.incrementAndGet() > 10) {
+            anonymousConnectionCount.decrementAndGet()
+            session.close(CloseStatus.POLICY_VIOLATION)
+            return
+        }
+    }
+
+    override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
+        val pid = session.attributes["PID"] as? Int
+
+        if (pid != null) {
+            activeSessions.remove(pid, session)
+            log.info("渲染服务器：连接已关闭 [PID: $pid, Session: ${session.id}]")
+        } else {
+            // 如果是匿名连接关闭，减少计数
+            anonymousConnectionCount.decrementAndGet()
+        }
     }
 
     @PreDestroy
