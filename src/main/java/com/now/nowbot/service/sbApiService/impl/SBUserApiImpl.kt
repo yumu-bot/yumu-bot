@@ -186,8 +186,8 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                 throw NetworkException.UserException.RequestTimeout()
             } else {
 
-                if (e !is CancellationException) {
-                    log.error("玩家模块：未定义的错误", e)
+                if (e !is CancellationException && e !is NetworkException.UserException) {
+                    log.error("玩家请求：未定义的错误", e)
                     throw NetworkException.UserException.Undefined(e)
                 } else {
                     throw e

@@ -127,8 +127,8 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
 
                 else -> {
 
-                    if (e !is CancellationException) {
-                        log.error("成绩模块：未定义的错误", e)
+                    if (e !is CancellationException && e !is NetworkException.ScoreException) {
+                        log.error("成绩请求：未定义的错误", e)
                         throw NetworkException.ScoreException.Undefined(e)
                     } else {
                         throw e

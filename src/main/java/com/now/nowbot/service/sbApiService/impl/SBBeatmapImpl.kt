@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import java.util.*
+import java.util.concurrent.CancellationException
 
 @Service
 class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
@@ -50,9 +51,14 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
                 502 -> throw NetworkException.BeatmapException.BadGateWay()
                 503 -> throw NetworkException.BeatmapException.ServiceUnavailable()
                 504 -> throw NetworkException.BeatmapException.GatewayTimeout()
+
                 else -> {
-                    log.error("谱面模块：未定义的错误", e)
-                    throw NetworkException.BeatmapException.Undefined(e)
+                    if (e !is CancellationException && e !is NetworkException.BeatmapException) {
+                        log.error("谱面请求：未定义的错误：", e)
+                        throw NetworkException.BeatmapException.Undefined(e)
+                    } else {
+                        throw e
+                    }
                 }
             }
         }

@@ -151,7 +151,7 @@ class MatchApiImpl(
                 504 -> throw NetworkException.MatchException.GatewayTimeout()
 
                 else -> {
-                    if (e !is CancellationException) {
+                    if (e !is CancellationException && e !is NetworkException.MatchException) {
                         log.error("比赛请求：未定义的错误：", e)
                         throw NetworkException.MatchException.Undefined(e)
                     } else {

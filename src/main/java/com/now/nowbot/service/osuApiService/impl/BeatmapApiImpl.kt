@@ -1325,7 +1325,7 @@ class BeatmapApiImpl(
                 504 -> throw NetworkException.BeatmapException.GatewayTimeout()
 
                 else -> {
-                    if (e !is CancellationException) {
+                    if (e !is CancellationException && e !is NetworkException.BeatmapException) {
                         log.error("谱面请求：未定义的错误：", e)
                         throw NetworkException.BeatmapException.Undefined(e)
                     } else {

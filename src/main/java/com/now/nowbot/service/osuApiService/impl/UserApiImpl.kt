@@ -438,8 +438,8 @@ import java.util.concurrent.CancellationException
                 503 -> throw NetworkException.UserException.ServiceUnavailable()
                 504 -> throw NetworkException.UserException.GatewayTimeout()
 
-                else -> if (e !is CancellationException) {
-                    log.error("玩家模块：未定义的错误", e)
+                else -> if (e !is CancellationException && e !is NetworkException.UserException) {
+                    log.error("玩家请求：未定义的错误", e)
                     throw NetworkException.UserException.Undefined(e)
                 } else {
                     throw e
