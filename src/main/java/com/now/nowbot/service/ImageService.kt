@@ -1,13 +1,12 @@
 package com.now.nowbot.service
 
+import com.now.nowbot.controller.RenderWebSocketHandler
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
-import com.now.nowbot.util.DataUtil.findCauseOfType
-import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -15,14 +14,17 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestClient
 import java.util.concurrent.CancellationException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @Service("NOWBOT_IMAGE")
 class ImageService(
-    @field:Qualifier("imageRestClient")
-    private val imageRestClient: RestClient
+//    @field:Qualifier("imageRestClient")
+//    private val imageRestClient: RestClient,
+
+    @field:Qualifier("renderWebSocketHandler")
+    private val renderWebSocketHandler: RenderWebSocketHandler
 ) {
     /**
      * @param name 面板的内部编号，并非功能编号
@@ -205,6 +207,7 @@ class ImageService(
             return headers
         }
 
+    /*
     private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
 
         val request = imageRestClient
@@ -248,8 +251,47 @@ class ImageService(
         }
     }
 
+     */
+
+    private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
+        try {
+            // 1. 发送 WebSocket 指令并拿到 Future
+            val future = renderWebSocketHandler.sendTask(path, entity.body)
+
+            val bytes = future.get(20, TimeUnit.SECONDS)
+
+            if (bytes.isEmpty()) {
+                throw NetworkException.RenderModuleException.NoContent()
+            }
+
+            return bytes
+
+        } catch (e: Throwable) {
+            when (e) {
+                is TimeoutException -> {
+                    log.error("渲染模块：WS 请求超时")
+                    throw NetworkException.RenderModuleException.GatewayTimeout()
+                }
+                is IllegalStateException -> {
+                    log.error("渲染模块：JS 客户端不在线")
+                    throw NetworkException.RenderModuleException.ServiceUnavailable()
+                }
+                else -> {
+                    val cause = e.cause
+                    if (cause !is CancellationException) {
+                        log.error("渲染模块：WS 内部错误", e)
+                        throw NetworkException.RenderModuleException.Undefined(cause ?: e)
+                    } else {
+                        throw e
+                    }
+                }
+            }
+        }
+    }
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ImageService::class.java)
         const val IMAGE_PATH: String = "http://127.0.0.1:1611/"
     }
+
 }

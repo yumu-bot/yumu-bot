@@ -1,0 +1,138 @@
+package com.now.nowbot.controller
+
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
+import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import com.now.nowbot.util.JacksonUtil
+import org.springframework.web.socket.BinaryMessage
+import org.springframework.web.socket.TextMessage
+import org.springframework.web.socket.WebSocketSession
+import org.springframework.web.socket.handler.TextWebSocketHandler
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+
+@Component
+class RenderWebSocketHandler : TextWebSocketHandler() {
+    private val log = LoggerFactory.getLogger(this::class.java)
+    private val objectMapper = JacksonUtil.mapper
+
+    private val activeSessions = ConcurrentHashMap<Int, WebSocketSession>()
+
+    // 存储挂起的请求：MessageId -> Future
+    private val pendingRequests = ConcurrentHashMap<String, CompletableFuture<ByteArray>>()
+
+    init {
+        val scheduler = Executors.newSingleThreadScheduledExecutor()
+
+        // 心跳检测
+        scheduler.scheduleAtFixedRate({
+            activeSessions.values.forEach { session ->
+                if (session.isOpen) {
+                    session.sendMessage(TextMessage("{\"type\":\"PING\"}"))
+                }
+            }
+        }, 30, 30, TimeUnit.SECONDS)
+    }
+
+    override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
+        try {
+            val response = objectMapper.readTree(message.payload)
+
+            if (response.has("type") && response.get("type").asString() == "AUTH") {
+                val pid = response.get("pid").asInt()
+
+                activeSessions[pid] = session
+                log.info("渲染服务器：进程验证成功 [PID: $pid, Session: ${session.id}]")
+                return
+            }
+
+            val messageId = response.get("messageId")?.asString()
+            val status = response.get("status")?.asString()
+
+            if (messageId != null && status == "success") {
+                val dataNode = response.get("data")
+
+                val bytes: ByteArray = when {
+                    dataNode.isString -> Base64.getDecoder().decode(dataNode.asString())
+
+                    dataNode.isObject && dataNode.has("data") && dataNode.get("data").isBinary -> {
+                        if (dataNode.get("data").isString) {
+                            Base64.getDecoder().decode(dataNode.get("data").asString())
+                        }
+
+                        if (dataNode.get("data").isBinary) {
+                            dataNode.get("data").binaryValue()
+                        } else {
+                            throw IllegalArgumentException("无法识别的 data 格式")
+                        }
+                    }
+
+                    else -> throw IllegalArgumentException("无法识别的 data 格式")
+                }
+
+                pendingRequests.remove(messageId)?.complete(bytes)
+            }
+        } catch (e: Exception) {
+            log.error("渲染服务器：解析 JS 返回消息失败", e)
+        }
+    }
+
+    override fun handleBinaryMessage(session: WebSocketSession, message: BinaryMessage) {
+        val payload = message.payload
+        val bytes = ByteArray(payload.remaining())
+        payload.get(bytes)
+
+        // 1. 分离头部 (前36字节是 UUID)
+        val idLength = 36
+        if (bytes.size <= idLength) return
+
+        val messageId = String(bytes.copyOfRange(0, idLength), Charsets.UTF_8)
+
+        // 2. 提取剩余的 PNG 数据
+        val imageData = bytes.copyOfRange(idLength, bytes.size)
+
+        // 3. 完成请求
+        pendingRequests.remove(messageId)?.complete(imageData)
+    }
+
+    fun sendTask(path: String, payload: Any?, timeoutSeconds: Long = 30): CompletableFuture<ByteArray> {
+        val available = activeSessions.values.filter { it.isOpen }
+
+        // 负载均衡：随机选一个
+        val session = available.randomOrNull() ?: throw IllegalStateException("渲染服务器：当前没有活跃的 JS 渲染进程")
+
+        val messageId = UUID.randomUUID().toString()
+        val future = CompletableFuture<ByteArray>()
+        pendingRequests[messageId] = future
+
+        // 引入超时定时任务
+        val timeoutTask = Executors.newSingleThreadScheduledExecutor().schedule({
+            if (pendingRequests.remove(messageId) != null) {
+                log.warn("渲染服务器：请求超时 [ID: $messageId]，已从等待队列清理")
+                future.completeExceptionally(TimeoutException("渲染服务器：任务超时：$messageId"))
+            }
+        }, timeoutSeconds, TimeUnit.SECONDS)
+
+        // 当任务成功完成时，取消定时器（避免资源浪费）
+        future.whenComplete { _: ByteArray?, _: Throwable? -> timeoutTask.cancel(false) }
+
+        try {
+            val requestMap = mapOf(
+                "path" to path,
+                "messageId" to messageId,
+                "payload" to payload
+            )
+            val jsonString = objectMapper.writeValueAsString(requestMap)
+
+            session.sendMessage(TextMessage(jsonString))
+        } catch (e: Exception) {
+            pendingRequests.remove(messageId)
+            future.completeExceptionally(e)
+        }
+
+        return future
+    }
+}

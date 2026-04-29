@@ -17,33 +17,33 @@ import org.springframework.stereotype.Service
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.regex.Matcher
 
-@Service("PING") class PingService : MessageService<Matcher>, TencentMessageService<Matcher> {
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Matcher>): Boolean {
+@Service("PING") class PingService : MessageService<Unit>, TencentMessageService<Unit> {
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Unit>): Boolean {
         val m = Instruction.PING.matcher(messageText)
         if (!m.find()) {
             return false
         }
 
-        data.value = m
+        data.value = Unit
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Unit): ServiceCallStatistic? {
         event.reply(getMessageChain()).recallIn(10 * 1000L)
         return ServiceCallStatistic.building(event)
     }
 
-    override fun accept(event: MessageEvent, messageText: String): Matcher? {
+    override fun accept(event: MessageEvent, messageText: String): Unit? {
         val m = OfficialInstruction.PING.matcher(messageText)
         if (!m.find()) {
             return null
         }
-        return m
+
+        return Unit
     }
 
-    @Throws(Throwable::class) override fun reply(event: MessageEvent, param: Matcher): MessageChain? {
+    @Throws(Throwable::class) override fun reply(event: MessageEvent, param: Unit): MessageChain? {
         return getMessageChain()
     }
 
