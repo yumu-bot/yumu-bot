@@ -2,7 +2,7 @@ package com.now.nowbot.service
 
 import com.neovisionaries.ws.client.WebSocketFactory
 import com.now.nowbot.aop.DiscordParam
-import com.now.nowbot.config.AsyncSetting.THREAD_FACTORY
+import com.now.nowbot.config.AsyncSetting
 import com.now.nowbot.config.DiscordConfig
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.controller.BotWebApi
@@ -106,7 +106,7 @@ class DiscordService(
                 }
             }
 
-            val scheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(0, THREAD_FACTORY)
+            val scheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(0, AsyncSetting.threadFactory)
 
             log.info("🔄 创建 JDA 实例...")
             val jda = JDABuilder.createDefault(discordConfig.token)

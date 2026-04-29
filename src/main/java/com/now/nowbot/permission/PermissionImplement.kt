@@ -34,7 +34,7 @@ class PermissionImplement(
 ) : PermissionController {
     companion object {
         private val log = LoggerFactory.getLogger(PermissionImplement::class.java)
-        private val EXECUTOR = Executors.newScheduledThreadPool(Int.MAX_VALUE, AsyncSetting.THREAD_FACTORY)
+        private val EXECUTOR = Executors.newScheduledThreadPool(Int.MAX_VALUE, AsyncSetting.threadFactory)
         const val GLOBAL_PERMISSION = "PERMISSION_ALL"
 
         private const val LOCAL_GROUP_ID = -10086L

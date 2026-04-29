@@ -6,6 +6,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import com.now.nowbot.util.JacksonUtil
+import jakarta.annotation.PreDestroy
 import org.springframework.web.socket.BinaryMessage
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeoutException
 
 @Component
 class RenderWebSocketHandler : TextWebSocketHandler() {
+    private val scheduler = Executors.newScheduledThreadPool(2)
     private val log = LoggerFactory.getLogger(this::class.java)
     private val objectMapper = JacksonUtil.mapper
 
@@ -25,13 +27,14 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
     private val pendingRequests = ConcurrentHashMap<String, CompletableFuture<ByteArray>>()
 
     init {
-        val scheduler = Executors.newSingleThreadScheduledExecutor()
-
-        // 心跳检测
         scheduler.scheduleAtFixedRate({
             activeSessions.values.forEach { session ->
                 if (session.isOpen) {
-                    session.sendMessage(TextMessage("{\"type\":\"PING\"}"))
+                    try {
+                        session.sendMessage(TextMessage("{\"type\":\"PING\"}"))
+                    } catch (_: Exception) {
+                        log.warn("心跳发送失败: ${session.id}")
+                    }
                 }
             }
         }, 30, 30, TimeUnit.SECONDS)
@@ -57,20 +60,15 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
 
                 val bytes: ByteArray = when {
                     dataNode.isString -> Base64.getDecoder().decode(dataNode.asString())
-
-                    dataNode.isObject && dataNode.has("data") && dataNode.get("data").isBinary -> {
-                        if (dataNode.get("data").isString) {
-                            Base64.getDecoder().decode(dataNode.get("data").asString())
-                        }
-
-                        if (dataNode.get("data").isBinary) {
-                            dataNode.get("data").binaryValue()
-                        } else {
-                            throw IllegalArgumentException("无法识别的 data 格式")
+                    dataNode.isObject && dataNode.has("data") -> {
+                        val dataField = dataNode.get("data")
+                        when {
+                            dataField.isString -> Base64.getDecoder().decode(dataField.asString())
+                            dataField.isBinary -> dataField.binaryValue()
+                            else -> throw IllegalArgumentException("无法识别的 data 内部格式")
                         }
                     }
-
-                    else -> throw IllegalArgumentException("无法识别的 data 格式")
+                    else -> throw IllegalArgumentException("无法识别的 data 结构")
                 }
 
                 pendingRequests.remove(messageId)?.complete(bytes)
@@ -85,7 +83,7 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
         val bytes = ByteArray(payload.remaining())
         payload.get(bytes)
 
-        // 1. 分离头部 (前36字节是 UUID)
+        // 1. 分离头部 (前 36 字节是 UUID)
         val idLength = 36
         if (bytes.size <= idLength) return
 
@@ -109,7 +107,7 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
         pendingRequests[messageId] = future
 
         // 引入超时定时任务
-        val timeoutTask = Executors.newSingleThreadScheduledExecutor().schedule({
+        val timeoutTask = scheduler.schedule({
             if (pendingRequests.remove(messageId) != null) {
                 log.warn("渲染服务器：请求超时 [ID: $messageId]，已从等待队列清理")
                 future.completeExceptionally(TimeoutException("渲染服务器：任务超时：$messageId"))
@@ -134,5 +132,10 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
         }
 
         return future
+    }
+
+    @PreDestroy
+    fun shutdown() {
+        scheduler.shutdown()
     }
 }
