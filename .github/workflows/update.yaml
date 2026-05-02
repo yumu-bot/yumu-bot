@@ -6,6 +6,25 @@ on:
       - master
 
 jobs:
+  check-time:
+    runs-on: self-hosted
+    outputs:
+      should_update: ${{ steps.timer.outputs.should_update }}
+    steps:
+      - name: Check Maintenance Window
+        id: timer
+        run: |
+          # 获取当前 UTC 小时
+          CURRENT_HOUR=$(date -u +%H)
+          echo "Current UTC hour: $CURRENT_HOUR"
+          
+          # 北京时间 02:00-04:00 对应 UTC 18:00-20:00
+          if [ "$CURRENT_HOUR" -ge 18 ] && [ "$CURRENT_HOUR" -lt 20 ]; then
+            echo "当前处于维护时间段 (北京时间 02:00-04:00)，将跳过更新步骤。"
+            echo "should_update=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_update=true" >> $GITHUB_OUTPUT
+          fi
   build:
     runs-on: self-hosted
     env:
@@ -25,7 +44,8 @@ jobs:
           mvnd package
   update:
     runs-on: self-hosted
-    needs: build
+    needs: [build, check-time]
+    if: needs.check-time.outputs.should_update == 'true'
     steps:
       - name: Update
         run: |
