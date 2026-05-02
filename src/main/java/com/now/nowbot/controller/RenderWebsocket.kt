@@ -16,14 +16,19 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 @Component
 class RenderWebSocketHandler : TextWebSocketHandler() {
     private val scheduler = Executors.newScheduledThreadPool(2)
     private val log = LoggerFactory.getLogger(this::class.java)
     private val objectMapper = JacksonUtil.mapper
+    private val roundRobinCounter = AtomicInteger(0)
 
     private val activeSessions = ConcurrentHashMap<Int, WebSocketSession>()
+
+    private val sessionLocks = ConcurrentHashMap<String, ReentrantLock>()
 
     // 存储挂起的请求：MessageId -> Future
     private val pendingRequests = ConcurrentHashMap<String, CompletableFuture<ByteArray>>()
@@ -39,7 +44,13 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             if (response.has("type") && response.get("type").asString() == "AUTH") {
                 val pid = response.get("pid").asInt()
 
-                // 使用 compute 确保原子性：存入新 Session，关掉旧 Session
+                if (session.attributes["PID"] == null) {
+                    anonymousConnectionCount.decrementAndGet()
+                }
+
+                // 记录 PID
+                session.attributes["PID"] = pid
+
                 activeSessions.compute(pid) { _, existingSession ->
                     if (existingSession != null && existingSession.id != session.id) {
                         log.info("渲染服务器：检测到重复连接 [PID: $pid]，正在关闭旧连接 ${existingSession.id}")
@@ -53,9 +64,6 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
                     }
                     session
                 }
-
-                // 可以在 session 属性里记一下这个 pid，方便 closed 时清理
-                session.attributes["PID"] = pid
 
                 log.info("渲染服务器：进程验证成功 [PID: $pid, Session: ${session.id}]")
                 return
@@ -107,9 +115,14 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
 
     fun sendTask(path: String, payload: Any?, timeoutSeconds: Long = 30): CompletableFuture<ByteArray> {
         val available = activeSessions.values.filter { it.isOpen }
+        if (available.isEmpty()) {
+            throw IllegalStateException("渲染服务器：当前没有活跃的 JS 渲染进程")
+        }
 
-        // 负载均衡：随机选一个
-        val session = available.randomOrNull() ?: throw IllegalStateException("渲染服务器：当前没有活跃的 JS 渲染进程")
+        // 优化：轮询 (Round-Robin) 负载均衡
+        // 使用 and 0x7FFFFFFF 防止计数器溢出变为负数导致的数组越界
+        val index = (roundRobinCounter.getAndIncrement() and 0x7FFFFFFF) % available.size
+        val session = available.getOrNull(index) ?: throw IllegalStateException("渲染服务器：没有可用的渲染进程连接")
 
         val messageId = UUID.randomUUID().toString()
         val future = CompletableFuture<ByteArray>()
@@ -134,7 +147,15 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             )
             val jsonString = objectMapper.writeValueAsString(requestMap)
 
-            session.sendMessage(TextMessage(jsonString))
+            val lock = sessionLocks.computeIfAbsent(session.id) { ReentrantLock() }
+
+            lock.withLock {
+                if (session.isOpen) {
+                    session.sendMessage(TextMessage(jsonString))
+                } else {
+                    throw IllegalStateException("Session 在发送前已关闭")
+                }
+            }
         } catch (e: Exception) {
             pendingRequests.remove(messageId)
             future.completeExceptionally(e)
@@ -155,6 +176,9 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
+        // 清理该 Session 对应的锁
+        sessionLocks.remove(session.id)
+
         val pid = session.attributes["PID"] as? Int
 
         if (pid != null) {
