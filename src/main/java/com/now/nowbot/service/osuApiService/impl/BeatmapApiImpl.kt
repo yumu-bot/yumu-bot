@@ -845,6 +845,7 @@ class BeatmapApiImpl(
                     .toBody<AttributesResponse>().attributes
             }
         } catch (_: Exception) {
+            log.error("谱面请求：遇到了无法处理的属性：${JacksonUtil.objectToJsonPretty(body)}}")
             BeatmapDifficultyAttributes()
         }
     }
@@ -1318,6 +1319,7 @@ class BeatmapApiImpl(
                 403 -> throw NetworkException.BeatmapException.Forbidden()
                 404 -> throw NetworkException.BeatmapException.NotFound()
                 408 -> throw NetworkException.BeatmapException.RequestTimeout()
+                422 -> throw NetworkException.BeatmapException.UnprocessableEntity()
                 429 -> throw NetworkException.BeatmapException.TooManyRequests()
                 500 -> throw NetworkException.BeatmapException.InternalServerError()
                 502 -> throw NetworkException.BeatmapException.BadGateWay()

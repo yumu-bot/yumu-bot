@@ -252,6 +252,14 @@ open class NetworkException(message: String?
             override val code = 408
         }
 
+        class UnprocessableEntity:
+            BeatmapException("""
+                422 Unprocessable Entity
+                服务器无法正确处理请求。
+            """.trimIndent()) {
+            override val code = 422
+        }
+
         class TooManyRequests:
             BeatmapException("""
                 429 Too Many Requests
