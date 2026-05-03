@@ -173,6 +173,9 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             session.close(CloseStatus.POLICY_VIOLATION)
             return
         }
+
+        session.binaryMessageSizeLimit = 20 * 1024 * 1024
+        session.textMessageSizeLimit = 5 * 1024 * 1024
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
