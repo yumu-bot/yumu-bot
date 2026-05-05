@@ -15,7 +15,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -174,7 +173,7 @@ import kotlin.math.min
                 val modsAttributeTmp: MutableList<Attribute> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double>) ->
                     val attribute = Attribute(
-                        mod, value.filterNotNull().size, value.filterNotNull().sum(), (value.size * 1.0 / modsSum)
+                        mod, value.size, value.sum(), (value.size * 1.0 / modsSum)
                     )
                     modsAttributeTmp.add(attribute)
                 }

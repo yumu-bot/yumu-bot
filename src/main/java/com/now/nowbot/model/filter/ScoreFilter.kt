@@ -12,6 +12,7 @@ import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlin.math.*
 import kotlin.time.Duration.Companion.days
@@ -494,30 +495,39 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             }
             val isRelative = TimeParser.isRelativeTime(to)
 
-            val timeMillis = timeInstant.toEpochMilli()
+            val toSec = timeInstant.toEpochMilli() / 1000L
 
-            val compareMillis = compare ?: 0L
-
-            log.info("compare: $compareMillis, to: $timeMillis")
+            val sec = compare ?: 0L
 
             return when (operator) {
                 Operator.GT -> {
-                    if (isRelative) compareMillis < timeMillis else compareMillis > timeMillis
+                    if (isRelative) sec < toSec else sec > toSec
                 }
                 Operator.GE -> {
-                    if (isRelative) compareMillis <= timeMillis else compareMillis >= timeMillis
+                    if (isRelative) sec <= toSec else sec >= toSec
                 }
                 Operator.LT -> {
-                    if (isRelative) compareMillis > timeMillis else compareMillis < timeMillis
+                    if (isRelative) sec > toSec else sec < toSec
                 }
                 Operator.LE -> {
-                    if (isRelative) compareMillis >= timeMillis else compareMillis <= timeMillis
+                    if (isRelative) sec >= toSec else sec <= toSec
                 }
 
-                Operator.EQ -> compareMillis in timeMillis until (timeMillis + 1.days.inWholeMilliseconds)
-                Operator.XQ -> compareMillis in timeMillis until (timeMillis + 1.hours.inWholeMilliseconds)
+                else -> {
+                    // 1. 将毫秒值重新解析为当前时区的日期时间
+                    val zonedDateTime = Instant.ofEpochMilli(toSec)
+                        .atZone(ZoneId.systemDefault())
 
-                Operator.NE -> compareMillis !in timeMillis until (timeMillis + 1.days.inWholeMilliseconds)
+                    // 2. 强制对齐到 0 点 (例如 15:30:25 -> 00:00:00)
+                    val startOfDay = zonedDateTime.toLocalDate().atStartOfDay(ZoneId.systemDefault())
+                    val startSec = startOfDay.toInstant().toEpochMilli() / 1000L
+
+                    when(operator) {
+                        Operator.EQ -> sec in startSec until (startSec + 1.days.inWholeSeconds)
+                        Operator.XQ -> sec in startSec until (startSec + 1.hours.inWholeSeconds)
+                        Operator.NE -> sec !in startSec until (startSec + 1.days.inWholeSeconds)
+                    }
+                }
             }
         }
 

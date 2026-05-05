@@ -237,11 +237,21 @@ enum class Instruction(val pattern: Pattern) {
     TODAY_BP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
         appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     SB_TODAY_BP(CommandPatternBuilder.create {
         appendSBCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
         appendModeQQUIDSBNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     BP_FIX(CommandPatternBuilder.create {

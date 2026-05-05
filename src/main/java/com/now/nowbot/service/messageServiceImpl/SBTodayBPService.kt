@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -18,14 +19,19 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.sbApiService.SBScoreApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getSBUserWithRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.UserIDUtil
+import com.now.nowbot.util.command.FLAG_ANY
+import com.now.nowbot.util.command.FLAG_RANGE
+import com.now.nowbot.util.command.REG_HYPHEN
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -33,6 +39,8 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
+import kotlin.collections.isNotEmpty
+import kotlin.collections.orEmpty
 
 @Service("SB_TODAY_BP")
 class SBTodayBPService(
@@ -85,8 +93,26 @@ class SBTodayBPService(
         )
     }
     private fun getParam(matcher: Matcher, event: MessageEvent): TodayBPParam {
+        val any: String = matcher.group(FLAG_ANY) ?: ""
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean()
+
+        val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
+
+        // 如果不加井号，则有时候范围会被匹配到这里来
+        val rangeInConditions = conditions.lastOrNull().orEmpty()
+        val hasRangeInConditions = rangeInConditions.isNotEmpty()
+        val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
+
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
+            throw IllegalArgumentException.WrongException.Cabbage()
+        }
+
+        val ranges = if (hasRangeInConditions) {
+            rangeInConditions
+        } else {
+            matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+        }
 
         val id = UserIDUtil.getSBUserIDWithRange(event, matcher, mode, isMyself, 999)
         id.setZeroDay()
@@ -97,8 +123,9 @@ class SBTodayBPService(
         val dayEnd: Int
 
         if (id.data != null) {
-            dayStart = id.getDayStart()
-            dayEnd = id.getDayEnd()
+            dayStart = ranges?.mapNotNull { it.toIntOrNull() }?.minByOrNull { it }?.coerceIn(1, 999)?.minus(1)
+                ?: id.getDayStart()
+            dayEnd = ranges?.mapNotNull { it.toIntOrNull() }?.maxByOrNull { it }?.coerceIn(1, 999) ?: id.getDayEnd()
 
             val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getUser(id.data!!) },
@@ -117,8 +144,9 @@ class SBTodayBPService(
             user = range.data?.toOsuUser(mode.data)
                 ?: throw NoSuchElementException.Player()
 
-            dayStart = range.getDayStart()
-            dayEnd = range.getDayEnd()
+            dayStart = ranges?.mapNotNull { it.toIntOrNull() }?.minByOrNull { it }?.coerceIn(1, 999)?.minus(1)
+                ?: range.getDayStart()
+            dayEnd = ranges?.mapNotNull { it.toIntOrNull() }?.maxByOrNull { it }?.coerceIn(1, 999) ?: range.getDayEnd()
 
             bests = scoreApiService.getBestScore(
                 id = user.userID,
@@ -130,6 +158,7 @@ class SBTodayBPService(
 
         val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
+
         val dataMap = bests.mapIndexed { i, it ->
             return@mapIndexed if (it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isBefore(laterDay)
                 && it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isAfter(earlierDay)) {
@@ -145,6 +174,14 @@ class SBTodayBPService(
             } else {
                 throw NoSuchElementException.PeriodBestScore(user.username)
             }
+        }
+
+        osuBeatmapApiService.applyBeatmapExtend(dataMap)
+
+        val filteredScores = ScoreFilter.filterScores(dataMap, conditions)
+
+        if (filteredScores.isEmpty()) {
+            throw NoSuchElementException.TodayBestScoreFiltered(user.username)
         }
 
         return TodayBPParam(user, null, mode.data!!, dataMap, isToday)

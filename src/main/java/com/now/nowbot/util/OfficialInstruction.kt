@@ -160,6 +160,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
     TODAY_BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("t", "today\\s*(bests?|bp)")
         appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     BP_FIX(CommandPatternBuilder.create {

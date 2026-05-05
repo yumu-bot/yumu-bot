@@ -100,7 +100,7 @@ object TimeParser {
     }
 
     private fun parseAbsoluteDateTime(input: String): ZonedDateTime {
-        val cleaned = input.replace("/", "-")
+        val cleaned = input.replace("[/\\\\_.]".toRegex(), "-")
 
         val localDateTime = LocalDateTime.parse(cleaned, dateDataFormatter)
 
@@ -108,17 +108,39 @@ object TimeParser {
     }
 
     private val dateDataFormatter = DateTimeFormatterBuilder()
-        // 1. 年月日部分 (兼容 2位和4位年份)
+        // 1. 年份 (必填)
         .appendValueReduced(ChronoField.YEAR, 2, 4, 2000)
-        .appendPattern("[-/M][-/MM][-/d][-/dd]")
-        // 2. 时间部分：使用方括号 [] 包裹表示可选
+
+        // 2. 月份 (必填)
+        .optionalStart().appendPattern("[-/. \\\\]").optionalEnd() // 简写分隔符匹配
+        .appendValue(ChronoField.MONTH_OF_YEAR)
+
+        // 3. 日期 (可选) -> 如果省略，默认为该月 1 号
         .optionalStart()
-        .appendPattern(" [H][HH]:[m][mm]")
+        .optionalStart().appendPattern("[-/. \\\\]").optionalEnd()
+        .appendValue(ChronoField.DAY_OF_MONTH)
+        .optionalEnd()
+
+        // 4. 时间部分 (整体可选)
         .optionalStart()
-        .appendPattern(":[s][ss]")
-        .optionalEnd()
-        .optionalEnd()
-        // 3. 默认值：如果没写时间，默认是 00:00:00
+        .appendLiteral(" ")
+        .appendValue(ChronoField.HOUR_OF_DAY)
+
+        // 分钟 (可选)
+        .optionalStart()
+        .appendLiteral(":")
+        .appendValue(ChronoField.MINUTE_OF_HOUR)
+
+        // 秒 (可选)
+        .optionalStart()
+        .appendLiteral(":")
+        .appendValue(ChronoField.SECOND_OF_MINUTE)
+        .optionalEnd() // 结束秒
+        .optionalEnd() // 结束分
+        .optionalEnd() // 结束时间整体
+
+        // 5. 默认值：关键在于 DAY_OF_MONTH 也需要默认值
+        .parseDefaulting(ChronoField.DAY_OF_MONTH, 1) // 省略日期时默认为 1 号
         .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
         .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
         .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)

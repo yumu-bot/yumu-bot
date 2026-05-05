@@ -285,6 +285,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             尝试修改范围，或尝试扩大搜索天数吧。
         """.trimIndent())
 
+    class TodayBestScoreFiltered(name: Any):
+        NoSuchElementException("无法获取玩家 $name 符合条件的今日最好成绩...")
+
     class UserBeatmapset(type: String):
         NoSuchElementException("没有找到玩家的 $type 谱面。")
 
