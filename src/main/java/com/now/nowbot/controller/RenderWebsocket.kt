@@ -174,7 +174,7 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             return
         }
 
-        session.binaryMessageSizeLimit = 20 * 1024 * 1024
+        session.binaryMessageSizeLimit = 30 * 1024 * 1024
         session.textMessageSizeLimit = 5 * 1024 * 1024
     }
 

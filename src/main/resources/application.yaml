@@ -15,8 +15,6 @@ yumu:
   mirror: # 谱面镜像站的设定
     url: ~
     api: ~
-  cosu:
-    url: ~
   group:
     # osu! 新人杀手群
     killerGroup: -1
@@ -50,10 +48,17 @@ yumu:
     #oauth应用的id与token
     id: 0
     token: ""
-  local: # 本地计算
+  calculate: # 本地计算
     host: "0.0.0.0"
     port: 23316
     rosu: false
+
+    # 本地星数查表或计算顺序。可填入...
+    # LOCAL_DATABASE（优先读取 psql 数据库，一般放在第一位。如果数据库内的星数已经过期，请通过 !ut:[mode?] r 快速清空它。）
+    # OFFICIAL_API（可以获取大部分 stable 星数，无法获取 pp）
+    # rosu（详见 https://github.com/MaxOhn/rosu-pp/ 项目，但是这个是我们本地编译的，您可以删去，并 rosu: false，避免出问题）
+    # cosu（详见 yumubot/osuApiWrap 项目）
+    priority: [LOCAL_DATABASE, OFFICIAL_API, R_OSU, C_OSU]
 
 # dc 机器人的配置, 如果没有可以不用填, 注意访问情况, 可能需要代理
 discord:

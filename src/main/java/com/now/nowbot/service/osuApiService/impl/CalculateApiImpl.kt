@@ -44,15 +44,9 @@ class CalculateApiImpl(
         C_OSU
     }
 
-    /**
-     * 计算优先级，从上往下
-     */
-    val calculatePriority = setOf<CalculateStrategy>(
-        CalculateStrategy.LOCAL_DATABASE,
-        // CalculateStrategy.C_OSU,
-        CalculateStrategy.OFFICIAL_API,
-        CalculateStrategy.R_OSU
-    )
+    val calculatePriority = config.priority.ifEmpty {
+        listOf(CalculateStrategy.LOCAL_DATABASE, CalculateStrategy.OFFICIAL_API)
+    }
 
     private val enableRosu = config.rosu
 
