@@ -15,6 +15,8 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.BotException
+import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
@@ -349,6 +351,8 @@ import kotlin.math.min
                 1 -> MessageChain(imageService.getPanel(this.toMap(), "J"))
                 else -> MessageChain(imageService.getPanel(this.toMap(), "J2"))
             }
+        } catch (e0: TipsRuntimeException) {
+            throw e0
         } catch (e: Exception) {
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
@@ -357,9 +361,11 @@ import kotlin.math.min
                     .dropLastWhile { it.isEmpty() }
                     .toTypedArray()
                 MessageChain(imageService.getPanelAlpha(*msg))
+            } catch (e01: TipsRuntimeException) {
+                throw e01
             } catch (e1: Exception) {
                 log.error("最好成绩分析：文字版转换失败", e1)
-                MessageChain(this.getText())
+                MessageChain(e1)
             }
         }
     }

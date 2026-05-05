@@ -44,8 +44,8 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
             如果要使用这个功能，您需要重新使用 Oauth2 绑定 (!bi)。
         """.trimIndent())
 
-//    class Invalid:
-//        UnsupportedOperationException("非法操作。")
+    class InvalidFuture:
+        UnsupportedOperationException("雨沐不会预知未来。")
 
     class InvalidMode(mode: OsuMode):
         UnsupportedOperationException("不支持绑定 ${mode.fullName} 这个游戏模式。")

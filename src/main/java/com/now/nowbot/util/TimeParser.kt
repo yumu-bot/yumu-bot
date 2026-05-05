@@ -1,171 +1,126 @@
 package com.now.nowbot.util
 
-import com.now.nowbot.util.command.REG_COLON
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
-import java.time.temporal.ChronoUnit.*
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
+import com.now.nowbot.throwable.TipsRuntimeException
+import java.time.*
+import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
 
 object TimeParser {
-    private val REGEX = Regex("""(\d+)\\s*([a-z]*)""")
+    private val BASE_DATE = LocalDate.of(2007, 9, 1)
+        .atStartOfDay(ZoneId.systemDefault()).toInstant()
 
-    private val YEAR_RANGE_REGEX = Regex("""^(\d{4})(?:-(\d{4}))?$""")
+    fun isRelativeTime(input: String): Boolean {
+        val relativeRegex = ".*\\d+\\s*([a-zA-Z\\u4e00-\\u9fa5]+).*".toRegex()
 
-    enum class ColonMode { HOUR_MIN, MIN_SEC }
-
-    // 定义返回包装类
-    data class ParsedTime(
-        val time: LocalDateTime,
-        val unit: ChronoUnit
-    )
-
-    data class ParsedDuration(
-        val duration: Duration,
-        val unit: ChronoUnit
-    )
-
-    /**
-     * 最小单位后都是 0 的情况
-     */
-    fun getDeltaFromUnit(time: LocalDateTime, unit: ChronoUnit): Duration {
-        return when (unit) {
-            YEARS -> (time.dayOfYear - 1).days + time.hour.hours + time.minute.minutes + time.second.seconds
-            MONTHS -> (time.dayOfMonth - 1).days + time.hour.hours + time.minute.minutes + time.second.seconds
-            WEEKS -> (time.dayOfWeek.value - 1).days + time.hour.hours + time.minute.minutes + time.second.seconds
-            else -> 1.days
-        }
+        return relativeRegex.matches(input) && !input.contains("-") && !input.contains("/")
     }
 
-    /**
-     * 解析为“一段时间”并返回最小单位
-     * 返回 Pair(时长, 最小物理单位)
-     */
-    fun parseDuration(
-        input: String,
-        defaultUnit: String = "s",
-        colonMode: ColonMode = ColonMode.MIN_SEC
-    ): ParsedDuration {
-        val raw = input.trim().lowercase()
-        if (raw.isEmpty()) return ParsedDuration(Duration.ZERO, convertToChronoUnit(defaultUnit))
+    fun process(input: String): ZonedDateTime {
+        val now = ZonedDateTime.now()
+        val thresholdMs = now.toInstant().toEpochMilli() - BASE_DATE.toEpochMilli()
 
-        return when {
-            // 1. 处理冒号格式
-            raw.contains(REG_COLON.toRegex()) -> {
-                val parts = raw.split(REG_COLON.toRegex()).map { it.toLong() }
-                val d: Duration
-                val unit: ChronoUnit
+        return try {
+            when {
+                // 1. 包含日期分隔符，走绝对时间逻辑
+                input.contains("-") || input.contains("/") -> {
+                    parseAbsoluteDateTime(input)
+                }
 
-                if (colonMode == ColonMode.HOUR_MIN) {
-                    d = when (parts.size) {
-                        3 -> {
-                            unit = SECONDS; parts[0].hours + parts[1].minutes + parts[2].seconds
-                        }
+                // 2. 包含时间单位，走相对时间逻辑
+                isRelativeTime(input) -> {
+                    val (period, duration) = parseRelative(input)
+                    // 注意：period.days 仅仅获取天数部分，不含月和年。
+                    // 建议使用更准确的粗略估算方式：
+                    val totalMonths = period.toTotalMonths()
+                    val totalDays = (totalMonths * 30) + period.days
+                    val approxMillis = totalDays * 24L * 3600L * 1000L + duration.toMillis()
 
-                        2 -> {
-                            unit = MINUTES; parts[0].hours + parts[1].minutes
-                        }
-
-                        else -> {
-                            unit = MINUTES; Duration.ZERO
-                        }
-                    }
-                } else {
-                    d = when (parts.size) {
-                        3 -> {
-                            unit = SECONDS; parts[0].hours + parts[1].minutes + parts[2].seconds
-                        }
-
-                        2 -> {
-                            unit = SECONDS; parts[0].minutes + parts[1].seconds
-                        }
-
-                        else -> {
-                            unit = SECONDS; Duration.ZERO
-                        }
+                    if (approxMillis < thresholdMs) {
+                        now.minus(period).minus(duration)
+                    } else {
+                        // 跳转点逻辑：低位补0 (按天截断)
+                        Instant.ofEpochMilli(approxMillis)
+                            .atZone(ZoneId.systemDefault())
+                            .truncatedTo(java.time.temporal.ChronoUnit.DAYS)
                     }
                 }
-                ParsedDuration(d, unit)
+
+                else -> throw IllegalArgumentException("未知格式")
             }
-
-            // 2. 处理复合或单单位格式 (如 10m30s)
-            else -> {
-                val regex = REGEX
-                val matches = regex.findAll(raw).toList()
-
-                if (matches.isEmpty()) return ParsedDuration(Duration.ZERO, convertToChronoUnit(defaultUnit))
-
-                var total = Duration.ZERO
-                var lastUnit = convertToChronoUnit(defaultUnit)
-
-                for (match in matches) {
-                    val value = match.groupValues[1].toLong()
-                    val unitStr = match.groupValues[2].ifEmpty { defaultUnit }
-
-                    // 更新当前循环的单位
-                    val currentUnit = convertToChronoUnit(unitStr)
-                    lastUnit = currentUnit // 最后一个匹配到的单位即为最小单位
-
-                    total += when (unitStr) {
-                        "y", "year" -> (value * 365).days
-                        "mo", "month" -> (value * 30).days
-                        "d", "day" -> value.days
-                        "h", "hour" -> value.hours
-                        "m", "min" -> value.minutes
-                        "s", "sec" -> value.seconds
-                        else -> Duration.ZERO
-                    }
-                }
-                ParsedDuration(total, lastUnit)
-            }
+        } catch (e: Exception) {
+            throw TipsRuntimeException("解析错误: ${e.message}")
         }
     }
 
-    fun parseBackwards(
-        input: String,
-        defaultUnit: String = "s",
-        colonMode: ColonMode = ColonMode.HOUR_MIN
-    ): ParsedTime {
-        val now = LocalDateTime.now()
-        val trimmed = input.trim()
+    // 同时解析 Period (YMD) 和 Duration (HMS)
+    private fun parseRelative(input: String): Pair<Period, Duration> {
+        var period = Period.ZERO
+        var duration = Duration.ZERO
 
-        // 情况 A: 年份/区间 (同前)
-        val yearMatch = YEAR_RANGE_REGEX.find(trimmed)
-        if (yearMatch != null) {
-            return ParsedTime(now.withYear(yearMatch.groupValues[1].toInt()), YEARS)
-        }
+        val regex = "(\\d+)\\s*([a-zA-Z\\u4e00-\\u9fa5]+)".toRegex()
 
-        // 情况 B: 日期格式 (同前)
-        if (trimmed.contains("-") || trimmed.contains("/")) {
-            val normalized = trimmed.replace("/", "-")
-            val parts = normalized.split("-")
-            if (!(parts.size == 2 && parts[0].length == 4 && parts[1].length == 4)) {
-                val pattern = if (parts[0].length == 2) "yy-MM-dd" else "yyyy-MM-dd"
-                val date = LocalDate.parse(normalized, DateTimeFormatter.ofPattern(pattern))
-                // 日期格式的最小单位通常是 DAYS
-                return ParsedTime(date.atTime(now.toLocalTime()), DAYS)
+        regex.findAll(input).forEach {
+            val (value, unit) = it.destructured
+            val num = value.toLongOrNull() ?: 0L
+
+            when (unit.lowercase()) {
+                // 年
+                in listOf("y", "year", "years", "年") ->
+                    period = period.plusYears(num)
+
+                // 月 (注意：这里用 mo 或 month 区分分钟 m)
+                in listOf("mo", "month", "months", "月") ->
+                    period = period.plusMonths(num)
+
+                // 周
+                in listOf("w", "week", "weeks", "周", "星期") ->
+                    period = period.plusDays(num * 7)
+
+                // 天
+                in listOf("d", "day", "days", "天", "日", "天数") ->
+                    period = period.plusDays(num)
+
+                // 时
+                in listOf("h", "hour", "hours", "时", "小时") ->
+                    duration = duration.plusHours(num)
+
+                // 分
+                in listOf("m", "min", "minute", "minutes", "分", "分钟") ->
+                    duration = duration.plusMinutes(num)
+
+                // 秒
+                in listOf("s", "sec", "second", "seconds", "秒") ->
+                    duration = duration.plusSeconds(num)
+
+                else -> duration = duration.plusSeconds(num)
             }
         }
 
-        // 情况 C: 所有的时长/冒号逻辑统一走 parseDuration
-        val (duration, minUnit) = parseDuration(trimmed, defaultUnit, colonMode)
-        val finalTime = now.minusNanos(duration.inWholeNanoseconds)
-
-        return ParsedTime(finalTime, minUnit)
+        return period to duration
     }
 
-    private fun convertToChronoUnit(unit: String): ChronoUnit = when (unit) {
-        "y", "year" -> YEARS
-        "mo", "month" -> MONTHS
-        "d", "day" -> DAYS
-        "h", "hour" -> HOURS
-        "m", "min" -> MINUTES
-        "s", "sec" -> SECONDS
-        else -> SECONDS
+    private fun parseAbsoluteDateTime(input: String): ZonedDateTime {
+        val cleaned = input.replace("/", "-")
+
+        val localDateTime = LocalDateTime.parse(cleaned, dateDataFormatter)
+
+        return localDateTime.atZone(ZoneId.systemDefault())
     }
+
+    private val dateDataFormatter = DateTimeFormatterBuilder()
+        // 1. 年月日部分 (兼容 2位和4位年份)
+        .appendValueReduced(ChronoField.YEAR, 2, 4, 2000)
+        .appendPattern("[-/M][-/MM][-/d][-/dd]")
+        // 2. 时间部分：使用方括号 [] 包裹表示可选
+        .optionalStart()
+        .appendPattern(" [H][HH]:[m][mm]")
+        .optionalStart()
+        .appendPattern(":[s][ss]")
+        .optionalEnd()
+        .optionalEnd()
+        // 3. 默认值：如果没写时间，默认是 00:00:00
+        .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+        .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+        .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+        .toFormatter()
 }

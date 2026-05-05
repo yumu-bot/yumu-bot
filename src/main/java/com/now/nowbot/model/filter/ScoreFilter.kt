@@ -5,15 +5,17 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
+import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.time.ZoneOffset
 import kotlin.math.*
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 
 enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
     CREATOR("(creator|host|c|谱师|作者|谱|主)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
@@ -482,159 +484,42 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
         }
 
         fun fitTime(operator: Operator, compare: Long?, to: String): Boolean {
-            // = ==
-            val isWithInMode = operator == Operator.EQ || operator == Operator.NE
+            val time = TimeParser.process(to) // 返回的是 ZonedDateTime
+            val timeInstant = time.toInstant() // 转换为 UTC 瞬时点
 
-            // <= >=
-            val isShiftMode = (operator == Operator.GE || operator == Operator.LE || operator == Operator.XQ)
+            val nowInstant = Instant.now() // 获取当前 UTC 瞬时点
 
-            val too: Long
-            val nowUtc = Instant.now() // 获取当前 UTC 时间的 Instant
-            val delta: Duration
-
-            if (isShiftMode) {
-                // 2. 移动日期模式：用户输入的是 "300s" 或 "2d" 这种长度
-                val parsed = TimeParser.parseDuration(to, "d", TimeParser.ColonMode.HOUR_MIN)
-
-                delta = 1.days
-                // 直接在当前 UTC 时间戳上减去时长
-                too = nowUtc.epochSecond - parsed.duration.inWholeSeconds
-            } else {
-                // 1. 绝对日期模式：用户输入的是 "22-11-22" 这种格式
-                // 我们先解析成本地日期时间，然后指定它为 UTC 偏移的时间
-                val parsed = TimeParser.parseBackwards(to, "d", TimeParser.ColonMode.HOUR_MIN)
-
-                delta = TimeParser.getDeltaFromUnit(parsed.time, parsed.unit)
-                // 将解析出的 LocalDateTime 视为 UTC 时间并转为秒
-                too = parsed.time.toEpochSecond(ZoneOffset.UTC)
+            if (nowInstant.isBefore(timeInstant)) {
+                throw UnsupportedOperationException.InvalidFuture()
             }
+            val isRelative = TimeParser.isRelativeTime(to)
 
-            return if (isWithInMode) {
-                // 区域日期模式，从目标时间到目标时间 + 输入的最小单位的时间
+            val timeMillis = timeInstant.toEpochMilli()
 
-                if (operator != Operator.NE) {
-                    fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta.inWholeSeconds)
-                } else {
-                    !(fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta.inWholeSeconds))
+            val compareMillis = compare ?: 0L
+
+            log.info("compare: $compareMillis, to: $timeMillis")
+
+            return when (operator) {
+                Operator.GT -> {
+                    if (isRelative) compareMillis < timeMillis else compareMillis > timeMillis
                 }
-            } else {
+                Operator.GE -> {
+                    if (isRelative) compareMillis <= timeMillis else compareMillis >= timeMillis
+                }
+                Operator.LT -> {
+                    if (isRelative) compareMillis > timeMillis else compareMillis < timeMillis
+                }
+                Operator.LE -> {
+                    if (isRelative) compareMillis >= timeMillis else compareMillis <= timeMillis
+                }
 
-                fit(operator, compare, too)
+                Operator.EQ -> compareMillis in timeMillis until (timeMillis + 1.days.inWholeMilliseconds)
+                Operator.XQ -> compareMillis in timeMillis until (timeMillis + 1.hours.inWholeMilliseconds)
+
+                Operator.NE -> compareMillis !in timeMillis until (timeMillis + 1.days.inWholeMilliseconds)
             }
         }
-
-        /**
-         * 时间筛选器升级
-         */
-        /*
-        fun fitTime(operator: Operator, compare: Long?, to: Pair<Period, Duration>): Boolean {
-            if (compare == null) return false
-
-            // 年月
-            val period = to.first
-
-            // 日时分秒
-            val duration = to.second
-
-            // = ==
-            val isWithInMode = operator == Operator.EQ || operator == Operator.XQ || operator == Operator.NE
-
-            // <= >=
-            val isAbsoluteMode = (operator == Operator.GE || operator == Operator.LE)
-
-            val too: Long
-            val now = LocalDateTime.now()
-
-            // 区域日期模式下，最小的单位差
-            // 如果是 ==，则会精确到秒。如果是 =，则只会精确到天。
-            var delta = 0L
-
-            if (isAbsoluteMode) {
-                // 绝对日期模式，构建一个目标时间
-
-                val years = when(period.years) {
-                    0 -> {
-                        delta = ChronoUnit.SECONDS.between(now.minusYears(1), now)
-                        now.year
-                    }
-                    else -> period.years % 100 + (now.year / 1000) * 1000
-                }
-
-                val months = when(period.months) {
-                    0 -> {
-                        delta = ChronoUnit.SECONDS.between(now.minusMonths(1), now)
-                        now.month.value
-                    }
-                    else -> period.months
-                }
-
-                val totalSeconds = duration.inWholeSeconds
-
-                val dd = (totalSeconds / (24 * 3600)).toInt()
-                val hh = ((totalSeconds % (24 * 3600)) / 3600).toInt()
-                val mm = ((totalSeconds % 3600) / 60).toInt()
-                val ss = (totalSeconds % 60).toInt()
-
-                val days = when(dd) {
-                    0 -> {
-                        delta = 24 * 60 * 60
-                        now.dayOfMonth
-                    }
-                    else -> min(YearMonth.from(now).lengthOfMonth(), dd)
-                }
-
-                val hours = when(hh) {
-                    0 -> {
-                        delta = 24 * 60 * 60
-                        now.hour
-                    }
-                    else -> min(hh, 24)
-                }
-
-                val minutes = when(mm) {
-                    0 -> {
-                        delta = 24 * 60 * 60
-                        now.minute
-                    }
-
-                    else -> min(mm, 60)
-                }
-
-                val seconds = when(ss) {
-                    0 -> {
-                        delta = 24 * 60 * 60
-                        now.second
-                    }
-                    else -> min(ss, 60)
-                }
-
-                too = OffsetDateTime.of(years, months, days, hours, minutes, seconds, 0, ZoneOffset.ofHours(8)).toEpochSecond()
-            } else {
-                // 移动日期模式，从现在减去这段时间
-                delta = 24 * 60 * 60
-
-                too = now
-                    .minusYears(period.years.toLong())
-                    .minusMonths(period.months.toLong())
-                    .minusSeconds(duration.inWholeSeconds)
-                    .toEpochSecond(ZoneOffset.ofHours(8))
-            }
-
-            return if (isWithInMode) {
-                // 区域日期模式，从目标时间到目标时间 + 输入的最小单位的时间
-
-                if (operator != Operator.NE) {
-                    fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta)
-                } else {
-                    !(fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta))
-                }
-            } else {
-
-                fit(operator, compare, too)
-            }
-        }
-
-         */
 
         fun fitMod(operator: Operator, compare: String, to: List<LazerMod>): Boolean {
             val com = LazerMod.getModsList(compare)
@@ -668,5 +553,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 }
             }
         }
+
+        private val log = LoggerFactory.getLogger(ScoreFilter::class.java)
     }
 }
