@@ -2,14 +2,10 @@ package com.now.nowbot.config
 
 import com.now.nowbot.listener.LocalCommandListener
 import com.now.nowbot.permission.PermissionImplement
-import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService
-import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.QQMsgUtil
-import com.now.nowbot.util.UserIDUtil
 import jakarta.annotation.Resource
 import org.slf4j.LoggerFactory
 import org.springframework.boot.CommandLineRunner
@@ -25,7 +21,8 @@ import java.util.concurrent.Executor
 class IocAllReadyRunner(
     private val applicationContext: ApplicationContext,
     private val permission: Permission,
-    private val permissionImplement: PermissionImplement
+    private val permissionImplement: PermissionImplement,
+    private val messageServices: Map<String, MessageService<*>>
 ) : CommandLineRunner {
 
     companion object {
@@ -41,12 +38,9 @@ class IocAllReadyRunner(
     private lateinit var env: Environment
 
     init {
-        val services = applicationContext.getBeansOfType(MessageService::class.java)
-        YumuServer.userApiService = applicationContext.getBean(OsuUserApiService::class.java)
-        InstructionUtil.init(applicationContext)
-        UserIDUtil.init(applicationContext)
+        //val services = applicationContext.getBeansOfType(MessageService::class.java)
 
-        LocalCommandListener.setHandler(services)
+        LocalCommandListener.setHandler(messageServices)
     }
 
     /**
@@ -54,9 +48,9 @@ class IocAllReadyRunner(
      */
     override fun run(vararg args: String) {
         QQMsgUtil.init(applicationContext.getBean(YumuConfig::class.java))
-        val services = applicationContext.getBeansOfType(MessageService::class.java)
+        //val services = applicationContext.getBeansOfType(MessageService::class.java)
 
-        permissionImplement.init(services)
+        permissionImplement.init(messageServices)
         permission.init(applicationContext)
 
         //        initFountWidth()

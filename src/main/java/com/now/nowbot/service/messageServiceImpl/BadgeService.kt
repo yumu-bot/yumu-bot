@@ -12,8 +12,8 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.InstructionObject
-import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_NAME
 import org.springframework.stereotype.Service
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         val isMyself = AtomicBoolean(false)
 
-        val user = getUserWithoutRange(event, m, InstructionObject(OsuMode.DEFAULT), isMyself = isMyself)
+        val user = InstructionUtil.getUserWithoutRange(event, m, InstructionObject(OsuMode.DEFAULT), isMyself = isMyself)
 
         if (user.badges.isEmpty()) {
             if (isMyself.get()) {
@@ -70,7 +70,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         val isMyself = AtomicBoolean(false)
 
-        val user = getUserWithoutRange(event, m, InstructionObject(OsuMode.DEFAULT), isMyself = isMyself)
+        val user = InstructionUtil.getUserWithoutRange(event, m, InstructionObject(OsuMode.DEFAULT), isMyself = isMyself)
 
         if (user.badges.isEmpty()) {
             if (isMyself.get()) {

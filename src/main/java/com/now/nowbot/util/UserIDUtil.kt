@@ -5,12 +5,10 @@ import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.command.*
-import org.springframework.context.ApplicationContext
+import jakarta.annotation.PostConstruct
+import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
@@ -18,12 +16,20 @@ import java.util.regex.Matcher
  * 这个类是用于快速地在命令中通过数据库获取玩家的 UID。
  *
  */
+@Component
+class UserIDUtil(
+    private val bindDao: BindDao
+) {
+    @PostConstruct
+    fun init() {
+        // 在 Spring 初始化完成后，把实例赋值给静态变量
+        instance = this
+    }
 
-object UserIDUtil {
     /**
      * @param isMyself 这里的布尔值仅用于返回当前 parse 的效果
      */
-    fun getUserIDWithRange(
+    private fun getUserIDWithRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
@@ -32,7 +38,7 @@ object UserIDUtil {
     ): InstructionRange<Long> {
         val range = getUserIDAndRange(event, matcher, mode, isMyself, maximum)
 
-        if (range.data == null || event.hasAt()) {
+        if (range.data == null) {
             range.data = getUserIDWithoutRange(event, matcher, mode, isMyself, maximum)
         }
 
@@ -41,7 +47,7 @@ object UserIDUtil {
     /**
      * @param isMyself 这里的布尔值仅用于返回当前 parse 的效果
      */
-    fun getSBUserIDWithRange(
+    private fun getSBUserIDWithRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
@@ -60,7 +66,7 @@ object UserIDUtil {
     /**
      * @param isMyself 这里的布尔值仅用于返回当前 parse 的效果
      */
-    fun getUserIDWithoutRange(
+    private fun getUserIDWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
@@ -95,7 +101,7 @@ object UserIDUtil {
     /**
      * @param isMyself 这里的布尔值仅用于返回当前 parse 的效果
      */
-    fun getSBUserIDWithoutRange(
+    private fun getSBUserIDWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
@@ -138,7 +144,7 @@ object UserIDUtil {
      * @param matcher 正则
      * @param mode 包装的模式, 如果给的 mode 非默认则返回对应 mode 的 userID 信息
      */
-    fun get2UserID(
+    private fun get2UserID(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
@@ -434,20 +440,19 @@ object UserIDUtil {
         val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
-            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
+            matcher.group(FLAG_QQ_ID)?.toLongOrNull()
         } else {
-            0L
+            null
         }
 
-        if (qq != 0L) {
+        if (qq != null) {
             isMyself.set(qq == event.sender.contactID)
 
-            val sb = bindDao.getBindFromQQOrNull(qq)
+            // 必须提前返回，否则对方没绑定时会掉到后面去
+            val sb = bindDao.getBindFromQQOrNull(qq) ?: return null
 
-            sb?.let {
-                setMode(mode, sb.mode, event)
-                return sb.userID
-            }
+            setMode(mode, sb.mode, event)
+            return sb.userID
         }
 
         setMode(mode, event)
@@ -571,16 +576,57 @@ object UserIDUtil {
         mode.data = OsuMode.getMode(mode.data, OsuMode.DEFAULT, bindDao.getGroupModeConfig(event))
     }
 
+    companion object {
+        private lateinit var instance: UserIDUtil
 
-    private lateinit var bindDao: BindDao
-    private lateinit var userApiService: OsuUserApiService
-    private lateinit var scoreApiService: OsuScoreApiService
-    private lateinit var beatmapApiService: OsuBeatmapApiService
+        fun getUserIDWithRange(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean = AtomicBoolean(false),
+            maximum: Int = 200,
+        ): InstructionRange<Long> {
+            return instance.getUserIDWithRange(event, matcher, mode, isMyself, maximum)
+        }
 
-    @JvmStatic fun init(applicationContext: ApplicationContext) {
-        bindDao = applicationContext.getBean(BindDao::class.java)
-        userApiService = applicationContext.getBean(OsuUserApiService::class.java)
-        scoreApiService = applicationContext.getBean(OsuScoreApiService::class.java)
-        beatmapApiService = applicationContext.getBean(OsuBeatmapApiService::class.java)
+
+        fun getSBUserIDWithRange(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean = AtomicBoolean(false),
+            maximum: Int = 200
+        ): InstructionRange<Long> {
+            return instance.getSBUserIDWithRange(event, matcher, mode, isMyself, maximum)
+        }
+
+        fun getUserIDWithoutRange(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean = AtomicBoolean(false),
+            maximum: Int = 200
+        ): Long? {
+            return instance.getUserIDWithoutRange(event, matcher, mode, isMyself, maximum)
+        }
+
+        fun getSBUserIDWithoutRange(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean = AtomicBoolean(false),
+        ): Long? {
+            return instance.getSBUserIDWithoutRange(event, matcher, mode, isMyself)
+        }
+
+        fun get2UserID(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isVS: Boolean = false,
+        ): Pair<Long?, Long?> {
+            return instance.get2UserID(event, matcher, mode, isVS)
+        }
+
     }
 }

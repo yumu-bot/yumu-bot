@@ -16,7 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.toBody
@@ -52,7 +52,7 @@ class MapPoolService(
         if (!m.find()) return false
 
         val name: String? = m.group(FLAG_NAME)
-        val mode = getMode(m).data!!
+        val mode = InstructionUtil.getMode(m).data!!
 
         if (name.isNullOrBlank()) {
             throw TipsException("请输入正确的图池名称！")

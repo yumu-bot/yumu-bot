@@ -25,9 +25,8 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.DataUtil
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getSBUserWithRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.UserIDUtil
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
@@ -94,7 +93,7 @@ class SBTodayBPService(
     }
     private fun getParam(matcher: Matcher, event: MessageEvent): TodayBPParam {
         val any: String = matcher.group(FLAG_ANY) ?: ""
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
         val isMyself = AtomicBoolean()
 
         val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
@@ -138,7 +137,7 @@ class SBTodayBPService(
             user = async.first?.toOsuUser(mode.data!!) ?: throw NoSuchElementException.Player(id.data!!.toString())
             bests = async.second.map { it.toLazerScore() }
         } else {
-            val range = getSBUserWithRange(event, matcher, mode, isMyself)
+            val range = InstructionUtil.getSBUserWithRange(event, matcher, mode, isMyself)
             range.setZeroDay()
 
             user = range.data?.toOsuUser(mode.data)

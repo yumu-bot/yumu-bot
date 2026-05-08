@@ -23,7 +23,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -118,7 +117,7 @@ class SBScorePRService(
         }
 
         val isMyself = AtomicBoolean(true) // 处理 range
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val id = UserIDUtil.getSBUserIDWithRange(event, matcher, mode, isMyself)
 

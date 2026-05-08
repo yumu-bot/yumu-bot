@@ -14,8 +14,8 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.botException.MapPoolException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -46,7 +46,7 @@ class GetPoolService(
         }
 
         val dataMap = parseDataString(dataStr)
-        val mode = getMode(matcher, getFirstMapMode(dataStr)).data!!
+        val mode = InstructionUtil.getMode(matcher, getFirstMapMode(dataStr)).data!!
 
         data.value = GetPoolParam(dataMap, nameStr, mode)
         return true

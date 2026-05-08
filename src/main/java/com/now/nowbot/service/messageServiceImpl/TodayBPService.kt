@@ -25,8 +25,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithRange
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -113,7 +111,7 @@ class TodayBPService(
 
     private fun getParam(matcher: Matcher, event: MessageEvent, isCompact: Boolean): TodayBPParam {
         val any: String = matcher.group(FLAG_ANY) ?: ""
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
         val isMyself = AtomicBoolean()
 
         val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
@@ -154,7 +152,7 @@ class TodayBPService(
             user = async.first
             bests = async.second.toList()
         } else {
-            val range = getUserWithRange(event, matcher, mode, isMyself)
+            val range = InstructionUtil.getUserWithRange(event, matcher, mode, isMyself)
             range.setZeroDay()
 
             user = range.data ?: throw NoSuchElementException.Player()

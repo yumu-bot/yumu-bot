@@ -26,8 +26,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -140,7 +138,7 @@ import java.util.regex.Matcher
         if (any.contains("&sb", ignoreCase = true)) return null
 
         val isMyself = AtomicBoolean(true) // 处理 range
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
 
@@ -181,12 +179,8 @@ import java.util.regex.Matcher
             val id2 = if (id.start != null) {
                 id
             } else {
-                val start = ranges?.firstOrNull()?.toIntOrNull()
-                val end = if (ranges?.size == 2) {
-                    ranges.last().toIntOrNull()
-                } else {
-                    null
-                }
+                val start = ranges?.getOrNull(0)?.toIntOrNull()
+                val end = ranges?.getOrNull(1)?.toIntOrNull()
 
                 InstructionRange(id.data!!, start, end)
             }
@@ -201,7 +195,7 @@ import java.util.regex.Matcher
         } else {
             // 经典的获取方式
 
-            val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+            val range = InstructionUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
             range.setZeroToRange100()
 
             val range2 = if (range.start != null) {

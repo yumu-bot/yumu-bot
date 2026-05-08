@@ -19,8 +19,7 @@ import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
+import com.now.nowbot.util.InstructionUtil
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -305,7 +304,7 @@ import kotlin.math.min
 
     private fun getParam(event: MessageEvent, matcher: Matcher): BAParam {
         val isMyself = AtomicBoolean(false)
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val user: OsuUser
         val bests: List<LazerScore>
@@ -326,7 +325,7 @@ import kotlin.math.min
             user = async.first
             bests = async.second
         } else {
-            user = getUserWithoutRange(event, matcher, mode, isMyself)
+            user = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data).apply {
                 BeatmapUtil.applyBeatmapChanges(this)
                 calculateApiService.applyStarToScores(this)

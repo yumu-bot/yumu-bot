@@ -13,9 +13,8 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.UserIDUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -38,7 +37,7 @@ class BPAnalysisLegacyService(
         }
 
         val isMyself = AtomicBoolean(false)
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val user: OsuUser
         val bests: List<LazerScore>
@@ -61,7 +60,7 @@ class BPAnalysisLegacyService(
             user = async.first
             bests = async.second.toList()
         } else {
-            user = getUserWithoutRange(event, matcher, mode, isMyself)
+            user = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data)
 
             BeatmapUtil.applyBeatmapChanges(bests)

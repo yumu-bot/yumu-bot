@@ -17,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botException.IMapperException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -289,7 +288,7 @@ import kotlin.math.max
 
                 user = async.second.second
             } else {
-                user = getUserWithoutRange(event, matcher, mode)
+                user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
                 val query = mapOf(
                     "q" to "creator=${user.userID}", "sort" to "ranked_desc", "s" to "any", "page" to 1

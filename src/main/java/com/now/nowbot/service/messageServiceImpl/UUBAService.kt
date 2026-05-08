@@ -22,8 +22,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.UserIDUtil
 import org.springframework.stereotype.Service
@@ -88,7 +87,7 @@ class UUBAService(
 
     private fun getParam(event: MessageEvent, matcher: Matcher): BAParam {
         val isMyself = AtomicBoolean(false)
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val user: OsuUser
         val bests: List<LazerScore>
@@ -111,7 +110,7 @@ class UUBAService(
             user = async.first
             bests = async.second.toList()
         } else {
-            user = getUserWithoutRange(event, matcher, mode, isMyself)
+            user = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data)
 
             BeatmapUtil.applyBeatmapChanges(bests)

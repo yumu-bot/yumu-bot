@@ -24,9 +24,6 @@ import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getBid
-import com.now.nowbot.util.InstructionUtil.getMod
-import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -105,10 +102,10 @@ class SBScoreService(
     }
 
     private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean, isShow: Boolean): ScoreParam {
-        val bid = getBid(matcher)
+        val bid = InstructionUtil.getBid(matcher)
 
-        val inputMode = getMode(matcher)
-        val mods = getMod(matcher)
+        val inputMode = InstructionUtil.getMode(matcher)
+        val mods = InstructionUtil.getMod(matcher)
         val map: Beatmap
         val user: OsuUser
         val scores: List<LazerScore>

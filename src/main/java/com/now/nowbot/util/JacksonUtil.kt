@@ -284,7 +284,14 @@ object JacksonUtil {
             val collectionType = typeFactory.constructCollectionType(MutableList::class.java, clazz)
             return mapper.convertValue<List<T>>(body, collectionType)
         }
-        return listOf()
+
+        val actualType = body?.nodeType?.toString() ?: "null"
+        val content = body?.toPrettyString()?.take(200) ?: "null"
+        val errorDetail = "Jackson：应用类型异常。预期 Array，实际是 $actualType。类：${clazz.name}。内容：$content"
+
+        log.error(errorDetail)
+
+        throw RuntimeException(errorDetail)
     }
 
     fun parseSubnodeToString(body: String?, field: String?): String? {

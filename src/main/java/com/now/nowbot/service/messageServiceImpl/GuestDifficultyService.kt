@@ -17,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -94,7 +93,7 @@ class GuestDifficultyService(
 
         // 其实这个功能下的 mode 和 isMyself 不重要
         val isMyself = AtomicBoolean(true)
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
 

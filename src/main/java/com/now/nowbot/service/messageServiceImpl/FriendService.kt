@@ -22,8 +22,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithRange
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_RANGE
@@ -183,7 +181,7 @@ class FriendService(
         bindDao.getBindFromQQ(event.sender.contactID)
 
         val isMyself = AtomicBoolean(true) // 处理 range
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
 
@@ -278,7 +276,7 @@ class FriendService(
 
             if (other == null || other.isTokenAvailable == null) {
                 // 对方未绑定模式
-                val others = getUserWithRange(event, matcher, InstructionObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
+                val others = InstructionUtil.getUserWithRange(event, matcher, InstructionObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
 
                 val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getOsuUser(me) },

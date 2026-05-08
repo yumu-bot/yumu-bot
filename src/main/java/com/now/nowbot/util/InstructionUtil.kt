@@ -3,57 +3,38 @@ package com.now.nowbot.util
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.SBBindUser
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.service.sbApiService.SBBeatmapApiService
-import com.now.nowbot.service.sbApiService.SBScoreApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
-import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.InstructionUtil.Companion.getUserWithRange
 import com.now.nowbot.util.command.*
+import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.context.ApplicationContext
+import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.text.trim
 
-object InstructionUtil {
+@Component
+class InstructionUtil(
+    private val bindDao: BindDao,
+    private val userApiService: OsuUserApiService,
+    private val sbUserApiService: SBUserApiService,
+) {
 
-    /** 获取玩家信息, 末尾没有 range。在未找到匹配的玩家时，抛错 */
-    fun getUserWithoutRange(
-        event: MessageEvent,
-        matcher: Matcher,
-        mode: InstructionObject<OsuMode>,
-    ): OsuUser {
-        return getUserWithoutRange(event, matcher, mode, AtomicBoolean(false))
-    }
-
-    fun getUserWithoutRangeWithBackoff(
-        event: MessageEvent,
-        matcher: Matcher,
-        mode: InstructionObject<OsuMode>,
-        isMyself: AtomicBoolean,
-        messageText: String,
-        vararg ignores: String,
-    ): OsuUser {
-        try {
-            return getUserWithoutRange(event, matcher, mode, isMyself)
-        } catch (e: BindException) {
-            if (isAvoidance(messageText, *ignores)) throw LogException(
-                "退避指令 $ignores"
-            )
-            throw e
-        }
+    @PostConstruct
+    fun init() {
+        // 在 Spring 初始化完成后，把实例赋值给静态变量
+        instance = this
     }
 
     /**
@@ -62,7 +43,7 @@ object InstructionUtil {
      * @param isMyself: 作为返回值使用, 如果是自己则结果为 true
      */
     @Throws(BindException::class)
-    fun getUserWithoutRange(
+    private fun getUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
@@ -102,44 +83,17 @@ object InstructionUtil {
      * @param isMyself 传入一个 [AtomicBoolean] 作为返回值使用, 如果是自己则结果为 true (注意, 当包含 qq= 或 uid= 时,
      *   即使是发送者本身也是 false)
      */
-    fun getUserWithRange(
+    private fun getUserWithRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): InstructionRange<OsuUser> {
         val range = getUserAndRange(event, matcher, mode)
-        if (range.data == null || event.hasAt()) {
+        if (range.data == null) {
             range.data = getUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range
-    }
-
-    /**
-     * 前四个参数同 [getUserWithRange]
-     *
-     * @param messageText 命令消息文本
-     * @param ignores 需要避免的指令
-     */
-    fun getUserAndRangeWithBackoff(
-        event: MessageEvent,
-        matcher: Matcher,
-        mode: InstructionObject<OsuMode>,
-        isMyself: AtomicBoolean,
-        messageText: String,
-        vararg ignores: String,
-    ): InstructionRange<OsuUser> {
-        try {
-            return getUserWithRange(event, matcher, mode, isMyself)
-        } catch (e: BindException) {
-            if (isMyself.get() && isAvoidance(messageText, *ignores)) {
-                throw LogException(
-                    "${event.sender.contactID} 触发了退避指令：${ignores.joinToString(", ")}"
-                )
-            } else {
-                throw e
-            }
-        }
     }
 
     /**
@@ -210,7 +164,7 @@ object InstructionUtil {
                 result = InstructionRange(user, range.start, range.end)
             }
         } catch (_: Exception) {
-            result = InstructionRange<OsuUser>()
+            result = InstructionRange()
         }
 
         if (result.data != null || result.start != null) {
@@ -226,27 +180,6 @@ object InstructionUtil {
         }
     }
 
-    /**
-     * 以下是复制的 SBUser 方法
-     */
-
-    fun getSBUserWithoutRangeWithBackoff(
-        event: MessageEvent,
-        matcher: Matcher,
-        mode: InstructionObject<OsuMode>,
-        isMyself: AtomicBoolean,
-        messageText: String,
-        vararg ignores: String,
-    ): SBUser {
-        try {
-            return getSBUserWithoutRange(event, matcher, mode, isMyself)
-        } catch (e: BindException) {
-            if (isAvoidance(messageText, *ignores)) throw LogException(
-                "退避指令 $ignores"
-            )
-            throw e
-        }
-    }
 
     /**
      * 获取玩家信息, 末尾没有 range
@@ -254,7 +187,7 @@ object InstructionUtil {
      * @param isMyself: 作为返回值使用, 如果是自己则结果为 true
      */
     @Throws(BindException::class)
-    fun getSBUserWithoutRange(
+    private fun getSBUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
@@ -300,37 +233,10 @@ object InstructionUtil {
         isMyself: AtomicBoolean,
     ): InstructionRange<SBUser> {
         val range = getSBUserAndRange(matcher, mode)
-        if (range.data == null || event.hasAt()) {
+        if (range.data == null) {
             range.data = getSBUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range
-    }
-
-    /**
-     * 前四个参数同 [getUserWithRange]
-     *
-     * @param messageText 命令消息文本
-     * @param ignores 需要避免的指令
-     */
-    fun getSBUserAndRangeWithBackoff(
-        event: MessageEvent,
-        matcher: Matcher,
-        mode: InstructionObject<OsuMode>,
-        isMyself: AtomicBoolean,
-        messageText: String,
-        vararg ignores: String,
-    ): InstructionRange<SBUser> {
-        try {
-            return getSBUserWithRange(event, matcher, mode, isMyself)
-        } catch (e: BindException) {
-            if (isMyself.get() && isAvoidance(messageText, *ignores)) {
-                throw LogException(
-                    "${event.sender.contactID} 触发了退避指令：${ignores.joinToString(", ")}"
-                )
-            } else {
-                throw e
-            }
-        }
     }
 
     /**
@@ -401,7 +307,7 @@ object InstructionUtil {
                 result = InstructionRange(user, range.start, range.end)
             }
         } catch (_: Exception) { // 其余的忽略
-            result = InstructionRange<SBUser>()
+            result = InstructionRange()
         }
 
         if (result.data != null || result.start != null) {
@@ -418,12 +324,7 @@ object InstructionUtil {
     }
 
 
-    /**
-     * 获取 2 个玩家信息。常用在 Skill、PPMinus 上。
-     *
-     * @param isVS 是否采用 VS 匹配方式。正常匹配方式和 VS 方式的不同体现在请求者本身之上。
-     */
-    fun get2User(
+    private fun get2User(
         event: MessageEvent,
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
@@ -512,110 +413,7 @@ object InstructionUtil {
         }
     }
 
-    /**
-     * 重写获取方法
-     */
-    fun parseNameWithHashedRange(input: String, maximum: Int = 200): InstructionRange<String> {
-        val split = input.split(REG_HASH.toRegex())
 
-        return when(split.size) {
-            2 -> {
-                val range = parseRange(split[1])
-
-                InstructionRange(split[0].ifBlank { null }?.trim(), range.first?.coerceAtMost(maximum), range.second?.coerceAtMost(maximum))
-            }
-
-            1 -> {
-                val range = parseRange(split[0])
-
-                InstructionRange(null, range.first?.coerceAtMost(maximum), range.second?.coerceAtMost(maximum))
-            }
-
-            else -> {
-                InstructionRange()
-            }
-        }
-    }
-
-    /**
-     * 重写获取方法
-     * 注意，这里不能包含 hash，也就是需要先去前面匹配
-     * @param maximum 如果数字大于这个值，则视作字符串
-     */
-    fun parseNameWithRange(string: String, maximum: Int = 200): InstructionRange<String> {
-        val input = string.trim()
-
-        // 情况1: 纯数字 (如 "100")
-        if (input.matches(Regex("\\d+"))) {
-            val first = input.toIntOrNull()
-
-            return if (first == null || first > maximum) {
-                InstructionRange(input, null, null)
-            } else {
-                InstructionRange(null, first, null)
-            }
-        }
-
-        // 情况2: 数字-数字 格式 (如 "200-100", "aaa 200-100")
-        val dashNumberRegex = Regex("(.+?)\\s*(\\d+)${REG_HYPHEN}(\\d+)\\s*$")
-        dashNumberRegex.find(input)?.let { match ->
-            val (prefix, firstStr, secondStr) = match.destructured
-
-            val first = firstStr.toIntOrNull()
-
-            return if (first == null || first > maximum) {
-                InstructionRange(input, null, null)
-            } else {
-                val str = prefix.ifBlank { null }?.trim()
-                val second = secondStr.toIntOrNull() ?: first
-
-                InstructionRange(str, min(first, second), max(first, second).coerceAtMost(maximum))
-            }
-        }
-
-        // 情况3: 末尾有空格分隔的数字 (如 "aaa aa 2")
-        val spaceNumberRegex = Regex("(.+)\\s+(\\d+)\\s*$")
-        spaceNumberRegex.find(input)?.let { match ->
-            val (prefix, suffix) = match.destructured
-
-            val first = suffix.toIntOrNull()
-
-            return if (first == null || first > maximum) {
-                InstructionRange(input, null, null)
-            } else {
-                val str = prefix.ifBlank { null }?.trim()
-                InstructionRange(str, first, null)
-            }
-        }
-
-        // 情况4: 其他所有情况都作为字符串
-        return InstructionRange(input, null, null)
-
-    }
-
-    /** 内部方法 */
-    private fun parseRange(text: String): Pair<Int?, Int?> {
-        val range = try {
-            text.removePrefix(CHAR_HASH.toString())
-                .removePrefix(CHAR_HASH_FULL.toString())
-                .trim()
-                .split(REG_HYPHEN.toRegex())
-                .dropWhile { it.isEmpty() }
-                .map { it.toIntOrNull() }
-                .toTypedArray()
-        } catch (e: Exception) {
-            log.debug("range 解析参数有误: {}", text, e)
-            return null to null
-        }
-
-        return if (range.size >= 2) {
-            range[0] to range[1]
-        } else if (range.size == 1) {
-            range[0] to null
-        } else {
-            null to null
-        }
-    }
 
     /**
      * 内部方法 获取玩家信息, 优先级为 at > qq= > uid= > name, 不处理自身绑定, 如果传入 mode 为 default, 同时是 @qq 绑定, 则改为绑定的模式,
@@ -635,20 +433,20 @@ object InstructionUtil {
         val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
-            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
+            matcher.group(FLAG_QQ_ID)?.toLongOrNull()
         } else {
-            0L
+            null
         }
 
-        if (qq != 0L) {
+        if (qq != null) {
             parsed.set(true)
-            val bind = bindDao.getBindFromQQOrNull(qq)
+            isMyself.set(qq == event.sender.contactID)
 
-            bind?.let {
-                isMyself.set(false)
-                setMode(mode, bind.mode, event)
-                return getOsuUser(bind, mode.data)
-            }
+            // 有问题在这里抛出
+            val bind = bindDao.getBindFromQQ(qq, isMyself.get())
+
+            setMode(mode, bind.mode, event)
+            return getOsuUser(bind, mode.data)
         }
 
         setMode(mode, event)
@@ -736,7 +534,7 @@ object InstructionUtil {
      * @param user 绑定
      * @param mode 指定模式
      */
-    fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
+    private fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
         return userApiService.getOsuUser(user, mode ?: OsuMode.DEFAULT)
     }
 
@@ -746,7 +544,7 @@ object InstructionUtil {
      * @param name 用户名
      * @param mode 指定模式
      */
-    fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
+    private fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
         return userApiService.getOsuUser(name, mode ?: OsuMode.DEFAULT)
     }
 
@@ -756,49 +554,8 @@ object InstructionUtil {
      * @param uid 用户ID
      * @param mode 指定模式
      */
-    fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
+    private fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
         return userApiService.getOsuUser(uid, mode ?: OsuMode.DEFAULT)
-    }
-
-    /** 判断是否包含避讳指令 */
-    @JvmStatic fun isAvoidance(text: String, vararg cmd: String): Boolean {
-        for (c in cmd) {
-            if (text.contains(c)) return true
-        }
-        return false
-    }
-
-    /**
-     * 获取一个包装的 mode 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果 单纯为了java添加的重载方法, 可以不指定, 所以这里没有这个参数
-     */
-    @JvmStatic fun getMode(matcher: Matcher): InstructionObject<OsuMode> {
-        val result = InstructionObject(OsuMode.DEFAULT)
-        if (matcher.namedGroups().containsKey(FLAG_MODE)) {
-            result.data = OsuMode.getMode(matcher.group(FLAG_MODE) ?: "")
-        }
-        return result
-    }
-
-    /** 获取一个包装的 mode 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果 */
-    @JvmStatic fun getMode(matcher: Matcher, other: OsuMode = OsuMode.DEFAULT): InstructionObject<OsuMode> {
-        val result = InstructionObject(OsuMode.getMode(getMode(matcher).data, other))
-        return result
-    }
-
-    /** 从正则中提取 bid */
-    @JvmStatic fun getBid(matcher: Matcher): Long {
-        if (!matcher.namedGroups().containsKey(FLAG_BID)) {
-            return 0
-        }
-        return matcher.group(FLAG_BID)?.toLong() ?: 0
-    }
-
-    /** 从正则中提取mod (结果为字符串) */
-    @JvmStatic fun getMod(matcher: Matcher): List<LazerMod> {
-        if (!matcher.namedGroups().containsKey(FLAG_MOD)) {
-            return listOf()
-        }
-        return LazerMod.getModsList(matcher.group(FLAG_MOD) ?: "")
     }
 
     /**
@@ -820,23 +577,291 @@ object InstructionUtil {
         mode.data = OsuMode.getMode(mode.data, OsuMode.DEFAULT, bindDao.getGroupModeConfig(event))
     }
 
-    private val log: Logger = LoggerFactory.getLogger(this::class.java)
-    private lateinit var bindDao: BindDao
-    private lateinit var userApiService: OsuUserApiService
-    private lateinit var scoreApiService: OsuScoreApiService
-    private lateinit var beatmapApiService: OsuBeatmapApiService
-    private lateinit var sbUserApiService: SBUserApiService
-    private lateinit var sbScoreApiService: SBScoreApiService
-    private lateinit var sbBeatmapApiService: SBBeatmapApiService
+    companion object {
+        private lateinit var instance: InstructionUtil
 
-    @JvmStatic fun init(applicationContext: ApplicationContext) {
-        bindDao = applicationContext.getBean(BindDao::class.java)
-        userApiService = applicationContext.getBean(OsuUserApiService::class.java)
-        scoreApiService = applicationContext.getBean(OsuScoreApiService::class.java)
-        beatmapApiService = applicationContext.getBean(OsuBeatmapApiService::class.java)
-        sbUserApiService = applicationContext.getBean(SBUserApiService::class.java)
-        sbScoreApiService = applicationContext.getBean(SBScoreApiService::class.java)
-        sbBeatmapApiService = applicationContext.getBean(SBBeatmapApiService::class.java)
+        fun getUserWithoutRange(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode> = InstructionObject(OsuMode.DEFAULT),
+            isMyself: AtomicBoolean = AtomicBoolean(false),
+        ): OsuUser {
+            return instance.getUserWithoutRange(event, matcher, mode, isMyself)
+        }
+
+        fun getUserWithoutRangeWithBackoff(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean,
+            messageText: String,
+            vararg ignores: String,
+        ): OsuUser {
+            try {
+                return instance.getUserWithoutRange(event, matcher, mode, isMyself)
+            } catch (e: BindException) {
+                if (isAvoidance(messageText, *ignores)) throw LogException(
+                    "退避指令 ${ignores.contentToString()}"
+                )
+                throw e
+            }
+        }
+
+        fun getUserWithRange(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean,
+        ): InstructionRange<OsuUser> {
+            return instance.getUserWithRange(event, matcher, mode, isMyself)
+        }
+
+        fun getUserAndRangeWithBackoff(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean,
+            messageText: String,
+            vararg ignores: String,
+        ): InstructionRange<OsuUser> {
+            try {
+                return instance.getUserWithRange(event, matcher, mode, isMyself)
+            } catch (e: BindException) {
+                if (isMyself.get() && isAvoidance(messageText, *ignores)) {
+                    throw LogException(
+                        "${event.sender.contactID} 触发了退避指令：${ignores.joinToString(", ")}"
+                    )
+                } else {
+                    throw e
+                }
+            }
+        }
+        fun getSBUserWithoutRangeWithBackoff(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean,
+            messageText: String,
+            vararg ignores: String,
+        ): SBUser {
+            try {
+                return instance.getSBUserWithoutRange(event, matcher, mode, isMyself)
+            } catch (e: BindException) {
+                if (isAvoidance(messageText, *ignores)) throw LogException(
+                    "退避指令 ${ignores.contentToString()}"
+                )
+                throw e
+            }
+        }
+        fun getSBUserWithoutRange(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean = AtomicBoolean(),
+        ): SBUser {
+            return instance.getSBUserWithoutRange(event, matcher, mode, isMyself)
+        }
+
+        fun getSBUserWithRange(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean,
+        ): InstructionRange<SBUser> {
+            return instance.getSBUserWithRange(event, matcher, mode, isMyself)
+        }
+
+
+        /**
+         * 前四个参数同 [getUserWithRange]
+         *
+         * @param messageText 命令消息文本
+         * @param ignores 需要避免的指令
+         */
+        fun getSBUserAndRangeWithBackoff(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isMyself: AtomicBoolean,
+            messageText: String,
+            vararg ignores: String,
+        ): InstructionRange<SBUser> {
+            try {
+                return instance.getSBUserWithRange(event, matcher, mode, isMyself)
+            } catch (e: BindException) {
+                if (isMyself.get() && isAvoidance(messageText, *ignores)) {
+                    throw LogException(
+                        "${event.sender.contactID} 触发了退避指令：${ignores.joinToString(", ")}"
+                    )
+                } else {
+                    throw e
+                }
+            }
+        }
+
+        /**
+         * 获取 2 个玩家信息。常用在 Skill、PPMinus 上。
+         *
+         * @param isVS 是否采用 VS 匹配方式。正常匹配方式和 VS 方式的不同体现在请求者本身之上。
+         */
+        fun get2User(
+            event: MessageEvent,
+            matcher: Matcher,
+            mode: InstructionObject<OsuMode>,
+            isVS: Boolean = false,
+        ): List<OsuUser> {
+            return instance.get2User(event, matcher, mode, isVS)
+        }
+
+
+        /**
+         * 重写获取方法
+         */
+        fun parseNameWithHashedRange(input: String, maximum: Int = 200): InstructionRange<String> {
+            val split = input.split(REG_HASH.toRegex())
+
+            return when(split.size) {
+                2 -> {
+                    val range = parseRange(split[1])
+
+                    InstructionRange(split[0].ifBlank { null }?.trim(), range.first?.coerceAtMost(maximum), range.second?.coerceAtMost(maximum))
+                }
+
+                1 -> {
+                    val range = parseRange(split[0])
+
+                    InstructionRange(null, range.first?.coerceAtMost(maximum), range.second?.coerceAtMost(maximum))
+                }
+
+                else -> {
+                    InstructionRange()
+                }
+            }
+        }
+
+        /**
+         * 重写获取方法
+         * 注意，这里不能包含 hash，也就是需要先去前面匹配
+         * @param maximum 如果数字大于这个值，则视作字符串
+         */
+        fun parseNameWithRange(string: String, maximum: Int = 200): InstructionRange<String> {
+            val input = string.trim()
+
+            // 情况1: 纯数字 (如 "100")
+            if (input.matches(Regex("\\d+"))) {
+                val first = input.toIntOrNull()
+
+                return if (first == null || first > maximum) {
+                    InstructionRange(input, null, null)
+                } else {
+                    InstructionRange(null, first, null)
+                }
+            }
+
+            // 情况2: 数字-数字 格式 (如 "200-100", "aaa 200-100")
+            val dashNumberRegex = Regex("(.+?)\\s*(\\d+)${REG_HYPHEN}(\\d+)\\s*$")
+            dashNumberRegex.find(input)?.let { match ->
+                val (prefix, firstStr, secondStr) = match.destructured
+
+                val first = firstStr.toIntOrNull()
+
+                return if (first == null || first > maximum) {
+                    InstructionRange(input, null, null)
+                } else {
+                    val str = prefix.ifBlank { null }?.trim()
+                    val second = secondStr.toIntOrNull() ?: first
+
+                    InstructionRange(str, min(first, second), max(first, second).coerceAtMost(maximum))
+                }
+            }
+
+            // 情况3: 末尾有空格分隔的数字 (如 "aaa aa 2")
+            val spaceNumberRegex = Regex("(.+)\\s+(\\d+)\\s*$")
+            spaceNumberRegex.find(input)?.let { match ->
+                val (prefix, suffix) = match.destructured
+
+                val first = suffix.toIntOrNull()
+
+                return if (first == null || first > maximum) {
+                    InstructionRange(input, null, null)
+                } else {
+                    val str = prefix.ifBlank { null }?.trim()
+                    InstructionRange(str, first, null)
+                }
+            }
+
+            // 情况4: 其他所有情况都作为字符串
+            return InstructionRange(input, null, null)
+
+        }
+
+        /** 内部方法 */
+        private fun parseRange(text: String): Pair<Int?, Int?> {
+            val range = try {
+                text.removePrefix(CHAR_HASH.toString())
+                    .removePrefix(CHAR_HASH_FULL.toString())
+                    .trim()
+                    .split(REG_HYPHEN.toRegex())
+                    .dropWhile { it.isEmpty() }
+                    .map { it.toIntOrNull() }
+                    .toTypedArray()
+            } catch (e: Exception) {
+                log.debug("range 解析参数有误: {}", text, e)
+                return null to null
+            }
+
+            return if (range.size >= 2) {
+                range[0] to range[1]
+            } else if (range.size == 1) {
+                range[0] to null
+            } else {
+                null to null
+            }
+        }
+
+        private val log: Logger = LoggerFactory.getLogger(InstructionUtil::class.java)
+
+        /** 判断是否包含避讳指令 */
+        fun isAvoidance(text: String, vararg cmd: String): Boolean {
+            for (c in cmd) {
+                if (text.contains(c)) return true
+            }
+            return false
+        }
+
+        /**
+         * 获取一个包装的 mode 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果 单纯为了java添加的重载方法, 可以不指定, 所以这里没有这个参数
+         */
+        fun getMode(matcher: Matcher): InstructionObject<OsuMode> {
+            val result = InstructionObject(OsuMode.DEFAULT)
+            if (matcher.namedGroups().containsKey(FLAG_MODE)) {
+                result.data = OsuMode.getMode(matcher.group(FLAG_MODE) ?: "")
+            }
+            return result
+        }
+
+        /** 获取一个包装的 mode 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果 */
+        fun getMode(matcher: Matcher, other: OsuMode = OsuMode.DEFAULT): InstructionObject<OsuMode> {
+            val result = InstructionObject(OsuMode.getMode(getMode(matcher).data, other))
+            return result
+        }
+
+        /** 从正则中提取 bid */
+        fun getBid(matcher: Matcher): Long {
+            if (!matcher.namedGroups().containsKey(FLAG_BID)) {
+                return 0
+            }
+            return matcher.group(FLAG_BID)?.toLong() ?: 0
+        }
+
+        /** 从正则中提取mod (结果为字符串) */
+        fun getMod(matcher: Matcher): List<LazerMod> {
+            if (!matcher.namedGroups().containsKey(FLAG_MOD)) {
+                return listOf()
+            }
+            return LazerMod.getModsList(matcher.group(FLAG_MOD) ?: "")
+        }
+
     }
 }
 

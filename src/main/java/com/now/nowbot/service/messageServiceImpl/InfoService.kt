@@ -23,8 +23,6 @@ import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.command.FLAG_DAY
 import kotlinx.coroutines.*
 import org.slf4j.Logger
@@ -203,7 +201,7 @@ class InfoService(
     private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam? {
         val isMyself = AtomicBoolean(false)
 
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
         val user: OsuUser
         val bests: List<LazerScore>
 
@@ -219,7 +217,7 @@ class InfoService(
             bests = async.second
         } else {
             user = try {
-                getUserWithoutRange(event, matcher, mode, isMyself)
+                InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
             } catch (e: BindException) {
                 if (InstructionUtil.isAvoidance(event.textMessage.trim(), "info")) {
                     log.debug("指令退避：I 退避成功")

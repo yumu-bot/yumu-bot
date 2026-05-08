@@ -22,7 +22,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -302,7 +301,7 @@ class PPMinusService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isVs: Boolean = false, version: Int = 4): PPMinusParam {
-        val inputMode = getMode(matcher)
+        val inputMode = InstructionUtil.getMode(matcher)
 
         val ids = UserIDUtil.get2UserID(event, matcher, inputMode, isVs)
 

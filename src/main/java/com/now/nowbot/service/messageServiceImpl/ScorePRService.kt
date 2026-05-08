@@ -27,8 +27,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -235,7 +233,7 @@ class ScorePRService(
         if (any.contains("&sb", ignoreCase = true)) return null
 
         val isMyself = AtomicBoolean(true) // 处理 range
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
 
@@ -287,7 +285,7 @@ class ScorePRService(
         } else {
             // 经典的获取方式
 
-            val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "re")
+            val range = InstructionUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "re")
             range.setZeroToRange100()
 
             val range2 = if (range.start != null) {

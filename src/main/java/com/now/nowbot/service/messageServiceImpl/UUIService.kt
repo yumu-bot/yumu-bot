@@ -13,9 +13,8 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.UUIService.UUIParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.command.FLAG_DAY
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -53,8 +52,8 @@ class UUIService(
             return false
         }
 
-        val mode = getMode(matcher, bindDao.getGroupModeConfig(event))
-        val user = getUserWithoutRange(event, matcher, mode)
+        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event))
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
 

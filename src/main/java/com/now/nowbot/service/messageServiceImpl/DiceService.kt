@@ -22,10 +22,6 @@ import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import kotlin.math.*
 import kotlin.random.Random
-import kotlin.text.contains
-import kotlin.text.toDoubleOrNull
-import kotlin.text.toLongOrNull
-import kotlin.text.trim
 
 @Service("DICE") class DiceService : MessageService<DiceParam>, TencentMessageService<DiceParam> {
     // dice：骰子次数，默认为 1
@@ -284,7 +280,18 @@ import kotlin.text.trim
         // 当然选 X 啦！
         OR(
             Pattern.compile(
-                "\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]?了?)?)?\\s*(?<m1>[\\S\\s]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|(?<![A-Za-z])or(?![A-Za-z])|或|或者|要么)(选?[择中好]?了?)?)\\s*(?<m2>[\\S\\s]*)"
+                "\\s*(?<c1>(不?是|要么|是要?)(选?[择中好]?了?)?)?\\s*(?<m1>[\\S\\s]*)[，,\\s]*?(?<c2>([：:]|[还就而]是|and|(?<![A-Za-z])or(?![A-Za-z])|或|或者|要么|与|跟)(选?[择中好]?了?)?)\\s*(?<m2>[\\S\\s]*)"
+            ), onlyC3 = false
+        ),
+
+        // A和B 谁更...?
+        CHOICE(
+            Pattern.compile(
+                "\\s*(?<c1>.*?)?\\s*" +
+                        "(?<m1>\\S+?)\\s*" +
+                        "(?<c2>(和|与|跟|\\s+))\\s*" +
+                        "(?<m2>\\S+?)" +
+                        "(?<c3>(?=[你谁更？?,，.\\s-_])(你们?)?(觉得|认为|看|想|猜|说)?(谁|哪个|更|呢|\\?|？).*|$)"
             ), onlyC3 = false
         ),
 
@@ -554,7 +561,8 @@ import kotlin.text.trim
                             }
                         }
 
-                        AMOUNT, AGE -> num = getRandom(120)
+                        AMOUNT -> num = getRandom(101)
+                        AGE -> num = getSkewedRandom().toDouble()
                         TIME -> {
                             val c3 = matcher.group("c3").trim()
 
@@ -769,12 +777,12 @@ import kotlin.text.trim
                     POSSIBILITY -> "概率是：%.2f%s%%"
                     ACCURACY -> "准确率是：%.2f%s%%"
                     RANGE, AMOUNT -> "您许愿的结果是：%.0f。"
-                    AGE -> "您许愿的岁数是：%.0f。"
+                    AGE -> "您许愿的年龄是：%.0f。"
                     TIME, TIMES -> "您许愿的结果是：%.0f %s。"
                     RANK -> "您许愿的结果是：%s %.0f。"
                     WHAT, WHY, WHO -> "我怎么知道。我又不是 deepseek。"
                     REAL -> "我觉得，是真的。"
-                    BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！"
+                    BETTER, COMPARE, OR, CHOICE, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！"
                     ASSUME, LIKE, IS, HAS, QUESTION -> "%s。"
                     COULD, WHETHER -> "%s%s%s。"
                     CONDITION -> "是的。"
@@ -789,14 +797,14 @@ import kotlin.text.trim
                     POSSIBILITY -> "概率是：%.2f%s%%"
                     ACCURACY -> "准确率是：%.2f%s%%"
                     RANGE, AMOUNT -> "您许愿的结果是：%.0f。"
-                    AGE -> "您许愿的岁数是：%.0f。"
+                    AGE -> "您许愿的年龄是：%.0f。"
                     TIME, TIMES -> "您许愿的结果是：%.0f %s。"
                     RANK -> "您许愿的结果是：%s %.0f。"
                     WHAT -> "是哈基米。\n整个宇宙都是哈基米组成的。"
                     WHY -> "你不如去问问神奇海螺？"
                     WHO -> "我知道，芝士雪豹。"
                     REAL -> "我觉得，是假的。"
-                    BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！"
+                    BETTER, OR, CHOICE, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！"
                     EVEN -> "当然%s%s啦！"
                     ASSUME -> "没有如果。"
                     COULD, WHETHER -> "%s%s%s%s。"
@@ -904,7 +912,7 @@ import kotlin.text.trim
                         return String.format(leftFormat, iis)
                     }
 
-                    OR -> {
+                    OR, CHOICE -> {
                         if (left.contains("是")) {
                             leftFormat = "我觉得，%s。"
                         }
@@ -941,7 +949,7 @@ import kotlin.text.trim
                         return String.format(rightFormat, not, right)
                     }
 
-                    OR -> {
+                    OR, CHOICE -> {
                         if (right.contains("是")) {
                             rightFormat = "我觉得，%s。"
                         }
@@ -1056,6 +1064,21 @@ import kotlin.text.trim
             } else {
                 Random.nextDouble()
             }
+        }
+
+        fun getSkewedRandom(peak: Int = 20, min: Int = 0, max: Int = 120): Int {
+            val sigmaLeft = (peak - min) / 3.0
+            val sigmaRight = (max - peak) / 3.0
+
+            val gaussian = java.util.Random().nextGaussian()
+
+            val result = if (gaussian < 0) {
+                peak + (gaussian * sigmaLeft)
+            } else {
+                peak + (gaussian * sigmaRight)
+            }
+
+            return result.roundToInt().coerceIn(min, max)
         }
 
         private val YOURS_CN = "你们?".toRegex()

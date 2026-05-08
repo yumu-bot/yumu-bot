@@ -17,9 +17,8 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.BeatmapUtil
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -45,8 +44,8 @@ class ScorePRCardService(
         if (!matcher.find()) return false
         val score: LazerScore?
 
-        val mode = getMode(matcher)
-        val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
+        val mode = InstructionUtil.getMode(matcher)
+        val range = InstructionUtil.getUserWithRange(event, matcher, mode, AtomicBoolean())
         range.setZeroToRange100()
 
         val offset = range.getOffset(0, false)
@@ -98,28 +97,24 @@ class ScorePRCardService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): PRCardParam? {
-        var matcher: Matcher
+        val m1 = OfficialInstruction.PR_CARD.matcher(messageText)
+        val m2 = OfficialInstruction.RE_CARD.matcher(messageText)
+
+        val matcher: Matcher
         val isRecent: Boolean
-        when {
-            OfficialInstruction.PR_CARD
-                .matcher(messageText)
-                .apply { matcher = this }
-                .find() -> {
-                isRecent = false
-            }
 
-            OfficialInstruction.RE_CARD
-                .matcher(messageText)
-                .apply { matcher = this }
-                .find() -> {
-                isRecent = true
-            }
-
-            else -> return null
+        if (m1.find()) {
+            matcher = m1
+            isRecent = false
+        } else if (m2.find()) {
+            matcher = m2
+            isRecent = true
+        } else {
+            return null
         }
 
-        val mode = getMode(matcher)
-        val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
+        val mode = InstructionUtil.getMode(matcher)
+        val range = InstructionUtil.getUserWithRange(event, matcher, mode, AtomicBoolean())
 
         val offset = range.getOffset(0, false)
 

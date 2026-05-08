@@ -27,9 +27,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getBid
-import com.now.nowbot.util.InstructionUtil.getMod
-import com.now.nowbot.util.InstructionUtil.getMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -174,9 +171,9 @@ import kotlin.time.Duration.Companion.seconds
     }
 
     private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean, isShow: Boolean, isCompact: Boolean): ScoreParam {
-        val number = getBid(matcher)
-        val inputMode = getMode(matcher)
-        val mods: List<LazerMod> = getMod(matcher)
+        val number = InstructionUtil.getBid(matcher)
+        val inputMode = InstructionUtil.getMode(matcher)
+        val mods: List<LazerMod> = InstructionUtil.getMod(matcher)
 
         val isMyself = AtomicBoolean(true)
 
@@ -186,7 +183,7 @@ import kotlin.time.Duration.Companion.seconds
 
         val data: ScoreData = when {
             number in 1L ..< 1000_0000L -> {
-                val d = getFromBeatmapID(number, userID, inputMode, event, messageText, matcher)
+                val d = getFromBeatmapID(number, userID, inputMode, event, messageText, matcher, mods)
 
                 if (d.scores.isNotEmpty()) {
                     d
@@ -212,7 +209,7 @@ import kotlin.time.Duration.Companion.seconds
                 )
 
                 if (beforeBeatmapID != null) {
-                    val d = getFromBefore(beforeBeatmapID, userID, inputMode, event, messageText, matcher)
+                    val d = getFromBefore(beforeBeatmapID, userID, inputMode, event, messageText, matcher, mods)
 
                     if (d.scores.isNotEmpty()) {
                         d
@@ -221,7 +218,7 @@ import kotlin.time.Duration.Companion.seconds
                         getFromBeatmapset(d, event)
                     }
                 } else {
-                    getFromRecentScore(userID, inputMode, event, messageText, matcher)
+                    getFromRecentScore(userID, inputMode, event, messageText, matcher, mods)
                 }
             }
         }
@@ -240,7 +237,7 @@ import kotlin.time.Duration.Companion.seconds
             isMultipleScore, isShow, isCompact, isRecordCallStatistics.get())
     }
 
-    private fun getFromBeatmapID(beatmapID: Long, userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher): ScoreData {
+    private fun getFromBeatmapID(beatmapID: Long, userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher, mods: List<LazerMod>): ScoreData {
         val map = beatmapApiService.getBeatmap(beatmapID)
         val mode: OsuMode
         val user: OsuUser
@@ -256,8 +253,6 @@ import kotlin.time.Duration.Companion.seconds
 
                 user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
             }
-
-            val mods: List<LazerMod> = getMod(matcher)
 
             return getFromDatabase(user, map, mode, mods, event)
             // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
@@ -303,7 +298,7 @@ import kotlin.time.Duration.Companion.seconds
     }
 
     // 备用方法：先获取最近成绩，再获取谱面
-    private fun getFromRecentScore(userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher): ScoreData {
+    private fun getFromRecentScore(userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher, mods: List<LazerMod>): ScoreData {
         event.reply("""
             没有获取到 24 小时内的可用谱面。
             正在查询您最近成绩所属的谱面上的最好成绩。
@@ -334,8 +329,6 @@ import kotlin.time.Duration.Companion.seconds
         val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
         if (!map.hasLeaderBoard) {
-            val mods: List<LazerMod> = getMod(matcher)
-
             return getFromDatabase(user, map, mode, mods, event)
             // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
         }
@@ -345,7 +338,7 @@ import kotlin.time.Duration.Companion.seconds
         return ScoreData(user, map, scores, mode)
     }
 
-    private fun getFromBefore(beforeBeatmapID: Long, userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher): ScoreData {
+    private fun getFromBefore(beforeBeatmapID: Long, userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher, mods: List<LazerMod>): ScoreData {
         val map = beatmapApiService.getBeatmap(beforeBeatmapID)
 
         val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
@@ -359,8 +352,6 @@ import kotlin.time.Duration.Companion.seconds
             } else {
                 InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
             }
-
-            val mods: List<LazerMod> = getMod(matcher)
 
             return getFromDatabase(user, map, mode, mods, event)
             // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)

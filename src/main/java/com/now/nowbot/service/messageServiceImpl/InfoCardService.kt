@@ -9,9 +9,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,8 +25,8 @@ class InfoCardService(
         val matcher = Instruction.INFO_CARD.matcher(messageText)
         if (!matcher.find()) return false
 
-        val mode = getMode(matcher)
-        val user = getUserWithoutRange(event, matcher, mode)
+        val mode = InstructionUtil.getMode(matcher)
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
         data.value = user
         return true
@@ -56,8 +55,8 @@ class InfoCardService(
     override fun accept(event: MessageEvent, messageText: String): OsuUser? {
         val matcher = OfficialInstruction.INFO_CARD.matcher(messageText)
         return if (matcher.find()) {
-            val mode = getMode(matcher)
-            getUserWithoutRange(event, matcher, mode)
+            val mode = InstructionUtil.getMode(matcher)
+            InstructionUtil.getUserWithoutRange(event, matcher, mode)
         } else {
             null
         }

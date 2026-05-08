@@ -25,8 +25,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getMode
-import com.now.nowbot.util.InstructionUtil.getSBUserAndRangeWithBackoff
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -111,7 +109,7 @@ class SBBPService(
         }
 
         val isMyself = AtomicBoolean(true) // 处理 range
-        val mode = getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val id = UserIDUtil.getSBUserIDWithRange(event, matcher, mode, isMyself)
 
@@ -168,7 +166,7 @@ class SBBPService(
         } else {
             // 经典的获取方式
 
-            val range = getSBUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+            val range = InstructionUtil.getSBUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
             range.setZeroToRange100()
 
             val range2 = if (range.start != null) {

@@ -22,9 +22,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.InstructionUtil.getBid
-import com.now.nowbot.util.InstructionUtil.getMod
-import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -87,14 +84,14 @@ import java.util.regex.Matcher
     }
 
     private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher): ScoreParam {
-        val bid = getBid(matcher)
+        val bid = InstructionUtil.getBid(matcher)
 
-        val inputMode = getMode(matcher)
+        val inputMode = InstructionUtil.getMode(matcher)
         var map: Beatmap
         val user: OsuUser
         val scores: List<LazerScore>
         val mode: OsuMode
-        val mods: List<LazerMod>
+        var mods: List<LazerMod> = InstructionUtil.getMod(matcher)
 
         if (bid in 1L ..< 10000000L) {
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, inputMode, AtomicBoolean(true))
@@ -122,8 +119,6 @@ import java.util.regex.Matcher
 
                 scores = scoreApiService.getBeatmapScores(bid, user.userID, mode)
             }
-
-            mods = getMod(matcher)
         } else if (bid >= 10000000L) {
             // 输入成绩 ID 的方法
             val score = scoreApiService.getScore(bid)
@@ -170,8 +165,6 @@ import java.util.regex.Matcher
                 mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
 
                 scores = scoreApiService.getBeatmapScores(beforeBeatmapID, user.userID, mode)
-
-                mods = getMod(matcher)
 
                 if (scores.isEmpty()) {
                     throw NoSuchElementException.BeatmapScore(map.previewName)
@@ -227,8 +220,6 @@ import java.util.regex.Matcher
             mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
 
             scores = scoreApiService.getBeatmapScores(recent.beatmapID, user.userID, mode)
-
-            mods = getMod(matcher)
         }
 
         if (scores.isEmpty()) {
