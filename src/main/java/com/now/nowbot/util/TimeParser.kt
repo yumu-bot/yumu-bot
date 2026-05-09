@@ -100,7 +100,7 @@ object TimeParser {
     }
 
     private fun parseAbsoluteDateTime(input: String): ZonedDateTime {
-        val cleaned = input.replace("[/\\\\_.]".toRegex(), "-")
+        val cleaned = input.trim().replace("[-_/.。\\s\\\\:]+".toRegex(), "-").trim()
 
         val localDateTime = LocalDateTime.parse(cleaned, dateDataFormatter)
 
@@ -112,12 +112,12 @@ object TimeParser {
         .appendValueReduced(ChronoField.YEAR, 2, 4, 2000)
 
         // 2. 月份 (必填)
-        .optionalStart().appendPattern("[-/. \\\\]").optionalEnd() // 简写分隔符匹配
+        .optionalStart().appendLiteral('-').optionalEnd() // 简写分隔符匹配
         .appendValue(ChronoField.MONTH_OF_YEAR)
 
         // 3. 日期 (可选) -> 如果省略，默认为该月 1 号
         .optionalStart()
-        .optionalStart().appendPattern("[-/. \\\\]").optionalEnd()
+        .optionalStart().appendLiteral('-').optionalEnd()
         .appendValue(ChronoField.DAY_OF_MONTH)
         .optionalEnd()
 

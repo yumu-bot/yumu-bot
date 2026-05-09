@@ -2,8 +2,10 @@ package com.now.nowbot.config
 
 import com.now.nowbot.listener.LocalCommandListener
 import com.now.nowbot.permission.PermissionImplement
+import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.QQMsgUtil
 import jakarta.annotation.Resource
@@ -39,6 +41,7 @@ class IocAllReadyRunner(
 
     init {
         //val services = applicationContext.getBeansOfType(MessageService::class.java)
+        YumuServer.userApiService = applicationContext.getBean(OsuUserApiService::class.java)
 
         LocalCommandListener.setHandler(messageServices)
     }
