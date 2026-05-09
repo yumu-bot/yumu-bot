@@ -50,7 +50,10 @@ import org.springframework.stereotype.Service
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MuRatingPanelParam): ServiceCallStatistic? {
         val data = calculate(param, beatmapApiService, calculateApiService)
 
-        val image: ByteArray = imageService.getPanel(data, "F")
+        val image: ByteArray = imageService.getPanel(mapOf(
+            "match" to data,
+            "panel" to "MN"
+        ), "F")
 
         try {
             event.reply(image)
@@ -82,7 +85,10 @@ import org.springframework.stereotype.Service
     override fun reply(event: MessageEvent, param: MuRatingPanelParam): MessageChain? {
         val data = calculate(param, beatmapApiService, calculateApiService)
 
-        return MessageChainBuilder().addImage(imageService.getPanel(data, "F")).build()
+        return MessageChainBuilder().addImage(imageService.getPanel(mapOf(
+            "match" to data,
+            "panel" to "MN"
+        ), "F")).build()
     }
 
     companion object {

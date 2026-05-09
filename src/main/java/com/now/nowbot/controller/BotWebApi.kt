@@ -202,7 +202,10 @@ import kotlin.math.min
                     match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
                 ), beatmapApiService, calculateApiService
             )
-            image = imageService.getPanel(data, "F")
+            image = imageService.getPanel(mapOf(
+                "match" to data,
+                "panel" to "MN"
+            ), "F")
         } catch (err: Exception) {
             log.error("比赛结果：API 异常", err)
             throw RuntimeException("比赛结果：API 异常")

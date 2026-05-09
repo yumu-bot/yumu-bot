@@ -63,7 +63,10 @@ class QuickplayService(
         mr.insertMicroUserToScores()
         mr.applyDTMod()
 
-        val image: ByteArray = imageService.getPanel(mr, "F")
+        val image: ByteArray = imageService.getPanel(mapOf(
+            "match" to mr,
+            "panel" to "RP"
+        ), "F")
 
         event.reply(image)
 
