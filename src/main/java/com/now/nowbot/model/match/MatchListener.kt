@@ -106,9 +106,9 @@ class MatchListener(
 
     fun stop(type: StopType) {
         if (!isStart()) return
+        onStop(type)
         kill?.cancel(true)
         future?.cancel(true)
-        onStop(type)
     }
 
     fun addListener(listener: MatchAdapter) {

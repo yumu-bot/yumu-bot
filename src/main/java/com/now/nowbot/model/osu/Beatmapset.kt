@@ -328,7 +328,13 @@ class Beatmapset {
         }
 
     @field:JsonProperty("rating")
-    var rating: Float = 0f
+    var rating: Float = -1f
+
+    init {
+        if (rating == -1f) {
+            rating = ratingFromCalculate
+        }
+    }
 
     /*
     val publicRating: Double
