@@ -315,9 +315,11 @@ class Beatmapset {
              return n.toList()
          }
 
-    @get:JsonIgnore
-    private val ratingFromCalculate: Float
-        get() = if (ratings.isEmpty()) {
+    @field:JsonProperty("rating")
+    var rating: Float = 0f
+        get() = if (field != 0f) {
+            field
+        } else if (ratings.isEmpty()) {
             0f
         } else {
             var sum = 0f
@@ -326,15 +328,6 @@ class Beatmapset {
             }
             sum / ratings.sum().coerceAtLeast(1)
         }
-
-    @field:JsonProperty("rating")
-    var rating: Float = -1f
-
-    init {
-        if (rating == -1f) {
-            rating = ratingFromCalculate
-        }
-    }
 
     /*
     val publicRating: Double
