@@ -64,4 +64,7 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
 
     class OnlyMania:
         UnsupportedOperationException("抱歉，本功能暂不支持除 Mania 模式以外的谱面！")
+
+    class OnlyManiaAndTaiko:
+        UnsupportedOperationException("抱歉，本功能暂不支持除 Mania 和 Taiko 模式以外的谱面！")
 }

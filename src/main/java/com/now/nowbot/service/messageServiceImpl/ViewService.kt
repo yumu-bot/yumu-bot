@@ -47,9 +47,7 @@ class ViewService(
         event: MessageEvent,
         param: ViewParam
     ): ServiceCallStatistic? {
-        val image = imageService.getPanel(param, "V")
-
-        event.reply(image)
+        event.reply(param.getMessageChain())
 
         return ServiceCallStatistic.build(event, beatmapID = param.beatmap.beatmapID)
     }
@@ -61,8 +59,8 @@ class ViewService(
 
         val beatmap = beatmapApiService.getBeatmap(beatmapID)
 
-        if (beatmap.mode != OsuMode.MANIA) {
-            throw UnsupportedOperationException.OnlyMania()
+        if (beatmap.mode != OsuMode.MANIA && beatmap.mode != OsuMode.TAIKO) {
+            throw UnsupportedOperationException.OnlyManiaAndTaiko()
         }
 
         beatmapApiService.getBeatmapFileString(beatmapID)
@@ -96,7 +94,16 @@ class ViewService(
         event: MessageEvent,
         param: ViewParam
     ): MessageChain? {
-        return MessageChain(imageService.getPanel(param, "V"))
+        return param.getMessageChain()
+    }
+
+    private fun ViewParam.getMessageChain(): MessageChain {
+        return when(this.mode) {
+            OsuMode.TAIKO -> MessageChain(imageService.getPanel(this, "V2"))
+            OsuMode.MANIA -> MessageChain(imageService.getPanel(this, "V"))
+
+            else -> throw UnsupportedOperationException.OnlyManiaAndTaiko()
+        }
     }
 
     data class ViewParam(
