@@ -199,6 +199,20 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendQQUIDName()
     }),
 
+    FRIEND(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("friends?", "fuck", "f")
+        appendColonCaptureGroup("sort", REG_ANYTHING_BUT_NO_SPACE, MORE)
+        appendQQ()
+        appendUID()
+        appendNameAndRange()
+        appendIgnore(REG_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_SPACE, MORE)
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
+    }),
+
+
     PP_MINUS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("pm")
         appendModeQQUID()

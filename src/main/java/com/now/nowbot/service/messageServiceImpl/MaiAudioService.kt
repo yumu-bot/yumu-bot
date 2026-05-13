@@ -116,13 +116,6 @@ class MaiAudioService(
             return sb.toString()
         }
 
-        private fun MaiSong.getSongPreviewInfo(): String {
-            val it = this
-
-            return "${it.songID}: ${it.info.artist} - ${it.info.title} ${it.level.joinToString(", ", "[", "]")}"
-        }
-
-
         private val log: Logger = LoggerFactory.getLogger(MaiAudioService::class.java)
     }
 }

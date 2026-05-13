@@ -10,6 +10,7 @@ import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortDirection.*
@@ -39,7 +40,7 @@ class FriendService(
     private val bindDao: BindDao,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
-) : MessageService<FriendParam> {
+) : MessageService<FriendParam>, TencentMessageService<Unit?> {
 
     abstract class FriendParam
 
@@ -325,6 +326,22 @@ class FriendService(
 
         }
 
+    }
+
+    override fun accept(event: MessageEvent, messageText: String): Unit? {
+        val m = OfficialInstruction.FRIEND.matcher(messageText)
+        if (!m.find()) {
+            return null
+        }
+
+        return Unit
+    }
+
+    override fun reply(
+        event: MessageEvent,
+        param: Unit?
+    ): MessageChain? {
+        return MessageChain("官方机器人暂不支持使用 F 功能（无法绑定）。")
     }
 
     companion object {

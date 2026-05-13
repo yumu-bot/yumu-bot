@@ -81,6 +81,7 @@ data class LxMaiSong(
                 versionInt = value
                 current = value >= MaiVersion.newestVersion.value
             }
+            doubleCabinet = hasDX && hasSD
         }
     }
 }

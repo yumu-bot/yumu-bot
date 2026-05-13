@@ -412,10 +412,10 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun getMaimaiAliasSong(text: String): MaiSong? {
-        return getMaimaiAliasSongs(text)?.firstOrNull()
+        return getMaimaiAliasSongs(text).firstOrNull()
     }
 
-    override fun getMaimaiAliasSongs(text: String): List<MaiSong>? {
+    override fun getMaimaiAliasSongs(text: String): List<MaiSong> {
         val aliases = getMaimaiAliasLibrary()
         val result = mutableListOf<Triple<MaiSong, Int, Double>>()
 
@@ -426,7 +426,7 @@ import kotlin.text.Charsets.UTF_8
 
                 if (y >= 0.5) {
                     val s = maiDao.findMaiSongByID(e.key)
-                        ?: maiDao.findMaiSongByID(e.key + 10000) //getMaimaiSong(e.key.toLong()) ?: getMaimaiSong(e.key + 10000L) 避免循环引用
+                        ?: maiDao.findMaiSongByID(e.key + 10000)
 
                     if (s != null) {
                         s.aliases = e.value
@@ -439,14 +439,10 @@ import kotlin.text.Charsets.UTF_8
             }
         }
 
-        return if (result.isEmpty()) {
-            null
-        } else {
-            result.sortBy { it.second }
-            result.sortByDescending { it.third }
+        result.sortBy { it.second }
+        result.sortByDescending { it.third }
 
-            result.map { it.first }
-        }
+        return result.map { it.first }
     }
 
     private val maimaiSongLibraryFromAPI: String

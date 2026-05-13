@@ -37,8 +37,15 @@ class RevokeService(private val botContainer: BotContainer): MessageService<Revo
             return false
         }
 
+        if (!event.hasReply()) {
+            throw UnsupportedOperationException.BotOperation.MustReply()
+        }
+
+        val messageID = event.replyMessage!!.id
+
         val botID = event.bot?.botID
             ?: throw UnsupportedOperationException.BotOperation.BotOffline()
+
 
         val bot = botContainer.robots[botID]
             ?: throw UnsupportedOperationException.BotOperation.BotOffline()
@@ -49,12 +56,6 @@ class RevokeService(private val botContainer: BotContainer): MessageService<Revo
             sub.getUser(bot.selfId).role ?: Role.MEMBER
         } else {
             Role.MEMBER
-        }
-
-        val messageID = if (event.hasReply()) {
-            event.replyMessage!!.id
-        } else {
-            throw UnsupportedOperationException.BotOperation.MustReply()
         }
 
         val response = bot.getResponseFromStringOrArray(messageID.toInt())

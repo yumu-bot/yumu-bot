@@ -58,12 +58,12 @@ class MaiSong {
 
     // 自己设置，可以高亮的难度，按 0-4 排布。如果是 null，则会全部显示（也包括宴会场）
     @JsonProperty("highlight") var highlight: Set<Int>? = null
+
+    // 自己设置，从 lxns 那边可得知，即判定是否有两个版本
+    @JsonProperty("double_cabinet") var doubleCabinet: Boolean? = null
     
     @JsonIgnore
     fun updateHighlight(input: Set<Int>) {
-        // 1. 根据你的定义：空集合 [] 是满集。
-        // 在数学交集逻辑中，任何集合与满集的交集 = 集合本身。
-        // 所以如果传入的是空集合，直接 return，不改变现有存储。
         if (input.isEmpty()) {
             return
         }
@@ -74,18 +74,18 @@ class MaiSong {
         if (current == null) {
             this.highlight = input
         } else {
-            // 3. 取交集：只保留两边都存在的元素
-            // 例如：[1,2,3] intersect [1,2,4] = [1,2]
-
-            // 注意：根据你的逻辑，如果交集变为空了，
-            // 你需要决定 this.highlight 是变成空 Set 还是变成 null。
-            // 这里建议转为可变 Set 存储。
             val intersect = current.intersect(input)
 
             if (intersect.isNotEmpty()) {
                 this.highlight = intersect
             }
         }
+    }
+
+    fun getSongPreviewInfo(): String {
+        val dx = if (this.isDeluxe) " [DX]" else ""
+
+        return "${this.songID}:${dx} ${this.info.artist} - ${this.info.title} ${this.level.joinToString(", ", "[", "]")}"
     }
 
     class MaiChart {

@@ -14,7 +14,9 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
@@ -199,30 +201,17 @@ import java.util.regex.Matcher
                 val possibles = maimaiApiService
                     .getMaimaiPossibleSongs(DataUtil.getStandardisedString(title))
                     .associateBy { it.title.getSimilarity(title) }
-                    .filter { it.key > 0.4 }
-                    .maxByOrNull { it.key }?.value
 
-                if (possibles != null) {
+                val selected = selectSong(event, cabinet, possibles)
 
-                    song = possibles
+                song = if (selected != null) {
+                    selected
                 } else {
                     // 外号模式
-                    val s = maimaiApiService.getMaimaiAliasSong(title ?: "")
+                    val possibles2 = maimaiApiService.getMaimaiAliasSongs(title ?: "")
+                    val selected2 = selectSong(event, cabinet, possibles2)
 
-                    // id 也可能是外号
-                    val i = if (s != null) {
-                        maimaiApiService.getMaimaiAlias(s.songID)?.alias
-                    } else null
-
-                    val sy = s?.title.getSimilarity(title) >= 0.4
-
-                    val iy = (i?.maxOfOrNull { it.getSimilarity(title) } ?: 0.0) >= 0.4
-
-                    if (s != null && (sy || iy)) {
-                        song = s
-                    } else {
-                        throw NoSuchElementException.ResultNotAccurate()
-                    }
+                    selected2 ?: throw NoSuchElementException.ResultNotAccurate()
                 }
             }
 
@@ -315,6 +304,101 @@ import java.util.regex.Matcher
                 page = split.second,
                 maxPage = split.third
             )
+        }
+    }
+
+    private fun Collection<MaiSong>.addDifferentCabinet(): List<MaiSong> {
+        // 预设容量以减少扩容次数
+        val result = ArrayList<MaiSong>(this.size)
+        val seen = mutableSetOf<Long>()
+
+        for (song in this) {
+            val baseID = song.songID % 10000L
+            if (!seen.add(baseID)) continue
+
+//            if (song.doubleCabinet != true) {
+//                如果改成了 LxMai，可以通过它来处理
+//            }
+
+            val anotherID = if (song.isDeluxe) song.songID - 10000L else song.songID + 10000L
+            val extraSong = maimaiApiService.getMaimaiSong(anotherID)
+
+            if (extraSong != null && extraSong.title == song.title) {
+                if (song.isDeluxe) {
+                    result.add(song)
+                    result.add(extraSong)
+                } else {
+                    result.add(extraSong)
+                    result.add(song)
+                }
+            } else {
+                result.add(song)
+            }
+        }
+        return result
+    }
+
+    private fun Collection<MaiSong>.filterByCabinet(cabinet: MaiCabinet?): List<MaiSong> {
+        // 处理无须过滤的情况
+        if (cabinet == null || cabinet == MaiCabinet.ANY) return this.toList()
+
+        return this.filter { song ->
+            when (cabinet) {
+                MaiCabinet.DX -> song.isDeluxe
+                MaiCabinet.SD -> !song.isDeluxe
+            }
+        }
+    }
+
+    // 当有多个结果时，询问，并返回默认的那个
+    private fun selectSong(event: MessageEvent, cabinet: MaiCabinet, candidate: Map<Double, MaiSong> = emptyMap()): MaiSong? {
+        val filtered = candidate.filter { it.key >= 0.4 }
+
+        return selectSong(event, cabinet, filtered.values)
+    }
+
+    // 当有多个结果时，询问，并返回默认的那个
+    private fun selectSong(event: MessageEvent, cabinet: MaiCabinet, candidate: Collection<MaiSong> = emptyList()): MaiSong? {
+        if (candidate.size <= 1) return candidate.firstOrNull()
+
+        val sb = StringBuilder("当前有多个匹配结果，请输入您想要展示的结果：\n")
+
+        val filtered = candidate
+            .addDifferentCabinet()
+            .filterByCabinet(cabinet)
+
+        if (filtered.isEmpty()) {
+            return null
+        }
+
+        val results = filtered.mapIndexed { index, song ->
+            "${index + 1}: ${song.getSongPreviewInfo()}" }
+            .joinToString("\n")
+
+        sb.append(results)
+
+        val receipt = event.reply(sb)
+
+        val lock = ASyncMessageUtil.getLock(event, 30 * 1000L)
+
+        val ev = lock.get()
+        receipt.recall()
+
+        if (ev != null) {
+            val index = ev.rawMessage.trim().toIntOrNull()
+
+            if (index != null) {
+                val i = index.coerceIn(1, candidate.size)
+
+                return candidate.toList()[i - 1]
+            } else {
+                throw TipsException("""
+                        请输入正确的索引！
+                        操作已中止。
+                    """.trimIndent())
+            }
+        } else {
+            return candidate.firstOrNull()
         }
     }
 
