@@ -658,6 +658,13 @@ enum class Instruction(val pattern: Pattern) {
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
     }),
 
+    VIEW_VARIATION(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(var(iation)?|sv)\\s*view", "view\\s*(var(iation)?|sv)", "view\\s*(\\+|plus)", "v[\\s:：]*v")
+        appendBID()
+        appendSpace()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+    }),
+
     // #5 osu! 比赛指令
     MATCH_LISTENER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("make\\s*love", "(match)?listen(er)?", "ml", "li")

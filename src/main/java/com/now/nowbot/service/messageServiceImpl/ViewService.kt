@@ -33,14 +33,17 @@ class ViewService(
         data: MessageService.DataValue<ViewParam>
     ): Boolean {
         val matcher = Instruction.VIEW.matcher(messageText)
+        val matcher2 = Instruction.VIEW_VARIATION.matcher(messageText)
 
-        if (!matcher.find()) {
-            return false
+        if (matcher.find()) {
+            data.value = getParam(event, matcher, isOfficial = false, isVariation = false)
+            return true
+        } else if (matcher2.find()) {
+            data.value = getParam(event, matcher2, isOfficial = false, isVariation = true)
+            return true
         }
 
-        data.value = getParam(event, matcher, isOfficial = false)
-
-        return true
+        return false
     }
 
     override fun handleMessage(
@@ -52,7 +55,7 @@ class ViewService(
         return ServiceCallStatistic.build(event, beatmapID = param.beatmap.beatmapID)
     }
 
-    private fun getParam(event: MessageEvent, matcher: Matcher, isOfficial: Boolean = false): ViewParam {
+    private fun getParam(event: MessageEvent, matcher: Matcher, isOfficial: Boolean = false, isVariation: Boolean = false): ViewParam {
         val beatmapID = matcher.group(FLAG_BID)?.toLongOrNull()
             ?: dao.getLastBeatmapID(event.subject.contactID, null, LocalDateTime.now().minusHours(24L))
             ?: throw IllegalArgumentException.WrongException.BeatmapID()
@@ -74,7 +77,7 @@ class ViewService(
             5
         }
 
-        return ViewParam(beatmap, page, beatmap.mode, row)
+        return ViewParam(beatmap, page, beatmap.mode, row, isVariation)
     }
 
     override fun accept(
@@ -82,12 +85,15 @@ class ViewService(
         messageText: String
     ): ViewParam? {
         val matcher = OfficialInstruction.VIEW.matcher(messageText)
+        val matcher2 = OfficialInstruction.VIEW_VARIATION.matcher(messageText)
 
-        if (!matcher.find()) {
-            return null
+        if (matcher.find()) {
+            return getParam(event, matcher, isOfficial = true, isVariation = false)
+        } else if (matcher2.find()) {
+            return getParam(event, matcher2, isOfficial = true, isVariation = true)
         }
 
-        return getParam(event, matcher, isOfficial = true)
+        return null
     }
 
     override fun reply(
@@ -111,5 +117,6 @@ class ViewService(
         val page: Int,
         val mode: OsuMode,
         val row: Int = 5,
+        val variation: Boolean = false
     )
 }
