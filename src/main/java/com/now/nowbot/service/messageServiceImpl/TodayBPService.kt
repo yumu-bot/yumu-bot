@@ -147,7 +147,7 @@ class TodayBPService(
 
             val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
-                { scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT) }
+                { scoreApiService.getBestScores(id.data!!, mode.data!!) }
             )
 
             user = async.first
@@ -190,7 +190,11 @@ class TodayBPService(
             }
         }
 
-        beatmapApiService.applyBeatmapExtend(dataMap)
+        AsyncMethodExecutor.awaitTriple(
+            { BeatmapUtil.applyBeatmapChanges(dataMap) },
+            { calculateApiService.applyStarToScores(dataMap) },
+            { beatmapApiService.applyBeatmapExtend(dataMap) }
+        )
 
         val filteredScores = ScoreFilter.filterScores(dataMap, conditions)
 
@@ -210,14 +214,8 @@ class TodayBPService(
     fun TodayBPParam.getMessageChain(): MessageChain {
         return try {
             if (scores.size > 1) {
-
                 val ranks = scores.keys
                 val ss = scores.values
-
-                AsyncMethodExecutor.awaitPair(
-                    { BeatmapUtil.applyBeatmapChanges(ss) },
-                    { calculateApiService.applyStarToScores(ss) }
-                )
 
                 val body = mapOf(
                     "user" to user,
@@ -236,7 +234,7 @@ class TodayBPService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val body = ScorePRService.getE5Param(user, historyUser, score, "T", beatmapApiService, calculateApiService)
+                val body = ScorePRService.getE5ParamForFilteredScore(user, historyUser, score, "T", beatmapApiService, calculateApiService)
 
                 MessageChain(imageService.getPanel(body, "E5"))
             }

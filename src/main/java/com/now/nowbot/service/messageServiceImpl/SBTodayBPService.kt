@@ -175,7 +175,11 @@ class SBTodayBPService(
             }
         }
 
-        osuBeatmapApiService.applyBeatmapExtend(dataMap)
+        AsyncMethodExecutor.awaitTriple(
+            { BeatmapUtil.applyBeatmapChanges(dataMap) },
+            { osuCalculateApiService.applyStarToScores(dataMap) },
+            { osuBeatmapApiService.applyBeatmapExtend(dataMap) }
+        )
 
         val filteredScores = ScoreFilter.filterScores(dataMap, conditions)
 
@@ -200,12 +204,6 @@ class SBTodayBPService(
                 val ranks = scores.keys
                 val ss = scores.values
 
-                AsyncMethodExecutor.awaitTriple(
-                    { BeatmapUtil.applyBeatmapChanges(ss) },
-                    { osuCalculateApiService.applyStarToScores(ss) },
-                    { osuBeatmapApiService.applyBeatmapExtend(ss) }
-                )
-
                 val body = mapOf(
                     "user" to user,
                     "history_user" to historyUser,
@@ -223,7 +221,7 @@ class SBTodayBPService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val body = ScorePRService.getE5Param(user, null, score, "T", osuBeatmapApiService, osuCalculateApiService)
+                val body = ScorePRService.getE5ParamForFilteredScore(user, null, score, "T", osuBeatmapApiService, osuCalculateApiService)
 
                 MessageChain(imageService.getPanel(body, "E5"))
             }

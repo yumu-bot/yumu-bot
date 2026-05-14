@@ -36,6 +36,12 @@ object BeatmapUtil {
         }
     }
 
+    fun applyBeatmapChanges(scoresMap: Map<*, LazerScore>) {
+        scoresMap.values.forEach {
+            applyBeatmapChanges(it)
+        }
+    }
+
     fun applyBeatmapChanges(score: LazerScore) {
         applyBeatmapChanges(score.beatmap, score.mods)
     }

@@ -1,13 +1,6 @@
 package com.now.nowbot.util
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Instant
@@ -390,19 +383,24 @@ object AsyncMethodExecutor {
     }
 
     /* 以下是协程代码 */
-
-    val vDispatcher = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
+    private val vExecutor: ExecutorService = Executors.newVirtualThreadPerTaskExecutor()
+    private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
     fun <T> await(work: Callable<out T>, timeout: Duration = 30.seconds): T {
-        return runBlocking(vDispatcher) {
-            suspend(work, timeout)
+        val future = CompletableFuture.supplyAsync({
+            try {
+                work.call()
+            } catch (e: Exception) {
+                throw RuntimeException(e)
+            }
+        }, vExecutor)
+
+        return try {
+            future.get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+        } catch (e: Exception) {
+            future.cancel(true)
+            throw e
         }
-    }
-
-    suspend fun <T> suspend(work: Callable<out T>, timeout: Duration = 30.seconds): T = withTimeout(timeout) {
-        val r = async(vDispatcher) { work.call() }
-
-        r.await()
     }
 
     fun <T, U> awaitPair(
@@ -410,20 +408,11 @@ object AsyncMethodExecutor {
         work2: Callable<out U>,
         timeout: Duration = 30.seconds
     ): Pair<T, U> {
-        return runBlocking(vDispatcher) {
-            suspendPair(work, work2, timeout)
-        }
-    }
+        val f1 = CompletableFuture.supplyAsync({ work.call() }, vExecutor)
+        val f2 = CompletableFuture.supplyAsync({ work2.call() }, vExecutor)
 
-    suspend fun <T, U> suspendPair(
-        work: Callable<out T>,
-        work2: Callable<out U>,
-        timeout: Duration = 30.seconds
-    ): Pair<T, U> = withTimeout(timeout) {
-        val r1 = async(vDispatcher) { work.call() }
-        val r2 = async(vDispatcher) { work2.call() }
-
-        r1.await() to r2.await()
+        return f1.thenCombine(f2) { res1, res2 -> res1 to res2 }
+            .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     }
 
     fun <T, U, V> awaitTriple(
@@ -432,25 +421,16 @@ object AsyncMethodExecutor {
         work3: Callable<out V>,
         timeout: Duration = 30.seconds
     ): Triple<T, U, V> {
-        return runBlocking(vDispatcher) {
-            suspendTriple(work, work2, work3, timeout)
-        }
+        val f1 = CompletableFuture.supplyAsync({ work.call() }, vExecutor)
+        val f2 = CompletableFuture.supplyAsync({ work2.call() }, vExecutor)
+        val f3 = CompletableFuture.supplyAsync({ work3.call() }, vExecutor)
+
+        // 等待所有任务完成
+        CompletableFuture.allOf(f1, f2, f3)
+            .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+
+        return Triple(f1.join(), f2.join(), f3.join())
     }
-
-    suspend fun <T, U, V> suspendTriple(
-        work: Callable<out T>,
-        work2: Callable<out U>,
-        work3: Callable<out V>,
-        timeout: Duration = 30.seconds
-    ): Triple<T, U, V> = withTimeout(timeout) {
-        val r1 = async(vDispatcher) { work.call() }
-        val r2 = async(vDispatcher) { work2.call() }
-        val r3 = async(vDispatcher) { work3.call() }
-
-        Triple(r1.await(), r2.await(), r3.await())
-    }
-
-
 
     fun <T, U, V, W> awaitQuad(
         work: Callable<out T>,
@@ -459,39 +439,44 @@ object AsyncMethodExecutor {
         work4: Callable<out W>,
         timeout: Duration = 30.seconds
     ): Pair<Pair<T, U>, Pair<V, W>> {
-        return runBlocking(vDispatcher) {
-            suspendQuad(work, work2, work3, work4, timeout)
-        }
-    }
+        val f1 = CompletableFuture.supplyAsync({ work.call() }, vExecutor)
+        val f2 = CompletableFuture.supplyAsync({ work2.call() }, vExecutor)
+        val f3 = CompletableFuture.supplyAsync({ work3.call() }, vExecutor)
+        val f4 = CompletableFuture.supplyAsync({ work4.call() }, vExecutor)
 
-    suspend fun <T, U, V, W> suspendQuad(
-        work: Callable<out T>,
-        work2: Callable<out U>,
-        work3: Callable<out V>,
-        work4: Callable<out W>,
-        timeout: Duration = 30.seconds
-    ): Pair<Pair<T, U>, Pair<V, W>> = withTimeout(timeout) {
-        val r1 = async(vDispatcher) { work.call() }
-        val r2 = async(vDispatcher) { work2.call() }
-        val r3 = async(vDispatcher) { work3.call() }
-        val r4 = async(vDispatcher) { work4.call() }
+        // 等待所有任务完成
+        CompletableFuture.allOf(f1, f2, f3, f4)
+            .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
 
-        (r1.await() to r2.await()) to (r3.await() to r4.await())
+        return (f1.join() to f2.join()) to (f3.join() to f4.join())
     }
 
     @CanIgnoreReturnValue
     fun <T> awaitList(
         works: List<Callable<out T>>,
         timeout: Duration = 30.seconds
-    ): List<T> = runBlocking(vDispatcher) {
-        suspendList(works, timeout)
-    }
+    ): List<T> {
+        if (works.isEmpty()) return emptyList()
 
-    suspend fun <T> suspendList(
-        works: List<Callable<out T>>,
-        timeout: Duration = 30.seconds
-    ): List<T> = withTimeout(timeout) {
-        works.map { async(vDispatcher) { it.call() } }.awaitAll()
+        val futures = works.map { work ->
+            CompletableFuture.supplyAsync({
+                try {
+                    work.call()
+                } catch (e: Exception) {
+                    throw RuntimeException(e)
+                }
+            }, vExecutor)
+        }
+
+        try {
+            CompletableFuture.allOf(*futures.toTypedArray())
+                .get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+
+            return futures.map { it.join() }
+        } catch (e: Exception) {
+            futures.forEach { it.cancel(true) }
+            throw e
+        }
     }
 
     fun <T> awaitBatch(
@@ -499,34 +484,46 @@ object AsyncMethodExecutor {
         batchSize: Int = 60,
         latency: Duration = 60.seconds,
         timeout: Duration = 30.seconds
-    ): List<T> = runBlocking(vDispatcher) {
-        suspendBatch(works, batchSize, latency, timeout)
-    }
+    ): List<T> {
+        if (works.isEmpty()) return emptyList()
 
-    /**
-     * 协程原生版：处理分批异步逻辑
-     */
-    suspend fun <T> suspendBatch(
-        works: List<Callable<out T>>,
-        batchSize: Int = 60,
-        latency: Duration = 60.seconds,
-        timeout: Duration = 30.seconds
-    ): List<T> = coroutineScope {
         val batches = works.chunked(batchSize)
+        val batchFutures = mutableListOf<CompletableFuture<List<T>>>()
 
-        // 将每一批次映射为一个异步 Job
-        val batchDeferred = batches.mapIndexed { index, batch ->
-            async(vDispatcher) {
-                // 批次间延迟：使用非阻塞的 delay 替代 Thread.sleep
-                if (index > 0) {
-                    delay(latency)
+        batches.forEachIndexed { index, batch ->
+            val future = CompletableFuture<List<T>>()
+
+            // 计算每一批次的启动延迟
+            val delayMs = index * latency.inWholeMilliseconds
+
+            scheduler.schedule({
+                // 在虚拟线程中执行具体的批次逻辑
+                CompletableFuture.supplyAsync({
+                    try {
+                        awaitList(batch, timeout)
+                    } catch (e: Exception) {
+                        throw RuntimeException("Batch $index failed", e)
+                    }
+                }, vExecutor).whenComplete { result: List<T>, ex: Throwable? ->
+                    if (ex != null) future.completeExceptionally(ex)
+                    else future.complete(result)
                 }
+            }, delayMs, TimeUnit.MILLISECONDS)
 
-                suspendList(batch, timeout)
-            }
+            batchFutures.add(future)
         }
 
-        batchDeferred.awaitAll().flatten()
+        try {
+            val totalTimeoutMs = (batches.size - 1) * latency.inWholeMilliseconds + timeout.inWholeMilliseconds
+
+            CompletableFuture.allOf(*batchFutures.toTypedArray())
+                .get(totalTimeoutMs, TimeUnit.MILLISECONDS)
+
+            return batchFutures.flatMap { it.join() }
+        } catch (e: Exception) {
+            batchFutures.forEach { it.cancel(true) }
+            throw e
+        }
     }
 
     /* 以下是 java 原生的 ShutdownOnFailure */

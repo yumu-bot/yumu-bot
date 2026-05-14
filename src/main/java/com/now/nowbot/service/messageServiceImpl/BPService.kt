@@ -306,8 +306,10 @@ import java.util.regex.Matcher
             }
         }
 
-        calculateApiService.applyStarToScores(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
+        AsyncMethodExecutor.awaitPair(
+            { calculateApiService.applyStarToScores(scores) },
+                { BeatmapUtil.applyBeatmapChanges(scores) }
+        )
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }

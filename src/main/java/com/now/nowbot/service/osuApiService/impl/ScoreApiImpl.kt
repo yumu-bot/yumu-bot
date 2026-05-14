@@ -29,7 +29,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
-import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.RejectedExecutionException
 import java.util.function.Function
@@ -116,21 +115,13 @@ class ScoreApiImpl(
     ): List<LazerScore> {
         val step = 100
 
-        if (limit <= step) {
-            return getBests(id, mode, offset, limit)
+        val scores = if (limit <= step) {
+            getBests(id, mode, offset, limit)
+        } else {
+            val firstBatch = getBests(id, mode, offset, step)
+            val secondBatch = getBests(id, mode, offset + step, limit - step)
+            firstBatch + secondBatch
         }
-
-//        val firstBatch = getBests(id, mode, offset, step)
-//        val secondBatch = getBests(id, mode, offset + step, limit - step)
-//
-//        return firstBatch + secondBatch
-
-        val scores = AsyncMethodExecutor.awaitList(
-            listOf(
-                Callable { getBests(id, mode, offset, step) },
-                Callable { getBests(id, mode, offset + step, limit - step) }
-            )
-        ).flatten()
 
         Thread.startVirtualThread {
             if (offset == 0 && limit == 200) {
@@ -139,6 +130,14 @@ class ScoreApiImpl(
         }
 
         return scores
+
+
+//        val scores = AsyncMethodExecutor.awaitList(
+//            listOf(
+//                Callable { getBests(id, mode, offset, step) },
+//                Callable { getBests(id, mode, offset + step, limit - step) }
+//            )
+//        ).flatten()
 
 //        // 使用你现有的工具方法进行并发
 //        val result = AsyncMethodExecutor.awaitPairCallableExecute(
