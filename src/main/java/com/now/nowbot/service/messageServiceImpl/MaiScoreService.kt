@@ -373,11 +373,11 @@ import java.util.regex.Matcher
             return null
         }
 
-        val results = filtered.mapIndexed { index, song ->
+        val tips = filtered.mapIndexed { index, song ->
             "${index + 1}: ${song.getSongPreviewInfo()}" }
             .joinToString("\n")
 
-        sb.append(results)
+        sb.append(tips)
 
         val receipt = event.reply(sb)
 
@@ -390,9 +390,9 @@ import java.util.regex.Matcher
             val index = ev.rawMessage.trim().toIntOrNull()
 
             if (index != null) {
-                val i = index.coerceIn(1, candidate.size)
+                val i = index.coerceIn(1, filtered.size)
 
-                return candidate.toList()[i - 1]
+                return filtered.toList()[i - 1]
             } else {
                 throw TipsException("""
                         请输入正确的索引！
@@ -400,7 +400,7 @@ import java.util.regex.Matcher
                     """.trimIndent())
             }
         } else {
-            return candidate.firstOrNull()
+            return filtered.firstOrNull()
         }
     }
 
