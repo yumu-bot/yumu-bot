@@ -1,5 +1,7 @@
 package com.now.nowbot.model.enums
 
+import com.now.nowbot.model.maimai.MaiSong
+
 enum class MaiCabinet {
     DX,
     SD,
@@ -15,6 +17,15 @@ enum class MaiCabinet {
                 "sd", "标准", "standard", "标" -> SD
                 "dx", "豪华", "deluxe" -> DX
                 else -> ANY
+            }
+        }
+
+        fun getCabinet(song: MaiSong?): MaiCabinet {
+            if (song == null) return ANY
+            return if (song.isDeluxe) {
+                DX
+            } else {
+                SD
             }
         }
     }

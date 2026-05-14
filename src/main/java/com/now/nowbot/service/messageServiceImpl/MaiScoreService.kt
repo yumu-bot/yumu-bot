@@ -142,7 +142,7 @@ import java.util.regex.Matcher
             qqStr.toLongOrNull() ?: event.sender.contactID
         }
 
-        val cabinet = MaiCabinet.getCabinet(matcher.group(FLAG_VERSION))
+        var cabinet = MaiCabinet.getCabinet(matcher.group(FLAG_VERSION))
 
         val isRange = any.matches(REG_MAI_RANGE.toRegex())
 
@@ -205,11 +205,13 @@ import java.util.regex.Matcher
                 val selected = selectSong(event, cabinet, possibles)
 
                 song = if (selected != null) {
+                    cabinet = MaiCabinet.getCabinet(selected)
                     selected
                 } else {
                     // 外号模式
                     val possibles2 = maimaiApiService.getMaimaiAliasSongs(title ?: "")
                     val selected2 = selectSong(event, cabinet, possibles2)
+                    cabinet = MaiCabinet.getCabinet(selected2)
 
                     selected2 ?: throw NoSuchElementException.ResultNotAccurate()
                 }
