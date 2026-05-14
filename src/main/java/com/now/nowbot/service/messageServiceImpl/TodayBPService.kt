@@ -53,7 +53,8 @@ class TodayBPService(
         val historyUser: OsuUser? = null,
         val mode: OsuMode,
         val scores: Map<Int, LazerScore>,
-        val isToday: Boolean,
+        val filteredCount: Int = 0,
+        val isToday: Boolean = true,
         val isCompact: Boolean = false
     )
 
@@ -199,7 +200,7 @@ class TodayBPService(
 
         val historyUser = infoDao.getHistoryUser(user)
 
-        return TodayBPParam(user, historyUser, mode.data!!, dataMap, isToday, isCompact)
+        return TodayBPParam(user, historyUser, mode.data!!, filteredScores, dataMap.size - filteredScores.size, isToday, isCompact)
     }
 
 //    fun TodayBPParam.asyncImage() {
@@ -223,6 +224,7 @@ class TodayBPService(
                     "history_user" to historyUser,
                     "scores" to ss,
                     "rank" to ranks,
+                    "filtered" to filteredCount,
                     "panel" to "T",
                     "compact" to ((isCompact && scores.size >= 10) || scores.size > 100)
                 )

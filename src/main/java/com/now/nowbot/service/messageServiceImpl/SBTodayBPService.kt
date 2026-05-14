@@ -183,7 +183,7 @@ class SBTodayBPService(
             throw NoSuchElementException.TodayBestScoreFiltered(user.username)
         }
 
-        return TodayBPParam(user, null, mode.data!!, dataMap, isToday)
+        return TodayBPParam(user, null, mode.data!!, filteredScores, dataMap.size - filteredScores.size, isToday)
     }
 
     /*
@@ -211,7 +211,9 @@ class SBTodayBPService(
                     "history_user" to historyUser,
                     "scores" to ss,
                     "rank" to ranks,
-                    "panel" to "T"
+                    "filtered" to filteredCount,
+                    "panel" to "T",
+                    "compact" to ((isCompact && scores.size >= 10) || scores.size > 100)
                 )
 
                 MessageChain(imageService.getPanel(body, "A4"))
