@@ -114,16 +114,23 @@ class BeatmapDao(
         return extendBeatmapSetRepository.findByUpdateAtAscend(time, limit)
     }
 
-    fun updateFailTimeByBeatmapsetID(beatmapsetID: Long, animeCover: Boolean, favouriteCount: Long, recommendOffset: Short, playCount: Long, spotlight: Boolean, trackID: Int?, discussionLocked: Boolean, rating: Float, ratings: Array<Int>): Int {
-        return extendBeatmapSetRepository.updateFailTimeByBeatmapsetID(beatmapsetID, animeCover, favouriteCount, recommendOffset, playCount, spotlight, trackID, discussionLocked, rating, ratings)
+    fun updateFailTimeByBeatmapsetID(s: Beatmapset): Int {
+        return extendBeatmapSetRepository.updateFailTimeByBeatmapsetID(
+            s.beatmapsetID, s.animeCover, s.favouriteCount,
+            s.offset, s.playCount, s.spotlight,
+            s.trackID, s.discussionLocked, s.rating,
+            s.ratings.toTypedArray())
     }
 
     fun findMapByUpdateAtAscend(time: LocalDateTime, limit: Int = 500): List<BeatmapExtendLite> {
         return extendBeatmapRepository.findByUpdateAtAscend(time, limit)
     }
 
-    fun updateFailTimeByBeatmapID(beatmapID: Long, fail: String?, owners: String?): Int {
-        return extendBeatmapRepository.updateFailTimeByBeatmapID(beatmapID, fail, owners)
+    fun updateFailTimeByBeatmapID(beatmap: Beatmap): Int {
+        return extendBeatmapRepository.updateFailTimeByBeatmapID(
+            beatmapID = beatmap.beatmapID,
+            fail = beatmap.failTimes?.toString(),
+            owners = beatmap.owners?.map { o -> o.toNanoUserLite() }?.let { owners -> JacksonUtil.objectToJson(owners)})
     }
 
     @Transactional
@@ -137,20 +144,22 @@ class BeatmapDao(
     }
 
     fun saveExtendedBeatmap(beatmap: Beatmap) {
-        val hasBeatmap = extendBeatmapRepository.existsByBeatmapID(beatmap.beatmapID)
-        val hasBeatmapset = extendBeatmapSetRepository.existsByBeatmapsetID(beatmap.beatmapsetID)
-
-        if (hasBeatmap && hasBeatmapset) return
-
         val hasGenreID = beatmap.beatmapset?.genreID != null
-
         val ranked = beatmap.beatmapset?.ranked
-
         val stabled = ranked != null && ranked in byteArrayOf(1, 2, 4)
 
         if (!(hasGenreID && stabled)) return
 
         val s = beatmap.beatmapset!!
+
+        val hasBeatmap = extendBeatmapRepository.existsByBeatmapID(beatmap.beatmapID)
+        val hasBeatmapset = extendBeatmapSetRepository.existsByBeatmapsetID(beatmap.beatmapsetID)
+
+        if (hasBeatmap && hasBeatmapset) {
+            updateFailTimeByBeatmapID(beatmap)
+            updateFailTimeByBeatmapsetID(s)
+            return
+        }
 
         val savedSet = if (hasBeatmapset) {
             extendBeatmapSetRepository.findByBeatmapsetID(beatmap.beatmapsetID)!!

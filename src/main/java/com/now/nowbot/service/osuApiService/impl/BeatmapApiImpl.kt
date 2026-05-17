@@ -6,7 +6,6 @@ import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
-import com.now.nowbot.entity.NanoUserLite.Companion.toNanoUserLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.CosuRequest
@@ -1259,29 +1258,13 @@ class BeatmapApiImpl(
         }
 
         val result = news.sumOf {
-            beatmapDao.updateFailTimeByBeatmapID(
-                it.beatmapID,
-                fail = it.failTimes?.toString(),
-                owners = it.owners?.map { o -> o.toNanoUserLite() }?.let { owners -> JacksonUtil.objectToJson(owners)})
+            beatmapDao.updateFailTimeByBeatmapID(it)
         }
 
         val result2 = news
             .distinctBy { it.beatmapsetID }
             .sumOf {
-                val set = it.beatmapset!!
-
-                beatmapDao.updateFailTimeByBeatmapsetID(
-                    it.beatmapsetID,
-                    set.animeCover,
-                    set.favouriteCount,
-                    set.offset,
-                    set.playCount,
-                    set.spotlight,
-                    set.trackID,
-                    set.discussionLocked,
-                    set.rating,
-                    set.ratings.toTypedArray()
-                )
+                beatmapDao.updateFailTimeByBeatmapsetID(it.beatmapset!!)
             }
 
         log.info("自动更新扩展谱面：已更新 $result($result2) 张谱面。")
