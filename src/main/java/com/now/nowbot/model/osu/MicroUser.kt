@@ -126,6 +126,32 @@ class MicroUser : Comparable<MicroUser> {
         return "MicroUser(avatarUrl=$avatarUrl, coverUrl=$coverUrl, defaultGroup=$defaultGroup, userID=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, lastVisitString=$lastVisitString, pmFriendsOnly=$pmFriendsOnly, profileColor=$profileColor, userName='$username', cover=$cover, country=$country, isMutual=$isMutual, groups=$groups, statistics=$statistics, rulesets=$rulesets, supportLevel=$supportLevel, team=$team)"
     }
 
+    fun toOsuUser(): OsuUser {
+        val u = this
+
+        return OsuUser(userID).apply {
+            u.avatarUrl?.let { avatarUrl = it }
+            u.coverUrl?.let { coverUrl = it }
+            defaultGroup = u.defaultGroup
+            isActive = u.isActive
+            isBot = u.isBot
+            isDeleted = u.isDeleted
+            isOnline = u.isOnline
+            isSupporter = u.isSupporter
+            lastVisit = u.lastVisitTime?.atOffset(ZoneOffset.ofHours(8))
+            pmFriendsOnly = u.pmFriendsOnly == true
+            profileColor = u.profileColor
+            username = u.username
+            cover = u.cover
+            countryCode = u.countryCode
+            country = u.country
+            groups = u.groups
+            statistics = u.statistics
+            supportLevel = u.supportLevel ?: 0.toByte()
+            team = u.team
+        }
+    }
+
     companion object {
         private val formatter: DateTimeFormatter = DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
@@ -133,32 +159,5 @@ class MicroUser : Comparable<MicroUser> {
             .appendPattern("HH:mm:ss")
             .appendZoneId()
             .toFormatter()
-
-
-        fun MicroUser.toOsuUser(): OsuUser {
-            val u = this
-
-            return OsuUser(userID).apply {
-                u.avatarUrl?.let { avatarUrl = it }
-                u.coverUrl?.let { coverUrl = it }
-                defaultGroup = u.defaultGroup
-                isActive = u.isActive
-                isBot = u.isBot
-                isDeleted = u.isDeleted
-                isOnline = u.isOnline
-                isSupporter = u.isSupporter
-                lastVisit = u.lastVisitTime?.atOffset(ZoneOffset.ofHours(8))
-                pmFriendsOnly = u.pmFriendsOnly == true
-                profileColor = u.profileColor
-                username = u.username
-                cover = u.cover
-                countryCode = u.countryCode
-                country = u.country
-                groups = u.groups
-                statistics = u.statistics
-                supportLevel = u.supportLevel ?: 0.toByte()
-                team = u.team
-            }
-        }
     }
 }

@@ -30,6 +30,10 @@ class BeatmapExtendLite(
     @Column(name = "max_combo")
     val maxCombo: Int = 0,
 
+    @Type(JsonBinaryType::class)
+    @Column(name = "owners", columnDefinition = "JSONB", nullable = true, updatable = true)
+    var owners: String? = null,
+
     @Column(name = "created_at", updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 

@@ -6,6 +6,7 @@ import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
+import com.now.nowbot.entity.NanoUserLite.Companion.toNanoUserLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.CosuRequest
@@ -1258,7 +1259,10 @@ class BeatmapApiImpl(
         }
 
         val result = news.sumOf {
-            beatmapDao.updateFailTimeByBeatmapID(it.beatmapID, it.failTimes?.toString())
+            beatmapDao.updateFailTimeByBeatmapID(
+                it.beatmapID,
+                fail = it.failTimes?.toString(),
+                owners = it.owners?.map { o -> o.toNanoUserLite() }?.let { owners -> JacksonUtil.objectToJson(owners)})
         }
 
         val result2 = news

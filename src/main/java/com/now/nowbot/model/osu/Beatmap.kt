@@ -112,7 +112,7 @@ data class Beatmap(
      * 只有 id 和 username
      */
     @field:JsonProperty("owners")
-    var owners: List<MicroUser>? = null,
+    var owners: List<NanoUser>? = null,
 
     @field:JsonProperty("mode_int")
     var modeInt: Int? = null,
@@ -252,20 +252,20 @@ data class Beatmap(
 
         other as Beatmap
 
-        return beatmapID == other.beatmapID
+        return beatmapID == other.beatmapID && mode == other.mode
     }
 
     override fun hashCode(): Int {
-        return beatmapID.hashCode()
+        return 31 * beatmapID.hashCode() + mode.hashCode()
     }
 
     companion object {
         private fun getList(data: JsonNode?, fieldName: String): List<Int> {
-            if (data == null) return listOf(0)
+            if (data == null) return emptyList()
 
             return if (data.hasNonNull(fieldName) && data[fieldName].isArray) {
-                (data[fieldName] as kotlin.collections.Iterable<JsonNode>).map { it -> it.asInt(0) }
-            } else listOf()
+                (data[fieldName] as Iterable<JsonNode>).map { it.asInt(0) }
+            } else emptyList()
         }
 
 

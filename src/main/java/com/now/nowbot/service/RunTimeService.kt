@@ -45,7 +45,7 @@ class RunTimeService(
     }
 
     // 每几小时更新一次过期的谱面
-    @Scheduled(cron = "15 0,30 0-1,6-23 * * *")
+    @Scheduled(cron = "15 8,23,38,53 0-2,4-23 * * *")
     fun updateBeatmapExtendFailTimes() {
         beatmapApiService.updateExtendedBeatmapFailTimes()
     }

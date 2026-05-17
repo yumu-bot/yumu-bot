@@ -30,8 +30,8 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     // 批量更新字段
     @Modifying
     @Transactional
-    @Query("UPDATE osu_extend_beatmap SET fail_times = CAST(:fail AS jsonb), updated_at = CURRENT_TIMESTAMP WHERE beatmap_id = :beatmapID", nativeQuery = true)
-    fun updateFailTimeByBeatmapID(@Param("beatmapID") beatmapID: Long, @Param("fail") fail: String?): Int
+    @Query("UPDATE osu_extend_beatmap SET fail_times = CAST(:fail AS jsonb), owners = CAST(:owners AS jsonb), updated_at = CURRENT_TIMESTAMP WHERE beatmap_id = :beatmapID", nativeQuery = true)
+    fun updateFailTimeByBeatmapID(@Param("beatmapID") beatmapID: Long, @Param("fail") fail: String?, @Param("owners") owners: String?): Int
 }
 
 @Repository

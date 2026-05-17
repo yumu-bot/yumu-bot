@@ -5,6 +5,8 @@ import com.now.nowbot.entity.BeatmapLite
 import com.now.nowbot.entity.BeatmapLite.BeatmapHitLengthResult
 import com.now.nowbot.entity.BeatmapsetExtendLite
 import com.now.nowbot.entity.BeatmapsetLite
+import com.now.nowbot.entity.NanoUserLite
+import com.now.nowbot.entity.NanoUserLite.Companion.toNanoUserLite
 import com.now.nowbot.entity.TagLite
 import com.now.nowbot.mapper.BeatmapExtendRepository
 import com.now.nowbot.mapper.BeatmapRepository
@@ -120,8 +122,8 @@ class BeatmapDao(
         return extendBeatmapRepository.findByUpdateAtAscend(time, limit)
     }
 
-    fun updateFailTimeByBeatmapID(beatmapID: Long, fail: String?): Int {
-        return extendBeatmapRepository.updateFailTimeByBeatmapID(beatmapID, fail)
+    fun updateFailTimeByBeatmapID(beatmapID: Long, fail: String?, owners: String?): Int {
+        return extendBeatmapRepository.updateFailTimeByBeatmapID(beatmapID, fail, owners)
     }
 
     @Transactional
@@ -144,7 +146,7 @@ class BeatmapDao(
 
         val ranked = beatmap.beatmapset?.ranked
 
-        val stabled = ranked == 1.toByte() || ranked == 2.toByte() || ranked == 4.toByte()
+        val stabled = ranked != null && ranked in byteArrayOf(1, 2, 4)
 
         if (!(hasGenreID && stabled)) return
 
@@ -216,6 +218,7 @@ class BeatmapDao(
             beatmapID = beatmap.beatmapID,
             beatmapset = savedSet,
             failTimes = beatmap.failTimes?.toString(),
+            owners = beatmap.owners?.map { nu -> nu.toNanoUserLite() }?.let { JacksonUtil.toJson(it) },
             maxCombo = beatmap.maxCombo ?: 0,
             createdAt = now,
             updatedAt = now
@@ -302,6 +305,7 @@ class BeatmapDao(
         score.beatmap.apply {
             beatmapsetID = x.beatmapsetID
             failTimes = b.failTimes?.let { JacksonUtil.toNode(it) }
+            owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
             maxCombo = b.maxCombo
         }
 
@@ -388,6 +392,7 @@ class BeatmapDao(
             beatmapset = set
             failTimes = b.failTimes?.let { JacksonUtil.toNode(it) }
             maxCombo = b.maxCombo
+            owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
         }
 
         return b.beatmapID
