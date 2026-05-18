@@ -151,7 +151,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, dif, con)
                 }
 
-                CABINET -> fit(operator, MaiCabinet.getCabinet(it.type), MaiCabinet.getCabinet(str))
+                CABINET -> fit(operator, MaiCabinet.getCabinet(it.type, it.isUtage), MaiCabinet.getCabinet(str))
                 VERSION -> fit(operator,
                     MaiVersion.getVersionList(it.version),
                     MaiVersion.getVersionList(str),

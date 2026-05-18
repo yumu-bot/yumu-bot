@@ -9,6 +9,13 @@ import org.springframework.transaction.annotation.Transactional
 
 interface MaiSongLiteRepository : JpaRepository<MaiSongLite, Int> {
     fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<MaiSongLite>?
+
+    @Query("""
+        SELECT * FROM maimai_song 
+        WHERE (songID % 10000) = (:songID % 10000) 
+          AND songID >= 20000
+    """, nativeQuery = true)
+    fun findByUtage(songID: Int): List<MaiSongLite>
 }
 
 interface MaiChartLiteRepository : JpaRepository<MaiChartLite, Int>
@@ -66,6 +73,14 @@ interface LxMaiSongLiteRepository : JpaRepository<LxMaiSongLite, Int> {
 
     @Query("SELECT s FROM LxMaiSongLite s LEFT JOIN FETCH s.difficulties WHERE s.queryTitle ILIKE CONCAT('%', :queryTitle, '%')")
     fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<LxMaiSongLite>
+
+    @EntityGraph(attributePaths = ["difficulties"])
+    @Query("""
+        SELECT s.* FROM lx_maimai_song s
+        WHERE (s.songID % 10000) = (:songID % 10000) 
+          AND s.songID >= 20000
+    """, nativeQuery = true)
+    fun findByUtage(songID: Int): List<LxMaiSongLite>
 }
 
 interface LxMaiCollectionLiteRepository: JpaRepository<LxMaiCollectionLite, LxMaiCollectionID> {

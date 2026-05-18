@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import kotlin.jvm.optionals.getOrNull
 
 @Component
 class BeatmapDao(
@@ -87,11 +88,7 @@ class BeatmapDao(
     }
 
     fun getBeatmapLite(id: Long): BeatmapLite? {
-        val lite = beatmapRepository.findById(id)
-        if (lite.isEmpty) {
-            return null
-        }
-        return lite.get()
+        return beatmapRepository.findById(id).getOrNull()
     }
 
     fun getBeatmapsetLite(id: Long): BeatmapsetLite? {

@@ -153,7 +153,7 @@ import java.util.regex.Matcher
             val title: String?
             val name: String?
 
-            if (any.contains(Regex(REG_SPACE))) {
+            if (any.contains("${REG_SPACE}${LEVEL_MORE}".toRegex())) {
                 val s = any.split(' ', '\t', '\n').filter { it.isNotBlank() }
 
                 if (s.size == 2) {
@@ -209,17 +209,31 @@ import java.util.regex.Matcher
                     selected
                 } else {
                     // 外号模式
-                    val possibles2 = maimaiApiService.getMaimaiAliasSongs(title ?: "")
-                    val selected2 = selectSong(event, cabinet, possibles2)
-                    cabinet = MaiCabinet.getCabinet(selected2)
 
-                    selected2 ?: throw NoSuchElementException.ResultNotAccurate()
+                    val possibles2 = maimaiApiService.getMaimaiAliasSongs((title ?: ""))
+
+                    if (cabinet == MaiCabinet.UTAGE) {
+                        val possibles3 = possibles2.flatMap { pos -> maimaiApiService.getUtage(pos.songID) }
+
+                        val selected3 = selectSong(event, cabinet, possibles3)
+                        cabinet = MaiCabinet.getCabinet(selected3)
+
+                        selected3 ?: throw NoSuchElementException.ResultNotAccurate()
+                    } else {
+
+                        val selected2 = selectSong(event, cabinet, possibles2)
+                        cabinet = MaiCabinet.getCabinet(selected2)
+
+                        selected2 ?: throw NoSuchElementException.ResultNotAccurate()
+                    }
                 }
             }
 
             // 获取符合的成绩
             val scores: List<MaiScore> = full.records.filter {
-                if (song.isDeluxe) {
+                if (song.isUtage) {
+                    return@filter it.songID == song.songID.toLong()
+                } else if (song.isDeluxe) {
                     return@filter it.songID == song.songID.toLong() || it.songID == (song.songID - 10000).toLong()
                 } else {
                     return@filter it.songID == song.songID.toLong() || it.songID == (song.songID + 10000).toLong()
@@ -228,7 +242,9 @@ import java.util.regex.Matcher
 
             maimaiApiService.insertSongData(scores)
 
-            val anotherResult: MaiSong? = if (song.isDeluxe) {
+            val anotherResult: MaiSong? = if (song.isUtage) {
+                null
+            } else if (song.isDeluxe) {
                 maimaiApiService.getMaimaiSong(song.songID - 10000L)
             } else {
                 maimaiApiService.getMaimaiSong(song.songID + 10000L)
@@ -236,10 +252,8 @@ import java.util.regex.Matcher
 
             // 只有一种谱面
             if (anotherResult == null) {
-                val version = if (song.isDeluxe) MaiCabinet.DX else MaiCabinet.SD
-
                 return MaiScoreParam(
-                    user = full.getUser(maiDao), songs = listOf(song), scores = scores, cabinet = version
+                    user = full.getUser(maiDao), songs = listOf(song), scores = scores, cabinet = cabinet
                 )
             } else if (scores.isNotEmpty() && cabinet == MaiCabinet.ANY) {
                 // 有两种谱面，有成绩，没有规定难度。此时取玩家成绩最好的那个
@@ -247,7 +261,7 @@ import java.util.regex.Matcher
 
                 val songs = listOf(song, anotherResult).filter { it.isDeluxe == isDX }
 
-                return MaiScoreParam(user = full.getUser(maiDao), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, cabinet = MaiCabinet.ANY
+                return MaiScoreParam(user = full.getUser(maiDao), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, cabinet = cabinet
                 )
             } else {
                 // 有两种谱面，但是没有成绩
@@ -310,28 +324,23 @@ import java.util.regex.Matcher
     }
 
     private fun Collection<MaiSong>.addDifferentCabinet(): List<MaiSong> {
-        // 预设容量以减少扩容次数
-        val result = ArrayList<MaiSong>(this.size)
-        val seen = mutableSetOf<Long>()
+        val result = ArrayList<MaiSong>(this.size * 2)
+        val seenIDs = mutableSetOf<Int>()
 
         for (song in this) {
-            val baseID = song.songID % 10000L
-            if (!seen.add(baseID)) continue
+            if (!seenIDs.add(song.songID)) continue
 
-//            if (song.doubleCabinet != true) {
-//                如果改成了 LxMai，可以通过它来处理
-//            }
+            if (song.songID in 0L..20000L) {
+                result.add(song)
 
-            val anotherID = if (song.isDeluxe) song.songID - 10000L else song.songID + 10000L
-            val extraSong = maimaiApiService.getMaimaiSong(anotherID)
+                // 计算互补 ID（SD ↔ DX）
+                val anotherID = if (song.isDeluxe) song.songID - 10000L else song.songID + 10000L
+                val extraSong = maimaiApiService.getMaimaiSong(anotherID)
 
-            if (extraSong != null && extraSong.title == song.title) {
-                if (song.isDeluxe) {
-                    result.add(song)
-                    result.add(extraSong)
-                } else {
-                    result.add(extraSong)
-                    result.add(song)
+                if (extraSong != null && extraSong.title == song.title) {
+                    if (seenIDs.add(extraSong.songID)) {
+                        result.add(extraSong)
+                    }
                 }
             } else {
                 result.add(song)
@@ -346,6 +355,7 @@ import java.util.regex.Matcher
 
         return this.filter { song ->
             when (cabinet) {
+                MaiCabinet.UTAGE -> song.isUtage
                 MaiCabinet.DX -> song.isDeluxe
                 MaiCabinet.SD -> !song.isDeluxe
             }
@@ -369,9 +379,7 @@ import java.util.regex.Matcher
             .addDifferentCabinet()
             .filterByCabinet(cabinet)
 
-        if (filtered.isEmpty()) {
-            return null
-        }
+        if (filtered.size <= 1) return filtered.firstOrNull()
 
         val tips = filtered.mapIndexed { index, song ->
             "${index + 1}: ${song.getSongPreviewInfo()}" }

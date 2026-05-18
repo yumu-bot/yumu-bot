@@ -193,7 +193,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                CABINET -> fit(operator, MaiCabinet.getCabinet(it.type), MaiCabinet.getCabinet(str)) to default
+                CABINET -> fit(operator, MaiCabinet.getCabinet(it.type, it.isUtage), MaiCabinet.getCabinet(str)) to default
                 VERSION -> fit(operator, MaiVersion.getVersionList(it.info.version), MaiVersion.getVersionList(str)) to default
 
                 TITLE -> fit(operator, it.title, str) to default

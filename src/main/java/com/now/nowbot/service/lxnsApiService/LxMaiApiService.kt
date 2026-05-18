@@ -33,6 +33,8 @@ interface LxMaiApiService {
 
     fun getPossibleMaiSongs(text: String): List<MaiSong>
 
+    fun getUtage(songID: Int): List<MaiSong>
+
     fun getMaiAliasSongs(text: String): List<MaiSong>
 
     fun getMaiAliasLibrary(): Map<Int, List<String>>

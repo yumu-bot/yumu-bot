@@ -91,6 +91,21 @@ class MaiDao(
         return songs.map { it.toModel() }
     }
 
+    fun findUtage(songID: Int): List<MaiSong> {
+        val songs = maiSongLiteRepository.findByUtage(songID)
+
+        if (songs.isEmpty()) return emptyList()
+
+        songs.forEach {
+            val charts = maiChartLiteRepository
+                .findAllById(it.chartIDs.asList())
+                .toCollection(ArrayList())
+            it.charts = charts
+        }
+
+        return songs.map { it.toModel() }
+    }
+
     @Transactional
     fun saveLxMaiCollections(collections: List<LxMaiCollection>) {
         // 这是一个局部缓存，用于确保本次 saveAll 过程中，对象在内存中是唯一的
@@ -151,6 +166,13 @@ class MaiDao(
 
         return songs.map { it.toModel() }
     }
+
+    fun findLxUtage(songID: Int): List<LxMaiSong> {
+        val songs = lxMaiSongLiteRepository.findByUtage(songID)
+
+        return songs.map { it.toModel() }
+    }
+
 
     @Transactional
     fun saveMaiSong(song: MaiSong) {

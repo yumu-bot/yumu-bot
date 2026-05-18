@@ -445,6 +445,10 @@ import kotlin.text.Charsets.UTF_8
         return result.map { it.first }
     }
 
+    override fun getUtage(songID: Int): List<MaiSong> {
+        return maiDao.findUtage(songID)
+    }
+
     private val maimaiSongLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/maimaidxprober/music_data")

@@ -40,6 +40,8 @@ interface MaimaiApiService {
 
     fun getMaimaiAliasSongs(text: String): List<MaiSong>
 
+    fun getUtage(songID: Int): List<MaiSong>
+
     fun getMaimaiSong(songID: Long): MaiSong?
 
     fun getMaimaiSongLibrary(): List<MaiSong>

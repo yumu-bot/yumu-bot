@@ -167,6 +167,10 @@ class LxMaiApiImpl(
         return maiDao.findLxMaiSongByTitle(text).map { it.toMaiSong() }
     }
 
+    override fun getUtage(songID: Int): List<MaiSong> {
+        return maiDao.findLxUtage(songID).map { it.toMaiSong() }
+    }
+
     override fun getMaiAliasLibrary(): Map<Int, List<String>> {
         return maiDao.getAllMaiAliases().associate { it.songID to it.alias }
     }
