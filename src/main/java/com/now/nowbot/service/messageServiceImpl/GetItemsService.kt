@@ -428,7 +428,13 @@ class GetItemsService(
             }
             is NewbiePlayerParam -> event.reply(param.getNewbiePlayerComponent())
             is NewbieScoreParam -> event.reply(param.getNewbieScoreComponent())
-            is NewbieBestParam -> event.reply(param.getNewbieBestsComponent())
+            is NewbieBestParam -> {
+                if (param.bests.size <= 10) {
+                    event.reply(param.getNewbieBestsComponent())
+                } else {
+                    event.replyFileInGroup(param.getNewbieBestsComponent().toByteArray(Charsets.UTF_8), "${param.user.username}(${param.bests.size}).md")
+                }
+            }
         }
 
         return null
