@@ -644,6 +644,7 @@ enum class Instruction(val pattern: Pattern) {
     GET_NEWBIE_PLAYER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(user|player)", "get\\s*(user|player)", "gu")
         appendModeQQUIDName()
+        appendHashCaptureGroup(FLAG_DATA, REG_NUMBER_DECIMAL, MAYBE)
     }),
 
     GET_BG(CommandPatternBuilder.create {

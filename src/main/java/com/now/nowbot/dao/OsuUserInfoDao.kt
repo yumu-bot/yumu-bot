@@ -336,6 +336,11 @@ class OsuUserInfoDao(
         return parseResults(arrays)
     }
 
+    fun getClosestFromTarget(userID: Long, mode: OsuMode, target: Double): OsuUser? {
+        val lite = infoRepository.getClosestFromTarget(userID, mode, target)
+
+        return lite?.let { fromArchive(it) }
+    }
 
 
     /*

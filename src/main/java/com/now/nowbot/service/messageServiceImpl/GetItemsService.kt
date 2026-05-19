@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
@@ -18,6 +19,7 @@ import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.TimeParser
+import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_MOD
 import com.now.nowbot.util.command.FLAG_RANGE
@@ -40,6 +42,7 @@ class GetItemsService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val scoreApiService: OsuScoreApiService,
+    private val userInfoDao: OsuUserInfoDao
 ) : MessageService<GetItemsService.GetItemsParam> {
 
     abstract class GetItemsParam
@@ -135,6 +138,15 @@ class GetItemsService(
 
         val mode = InstructionUtil.getMode(matcher)
         val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
+        val target = matcher.group(FLAG_DATA)?.toDoubleOrNull()
+
+        if (target != null) {
+            val u = userInfoDao.getClosestFromTarget(user.userID, mode.data!!, target)
+
+            if (u != null) {
+                return NewbiePlayerParam(u, mode.data!!)
+            }
+        }
 
         if (user.pp <= 0.0 && user.globalRank == 0L) {
             val bests = scoreApiService.getBestScores(user)

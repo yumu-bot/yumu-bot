@@ -35,7 +35,7 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
                     and osu_id is not null
                     and mode is not null
                     and play_count is not null
-                    order by osu_id, mode, play_count asc
+                    order by osu_id, mode, play_count
                 ) as shadow
                 """, nativeQuery = true
     ) fun getFromUserIDs(
@@ -100,4 +100,20 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
         """, nativeQuery = true
     )
     fun removeBetween(userID: Long, mode: OsuMode, from: LocalDateTime, to: LocalDateTime)
+
+    @Query(
+        value = """
+            SELECT * FROM osu_user_info_archive 
+            WHERE osu_id = :userID 
+              AND mode = :mode 
+            ORDER BY ABS(pp - :target) 
+            LIMIT 1
+        """,
+        nativeQuery = true
+    )
+    fun getClosestFromTarget(
+        userID: Long,
+        mode: OsuMode,
+        target: Double
+    ): OsuUserInfoArchiveLite?
 }
