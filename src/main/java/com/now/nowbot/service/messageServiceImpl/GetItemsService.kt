@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -16,11 +17,16 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_MOD
+import com.now.nowbot.util.command.FLAG_RANGE
+import com.now.nowbot.util.command.FLAG_TIME
 import com.now.nowbot.util.command.REG_SEPERATOR
 import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
 import org.springframework.stereotype.Service
+import java.time.Instant
+import java.time.ZonedDateTime
 import java.util.regex.Matcher
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -68,6 +74,12 @@ class GetItemsService(
     data class NewbiePlayerParam(
         val user: OsuUser,
         val mode: OsuMode,
+    ): GetItemsParam()
+
+    data class NewbieBestParam(
+        val user: OsuUser,
+        val mode: OsuMode,
+        val bests: List<LazerScore>
     ): GetItemsParam()
 
     private fun getPoolParam(matcher: Matcher): PoolParam {
@@ -131,6 +143,27 @@ class GetItemsService(
         }
 
         return NewbiePlayerParam(user, mode.data!!)
+    }
+
+    private fun getNewbieBestParam(event: MessageEvent, matcher: Matcher): NewbieBestParam {
+        val mode = InstructionUtil.getMode(matcher)
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
+
+        val time: Instant = runCatching {
+            TimeParser.process(matcher.group(FLAG_TIME))
+        }.getOrElse {
+            ZonedDateTime.now()
+        }.toInstant()
+
+        val count = matcher.group(FLAG_RANGE)?.toIntOrNull() ?: 5
+
+        val bests = scoreApiService.getBestScores(user)
+
+        val filtered = bests.filter {
+            it.endedTime.toInstant().isBefore(time)
+        }.take(count)
+
+        return NewbieBestParam(user, mode.data!!, filtered)
     }
 
     private fun NewbiePlayerParam.getNewbiePlayerComponent(): String {
@@ -261,6 +294,41 @@ class GetItemsService(
             """.trimIndent()
     }
 
+    private fun NewbieBestParam.getNewbieBestsComponent(): String {
+        calculateApiService.applyPPToScores(this.bests)
+        calculateApiService.applyStarToScores(this.bests)
+        beatmapApiService.applyBeatmapExtend(this.bests)
+        BeatmapUtil.applyBeatmapChanges(this.bests)
+
+        return this.bests.joinToString("\n\n") { it.getNewbieScore() }
+    }
+
+    private fun LazerScore.getNewbieScore(): String {
+
+        val b = this.beatmap
+        b.beatmapset = this.beatmapset
+
+        val attributes = listOfNotNull(
+            "bid=${b.beatmapID}",
+            "sid=${b.beatmapsetID}",
+            "preview=\"${this.previewName}\"",
+            "star=${"%.2f".format(b.starRating)}",
+            "max=${b.maxCombo}",
+            "mode=\"${b.mode.charName}\"",
+            "accuracy=${this.accuracy}",
+            "combo=${this.maxCombo}",
+            "rank=\"${this.rank.ifEmpty { "F" }.lowercase()}\"",
+            "performance=${this.pp.roundToInt()}",
+            if (this.mods.isNotEmpty()) "mods=\"${this.mods.joinToString("") { it.acronym.uppercase() }}\"" else null
+        )
+
+        return """
+            <Score
+              ${attributes.joinToString("\n              ")}
+            />
+            """.trimIndent()
+    }
+
     private fun PoolParam.getMapPoolText(): String {
         val b = beatmapApiService.getBeatmap(beatmapID)
         val sb = StringBuilder()
@@ -316,6 +384,7 @@ class GetItemsService(
         val m3 = Instruction.GET_NEWBIE_SET.matcher(messageText)
         val m4 = Instruction.GET_NEWBIE_PLAYER.matcher(messageText)
         val m5 = Instruction.GET_NEWBIE_SCORE.matcher(messageText)
+        val m6 = Instruction.GET_NEWBIE_BEST.matcher(messageText)
 
         if (m.find()) {
             data.value = getPoolParam(m)
@@ -331,6 +400,9 @@ class GetItemsService(
             return true
         } else if (m5.find()) {
             data.value = getNewbieScoreParam(m5)
+            return true
+        } else if (m6.find()) {
+            data.value = getNewbieBestParam(event, m6)
             return true
         }
 
@@ -356,6 +428,7 @@ class GetItemsService(
             }
             is NewbiePlayerParam -> event.reply(param.getNewbiePlayerComponent())
             is NewbieScoreParam -> event.reply(param.getNewbieScoreComponent())
+            is NewbieBestParam -> event.reply(param.getNewbieBestsComponent())
         }
 
         return null

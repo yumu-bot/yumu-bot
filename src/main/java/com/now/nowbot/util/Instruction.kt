@@ -633,6 +633,14 @@ enum class Instruction(val pattern: Pattern) {
         appendMod()
     }),
 
+    GET_NEWBIE_BEST(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*((best)|s)", "get\\s*best", "gt")
+        appendModeQQUIDName()
+        appendStarCaptureGroup(FLAG_TIME, REG_TIME, MAYBE)
+        appendSpace()
+        appendHashCaptureGroup(FLAG_RANGE, REG_NUMBER_13, MAYBE)
+    }),
+
     GET_NEWBIE_PLAYER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(user|player)", "get\\s*(user|player)", "gu")
         appendModeQQUIDName()
