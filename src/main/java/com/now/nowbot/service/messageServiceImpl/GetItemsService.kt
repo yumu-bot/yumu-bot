@@ -140,11 +140,17 @@ class GetItemsService(
         val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
         val target = matcher.group(FLAG_DATA)?.toDoubleOrNull()
 
+        val m = OsuMode.getMode(mode.data, user.currentOsuMode)
+
         if (target != null) {
-            val u = userInfoDao.getClosestFromTarget(user.userID, mode.data!!, target)
+            val u = userInfoDao.getClosestFromTarget(user.userID, m, target)
 
             if (u != null) {
-                return NewbiePlayerParam(u, mode.data!!)
+                return NewbiePlayerParam(u.apply {
+                    u.username = user.username
+                    u.country = user.country
+                    u.countryCode = user.countryCode
+                }, m)
             }
         }
 
@@ -169,13 +175,15 @@ class GetItemsService(
 
         val count = matcher.group(FLAG_RANGE)?.toIntOrNull() ?: 5
 
-        val bests = scoreApiService.getBestScores(user)
+        val m = OsuMode.getMode(mode.data, user.currentOsuMode)
+
+        val bests = scoreApiService.getBestScores(user, m)
 
         val filtered = bests.filter {
             it.endedTime.toInstant().isBefore(time)
         }.take(count)
 
-        return NewbieBestParam(user, mode.data!!, filtered)
+        return NewbieBestParam(user, m, filtered)
     }
 
     private fun NewbiePlayerParam.getNewbiePlayerComponent(): String {
