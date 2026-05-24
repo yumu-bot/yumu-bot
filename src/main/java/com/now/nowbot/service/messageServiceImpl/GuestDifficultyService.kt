@@ -123,16 +123,7 @@ class GuestDifficultyService(
                         (set.beatmapsetID != id.data!!) && (set.beatmaps?.all { that -> that.beatmapID != id.data!! } ?: true)
                     }).toHashSet()
 
-            relatedSets = beatmapApiService.extendBeatmapInSet(sets).toHashSet()
-
-            /*
-            relatedSets = (async.first.beatmapsets.toHashSet() +
-                    async.second.beatmapsets.filter {
-                        it.beatmapsetID != id.data!! &&
-                                (it.beatmaps?.all { that -> that.beatmapID != id.data!! } ?: true)
-                    }.toHashSet())
-
-             */
+            relatedSets = beatmapApiService.extendBeatmapInSetFromAPI(sets).toHashSet()
 
             user = async.third
             page = id.start ?: 1
@@ -160,7 +151,7 @@ class GuestDifficultyService(
                         (set.beatmapsetID != user.userID) && (set.beatmaps?.all { that -> that.beatmapID != user.userID } ?: true)
                     }).toHashSet()
 
-            relatedSets = beatmapApiService.extendBeatmapInSet(sets).toHashSet()
+            relatedSets = beatmapApiService.extendBeatmapInSetFromAPI(sets).toHashSet()
 
             /*
 

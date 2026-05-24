@@ -525,7 +525,7 @@ class BeatmapApiImpl(
         return AsyncMethodExecutor.awaitList(callables)
     }
 
-    override fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset> {
+    override fun extendBeatmapInSetFromAPI(sets: Iterable<Beatmapset>): List<Beatmapset> {
         val map = sets.associate { set ->
             set.beatmapsetID to (set.beatmaps.orEmpty()).map { b -> b.beatmapID }
         }
@@ -543,7 +543,7 @@ class BeatmapApiImpl(
         return sets.toList()
     }
 
-    override fun extendBeatmapInScore(scores: Iterable<LazerScore>): List<LazerScore> {
+    override fun extendBeatmapInScoreFromAPI(scores: Iterable<LazerScore>): List<LazerScore> {
 
         val bids = scores.map { it.beatmapID }.toHashSet()
 

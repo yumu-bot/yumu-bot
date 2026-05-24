@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
+import com.now.nowbot.util.FastPower095
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -164,7 +165,8 @@ open class LazerScore(
         @field:JsonProperty("percentage") var percentage: Double = 0.0,
         @field:JsonProperty("pp") var pp: Double = 0.0,
     ) {
-        val index: Int = (ln((percentage / 100)) / ln(0.95)).roundToInt()
+        val index: Int
+            get() = (ln((percentage / 100)) / ln(0.95)).roundToInt()
     }
 
     @get:JsonProperty("is_lazer")
@@ -294,6 +296,11 @@ open class LazerScore(
                 else -> 0
             }
         }
+
+    fun getWeightedPP(index: Int): Double {
+        return this.weight?.pp
+            ?: (FastPower095.pow(index) * this.pp)
+    }
 
     companion object {
 

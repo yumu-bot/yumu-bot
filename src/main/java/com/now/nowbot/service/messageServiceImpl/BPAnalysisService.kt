@@ -1,7 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -10,6 +12,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
+import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.BeatmapAnalysis.Companion.toBeatmapAnalysis
 import com.now.nowbot.service.messageServiceImpl.UUBAService.Companion.getText
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
@@ -24,14 +27,10 @@ import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.LinkedMultiValueMap
-import org.springframework.util.MultiValueMap
 import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.max
-import kotlin.math.min
 
 @Service("BP_ANALYSIS") class BPAnalysisService(
     private val scoreApiService: OsuScoreApiService,
@@ -39,170 +38,149 @@ import kotlin.math.min
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val calculateApiService: OsuCalculateApiService,
+    private val bindDao: BindDao
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
     data class BAParam(val user: OsuUser, val bests: List<LazerScore>, val isMyself: Boolean, val mappers: List<MicroUser>, val version: Int) {
-        fun toMap() : Map<String, Any> {
+        fun toMap(version: Int = this.version): Map<String, Any> {
             if (bests.size <= 5) {
                 throw NoSuchElementException.PlayerBestScore(user.username, user.currentOsuMode)
             }
 
-            val bpSize = bests.size
+            val rankMap = mutableMapOf<String, MutableList<Double>>()
+            val modMap = mutableMapOf<String, MutableList<Double>>()
+            val fullMapperMap = mutableMapOf<NanoUser, MutableList<Double>>()
 
-            // top
-            val t6: List<LazerScore> = bests.take(6)
-            val b5: List<LazerScore> = bests.takeLast(bpSize - max((bpSize - 5).toDouble(), 0.0).toInt())
+            var modCount = 0
 
-            val beatmapList: MutableList<BeatmapAnalysis> = ArrayList(bpSize)
-            val modsPPMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
-            val rankMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
+            bests.forEachIndexed { i, s ->
+                s.ranking = i + 1
 
-            var modsSum = 0
+                val b = s.beatmap
+                val m = s.mods
+                val weighted = s.getWeightedPP(i)
 
-            bests.forEachIndexed { i, best ->
-                val b = best.beatmap
-
-                val m = best.mods.filter {
-                    if (it is ValueMod) {
-                        it.value != 0
-                    } else {
-                        true
+                if (m.isNotEmpty()) {
+                    m.forEach {
+                        modMap.getOrPut(it.acronym) { mutableListOf() }.add(weighted)
                     }
+                    modCount += m.size
+                } else {
+                    modCount ++
                 }
 
-                run {
-                    val ba = BeatmapAnalysis(
-                        i + 1,
-                        b.totalLength,
-                        best.maxCombo,
-                        b.bpm,
-                        b.starRating.toFloat(),
-                        best.rank,
-                        best.beatmapset.covers.list,
-                        m
-                    )
-                    beatmapList.add(ba)
+
+                if (s.fullCombo) {
+                    rankMap.getOrPut("FC") { mutableListOf() }.add(weighted)
                 }
 
-                run { // 统计 mods / rank
-                    if (m.isNotEmpty()) {
-                        m.forEach {
-                            modsPPMap.add(it.acronym, best.weight!!.pp)
-                        }
-                        modsSum += m.size
-                    } else {
-                        modsSum += 1
-                    }
+                rankMap.getOrPut(s.rank) { mutableListOf() }.add(weighted)
 
-                    if (best.fullCombo) {
-                        rankMap.add("FC", best.weight!!.pp)
-                    }
-
-                    rankMap.add(best.rank, best.weight!!.pp)
+                b.mappers.forEach { m ->
+                    fullMapperMap.getOrPut(m) { mutableListOf() }.add(weighted)
                 }
             }
 
-            // 0 length; 1 combo; 2 star; 3 bpm
-            val summary: HashMap<String, List<BeatmapAnalysis>> = HashMap(4)
+            val mapperMap: Map<NanoUser, List<Double>> = fullMapperMap.entries
+                .groupBy { it.key.userID }
+                .mapValues { (_, sameIDs) ->
+                    val bestEntry = sameIDs.maxByOrNull { it.value.size }!!
+                    val resolvedUser = bestEntry.key
+                    val mergedList = sameIDs.flatMap { it.value }
 
-            fun <T : Comparable<T>> sortCount(name: String, sortedBy: (BeatmapAnalysis) -> T) {
-                val sortList: List<BeatmapAnalysis> = beatmapList.sortedByDescending(sortedBy)
-                val stat: ArrayList<BeatmapAnalysis> = ArrayList(3)
-                stat.add(sortList.first())
-                stat.add(sortList[bpSize / 2])
-                stat.add(sortList[bpSize - 1])
-                summary[name] = stat
+                    resolvedUser to mergedList
+                }
+                .values
+                .toMap()
+
+            val summary = mutableMapOf<String, List<BeatmapAnalysis>>()
+
+            fun <T : Comparable<T>> sortCount(name: String, sortedBy: (LazerScore) -> T) {
+                val ss = bests.sortedByDescending(sortedBy)
+
+                // 3. 使用 listOf() 结合 Kotlin 集合的快捷扩展函数
+                summary[name] = listOf(
+                    ss.first().toBeatmapAnalysis(),
+                    ss[ss.size / 2].toBeatmapAnalysis(),
+                    ss.last().toBeatmapAnalysis()
+                )
             }
 
-            sortCount("length") { it.length }
-            sortCount("combo") { it.combo }
-            sortCount("star") { it.star }
-            sortCount("bpm") { it.bpm }
+            sortCount("length") { it.beatmap.totalLength }
+            sortCount("combo") { it.maxCombo }
+            sortCount("star") { it.beatmap.starRating }
+            sortCount("bpm") { it.beatmap.bpm }
 
-            val ppRawList = bests.map { it.pp }
-            val ppSum = bests.sumOf { it.weight?.pp ?: 0.0 }
-            val rankList = bests.map { it.rank }
-            val lengthList = beatmapList.map { it.length }
-            val starList = beatmapList.map { it.star }
-            val modsList: List<List<String>> = beatmapList.map {
-                it.mods.map { mod -> mod.acronym }
-            }
-            val timeList =
-                bests.map { 1.0 * it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).hour +
-                        (it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).minute / 60.0) }
-            val timeDist = MutableList(8) { _ -> 0 }
+            val ppRaw = bests.map { it.pp }
+            val ppSum = bests.mapIndexed { index, score ->  score.getWeightedPP(index) }.sum()
+            val ranks = bests.map { it.rank }
+            val length = bests.map { it.beatmap.totalLength }
+            val star = bests.map { it.beatmap.starRating }
+            val mods = bests.map { it.mods.map { mod -> mod.acronym } }
 
-            for (time in timeList) {
-                val position: Int = min((time / 3.0).toInt(), 7)
-                timeDist[position]++
+            val zoneOffset = ZoneOffset.ofHours(8)
+
+            val times: List<Double> = bests.map {
+                it.endedTime.withOffsetSameInstant(zoneOffset).run {
+                    hour + (minute / 60.0)
+                }
             }
 
-            val rankSort = rankList.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.map { it.key }
+            val dist: MutableList<Int> = MutableList(8) { 0 }.apply {
+                times.forEach { time ->
+                    // 使用 coerceAtMost(7) 替代 min(..., 7)，语义更自然
+                    val position = (time / 3.0).toInt().coerceAtMost(7)
+                    this[position]++
+                }
+            }
 
-            val mapperMap = bests
-                .associateWith { it.beatmap.mapperIDs }
-                .flatMap { (score, mappers) ->
-                    mappers.map { mapper -> mapper to score }
-                }.groupBy({ it.first }, { it.second })
 
-            val mapperSize = mapperMap.size
+            val rankSort = ranks.groupingBy { it }
+                .eachCount()
+                .entries
+                .sortedByDescending { it.value }
+                .map { it.key }
 
-            val mapperUserInfoMap = mappers.associateBy { it.userID }
 
-            val mapperList = mapperMap.map { entry -> entry.key
-                val microUser = mapperUserInfoMap[entry.key]
-
+            val mappers =  mapperMap.map { (ms, ss) ->
                 Mapper(
-                    avatarUrl = microUser?.avatarUrl ?: "https://a.ppy.sh/${entry.key}",
-                    username = microUser?.username ?: "UID: ${entry.key}",
-                    mapCount = entry.value.size,
-                    ppCount = entry.value.sumOf { it.pp }.toFloat(),
-                    // ppCount = entry.value.sumOf { it.weight?.pp ?: 0.0 }.toFloat(),
+                    avatarUrl = "https://a.ppy.sh/${ms.userID}",
+                    username = ms.username,
+                    mapCount = ss.size,
+                    ppCount = ss.sum(),
                 )
             }.sortedByDescending { it.ppCount }
 
             val userPP = user.pp
-            val rawPP = DataUtil.getBestsPP(bests)
+            val bestPP = DataUtil.getBestsPP(bests)
 
-            //bpPP + remainPP (bp100之后的) = rawPP
-            val bestPP = bests.sumOf { it.weight!!.pp }
+            val modsAttribute: List<Attribute> = modMap.map { (mod, value) ->
+                Attribute(
+                    index = mod,
+                    mapCount = value.size,
+                    ppCount = value.sum(),
+                    percent = value.size * 1.0 / modCount.coerceAtLeast(1)
+                )
+            }.sortedByDescending { it.ppCount }
 
-            val modsAttribute: List<Attribute>
-            run {
-                val modsAttributeTmp: MutableList<Attribute> = ArrayList(modsPPMap.size)
-                modsPPMap.forEach { (mod: String, value: MutableList<Double>) ->
-                    val attribute = Attribute(
-                        mod, value.size, value.sum(), (value.size * 1.0 / modsSum)
-                    )
-                    modsAttributeTmp.add(attribute)
-                }
-                modsAttribute = modsAttributeTmp.sortedByDescending { it.ppCount }
-            }
-
-            val rankAttribute: MutableList<Attribute?> = ArrayList(rankMap.size)
-            run {
+            val rankAttribute: List<Attribute?> = buildList {
+                // 1. 处理 "FC"
                 val fcList = rankMap.remove("FC")
-                val fc: Attribute
                 if (fcList.isNullOrEmpty()) {
-                    fc = Attribute("FC", 0, 0.0, 0.0)
+                    add(Attribute("FC", 0, 0.0, 0.0))
                 } else {
                     val fcPPSum = fcList.sum()
-
-                    fc = Attribute("FC", fcList.size, fcPPSum, (fcPPSum / bestPP))
+                    add(Attribute("FC", fcList.size, fcPPSum, fcPPSum / bestPP))
                 }
-                rankAttribute.add(fc)
+
                 for (rank in RANK_ARRAY) {
-                    if (rankMap.containsKey(rank)) {
-                        val value = rankMap[rank]
-                        var rankPPSum: Double
-                        var attribute: Attribute? = null
-                        if (!value.isNullOrEmpty()) {
-                            rankPPSum = value.sum()
-                            attribute = Attribute(
-                                rank, value.count(), rankPPSum, (rankPPSum / bestPP)
-                            )
-                        }
-                        rankAttribute.add(attribute)
+                    val value = rankMap[rank] ?: continue
+
+                    if (value.isEmpty()) {
+                        add(null) // 如果列表为空，添加 null
+                    } else {
+                        val rankPPSum = value.sum()
+                        add(Attribute(rank, value.size, rankPPSum, rankPPSum / bestPP))
                     }
                 }
             }
@@ -210,46 +188,46 @@ import kotlin.math.min
             val clientCount = bests.fold(intArrayOf(0, 0)) { counts, item ->
                 if (item.isLazer) counts[1]++ else counts[0]++
                 counts
-            }.toList()
+            }
 
             val map: Map<String, Any> = when(version) {
                 1 -> mapOf(
                     "card_A1" to user,
-                    "bpTop5" to t6.dropLast(1),
-                    "bpLast5" to b5,
+                    "bpTop5" to bests.take(5),
+                    "bpLast5" to bests.drop(5).takeLast(5),
                     "bpLength" to summary["length"]!!,
                     "bpCombo" to summary["combo"]!!,
                     "bpSR" to summary["star"]!!,
                     "bpBpm" to summary["bpm"]!!,
-                    "favorite_mappers_count" to mapperSize,
-                    "favorite_mappers" to mapperList,
-                    "pp_raw_arr" to ppRawList,
-                    "rank_arr" to rankList,
+                    "favorite_mappers_count" to mappers.size,
+                    "favorite_mappers" to mappers,
+                    "pp_raw_arr" to ppRaw,
+                    "rank_arr" to ranks,
                     "rank_elect_arr" to rankSort,
-                    "bp_length_arr" to lengthList,
+                    "bp_length_arr" to length,
                     "mods_attr" to modsAttribute,
                     "rank_attr" to rankAttribute,
-                    "pp_raw" to rawPP,
+                    "pp_raw" to bestPP,
                     "pp" to userPP,
-                    "game_mode" to bests.first().mode,
+                    "game_mode" to user.currentOsuMode,
                 )
 
                 else ->
                     mapOf(
                         "user" to user,
-                        "bests" to t6,
+                        "bests" to bests.take(6),
                         "length_attr" to summary["length"]!!,
                         "combo_attr" to summary["combo"]!!,
                         "star_attr" to summary["star"]!!,
                         "bpm_attr" to summary["bpm"]!!,
-                        "favorite_mappers" to mapperList,
-                        "pp_raw_arr" to ppRawList,
-                        "rank_arr" to rankList,
-                        "length_arr" to lengthList,
-                        "mods_arr" to modsList,
-                        "star_arr" to starList,
-                        "time_arr" to timeList,
-                        "time_dist_arr" to timeDist,
+                        "favorite_mappers" to mappers,
+                        "pp_raw_arr" to ppRaw,
+                        "rank_arr" to ranks,
+                        "length_arr" to length,
+                        "mods_arr" to mods,
+                        "star_arr" to star,
+                        "time_arr" to times,
+                        "time_dist_arr" to dist,
 
                         "mods_attr" to modsAttribute,
                         "rank_attr" to rankAttribute,
@@ -305,50 +283,48 @@ import kotlin.math.min
     private fun getParam(event: MessageEvent, matcher: Matcher): BAParam {
         val isMyself = AtomicBoolean(false)
         val mode = InstructionUtil.getMode(matcher)
-
-        val user: OsuUser
-        val bests: List<LazerScore>
-
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
-        if (id != null) {
-            val async = AsyncMethodExecutor.awaitPair(
-                { userApiService.getOsuUser(id, mode.data!!) },
-                {
-                    scoreApiService.getBestScores(id, mode.data!!).apply {
-                        BeatmapUtil.applyBeatmapChanges(this)
-                        calculateApiService.applyStarToScores(this)
-                    }
-                }
+        // 1. 使用 if 表达式并结合解构声明，集中处理数据的获取逻辑
+        val (user, bests) = if (id != null) {
+            val m = OsuMode.getMode(mode.data,
+                bindDao.getBindModeFromID(id),
+                bindDao.getGroupModeConfig(event)
             )
 
-            user = async.first
-            bests = async.second
-        } else {
-            user = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
-            bests = scoreApiService.getBestScores(user.userID, mode.data).apply {
-                BeatmapUtil.applyBeatmapChanges(this)
-                calculateApiService.applyStarToScores(this)
+            if (m.isNotDefault()) {
+                AsyncMethodExecutor.awaitPair(
+                    { userApiService.getOsuUser(id, m) },
+                    { scoreApiService.getBestScores(id, m) }
+                )
+            } else {
+                val fetchedUser = userApiService.getOsuUser(id)
+                val fetchedBests = scoreApiService.getBestScores(id, fetchedUser.currentOsuMode)
+                fetchedUser to fetchedBests
             }
+        } else {
+            val fetchedUser = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
+            val fetchedBests = scoreApiService.getBestScores(fetchedUser.userID, fetchedUser.currentOsuMode)
+            fetchedUser to fetchedBests
         }
 
-        val mapperIDs = bests.flatMap { it.beatmap.mapperIDs }.toSet()
-
-        val async2 = AsyncMethodExecutor.awaitPair(
-            { beatmapApiService.extendBeatmapInScore(bests) },
-            { userApiService.getUsers(mapperIDs) },
+        AsyncMethodExecutor.awaitTriple(
+            { BeatmapUtil.applyBeatmapChanges(bests) },
+            { calculateApiService.applyStarToScores(bests) },
+            { beatmapApiService.applyBeatmapExtend(bests) }
         )
 
-        return BAParam(user, async2.first, isMyself.get(), async2.second, 2)
-
+        return BAParam(user, bests, isMyself.get(), emptyList(), 2)
     }
 
     private fun BAParam.getMessageChain(): MessageChain {
         return try {
-            when (version) {
-                1 -> MessageChain(imageService.getPanel(this.toMap(), "J"))
-                else -> MessageChain(imageService.getPanel(this.toMap(), "J2"))
+            val name = when(version) {
+                1 -> "J"
+                else -> "J2"
             }
+
+            MessageChain(imageService.getPanel(this.toMap(), name))
         } catch (e0: TipsRuntimeException) {
             throw e0
         } catch (e: Exception) {
@@ -376,7 +352,7 @@ import kotlin.math.min
             @field:JsonProperty("avatar_url") val avatarUrl: String,
             @field:JsonProperty("username") val username: String,
             @field:JsonProperty("map_count") val mapCount: Int,
-            @field:JsonProperty("pp_count") val ppCount: Float
+            @field:JsonProperty("pp_count") val ppCount: Double
         )
 
         data class BeatmapAnalysis(
@@ -384,11 +360,28 @@ import kotlin.math.min
             val length: Int,
             val combo: Int,
             val bpm: Float,
-            val star: Float,
+            val star: Double,
             val rank: String,
             val cover: String,
-            val mods: List<LazerMod>
-        )
+            val mods: List<LazerMod>,
+        ) {
+            companion object {
+                fun LazerScore.toBeatmapAnalysis(): BeatmapAnalysis {
+                    val b = this.beatmap
+
+                    return BeatmapAnalysis(
+                        this.ranking ?: 1,
+                        b.totalLength,
+                        this.maxCombo,
+                        b.bpm,
+                        b.starRating,
+                        this.rank,
+                        this.beatmapset.covers.list,
+                        this.mods
+                    )
+                }
+            }
+        }
 
         data class Attribute(
             val index: String,

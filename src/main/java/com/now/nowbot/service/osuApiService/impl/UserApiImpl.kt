@@ -125,7 +125,7 @@ import java.util.concurrent.CancellationException
         }
     }
 
-    override fun syncUserToken(user: BindUser, isFirstTime: Boolean): String {
+    override fun syncUserToken(user: BindUser, isFirstTime: Boolean): String? {
         return base.syncUserToken(user, isFirstTime)
     }
 

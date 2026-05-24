@@ -32,7 +32,7 @@ interface OsuUserApiService {
     @CanIgnoreReturnValue
     fun getUserTokenOrBotToken(user: BindUser): String?
 
-    fun syncUserToken(user: BindUser, isFirstTime: Boolean): String
+    fun syncUserToken(user: BindUser, isFirstTime: Boolean): String?
 
     fun applyBindUserDetails(user: BindUser)
 

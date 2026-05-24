@@ -60,26 +60,16 @@ interface OsuBeatmapApiService {
 
     fun getBeatmapset(sid: Long): Beatmapset
 
-    /**
-     * 这个可能会撞限制，所以请用 extendBeatmapset
-     */
     fun getBeatmapset(sids: Iterable<Long>): List<Beatmapset>
 
-    /**
-     * 扩展 search result 的 set 内的 beatmap，确保它含有 owners 等信息
-     */
-    fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset>
+    fun extendBeatmapInSetFromAPI(sets: Iterable<Beatmapset>): List<Beatmapset>
 
-    /**
-     * 扩展 score 内的 beatmap，确保它含有 owners 等信息
-     */
-    fun extendBeatmapInScore(scores: Iterable<LazerScore>): List<LazerScore>
+    fun extendBeatmapInScoreFromAPI(scores: Iterable<LazerScore>): List<LazerScore>
 
     fun getBeatmapFromDatabase(bid: Int): Beatmap {
         return getBeatmapFromDatabase(bid.toLong())
     }
 
-    // TODO database 存的谱面缺太多东西，比如甚至谱面状态都没有。。。
     fun getBeatmapFromDatabase(bid: Long): Beatmap
 
     fun isNotOverRating(bid: Long): Boolean

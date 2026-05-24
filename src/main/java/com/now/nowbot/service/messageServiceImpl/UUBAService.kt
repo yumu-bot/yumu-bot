@@ -1,9 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.osu.ValueMod
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -12,13 +11,13 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Attribute
+import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.BeatmapAnalysis
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Mapper
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
@@ -26,8 +25,6 @@ import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.UserIDUtil
 import org.springframework.stereotype.Service
-import org.springframework.util.LinkedMultiValueMap
-import org.springframework.util.MultiValueMap
 import java.text.DecimalFormat
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -40,6 +37,7 @@ class UUBAService(
     private val scoreApiService: OsuScoreApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
+    private val bindDao: BindDao,
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
     @Throws(Throwable::class)
@@ -86,156 +84,86 @@ class UUBAService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): BAParam {
+
         val isMyself = AtomicBoolean(false)
         val mode = InstructionUtil.getMode(matcher)
-
-        val user: OsuUser
-        val bests: List<LazerScore>
-
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
-        if (id != null) {
-            val async = AsyncMethodExecutor.awaitPair(
-                { userApiService.getOsuUser(id, mode.data!!) },
-                {
-                    val ss = scoreApiService.getBestScores(id, mode.data!!)
-
-                    BeatmapUtil.applyBeatmapChanges(ss)
-                    calculateApiService.applyStarToScores(ss)
-
-                    ss
-                }
+        // 1. 使用 if 表达式并结合解构声明，集中处理数据的获取逻辑
+        val (user, bests) = if (id != null) {
+            val m = OsuMode.getMode(mode.data,
+                bindDao.getBindModeFromID(id),
+                bindDao.getGroupModeConfig(event)
             )
 
-            user = async.first
-            bests = async.second.toList()
+            if (m.isNotDefault()) {
+                AsyncMethodExecutor.awaitPair(
+                    { userApiService.getOsuUser(id, m) },
+                    { scoreApiService.getBestScores(id, m) }
+                )
+            } else {
+                val fetchedUser = userApiService.getOsuUser(id)
+                val fetchedBests = scoreApiService.getBestScores(id, fetchedUser.currentOsuMode)
+                fetchedUser to fetchedBests
+            }
         } else {
-            user = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
-            bests = scoreApiService.getBestScores(user.userID, mode.data)
-
-            BeatmapUtil.applyBeatmapChanges(bests)
-            calculateApiService.applyStarToScores(bests)
+            val fetchedUser = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
+            val fetchedBests = scoreApiService.getBestScores(fetchedUser.userID, fetchedUser.currentOsuMode)
+            fetchedUser to fetchedBests
         }
 
-        val mapperIDs = bests.flatMap { it.beatmap.mapperIDs }.toSet()
-
-        val async2 = AsyncMethodExecutor.awaitPair(
-            { beatmapApiService.extendBeatmapInScore(bests) },
-            { userApiService.getUsers(mapperIDs) },
+        AsyncMethodExecutor.awaitTriple(
+            { BeatmapUtil.applyBeatmapChanges(bests) },
+            { calculateApiService.applyStarToScores(bests) },
+            { beatmapApiService.applyBeatmapExtend(bests) }
         )
 
-        return BAParam(user, async2.first, isMyself.get(), async2.second, 2)
+        return BAParam(user, bests, isMyself.get(), emptyList(), 2)
 
     }
 
     companion object {
-
-        /**
-         * 重写自己的获取
-         */
-        private fun <T> List<LazerScore>.sortCount2(
-            username: String,
-            sortedByDescending: (LazerScore) -> T
-        ): List<Triple<Int, Number, LazerScore>> where T : Number, T : Comparable<T> {
-            if (this.isEmpty()) throw NoSuchElementException.BestScore(username)
-
-            val sorted: List<Triple<Int, Number, LazerScore>> = this
-                .mapIndexed { index, score ->
-                    val value = sortedByDescending(score)
-                    Triple(index + 1, value, score)
-                }
-                .sortedByDescending { it.second }  // 这里可以直接比较，因为 T 是 Comparable<T>
-
-            val max = sorted.first()
-            val mid = sorted[sorted.size / 2]
-            val min = sorted.last()
-
-            return listOf(
-                Triple(-1, sorted.map { it.second.toString().toDouble() }.average(), LazerScore()),
-                max, mid, min,
-            )
-        }
-
-
         fun BAParam.getText(): String {
-            val name = this.user.username
-            val mode = this.user.currentOsuMode.fullName
+            val map = this.toMap(2)
 
-            val length = this.bests.sortCount2(name) { score -> score.beatmap.totalLength }
-            val combo = this.bests.sortCount2(name) { score -> score.maxCombo }
-            val star = this.bests.sortCount2(name) { score -> score.beatmap.starRating }
-            val bpm = this.bests.sortCount2(name) { score -> score.beatmap.bpm }
+            @Suppress("UNCHECKED_CAST")
+            val length = map["length_attr"] as List<BeatmapAnalysis>
 
-            val mapperMap = bests
-                .associateWith { it.beatmap.mapperIDs }
-                .flatMap { (score, mappers) ->
-                    mappers.map { mapper -> mapper to score }
-                }.groupBy({ it.first }, { it.second })
+            @Suppress("UNCHECKED_CAST")
+            val combo = map["combo_attr"] as? List<BeatmapAnalysis> ?: emptyList()
 
-            val mapperUserInfoMap = mappers.associateBy { it.userID }
+            @Suppress("UNCHECKED_CAST")
+            val star = map["star_attr"] as? List<BeatmapAnalysis> ?: emptyList()
 
-            val mapperList = mapperMap.map { entry -> entry.key
-                val microUser = mapperUserInfoMap[entry.key]
+            @Suppress("UNCHECKED_CAST")
+            val bpm = map["bpm_attr"] as? List<BeatmapAnalysis> ?: emptyList()
 
-                Mapper(
-                    avatarUrl = microUser?.avatarUrl ?: "https://a.ppy.sh/${entry.key}",
-                    username = microUser?.username ?: "UID: ${entry.key}",
-                    mapCount = entry.value.size,
-                    ppCount = entry.value.sumOf { it.pp }.toFloat(),
-                    // ppCount = entry.value.sumOf { it.weight?.pp ?: 0.0 }.toFloat(),
-                )
-            }.sortedByDescending { it.ppCount }
+            @Suppress("UNCHECKED_CAST")
+            val mappers = map["favorite_mappers"] as? List<Mapper> ?: emptyList()
 
-            val modsPPMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
+            @Suppress("UNCHECKED_CAST")
+            val modsAttribute = map["mods_attr"] as? List<Attribute> ?: emptyList()
 
-            bests.map { best ->
-                val m = best.mods.filter {
-                    if (it is ValueMod) {
-                        it.value != 0
-                    } else {
-                        true
-                    }
-                }
-
-                if (m.isNotEmpty()) {
-                    m.forEach {
-                        modsPPMap.add(it.acronym, best.weight!!.pp)
-                    }
-                }
-            }
-
-            val modsAttribute: List<Attribute> = run {
-                val modsAttributeTmp: MutableList<Attribute> = ArrayList(modsPPMap.size)
-                modsPPMap.forEach { (mod: String, value: MutableList<Double>) ->
-                    val attribute = Attribute(
-                        mod, value.size, value.sum(), value.average()
-                    )
-                    modsAttributeTmp.add(attribute)
-                }
-
-                modsAttributeTmp.sortedByDescending { it.ppCount }
-            }
-
-            val l = length.toResult { it.toInt().secondsToTime() }
-            val c = combo.toResult(suffix = "x") { it.toInt().toString() }
-            val r = star.toResult(suffix = "*") { it.toDouble().to2DigitString() }
-            val m = bpm.toResult { it.toDouble().to2DigitString() }
+            val l = length.map { it.ranking to it.length }.toResult { it.secondsToTime() }
+            val c = combo.map { it.ranking to it.combo }.toResult(suffix = "x") { it.toString() }
+            val r = star.map { it.ranking to it.star }.toResult(suffix = "*") { it.to2DigitString() }
+            val m = bpm.map { it.ranking to it.bpm }.toResult { it.toDouble().to2DigitString() }
 
             return """
-                $name: $mode
+                ${user.username}: ${user.currentOsuMode.fullName}
                 ---
-                [length]: ${l.first}
-                ${l.second}
+                [length]:
+                $l
                 ---
-                [combo]: ${c.first}
-                ${c.second}
+                [combo]:
+                $c
                 ---
-                [star]: ${r.first}
-                ${r.second}
+                [star]:
+                $r
                 ---
-                [bpm]: ${m.first}
-                ${m.second}
-            """.trimIndent() + "\n---\n[mappers]:\n" + mapperList.mapperToLine(5) + "\n---\n[mods]:\n" + modsAttribute.attrToLine(5)
+                [bpm]:
+                $m
+            """.trimIndent() + "\n---\n[mappers]:\n" + mappers.mapperToLine(5) + "\n---\n[mods]:\n" + modsAttribute.attrToLine(5)
         }
 
         /**
@@ -243,23 +171,18 @@ class UUBAService(
          * @param suffix 后缀，会添加到所有地方
          * @param function 格式化 triple 第二个值，用于时间的显示
          */
-        private fun <T> List<Triple<Int, T, LazerScore>>.toResult(
+        private fun <T> List<Pair<Int, T>>.toResult(
             suffix: String = "",
             function: (T) -> String = { it.toString() }
-        ): Pair<String, String> {
-            val average = "${function.invoke(this[0].second)}${suffix}"
-            val max = this[1].toLine(suffix, function)
-            val mid = this[2].toLine(suffix, function)
-            val min = this[3].toLine(suffix, function)
+        ): String {
+            val max = this[0].toLine(suffix, function)
+            val mid = this[1].toLine(suffix, function)
+            val min = this[2].toLine(suffix, function)
 
-            val first = "average: $average"
-
-            val second = "max: $max, mid: $mid, min: $min"
-
-            return first to second
+            return "max: $max, mid: $mid, min: $min"
         }
 
-        private fun <T> Triple<Int, T, LazerScore>.toLine(
+        private fun <T> Pair<Int, T>.toLine(
             suffix: String = "",
             function: (T) -> String = { it.toString() },
         ): String {

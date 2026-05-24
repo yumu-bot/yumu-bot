@@ -275,7 +275,7 @@ import kotlin.math.max
                                     (it.beatmaps?.all { that -> that.beatmapID != id } ?: true)
                         }).toHashSet()
 
-                relatedSets = beatmapApiService.extendBeatmapInSet(sets).asSequence()
+                relatedSets = beatmapApiService.extendBeatmapInSetFromAPI(sets).asSequence()
 
                 /*
                 relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
@@ -311,7 +311,7 @@ import kotlin.math.max
                             (set.beatmapsetID != user.userID) && (set.beatmaps?.all { that -> that.beatmapID != user.userID } ?: true)
                         }).toHashSet()
 
-                relatedSets = beatmapApiService.extendBeatmapInSet(sets).asSequence()
+                relatedSets = beatmapApiService.extendBeatmapInSetFromAPI(sets).asSequence()
 
                 /*
 

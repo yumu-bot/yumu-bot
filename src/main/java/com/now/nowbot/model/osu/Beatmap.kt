@@ -209,7 +209,13 @@ data class Beatmap(
     )
 
     @get:JsonProperty("mapper_ids")
-    val mapperIDs: List<Long> = owners?.map { it.userID } ?: listOf(mapperID)
+    val mapperIDs: List<Long>
+        get() = owners?.map { it.userID } ?: listOf(mapperID)
+
+    @get:JsonIgnore
+    val mappers: List<NanoUser>
+        get() = owners ?: listOf(NanoUser(mapperID, user?.username ?: "UID:${mapperID}"))
+
 
     //自己保存一份
     data class BeatmapDetails(

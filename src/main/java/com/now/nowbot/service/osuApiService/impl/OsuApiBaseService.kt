@@ -631,7 +631,7 @@ class OsuApiBaseService(
         CLOSED, OPEN, // HALF_OPEN
     }
 
-    fun syncUserToken(user: BindUser, isFirstTime: Boolean): String {
+    fun syncUserToken(user: BindUser, isFirstTime: Boolean): String? {
         val token = user.refreshToken
 
         if (token.isNullOrBlank()) {
@@ -670,7 +670,8 @@ class OsuApiBaseService(
                 401 -> {
                     bindDao.downgradeBind(user.userID)
                     log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
-                    throw NetworkException.UserException.Unauthorized()
+                    return null
+                    //throw NetworkException.UserException.Unauthorized()
                 }
 
                 403 -> throw NetworkException.UserException.Forbidden()

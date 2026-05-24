@@ -256,6 +256,10 @@ class BindDao(
         return fromLite(bindUserMapper.getByOsuID(userID))
     }
 
+    fun getBindModeFromID(userID: Long): OsuMode? {
+        return getBindUser(userID)?.mode
+    }
+
     fun getSBQQLiteFromUserID(userID: Long): SBQQBindLite? {
         return sbQQBindMapper.findByUserID(userID)
     }
