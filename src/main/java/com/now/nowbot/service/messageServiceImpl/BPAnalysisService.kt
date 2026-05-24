@@ -77,7 +77,7 @@ import java.util.regex.Matcher
                 rankMap.getOrPut(s.rank) { mutableListOf() }.add(weighted)
 
                 b.mappers.forEach { m ->
-                    fullMapperMap.getOrPut(m) { mutableListOf() }.add(weighted)
+                    fullMapperMap.getOrPut(m) { mutableListOf() }.add(s.pp)
                 }
             }
 
