@@ -19,7 +19,7 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
         VALUES (:userID, :mode, :updatedAt, :globalRank, :countryRank, :level, :rankCountScore, 
                 :playCount, :totalHits, :playTime, :rankedScore, :totalScore, 
                 :beatmapPlaycount, :replaysWatched, :maximumCombo, :achievementsCount) 
-        ON CONFLICT (user_id, mode) 
+        ON CONFLICT (mode, user_id)
         DO UPDATE SET
             updated_at = EXCLUDED.updated_at,
             global_rank = EXCLUDED.global_rank,
