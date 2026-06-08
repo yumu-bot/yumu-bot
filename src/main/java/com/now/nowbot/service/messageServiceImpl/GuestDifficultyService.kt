@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Beatmapset
-import com.now.nowbot.model.osu.MicroUser
+import com.now.nowbot.model.osu.NanoUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -13,14 +13,12 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.GuestDifficultyService.GuestParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
@@ -33,7 +31,7 @@ class GuestDifficultyService(
 
     data class GuestDifficultyOwner(
         @get:JsonProperty("user")
-        val user: MicroUser,
+        val user: NanoUser,
 
         @get:JsonProperty("received")
         val received: Int,
@@ -106,26 +104,19 @@ class GuestDifficultyService(
                 "q" to "creator=" + id.data!!, "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
 
-            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-            val query2 = mapOf(
-                "q" to id.data!!, "sort" to "ranked_desc", "s" to "any", "page" to 1
-            )
-
-            val async = AsyncMethodExecutor.awaitTriple(
+            val async = AsyncMethodExecutor.awaitPair(
                 { beatmapApiService.searchBeatmapsetParallel(query) },
-                { beatmapApiService.searchBeatmapsetParallel(query2) },
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
             )
 
             // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
-            val sets = (async.first.beatmapsets +
-                    async.second.beatmapsets.filter { set ->
-                        (set.beatmapsetID != id.data!!) && (set.beatmaps?.all { that -> that.beatmapID != id.data!! } ?: true)
-                    }).toHashSet()
+            val sets = async.first.beatmapsets
 
-            relatedSets = beatmapApiService.extendBeatmapInSetFromAPI(sets).toHashSet()
+            beatmapApiService.applyBeatmapsetExtend(sets)
 
-            user = async.third
+            relatedSets = sets.toHashSet()
+
+            user = async.second
             page = id.start ?: 1
         } else {
             val range = InstructionUtil.getUserWithRange(event, matcher, mode, isMyself)
@@ -135,33 +126,12 @@ class GuestDifficultyService(
                 "q" to "creator=" + user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
 
-            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-            val query2 = mapOf(
-                "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
-            )
-
-            val async = AsyncMethodExecutor.awaitPair(
-                { beatmapApiService.searchBeatmapsetParallel(query) },
-                { beatmapApiService.searchBeatmapsetParallel(query2) },
-            )
-
             // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
-            val sets = (async.first.beatmapsets +
-                    async.second.beatmapsets.filter { set ->
-                        (set.beatmapsetID != user.userID) && (set.beatmaps?.all { that -> that.beatmapID != user.userID } ?: true)
-                    }).toHashSet()
+            val sets = beatmapApiService.searchBeatmapsetParallel(query).beatmapsets
 
-            relatedSets = beatmapApiService.extendBeatmapInSetFromAPI(sets).toHashSet()
+            beatmapApiService.applyBeatmapsetExtend(sets)
 
-            /*
-
-            relatedSets = (async.first.beatmapsets.toHashSet() +
-                    async.second.beatmapsets.filter {
-                        it.beatmapsetID != user.userID &&
-                                (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
-                    }.toHashSet())
-
-             */
+            relatedSets = sets.toHashSet()
 
             page = range.start ?: 1
         }
@@ -173,26 +143,22 @@ class GuestDifficultyService(
         val user = this.user
         val relatedSets = this.relatedSets.asSequence()
 
-        val relatedUsers = run {
-            val idChunk = relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet().chunked(50)
+        val relatedUsers = relatedSets
+            .filter { it.creatorID != user.userID }
+            .flatMap { it.beatmaps.orEmpty() }
+            .flatMap { it.mappers }
+            .distinctBy { it.userID }
+            .filter { it.userID != user.userID }
 
-            val actions = idChunk.map {
-                Callable {
-                    userApiService.getUsers(it)
-                }
-            }
+        val (mySets, otherSets) = relatedSets.partition { it.creatorID == user.userID }
 
-            AsyncMethodExecutor.awaitList(actions).flatten()
+        val myOwnedDiffs = mySets.flatMap { it.beatmaps.orEmpty() }
+        val otherOwnedDiffs = otherSets.flatMap { it.beatmaps.orEmpty() }
+
+        val guestDiffs = myOwnedDiffs.filter { diff ->
+            diff.mapperIDs.any { it != user.userID }
         }
-
-//        AsyncMethodExecutor.asyncRunnableExecute {
-//            userApiService.asyncDownloadAvatar(relatedUsers)
-//        }
-
-        val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten().toList()
-
-        val myGuestDiffs = relatedDiffs.filter { it.mapperIDs.contains(user.userID) && it.beatmapset?.creatorID != user.userID }
-        val guestDiffs = relatedDiffs.filter { !it.mapperIDs.contains(user.userID) && it.beatmapset?.creatorID == user.userID }
+        val myGuestDiffs = otherOwnedDiffs.filter { user.userID in it.mapperIDs }
 
         val guestDifficultyOwners = relatedUsers.map { u ->
             val re = guestDiffs.filter { it.mapperIDs.contains(u.userID) }
@@ -211,7 +177,7 @@ class GuestDifficultyService(
             it.sent + it.received
         }.sortedByDescending {
             it.sentRanked + it.receivedRanked
-        }
+        }.toList()
 
         if (guestDifficultyOwners.isEmpty()) {
             throw NoSuchElementException.GuestDiff()

@@ -1,6 +1,8 @@
 package com.now.nowbot.model.filter
 
 import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.enums.OsuGenre
+import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTime
@@ -153,8 +155,8 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
                     ts || fit(operator, s.title, str) || fit(operator, s.titleUnicode, str) || fit(operator, s.artist, str) || fit(operator, s.artistUnicode, str) || fit(operator, s.source, str)
                 }
-                GENRE -> fit(operator, s.genreID.toInt(), DataUtil.getGenre(str)?.toInt() ?: return false)
-                LANGUAGE -> fit(operator, s.languageID.toInt(), DataUtil.getLanguage(str)?.toInt() ?: return false)
+                GENRE -> fit(operator, s.genreID.toInt(), OsuGenre.getByte(str)?.toInt() ?: return false)
+                LANGUAGE -> fit(operator, s.languageID.toInt(), OsuLanguage.getByte(str)?.toInt() ?: return false)
                 DIFFICULTY -> bs.map {
                     fit(operator, it.difficultyName, str)
                 }.contains(true)

@@ -1,5 +1,6 @@
 package com.now.nowbot.dao
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.entity.BeatmapExtendLite
 import com.now.nowbot.entity.BeatmapLite
 import com.now.nowbot.entity.BeatmapLite.BeatmapHitLengthResult
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import kotlin.collections.orEmpty
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -325,83 +327,117 @@ class BeatmapDao(
         val b = extendBeatmapRepository.findByBeatmapID(from.beatmapID) ?: return null
         val x = b.beatmapset
 
-        val isRanked = x.ranked.toInt() > 0
+        from.extend(b, from.beatmapset?.extend(x), x.beatmapsetID)
+
+        return b.beatmapID
+    }
+
+    /**
+     * 如果成功，就返回这个谱面集 ID
+     */
+    fun extendBeatmapset(from: Beatmapset): Long? {
+        val set = extendBeatmapSetRepository.findByBeatmapsetID(from.beatmapsetID) ?: return null
+
+        val bs = from.beatmaps.orEmpty().map { b ->
+            extendBeatmapRepository.findByBeatmapID(b.beatmapID) ?: return null
+        }.associateBy { it.beatmapID }
+
+        from.beatmaps.orEmpty().forEach { b ->
+            bs[b.beatmapID]?.let { x ->
+                b.extend(x, null, set.beatmapsetID)
+            }
+        }
+
+        from.extend(set)
+
+        return set.beatmapsetID
+    }
+
+    @CanIgnoreReturnValue
+    private fun Beatmap.extend(b: BeatmapExtendLite, s: Beatmapset? = null, setID: Long? = null): Beatmap {
+        setID?.let {
+            beatmapsetID = setID
+        }
+
+        s?.let {
+            beatmapset = s
+        }
+
+        failTimes = b.failTimes?.let { JacksonUtil.toNode(it) }
+        maxCombo = b.maxCombo
+        owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
+
+        return this
+    }
+
+    @CanIgnoreReturnValue
+    private fun Beatmapset.extend(x: BeatmapsetExtendLite): Beatmapset {
 
         fun Byte.isBitSet(bitPosition: Int): Boolean {
             return (this.toInt() and (1 shl bitPosition)) != 0
         }
 
-        val set = (from.beatmapset ?: Beatmapset()).apply {
-            animeCover = x.animeCover
-            artist = x.artist
-            artistUnicode = x.artistUnicode
-            covers = Covers.getCoverFromCacheID(x.beatmapsetID, x.coverID)
-            creator = x.creator
-            favouriteCount = x.favouriteCount
-            genreID = x.genreID
-            hype = null
-            beatmapsetID = x.beatmapsetID
-            languageID = x.languageID
-            nsfw = x.nsfw
-            offset = x.recommendOffset
-            playCount = x.playCount
-            previewUrl = "//b.ppy.sh/preview/${x.beatmapsetID}.mp3"
-            source = x.source
-            spotlight = x.spotlight
-            status = x.status
-            title = x.title
-            titleUnicode = x.titleUnicode
-            trackID = x.trackID
-            creatorID = x.creatorID
-            video = x.video
-            bpm = x.bpm
-            canBeHyped = !isRanked
-            deletedAt = null
-            discussionLocked = x.discussionLocked
-            scoreable = true
-            lastUpdated = x.lastUpdated.atOffset(ZoneOffset.ofHours(8))
-            legacyThreadUrl = x.threadID?.let { "https://osu.ppy.sh/community/forums/topics/$it" }
-            nominationsSummary = Beatmapset.NominationsSummary(
-                x.nominationsCurrent ?: 0,
-                x.nominationsRulesets?.let {
-                    val rulesets = mutableListOf<String>()
+        animeCover = x.animeCover
+        artist = x.artist
+        artistUnicode = x.artistUnicode
+        covers = Covers.getCoverFromCacheID(x.beatmapsetID, x.coverID)
+        creator = x.creator
+        favouriteCount = x.favouriteCount
+        genreID = x.genreID
+        hype = null
+        beatmapsetID = x.beatmapsetID
+        languageID = x.languageID
+        nsfw = x.nsfw
+        offset = x.recommendOffset
+        playCount = x.playCount
+        previewUrl = "//b.ppy.sh/preview/${x.beatmapsetID}.mp3"
+        source = x.source
+        spotlight = x.spotlight
+        status = x.status
+        title = x.title
+        titleUnicode = x.titleUnicode
+        trackID = x.trackID
+        creatorID = x.creatorID
+        video = x.video
+        bpm = x.bpm
+        canBeHyped = x.ranked <= 0.toByte()
+        deletedAt = null
+        discussionLocked = x.discussionLocked
+        scoreable = true
+        lastUpdated = x.lastUpdated.atOffset(ZoneOffset.ofHours(8))
+        legacyThreadUrl = x.threadID?.let { "https://osu.ppy.sh/community/forums/topics/$it" }
+        nominationsSummary = Beatmapset.NominationsSummary(
+            x.nominationsCurrent ?: 0,
+            x.nominationsRulesets?.let {
+                val rulesets = mutableListOf<String>()
 
-                    if (it.isBitSet(1)) rulesets.add("osu")
+                if (it.isBitSet(1)) rulesets.add("osu")
 
-                    if (it.isBitSet(2)) rulesets.add("taiko")
+                if (it.isBitSet(2)) rulesets.add("taiko")
 
-                    if (it.isBitSet(3)) rulesets.add("fruits")
+                if (it.isBitSet(3)) rulesets.add("fruits")
 
-                    if (it.isBitSet(4)) rulesets.add("mania")
+                if (it.isBitSet(4)) rulesets.add("mania")
 
-                    return@let rulesets
-                }.orEmpty(), Beatmapset.RequiredMeta(
-                    x.nominationsRequiredMain ?: 0,
-                    x.nominationsRequiredSecondary ?: 0
-                )
+                return@let rulesets
+            }.orEmpty(), Beatmapset.RequiredMeta(
+                x.nominationsRequiredMain ?: 0,
+                x.nominationsRequiredSecondary ?: 0
             )
-            ranked = x.ranked
-            rankedDate = x.rankedDate?.atOffset(ZoneOffset.ofHours(8))
-            rating = x.rating
-            storyboard = x.storyboard
-            submittedDate = x.submittedDate.atOffset(ZoneOffset.ofHours(8))
-            this.tags = x.tags
-            availability = Beatmapset.Availability(
-                x.downloadDisabled,
-                x.moreInformation
-            )
-            ratings = x.ratings.toList()
-        }
+        )
+        ranked = x.ranked
+        rankedDate = x.rankedDate?.atOffset(ZoneOffset.ofHours(8))
+        rating = x.rating
+        storyboard = x.storyboard
+        submittedDate = x.submittedDate.atOffset(ZoneOffset.ofHours(8))
+        this.tags = x.tags
+        availability = Beatmapset.Availability(
+            x.downloadDisabled,
+            x.moreInformation
+        )
+        ratings = x.ratings.toList()
 
-        from.apply {
-            beatmapsetID = x.beatmapsetID
-            beatmapset = set
-            failTimes = b.failTimes?.let { JacksonUtil.toNode(it) }
-            maxCombo = b.maxCombo
-            owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
-        }
-
-        return b.beatmapID
+        return this
     }
 
     fun existsBeatmapsetFromExtend(beatmapsetID: Long): Boolean {

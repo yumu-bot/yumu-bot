@@ -855,7 +855,7 @@ import kotlin.math.min
         val async = AsyncMethodExecutor.awaitQuad(
             { beatmapApiService.searchBeatmapsetParallel(query) },
             { beatmapApiService.searchBeatmapsetParallel(query2) },
-            { userApiService.getUserRecentActivity(userID, 0, 100).filter { it.isMapping } },
+            { userApiService.getUserRecentActivity(userID).filter { it.isMapping } },
             { userApiService.getOsuUser(userID) },
         )
 

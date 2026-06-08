@@ -78,7 +78,7 @@ interface OsuUserApiService {
 
     fun getFriendList(user: BindUser): List<LazerFriend>
 
-    fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent>
+    fun getUserRecentActivity(id: Long, offset: Int = 0, limit: Int = 100): List<ActivityEvent>
 
     fun getUserKudosu(user: BindUser): KudosuHistory
 

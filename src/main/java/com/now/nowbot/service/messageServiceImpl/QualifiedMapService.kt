@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.BeatmapsetSearch
 import com.now.nowbot.qq.event.MessageEvent
@@ -122,7 +123,7 @@ import java.util.regex.Matcher
 
         val mode = OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), bindDao.getGroupModeConfig(event))
         val status = DataUtil.getStatus(statusStr)
-        val genre = DataUtil.getGenre(genreStr)
+        val genre = OsuGenre.getByte(genreStr)
         val sort = DataUtil.getSort(sortStr ?: "ranked_asc")
 
         return QualifiedMapParam(

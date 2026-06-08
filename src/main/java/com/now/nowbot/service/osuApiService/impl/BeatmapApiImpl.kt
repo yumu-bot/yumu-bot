@@ -844,9 +844,18 @@ class BeatmapApiImpl(
                     .body(body)
                     .toBody<AttributesResponse>().attributes
             }
-        } catch (_: Exception) {
-            log.error("谱面请求：遇到了无法处理的属性：${JacksonUtil.objectToJsonPretty(body)}}")
-            BeatmapDifficultyAttributes()
+        } catch (_: NetworkException.BeatmapException.UnprocessableEntity) {
+            log.error("谱面请求：遇到了无法处理的属性：${id}: ${JacksonUtil.objectToJsonPretty(body)}}")
+
+            body.remove("ruleset_id")
+
+            return request { client ->
+                client.post()
+                    .uri("beatmaps/{id}/attributes", id)
+                    .headers(base::insertHeader)
+                    .body(body)
+                    .toBody<AttributesResponse>().attributes
+            }
         }
     }
 
@@ -1151,6 +1160,18 @@ class BeatmapApiImpl(
 
         if (notExistBeatmaps.isNotEmpty()) {
             applyExtendFromAPI(notExistBeatmaps)
+        }
+    }
+
+    override fun applyBeatmapsetExtend(sets: Iterable<Beatmapset>) {
+        val existSet = sets.mapNotNull { s ->
+            beatmapDao.extendBeatmapset(s)
+        }.toSet()
+
+        val notExistBeatmapsets = sets.filterNot { it.beatmapsetID in existSet }
+
+        if (notExistBeatmapsets.isNotEmpty()) {
+            extendBeatmapInSetFromAPI(notExistBeatmapsets)
         }
     }
 

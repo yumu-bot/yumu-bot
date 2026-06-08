@@ -1,6 +1,8 @@
 package com.now.nowbot.model.filter
 
 import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.enums.OsuGenre
+import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
@@ -10,7 +12,6 @@ import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
-import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -321,8 +322,8 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                             || fit(operator, it.beatmapset.source, str)
                 }
 
-                GENRE -> fit(operator, it.beatmapset.genreID.toInt(), DataUtil.getGenre(str)?.toInt() ?: return false)
-                LANGUAGE -> fit(operator, it.beatmapset.languageID.toInt(), DataUtil.getLanguage(str)?.toInt() ?: return false)
+                GENRE -> fit(operator, it.beatmapset.genreID.toInt(), OsuGenre.getByte(str)?.toInt() ?: return false)
+                LANGUAGE -> fit(operator, it.beatmapset.languageID.toInt(), OsuLanguage.getByte(str)?.toInt() ?: return false)
 
                 DIFFICULTY -> fit(operator, it.beatmap.difficultyName, str)
 
@@ -564,6 +565,6 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             }
         }
 
-        private val log = LoggerFactory.getLogger(ScoreFilter::class.java)
+        // private val log = LoggerFactory.getLogger(ScoreFilter::class.java)
     }
 }

@@ -135,6 +135,8 @@ interface OsuBeatmapApiService {
         applyBeatmapExtend(scoreMap.values)
     }
 
+    fun applyBeatmapsetExtend(sets: Iterable<Beatmapset>)
+
     // 获取Q区谱面大致的上架时间
     fun getBeatmapsetRankedTime(beatmap: Beatmap): String
 

@@ -4,6 +4,8 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.GuessDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.OsuGenre
+import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Covers
 import com.now.nowbot.model.osu.LazerScore
@@ -505,9 +507,9 @@ class GuessService(
                 } else {
                     MessageChain("谱面 #$i 的来源是 ${s.source}。")
                 }
-                LANGUAGE -> MessageChain("谱面 #$i 的语言是 ${DataUtil.getLanguageName(s.languageID)}。")
+                LANGUAGE -> MessageChain("谱面 #$i 的语言是 ${OsuLanguage.getFormalName(s.languageID)}。")
                 DIFFICULTY_NAME -> MessageChain("谱面 #$i 的难度名是 ${b.difficultyName}。")
-                GENRE -> MessageChain("谱面 #$i 的风格是 ${DataUtil.getGenreName(s.genreID)}。")
+                GENRE -> MessageChain("谱面 #$i 的风格是 ${OsuGenre.getFormalName(s.genreID)}。")
                 ARTIST -> MessageChain("谱面 #$i 的艺术家是 ${s.artistUnicode}。")
                 CREATOR -> if (b.owners.isNullOrEmpty()) {
                     MessageChain("谱面 #$i 的创建者是 ${s.creator}。")

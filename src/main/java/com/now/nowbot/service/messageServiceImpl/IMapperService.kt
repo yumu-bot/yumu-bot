@@ -1,6 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.OsuGenre
+import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.ActivityEvent
@@ -23,7 +25,6 @@ import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.max
 
 @Service("I_MAPPER") class IMapperService(
     private val userApiService: OsuUserApiService,
@@ -81,41 +82,40 @@ import kotlin.math.max
     companion object {
         private val log: Logger = LoggerFactory.getLogger(IMapperService::class.java)
 
-        fun getIMapperV2(param: IMapperParam, userApiService: OsuUserApiService): Map<String, Any> {
+        fun getIMapperV2(param: IMapperParam): Map<String, Any> {
             val user = param.user
             val relatedSets = param.relatedSets
             val activity = param.activities
 
-            val relatedUsers = userApiService.getUsers(
-                relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet(),
-                false
-            )
+            val relatedUsers = relatedSets
+                .filter { it.creatorID != user.userID }
+                .flatMap { it.beatmaps.orEmpty() }
+                .flatMap { it.mappers }
+                .distinctBy { it.userID }
+                .filter { it.userID != user.userID }
 
             val recentActivity: List<ActivityEvent> = try {
-                activity.mapIndexed { i, it ->
-                    val before = activity[max(0, i - 1)]
-
-                    if (it != before || i == 0) {
-                        it
-                    } else {
-                        null
-                    }
-                }.filterNotNull()
-            } catch (_: NoSuchElementException) {
-                listOf()
+                activity.filterIndexed { i, it ->
+                    i == 0 || it != param.activities[i - 1]
+                }
             } catch (e: Exception) {
                 log.error("谱师信息：筛选出错", e)
-                listOf()
+                emptyList()
             }
 
-            val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten()
+            val (mySets, otherSets) = relatedSets.partition { it.creatorID == user.userID }
 
-            val mySets = relatedSets.filter { it.creatorID == user.userID }
-            val otherSets = relatedSets.filter { it.creatorID != user.userID }
+            val myOwnedDiffs = mySets.flatMap { it.beatmaps.orEmpty() }
+            val otherOwnedDiffs = otherSets.flatMap { it.beatmaps.orEmpty() }
 
-            val myDiffs = relatedDiffs.filter { it.mapperIDs.contains(user.userID) } // 包括了别人 Set 里的
-            val myGuestDiffs = relatedDiffs.filter { it.mapperIDs.contains(user.userID) && it.beatmapset?.creatorID != user.userID }
-            val guestDiffs = relatedDiffs.filter { !it.mapperIDs.contains(user.userID) && it.beatmapset?.creatorID == user.userID }
+            val myDiffs = myOwnedDiffs.filter { user.userID in it.mapperIDs } +
+                    otherOwnedDiffs.filter { user.userID in it.mapperIDs }
+
+            val guestDiffs = myOwnedDiffs.filter { diff ->
+                diff.mapperIDs.any { it != user.userID }
+            }
+            val myGuestDiffs = otherOwnedDiffs.filter { user.userID in it.mapperIDs }
+
 
             val guestDifficultyOwners = relatedUsers.map { u ->
                 val re = guestDiffs.filter { it.mapperIDs.contains(u.userID) }
@@ -141,69 +141,32 @@ import kotlin.math.max
                 .sortedByDescending { it.ranked }
                 .take(6)
 
-            val genreKeys = arrayOf(
-                "unspecified",
-                "video game",
-                "anime",
-                "rock",
-                "pop",
-                "other",
-                "novelty",
-                "hip hop",
-                "electronic",
-                "metal",
-                "classical",
-                "folk",
-                "jazz"
-            )
+            val genre = findGenreCounts( myDiffs)
 
-            val genre = findKey(genreKeys, myDiffs)
-
-            val languageKeys = arrayOf(
-                "unspecified",
-                "english",
-                "chinese",
-                "french",
-                "german",
-                "italian",
-                "japanese",
-                "korean",
-                "spanish",
-                "swedish",
-                "russian",
-                "polish",
-                "instrumental",
-                "other"
-            )
-
-            val language = findKey(languageKeys, myDiffs)
+            val language = findLanguageCounts( myDiffs)
 
             val lengthArr = IntArray(8)
 
-            run {
-                val lengthMaxBoundary = intArrayOf(60, 100, 140, 180, 220, 260, 300, Int.MAX_VALUE)
+            val lengthMaxBoundary = intArrayOf(60, 100, 140, 180, 220, 260, 300, Int.MAX_VALUE)
 
-                for (f in myDiffs.map { it.totalLength }) {
-                    for (i in lengthMaxBoundary.indices) {
-                        if (f <= lengthMaxBoundary[i]) {
-                            lengthArr[i]++
-                            break
-                        }
+            for (f in myDiffs.map { it.totalLength }) {
+                for (i in lengthMaxBoundary.indices) {
+                    if (f <= lengthMaxBoundary[i]) {
+                        lengthArr[i]++
+                        break
                     }
                 }
             }
 
             val diffArr = IntArray(8)
 
-            run {
-                val starMaxBoundary = doubleArrayOf(2.0, 2.8, 4.0, 5.3, 6.5, 8.0, 10.0, Double.MAX_VALUE)
+            val starMaxBoundary = doubleArrayOf(2.0, 2.8, 4.0, 5.3, 6.5, 8.0, 10.0, Double.MAX_VALUE)
 
-                for (d in myDiffs.map { it.starRating }) {
-                    for (i in starMaxBoundary.indices) {
-                        if (d <= starMaxBoundary[i]) {
-                            diffArr[i]++
-                            break
-                        }
+            for (d in myDiffs.map { it.starRating }) {
+                for (i in starMaxBoundary.indices) {
+                    if (d <= starMaxBoundary[i]) {
+                        diffArr[i]++
+                        break
                     }
                 }
             }
@@ -244,111 +207,20 @@ import kotlin.math.max
                 )
         }
 
-        fun getIMapperParam(event: MessageEvent, matcher: Matcher, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService): IMapperParam {
-            val mode = InstructionObject(OsuMode.DEFAULT)
-            val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
-
-            val user: OsuUser
-            val relatedSets: Sequence<Beatmapset>
-            val activity: List<ActivityEvent>
-
-            if (id != null) {
-                val query = mapOf(
-                    "q" to "creator=${id}", "sort" to "ranked_desc", "s" to "any", "page" to 1
-                )
-
-                // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-                val query2 = mapOf(
-                    "q" to id, "sort" to "ranked_desc", "s" to "any", "page" to 1
-                )
-
-                val async = AsyncMethodExecutor.awaitQuad(
-                    { beatmapApiService.searchBeatmapsetParallel(query) },
-                    { beatmapApiService.searchBeatmapsetParallel(query2) },
-                    { userApiService.getUserRecentActivity(id, 0, 100).filter { it.isMapping } },
-                    { userApiService.getOsuUser(id, mode.data!!) },
-                )
-                // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
-                val sets = (async.first.first.beatmapsets +
-                        async.first.second.beatmapsets.filter {
-                            it.beatmapsetID != id &&
-                                    (it.beatmaps?.all { that -> that.beatmapID != id } ?: true)
-                        }).toHashSet()
-
-                relatedSets = beatmapApiService.extendBeatmapInSetFromAPI(sets).asSequence()
-
-                /*
-                relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
-                    it.beatmapsetID != id && (it.beatmaps?.all { that -> that.beatmapID != id } ?: true)
-                }.toHashSet()).asSequence()
-
-                 */
-
-                activity = async.second.first
-
-                user = async.second.second
-            } else {
-                user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
-
-                val query = mapOf(
-                    "q" to "creator=${user.userID}", "sort" to "ranked_desc", "s" to "any", "page" to 1
-                )
-
-                // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-                val query2 = mapOf(
-                    "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
-                )
-
-                val async = AsyncMethodExecutor.awaitTriple(
-                    { beatmapApiService.searchBeatmapsetParallel(query) },
-                    { beatmapApiService.searchBeatmapsetParallel(query2) },
-                    { userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping } }
-                )
-
-                // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
-                val sets = (async.first.beatmapsets +
-                        async.second.beatmapsets.filter { set ->
-                            (set.beatmapsetID != user.userID) && (set.beatmaps?.all { that -> that.beatmapID != user.userID } ?: true)
-                        }).toHashSet()
-
-                relatedSets = beatmapApiService.extendBeatmapInSetFromAPI(sets).asSequence()
-
-                /*
-
-
-                relatedSets = (async.first.beatmapsets.toHashSet() + async.second.beatmapsets.filter {
-                    it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
-                }.toHashSet()).asSequence()
-
-                 */
-
-                activity = async.third
-            }
-
-            return IMapperParam(user, relatedSets, activity)
-        }
-
         fun getIMapperV1(
             param: IMapperParam
         ): Map<String, Any?> {
             val result = param.relatedSets
             val user = param.user
+            val activity = param.activities
 
             val mappingActivity: List<ActivityEvent> = try {
-                param.activities.mapIndexed { i, it ->
-                    val before = param.activities[max(0, i - 1)]
-
-                    if (it != before || i == 0) {
-                        it
-                    } else {
-                        null
-                    }
-                }.filterNotNull()
-            } catch (_: NoSuchElementException) {
-                listOf()
+                activity.filterIndexed { i, it ->
+                    i == 0 || it != param.activities[i - 1]
+                }
             } catch (e: Exception) {
                 log.error("谱师信息：筛选出错", e)
-                listOf()
+                emptyList()
             }
 
             val mostPopularBeatmap =
@@ -451,30 +323,101 @@ import kotlin.math.max
             )
         }
 
-        private fun findKey(keys: Array<String>, maps: Sequence<Beatmap>): IntArray {
-            val result = IntArray(keys.size)
-            val hasAnyGenre = AtomicBoolean(false)
 
-            //逻辑应该是先每张图然后再遍历12吧？
-            maps.forEach {
-                val str = it.beatmapset?.tags?.lowercase() ?: ""
 
-                keys.forEachIndexed { i, keyword ->
-                    if (str.contains(keyword, ignoreCase = true)) {
+        fun getIMapperParam(event: MessageEvent, matcher: Matcher, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService): IMapperParam {
+            val mode = InstructionObject(OsuMode.DEFAULT)
+            val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
+
+            val user: OsuUser
+            val relatedSets: Sequence<Beatmapset>
+            val activity: List<ActivityEvent>
+
+            if (id != null) {
+                val query = mapOf(
+                    "q" to "creator=${id}", "sort" to "ranked_desc", "s" to "any", "page" to 1
+                )
+
+                val async = AsyncMethodExecutor.awaitTriple(
+                    { beatmapApiService.searchBeatmapsetParallel(query) },
+                    { userApiService.getUserRecentActivity(id).filter { it.isMapping } },
+                    { userApiService.getOsuUser(id, mode.data!!) },
+                )
+                val sets = async.first.beatmapsets
+
+                beatmapApiService.applyBeatmapsetExtend(sets)
+
+                relatedSets = sets.asSequence()
+
+                activity = async.second
+                user = async.third
+            } else {
+                user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
+
+                val query = mapOf(
+                    "q" to "creator=${user.userID}", "sort" to "ranked_desc", "s" to "any", "page" to 1
+                )
+
+                val async = AsyncMethodExecutor.awaitPair(
+                    { beatmapApiService.searchBeatmapsetParallel(query) },
+                    { userApiService.getUserRecentActivity(user.userID).filter { it.isMapping } }
+                )
+
+                val sets = async.first.beatmapsets
+
+                beatmapApiService.applyBeatmapsetExtend(sets)
+
+                relatedSets = sets.asSequence()
+
+                activity = async.second
+            }
+
+            return IMapperParam(user, relatedSets, activity)
+        }
+
+        private fun findGenreCounts(maps: Collection<Beatmap>): IntArray {
+            val genres = OsuGenre.entries
+            val result = IntArray(genres.size)
+
+            maps.forEach { map ->
+                val tags = map.beatmapset?.tags?.lowercase() ?: ""
+                var matchedAnyGenre = false
+
+                for (i in 1 until genres.size) {
+                    val genre = genres[i]
+                    if (tags.contains(genre.formalName)) {
                         result[i]++
-
-                        if (i > 0) {
-                            hasAnyGenre.set(true)
-                        }
+                        matchedAnyGenre = true
                     }
                 }
 
-                //0是实在找不到 tag 的时候所赋予的默认值
-                if (!hasAnyGenre.get()) {
-                    result[0] ++
+                if (!matchedAnyGenre) {
+                    result[0]++
+                }
+            }
+
+            return result
+        }
+
+        private fun findLanguageCounts(maps: Collection<Beatmap>): IntArray {
+            val languages = OsuLanguage.entries
+            val result = IntArray(languages.size)
+
+            maps.forEach { map ->
+                val tags = map.beatmapset?.tags?.lowercase() ?: ""
+                var matchedAnyLanguage = false
+
+                for (i in 1 until languages.size) {
+                    val lang = languages[i]
+                    if (tags.contains(lang.formalName)) {
+                        result[i]++
+                        matchedAnyLanguage = true
+                    }
                 }
 
-                hasAnyGenre.set(false)
+                if (!matchedAnyLanguage) {
+                    result[0]++
+                }
             }
 
             return result

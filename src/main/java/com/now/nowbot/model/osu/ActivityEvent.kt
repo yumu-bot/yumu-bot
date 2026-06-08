@@ -137,13 +137,7 @@ class ActivityEvent {
     var beatmapSet: EventBeatmapset? = null
 
     val isMapping: Boolean
-        get() = type == EventType.BeatmapsetApprove
-                || type == EventType.BeatmapsetDelete
-                || type == EventType.BeatmapsetRevive
-                || type == EventType.BeatmapsetUpdate
-                || type == EventType.BeatmapsetUpload
-
-
+        get() = type in MAPPING_EVENTS
 
     override fun equals(other: Any?): Boolean {
         if (other is ActivityEvent) {
@@ -158,5 +152,15 @@ class ActivityEvent {
 
     override fun toString(): String {
         return "ActivityEvent(createdAt=$createdAt, eventID=$eventID, type=$type, count=$count, approval=$approval, scoreRank=$scoreRank, rank=$rank, mode=$mode, achievement=$achievement, user=$user, beatmap=$beatmap, beatmapSet=$beatmapSet, isMapping=$isMapping)"
+    }
+
+    companion object {
+        private val MAPPING_EVENTS = setOf(
+            EventType.BeatmapsetApprove,
+            EventType.BeatmapsetDelete,
+            EventType.BeatmapsetRevive,
+            EventType.BeatmapsetUpdate,
+            EventType.BeatmapsetUpload
+        )
     }
 }

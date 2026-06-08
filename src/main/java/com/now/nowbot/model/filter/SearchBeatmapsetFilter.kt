@@ -2,6 +2,8 @@ package com.now.nowbot.model.filter
 
 import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.Operator.Companion.getText
+import com.now.nowbot.model.enums.OsuGenre
+import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
@@ -122,12 +124,12 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                             s?.let { "s" to it }
                         }
                         GENRE -> {
-                            val g = DataUtil.getGenre(text)?.toString()
+                            val g = OsuGenre.getByte(text)?.toString()
 
                             g?.let { "g" to it }
                         }
                         LANGUAGE -> {
-                            val l = DataUtil.getLanguage(text)?.toString()
+                            val l = OsuLanguage.getByte(text)?.toString()
 
                             l?.let { "l" to it }
                         }

@@ -429,7 +429,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // ...
     // #7 娱乐指令
     DICE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("d", "dice")
+        appendOfficialCommandsIgnoreAll("d", "dice", "roll")
         appendCaptureGroup("number", "-?\\d", ANY)
         appendCaptureGroup("text", REG_ANYTHING, MORE)
     }),
