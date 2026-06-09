@@ -104,16 +104,12 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
      * 不再发送网络请求，只做内存级别的实例查找替换。
      */
     private fun tryRecoverBot(): Boolean {
-        val container = OneBotConfig.getBotContainer().robots
+        val container = OneBotConfig.getBotContainer()?.robots
 
-        if (container.containsKey(bot.selfId)) {
-            val newBot = container[bot.selfId]
-            if (newBot != null) {
-                this.bot = newBot
-                return true
-            }
-        }
-        return false
+        val newBot = container?.get(bot.selfId) ?: return false
+
+        this.bot = newBot
+        return true
     }
 
     companion object {
