@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.MaiCabinet
 import com.now.nowbot.model.enums.MaiPlateType
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.maimai.MaiBestScore
@@ -207,9 +208,13 @@ class MaiVersionScoreService(
             .mapNotNull { (identity, pairs) ->
                 val (songID, type) = identity
 
-                val maiSong = maiDao.findLxMaiSongByID(songID)?.toMaiSong(
-                    type.equals("dx", true)
-                )
+                val cabinet = if (type.equals("dx", true)) {
+                    MaiCabinet.DX
+                } else {
+                    MaiCabinet.SD
+                }
+
+                val maiSong = maiDao.findLxMaiSongByID(songID)?.toMaiSong(cabinet)
 
                 val mergedHighlights = pairs.flatMapTo(mutableSetOf()) { it.second }
 

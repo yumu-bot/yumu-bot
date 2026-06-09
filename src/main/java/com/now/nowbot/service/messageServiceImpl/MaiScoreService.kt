@@ -14,6 +14,7 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.ASyncMessageUtil
@@ -25,6 +26,7 @@ import java.util.regex.Matcher
 
 @Service("MAI_SCORE") class MaiScoreService(
     private val maimaiApiService: MaimaiApiService,
+    private val lxMaiApiService: LxMaiApiService,
     private val imageService: ImageService,
     private val maiDao: MaiDao
 ) : MessageService<MaiScoreService.MaiScoreParam> {
@@ -170,7 +172,7 @@ import java.util.regex.Matcher
             val song: MaiSong
 
             if (id != null) {
-                song = maimaiApiService.getMaimaiSong(id)
+                song = lxMaiApiService.getMaiSong(id.toInt())
                     ?: maimaiApiService.getMaimaiAliasSong(id.toString()) // 有的歌曲外号叫 333
                     ?: throw NoSuchElementException.Song(id)
             } else {
@@ -221,9 +223,9 @@ import java.util.regex.Matcher
             val anotherResult: MaiSong? = if (song.isUtage) {
                 null
             } else if (song.isDeluxe) {
-                maimaiApiService.getMaimaiSong(song.songID - 10000L)
+                lxMaiApiService.getMaiSong(song.songID - 10000)
             } else {
-                maimaiApiService.getMaimaiSong(song.songID + 10000L)
+                lxMaiApiService.getMaiSong(song.songID + 10000)
             }
 
             // 只有一种谱面
@@ -310,8 +312,8 @@ import java.util.regex.Matcher
                 result.add(song)
 
                 // 计算互补 ID（SD ↔ DX）
-                val anotherID = if (song.isDeluxe) song.songID - 10000L else song.songID + 10000L
-                val extraSong = maimaiApiService.getMaimaiSong(anotherID)
+                val anotherID = if (song.isDeluxe) song.songID - 10000 else song.songID + 10000
+                val extraSong = lxMaiApiService.getMaiSong(anotherID)
 
                 if (extraSong != null && extraSong.title == song.title) {
                     if (seenIDs.add(extraSong.songID)) {

@@ -46,8 +46,8 @@ interface LxMaiApiService {
         /**
          * 落雪只记录准确的 songID，此时不需要 10000 以上的单位
          */
-        fun convertToLxMaiSongID(songID: Any): Int {
-            val id = songID.toString().toInt()
+        fun convertToLxMaiSongID(songID: Number): Int {
+            val id = songID.toInt()
 
             return if (id in 10000 ..< 100000) {
                 id % 10000

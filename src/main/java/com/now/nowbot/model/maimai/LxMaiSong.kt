@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import com.now.nowbot.model.enums.MaiCabinet
 import com.now.nowbot.model.enums.MaiVersion
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
@@ -39,15 +40,28 @@ data class LxMaiSong(
     // 自己设置，可以高亮的难度，按 0-4 排布。如果是 null，则会全部显示（也包括宴会场）
     @JsonProperty("highlight") var highlight: List<Int>? = null
 
-    fun toMaiSong(type: Boolean? = null): MaiSong {
+    fun toMaiSong(cabinet: MaiCabinet = MaiCabinet.ANY): MaiSong? {
         val lx = this
 
         val hasDX = difficulties.deluxe.isNotEmpty()
         val hasSD = difficulties.standard.isNotEmpty()
+        val hasUtage = difficulties.utage.isNotEmpty()
 
-        val isDeluxe = (type == true || type == null) && hasDX
+        val isDeluxe = (cabinet == MaiCabinet.DX || cabinet == MaiCabinet.ANY) && hasDX
 
-        val isUtage = !hasSD && !hasDX
+        val isUtage = cabinet == MaiCabinet.UTAGE && hasUtage
+
+        if (cabinet == MaiCabinet.DX && !hasDX) {
+            return null
+        }
+
+        if (cabinet == MaiCabinet.SD && !hasSD) {
+            return null
+        }
+
+        if (cabinet == MaiCabinet.UTAGE && !hasUtage) {
+            return null
+        }
 
         val difficulties = if (isUtage) {
             difficulties.utage
@@ -65,6 +79,7 @@ data class LxMaiSong(
             } else {
                 lx.songID
             }
+
             title = lx.title
             alias = lx.alias
             aliases = lx.aliases
@@ -81,6 +96,7 @@ data class LxMaiSong(
                 versionInt = value
                 current = value >= MaiVersion.newestVersion.value
             }
+
             doubleCabinet = hasDX && hasSD
         }
     }

@@ -1,6 +1,7 @@
 package com.now.nowbot.service.lxnsApiService.impl
 
 import com.now.nowbot.dao.MaiDao
+import com.now.nowbot.model.enums.MaiCabinet
 import com.now.nowbot.model.maimai.LxMaiCollection
 import com.now.nowbot.model.maimai.LxMaiSong
 import com.now.nowbot.model.maimai.MaiAlias
@@ -57,23 +58,26 @@ class LxMaiApiImpl(
     override fun getMaiSong(songID: Int): MaiSong? {
         val convertedID = LxMaiApiService.convertToLxMaiSongID(songID)
 
-        return getLxMaiSong(convertedID)?.toMaiSong()
+        val cabinet = when(songID) {
+            in 10000..19999 -> MaiCabinet.DX
+            in 0..9999 -> MaiCabinet.SD
+            else -> MaiCabinet.ANY
+        }
+
+        return getLxMaiSong(convertedID)?.toMaiSong(cabinet)
     }
 
     override fun getMaiSongs(): List<MaiSong> {
         val list = getLxMaiSongs()
 
         val standard = list
-            .filter { it.difficulties.standard.isNotEmpty() }
-            .map { it.toMaiSong(type = false) }
+            .mapNotNull { it.toMaiSong(cabinet = MaiCabinet.SD) }
 
         val deluxe = list
-            .filter { it.difficulties.deluxe.isNotEmpty() }
-            .map { it.toMaiSong(type = true) }
+            .mapNotNull { it.toMaiSong(cabinet = MaiCabinet.DX) }
 
         val utage = list
-            .filter { it.difficulties.utage.isNotEmpty() }
-            .map { it.toMaiSong(type = null) }
+            .mapNotNull { it.toMaiSong(cabinet = MaiCabinet.UTAGE) }
 
         return (deluxe + standard + utage)
     }
@@ -126,7 +130,9 @@ class LxMaiApiImpl(
     }
 
     override fun getMaimaiAlias(songID: Int): MaiAlias? {
-        return maiDao.getMaiAliasByID((songID % 10000))
+        val convertedID = LxMaiApiService.convertToLxMaiSongID(songID)
+
+        return maiDao.getMaiAliasByID(convertedID)
     }
 
 
@@ -153,22 +159,18 @@ class LxMaiApiImpl(
     override fun insertMaimaiAliasForMaiSong(songs: List<MaiSong>?) {
         if (songs.isNullOrEmpty()) return
 
-        val actions = songs.map {
-            return@map AsyncMethodExecutor.Runnable {
-                it.aliases = getMaimaiAlias(it.songID)?.alias
-                it.alias = it.aliases?.minByOrNull { alias -> alias.length }
-            }
+        songs.forEach {
+            it.aliases = getMaimaiAlias(it.songID)?.alias
+            it.alias = it.aliases?.minByOrNull { alias -> alias.length }
         }
-
-        AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
     override fun getPossibleMaiSongs(text: String): List<MaiSong> {
-        return maiDao.findLxMaiSongByTitle(text).map { it.toMaiSong() }
+        return maiDao.findLxMaiSongByTitle(text).mapNotNull { it.toMaiSong() }
     }
 
     override fun getUtage(songID: Int): List<MaiSong> {
-        return maiDao.findLxUtage(songID).map { it.toMaiSong() }
+        return maiDao.findLxUtage(songID).mapNotNull { it.toMaiSong() }
     }
 
     override fun getMaiAliasLibrary(): Map<Int, List<String>> {
@@ -186,7 +188,6 @@ class LxMaiApiImpl(
 
                 if (y >= 0.5) {
                     val s = maiDao.findLxMaiSongByID(e.key)
-                        ?: maiDao.findLxMaiSongByID(e.key + 10000) //getMaimaiSong(e.key.toLong()) ?: getMaimaiSong(e.key + 10000L) 避免循环引用
 
                     if (s != null) {
                         s.aliases = e.value
@@ -200,12 +201,12 @@ class LxMaiApiImpl(
         }
 
         return if (result.isEmpty()) {
-            listOf()
+            emptyList()
         } else {
             result.sortBy { it.second }
             result.sortByDescending { it.third }
 
-            result.map { it.first.toMaiSong() }
+            result.mapNotNull { it.first.toMaiSong() }
         }
     }
 

@@ -96,8 +96,6 @@ class UpdateTriggerService(
                 maimaiApiService.updateMaimaiSongLibraryDatabase()
                 val time1 = System.currentTimeMillis()
                 maimaiApiService.updateMaimaiAliasLibraryDatabase()
-                val time2 = System.currentTimeMillis()
-                maimaiApiService.updateMaimaiRankLibraryDatabase()
                 val time3 = System.currentTimeMillis()
                 maimaiApiService.updateMaimaiFitLibraryDatabase()
                 val time4 = System.currentTimeMillis()
@@ -110,8 +108,7 @@ class UpdateTriggerService(
                 event.reply("""
                     更新水鱼数据完成。
                     舞萌歌曲库：${DataUtil.time2HMS(time1 - startTime)}
-                    舞萌外号库：${DataUtil.time2HMS(time2 - time1)}
-                    舞萌玩家排名库：${DataUtil.time2HMS(time3 - time2)}
+                    舞萌玩家排名库：${DataUtil.time2HMS(time3 - time1)}
                     舞萌拟合定数库：${DataUtil.time2HMS(time4 - time3)}
                     中二节奏歌曲数据库：${DataUtil.time2HMS(time5 - time4)}
                     中二节奏外号库：${DataUtil.time2HMS(endTime - time5)}
