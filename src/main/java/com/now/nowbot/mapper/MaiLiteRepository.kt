@@ -74,12 +74,7 @@ interface LxMaiSongLiteRepository : JpaRepository<LxMaiSongLite, Int> {
     @Query("SELECT s FROM LxMaiSongLite s LEFT JOIN FETCH s.difficulties WHERE s.queryTitle ILIKE CONCAT('%', :queryTitle, '%')")
     fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<LxMaiSongLite>
 
-    @EntityGraph(attributePaths = ["difficulties"])
-    @Query("""
-        SELECT s.* FROM lx_maimai_song s
-        WHERE (s.songID % 10000) = (:songID % 10000) 
-          AND s.songID >= 20000
-    """, nativeQuery = true)
+    @Query("SELECT s FROM LxMaiSongLite s LEFT JOIN FETCH s.difficulties WHERE MOD(s.songID, 10000) = MOD(:songID, 10000) AND s.songID >= 20000")
     fun findByUtage(songID: Int): List<LxMaiSongLite>
 }
 

@@ -188,9 +188,10 @@ class MaiChartLite(
 }
 
 @Entity(name = "maimai_fit_chart")
+@Table(indexes = [Index(name = "idx_maimai_fit_chart_song_sort", columnList = "songid, sort")])
 class MaiFitChartLite(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int? = null,
 
     var sort: Int,

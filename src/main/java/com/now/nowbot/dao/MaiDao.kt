@@ -210,13 +210,11 @@ class MaiDao(
     fun saveMaiFit(maiFit: MaiFit) {
         val allChart = maiFit
             .charts
-            .entries
-            .map { (id, charts) ->
+            .entries.flatMap { (id, charts) ->
                 charts.mapIndexed { index, it ->
                     MaiFitChartLite.from(id, index, it)
                 }
             }
-            .flatten()
 
 
         for (chart in allChart) {
