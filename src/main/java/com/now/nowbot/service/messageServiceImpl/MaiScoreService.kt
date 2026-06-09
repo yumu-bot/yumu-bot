@@ -123,12 +123,14 @@ import java.util.regex.Matcher
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): MaiScoreParam {
-        val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
+        val titleStr: String = (matcher.group(FLAG_NAME) ?: "").trim()
+        val name: String? = matcher.group(FLAG_DATA)?.trim()
+
         val difficulties: String? = matcher.group(FLAG_DIFF)
 
         val full: MaiBestScore
 
-        val conditions = DataUtil.getConditions(any, MaiScoreFilter.entries.map { it.regex },
+        val conditions = DataUtil.getConditions(titleStr, MaiScoreFilter.entries.map { it.regex },
             endPattern = MaiScoreFilter.RANGE.regex.pattern)
 
         val rangeInConditions = conditions.lastOrNull().orEmpty()
@@ -144,45 +146,19 @@ import java.util.regex.Matcher
 
         var cabinet = MaiCabinet.getCabinet(matcher.group(FLAG_VERSION))
 
-        val isRange = any.matches(REG_MAI_RANGE.toRegex())
+        val isRange = titleStr.matches(REG_MAI_RANGE.toRegex())
 
         // 输入的可能是外号或者歌曲编号
-        if (!hasCondition && any.isNotEmpty() && !isRange) {
-
+        if (!hasCondition && titleStr.isNotEmpty() && !isRange) {
             val id: Long?
             val title: String?
-            val name: String?
 
-            if (any.contains("${REG_SPACE}${LEVEL_MORE}".toRegex())) {
-                val s = any.split(' ', '\t', '\n').filter { it.isNotBlank() }
-
-                if (s.size == 2) {
-                    if (s.first().matches(REG_NUMBER_15.toRegex())) {
-                        id = s.first().toLong()
-                        title = null
-                        name = s.last()
-                    } else if (s.last().matches(REG_NUMBER_15.toRegex())) {
-                        id = s.last().toLong()
-                        title = null
-                        name = s.first()
-                    } else {
-                        id = null
-                        title = s.first()
-                        name = s.last()
-                    }
-                } else {
-                    id = null
-                    title = any
-                    name = null
-                }
-            } else if (any.matches(REG_NUMBER_15.toRegex())) {
-                id = any.toLong()
+            if (titleStr.matches(REG_NUMBER_15.toRegex())) {
+                id = titleStr.toLong()
                 title = null
-                name = null
             } else {
                 id = null
-                title = any
-                name = null
+                title = titleStr
             }
 
             full = if (name.isNullOrBlank()) {

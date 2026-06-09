@@ -999,10 +999,10 @@ enum class Instruction(val pattern: Pattern) {
         appendColonCaptureGroup(FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE)
         appendSpace()
         appendQQ()
-        appendSpace()
         appendCaptureGroup(FLAG_VERSION, REG_MAI_CABINET)
         appendSpace()
-        appendNameAnyButNoHash()
+        appendNameAnyButNoHashStars()
+        appendStarCaptureGroup(FLAG_DATA, REG_ANYTHING_BUT_NO_HASH, MORE)
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100)
     }),
 

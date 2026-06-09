@@ -244,6 +244,11 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
+    fun appendNameAnyButNoHashStars() {
+        appendCaptureGroup(FLAG_NAME, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendSpace()
+    }
+
     /**
      * maimai 合法名称（啥都匹配）
      * (?<name> X X+ X)
