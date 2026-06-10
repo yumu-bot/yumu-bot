@@ -176,14 +176,11 @@ class BindDao(
         return bindQQMapper.findById(qq).getOrNull()
     }
 
-    fun verifyCaptcha(code: String): Long {
-        val cachedUserId = captchaCache.getIfPresent(code)
-        if (cachedUserId != null) {
+    fun verifyCaptcha(code: String): Long? {
+        return captchaCache.getIfPresent(code)?.apply {
             captchaCache.invalidate(code)
-            indexCache.remove(cachedUserId)
-            return cachedUserId
+            indexCache.remove(this)
         }
-        return -1
     }
 
     fun bindQQ(qq: Long?, user: OsuBindUserLite): QQBindLite {

@@ -106,6 +106,9 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
         class IllegalQQ:
             BindIllegalArgumentException("请输入正确的 QQ！")
 
+        class IllegalVerification:
+            BindIllegalArgumentException("验证码错误。请重新获取验证码，或检查是否是六位数字。")
+
         class IllegalUser:
             BindIllegalArgumentException("这是谁呀，小沐找不到他哦？")
 
@@ -113,28 +116,27 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
             BindIllegalArgumentException("哼哼，他号没了。")
     }
 
-    open class BindNetworkException : BindException("ppy API 访问量超限，暂时不能绑定呢...")
-
     open class BindResultException(message: String): BindException(message) {
 
         class BindUrl(url: String):
             BindResultException("""
                 $url
                 请在获取六位数的验证码后，回来发送 !bi 验证码 完成绑定。
+                比如：!bi 123456。
                 """.trimIndent())
 
         class BindSuccess(qq: Long, id: Long, name: String, mode: OsuMode):
             BindResultException("""
                 已将 ($id) $name 绑定到 $qq 上！
                 当前绑定模式为：${mode.fullName}
-                您可以输入 !help 获取简洁的帮助信息。
+                您可以输入 !mode (mode) 来切换绑定的模式，输入 !help 获取简洁的帮助信息。
             """.trimIndent())
 
         class BindSuccessWithMode(mode: OsuMode):
             BindResultException("""
                 已绑定成功！
                 当前绑定模式为：${mode.fullName}。
-                您可以输入 !help 获取简洁的帮助信息。
+                您可以输入 !mode (mode) 来切换绑定的模式，输入 !help 获取简洁的帮助信息。
                 """.trimIndent())
     }
 }

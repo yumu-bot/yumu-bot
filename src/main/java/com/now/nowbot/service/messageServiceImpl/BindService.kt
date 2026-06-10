@@ -279,10 +279,14 @@ import java.util.function.Predicate
     }
 
     private fun bindQQName(event: MessageEvent, name: String, qq: Long, isCaptcha: Boolean) {
+        val ql = bindDao.getQQLiteFromQQ(qq)
+        val ou: OsuUser
+
         // 绑定先判断是否是传入验证码
         if (isCaptcha) {
             val uid = bindDao.verifyCaptcha(name)
             val bu = bindDao.getBindUser(uid)
+
             if (bu != null && bu.hasToken) {
                 val mode = userApiService.getOsuUser(bu.userID).currentOsuMode
 
@@ -292,9 +296,19 @@ import java.util.function.Predicate
                 event.reply(BindException.BindResultException.BindSuccessWithMode(mode))
                 return
             }
-        }
 
-        val ql = bindDao.getQQLiteFromQQ(qq)
+            val oo = runCatching {
+                userApiService.getOsuUser(name)
+            }.getOrNull()
+
+            if (ql != null || oo == null) {
+                throw BindException.BindIllegalArgumentException.IllegalVerification()
+            }
+
+            ou = oo
+        } else {
+            ou = userApiService.getOsuUser(name)
+        }
 
         if (ql != null) {
             if (ql.qq == event.sender.contactID) {
@@ -303,8 +317,6 @@ import java.util.function.Predicate
                 throw BindException.BoundException.UserBound(name, ql.qq!!)
             }
         }
-
-        val ou = userApiService.getOsuUser(name)
 
         val qb = bindDao.getQQLiteFromUserID(ou.userID)
 
