@@ -36,7 +36,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 import java.util.regex.Matcher
 
 @Service("GROUP_LEADER_BOARD")
@@ -129,8 +128,7 @@ class GroupLeaderBoardService(
 
         val id = matcher.group(FLAG_BID)?.toLongOrNull()
 
-        val beatmapID = id ?: dao.getLastBeatmapID(event.subject.contactID, null,
-            LocalDateTime.now().minusHours(24L)) ?: throw IllegalArgumentException.WrongException.BeatmapID()
+        val beatmapID = id ?: dao.getLastBeatmapID(event) ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val beatmap = beatmapApiService.getBeatmap(beatmapID)
 

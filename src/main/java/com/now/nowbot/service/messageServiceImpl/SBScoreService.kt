@@ -154,13 +154,11 @@ class SBScoreService(
         } else {
             // 进阶备用方法：先获取之前大家使用的 bid，然后尝试获取最近成绩
             val beforeBeatmapID = dao.getLastBeatmapID(
-                groupID = event.subject.contactID,
+                event = event,
                 name = "SCORE",
                 from = LocalDateTime.now().minusMinutes(2L)
             ) ?: dao.getLastBeatmapID(
-                groupID = event.subject.contactID,
-                name = null,
-                from = LocalDateTime.now().minusHours(24L)
+                event = event,
             )
 
             val currentMode = InstructionObject(inputMode.data)

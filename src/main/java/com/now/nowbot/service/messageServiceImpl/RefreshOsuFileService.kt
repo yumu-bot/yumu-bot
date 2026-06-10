@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Service
 import java.io.IOException
 
 @Service("REFRESH_FILE")
-class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiService) :
+class RefreshOsuFileService(
+    private val osuBeatmapApiService: OsuBeatmapApiService,
+    private val serviceCallStatisticsDao: ServiceCallStatisticsDao
+) :
     MessageService<Long> {
     override fun isHandle(
         event: MessageEvent,
@@ -23,8 +27,13 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
         data: MessageService.DataValue<Long>,
     ): Boolean {
         val matcher = Instruction.REFRESH_FILE.matcher(messageText)
+
         return if (matcher.find()) {
-            data.value = matcher.group("bid")?.toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
+            val bid = matcher.group("bid")?.toLongOrNull() ?:
+            serviceCallStatisticsDao.getLastBeatmapID(event) ?:
+            throw IllegalArgumentException.WrongException.BeatmapID()
+
+            data.value = bid
             true
         } else {
             false
@@ -35,14 +44,14 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
         val sid =
             try {
                 osuBeatmapApiService.getBeatmapFromDatabase(param).beatmapsetID
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw NoSuchElementException.Beatmap(param)
             }
 
         val s =
             try {
                 osuBeatmapApiService.getBeatmapset(sid)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw NoSuchElementException.Beatmap(sid)
             }
 

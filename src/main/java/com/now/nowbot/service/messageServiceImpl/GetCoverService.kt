@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.net.URI
 import java.nio.file.Files
-import java.time.LocalDateTime
 
 // GET_BG
 @Service("GET_COVER") class GetCoverService(
@@ -54,7 +53,7 @@ import java.time.LocalDateTime
         }
 
         val bids = if (dataStr.isNullOrBlank()) {
-            val last = dao.getLastBeatmapID(event.subject.contactID, null, LocalDateTime.now().minusHours(24L))
+            val last = dao.getLastBeatmapID(event)
 
             if (last != null) {
                 listOf(last)

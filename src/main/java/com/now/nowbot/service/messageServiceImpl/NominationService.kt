@@ -27,7 +27,6 @@ import com.now.nowbot.util.command.FLAG_SID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 import java.util.regex.Matcher
 import kotlin.math.floor
 
@@ -113,11 +112,7 @@ import kotlin.math.floor
 
         val id = idStr?.toLongOrNull()
             ?: run {
-                val last = dao.getLastBeatmapID(
-                    groupID = event.subject.contactID,
-                    name = null,
-                    from = LocalDateTime.now().minusHours(24L)
-                )
+                val last = dao.getLastBeatmapID(event)
 
                 if (last != null) {
                     isSID = false

@@ -18,7 +18,6 @@ import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_PAGE
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 import java.util.regex.Matcher
 
 @Service("VIEW")
@@ -57,7 +56,7 @@ class ViewService(
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isOfficial: Boolean = false, isVariation: Boolean = false): ViewParam {
         val beatmapID = matcher.group(FLAG_BID)?.toLongOrNull()
-            ?: dao.getLastBeatmapID(event.subject.contactID, null, LocalDateTime.now().minusHours(24L))
+            ?: dao.getLastBeatmapID(event)
             ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val beatmap = beatmapApiService.getBeatmap(beatmapID)

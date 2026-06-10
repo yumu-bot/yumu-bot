@@ -29,7 +29,6 @@ import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
 import com.now.nowbot.util.command.REG_OPERATOR_WITH_SPACE
 import org.intellij.lang.annotations.Language
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 import java.util.regex.Matcher
 
 @Service("MAP")
@@ -111,10 +110,7 @@ class MapStatisticsService(
         val existSet = anyID?.let { beatmapDao.existsBeatmapsetFromExtend(anyID) } ?: false
         val exists = anyID?.let { beatmapDao.existsBeatmapFromExtend(anyID) } ?: false
 
-        val heritage = dao.getLastBeatmapID(
-            event.subject.contactID,
-            null, LocalDateTime.now().minusHours(24L), LocalDateTime.now()
-        )
+        val heritage = dao.getLastBeatmapID(event)
 
         val before: String? = if (anyID != null && anyID <= 10000) {
             if (!existSet && !exists) {

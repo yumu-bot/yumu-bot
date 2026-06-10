@@ -21,7 +21,6 @@ import com.now.nowbot.util.command.FLAG_MOD
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 
 @Service("PP_PLUS_MAP")
 class PPPlusMapService(
@@ -45,7 +44,7 @@ class PPPlusMapService(
             return false
         }
         val bid = bidStr.toLongOrNull()
-            ?: dao.getLastBeatmapID(event.subject.contactID, null, LocalDateTime.now().minusHours(24L))
+            ?: dao.getLastBeatmapID(event)
             ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))

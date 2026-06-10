@@ -28,7 +28,6 @@ import com.now.nowbot.util.command.FLAG_MOD
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 import java.util.regex.Matcher
 import kotlin.math.absoluteValue
 
@@ -87,7 +86,7 @@ import kotlin.math.absoluteValue
         val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
         val bid = matcher.group("bid")?.toLongOrNull()
-            ?: dao.getLastBeatmapID(event.subject.contactID, name = null, LocalDateTime.now().minusHours(24))
+            ?: dao.getLastBeatmapID(event)
             ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val rate = matcher.group("rate")?.toDoubleOrNull() ?: 1.0

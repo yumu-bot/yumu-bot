@@ -24,7 +24,6 @@ import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 import java.util.regex.Matcher
 
 @Service("LEADER_BOARD")
@@ -107,11 +106,7 @@ class LeaderBoardService(
                 }
 
                 // 进阶备用方法：先获取之前大家使用的 bid，然后尝试获取谱面
-                val beforeBeatmapID = dao.getLastBeatmapID(
-                    groupID = event.subject.contactID,
-                    name = null,
-                    from = LocalDateTime.now().minusHours(24L)
-                )
+                val beforeBeatmapID = dao.getLastBeatmapID(event)
 
                 val beatmap = beforeBeatmapID?.let {
                     try {
@@ -175,7 +170,7 @@ class LeaderBoardService(
         }
 
         if (scores.isEmpty()) {
-            if (param.type === "global" || param.type === null) {
+            if (param.type == "global" || param.type == null) {
                 throw NoSuchElementException.LeaderboardScore()
             } else {
                 throw NoSuchElementException.LeaderboardScoreFiltered(param.type)

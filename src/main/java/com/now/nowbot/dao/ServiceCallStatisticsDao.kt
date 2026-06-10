@@ -3,6 +3,7 @@ package com.now.nowbot.dao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.entity.ServiceHeritage
 import com.now.nowbot.mapper.ServiceCallStatisticRepository
+import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.util.JacksonUtil
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
@@ -80,9 +81,18 @@ import java.time.LocalDateTime
     }
 
     fun getLastBeatmapID(
+        event: MessageEvent,
+        name: String? = null,
+        from: LocalDateTime = LocalDateTime.now().minusHours(24L),
+        to: LocalDateTime = LocalDateTime.now()
+    ): Long? {
+        return getLastBeatmapID(event.subject.contactID, name, from, to)
+    }
+
+    fun getLastBeatmapID(
         groupID: Long,
-        name: String?,
-        from: LocalDateTime,
+        name: String? = null,
+        from: LocalDateTime = LocalDateTime.now().minusHours(24L),
         to: LocalDateTime = LocalDateTime.now()
     ): Long? {
         return if (name.isNullOrEmpty()) {

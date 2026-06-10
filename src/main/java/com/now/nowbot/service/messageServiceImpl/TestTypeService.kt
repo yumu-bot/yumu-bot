@@ -23,7 +23,6 @@ import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationExceptio
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 
 @Service("TEST_TYPE") class TestTypeService(
     private val beatmapApiService: OsuBeatmapApiService,
@@ -45,7 +44,7 @@ import java.time.LocalDateTime
         val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
         val bid = matcher.group("bid")?.toLongOrNull()
-            ?: dao.getLastBeatmapID(event.subject.contactID, name = null, LocalDateTime.now().minusHours(24))
+            ?: dao.getLastBeatmapID(event)
             ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val rate = matcher.group("rate")?.toDoubleOrNull() ?: 1.0
