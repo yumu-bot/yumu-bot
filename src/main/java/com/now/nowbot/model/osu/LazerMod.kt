@@ -1105,6 +1105,7 @@ sealed class LazerMod {
         override val color: String = "#00B7EE"
 
         companion object : Mod, ValueMod {
+            const val alias: String = "AU"
             override val type: String = "AT"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(
@@ -1125,6 +1126,7 @@ sealed class LazerMod {
         override val color: String = "#00B7EE"
 
         companion object : Mod, ValueMod {
+            const val alias: String = "CM"
             override val type: String = "CN"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(
@@ -2345,6 +2347,7 @@ sealed class LazerMod {
         override val color: String = "#5F5BA8"
 
         companion object : Mod {
+            const val alias: String = "IV"
             override val type: String = "IN"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(HoldOff)
@@ -2780,8 +2783,8 @@ sealed class LazerMod {
                 Mirror.type -> Mirror()
                 Alternate.type -> Alternate()
                 SingleTap.type -> SingleTap()
-                Autoplay.type -> Autoplay()
-                Cinema.type -> Cinema()
+                Autoplay.type, Autoplay.alias -> Autoplay()
+                Cinema.type, Cinema.alias -> Cinema()
                 Relax.type -> Relax()
                 Autopilot.type -> Autopilot()
                 SpunOut.type -> SpunOut()
@@ -2815,7 +2818,7 @@ sealed class LazerMod {
                 FadeIn.type -> FadeIn()
                 Cover.type -> Cover()
                 DualStages.type -> DualStages()
-                Invert.type -> Invert()
+                Invert.type, Invert.alias -> Invert()
                 HoldOff.type -> HoldOff()
                 Key1.type -> Key1()
                 Key2.type -> Key2()
