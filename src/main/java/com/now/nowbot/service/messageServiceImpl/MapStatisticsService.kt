@@ -84,11 +84,11 @@ class MapStatisticsService(
 
         val matcher = OfficialInstruction.MAP.matcher(messageText)
         val matcher2 = OfficialInstruction.MAP_LAZER.matcher(messageText)
-        if (matcher.find()) {
-            return getParam(event, matcher, isLazer = false)
+        return if (matcher.find()) {
+            getParam(event, matcher, isLazer = false)
         } else if (matcher2.find()) {
-            return getParam(event, matcher2, isLazer = true)
-        } else return null
+            getParam(event, matcher2, isLazer = true)
+        } else null
     }
 
     override fun reply(
@@ -127,25 +127,15 @@ class MapStatisticsService(
         val beatmapset: Beatmapset?
         val beatmapID: Long
 
-        if (exists) {
-            val beatmapsetID = beatmapDao.getBeatmapsetIDFromExtend(anyID)!!
-            beatmapset = fetchBeatmapsetFromBeatmapsetID(beatmapsetID)
-            beatmapID = anyID
-        } else if (existSet) {
-            beatmapset = fetchBeatmapsetFromBeatmapsetID(anyID)
-            beatmapID = beatmapset?.getTopDiff()?.beatmapID ?: 0L
-        } else if (anyID != null) {
-            beatmapset = fetchBeatmapsetFromBeatmapID(anyID)
-            beatmapID = beatmapset?.beatmaps?.find { it.beatmapID == anyID }?.beatmapID
-                ?: beatmapset?.getTopDiff()?.beatmapID ?: 0L
+        val (s, i) = fetchBeatmapsetAndBeatmapID(anyID)
+
+        if (s != null && i != null) {
+            beatmapset = s
+            beatmapID = i
         } else if (heritage != null) {
             beatmapID = heritage
-            beatmapset = fetchBeatmapsetFromBeatmapID(heritage)
+            beatmapset = beatmapApiService.getBeatmapset(heritage)
         } else {
-            throw IllegalArgumentException.WrongException.BeatmapID()
-        }
-
-        if (beatmapset == null) {
             throw IllegalArgumentException.WrongException.BeatmapID()
         }
 
@@ -153,7 +143,7 @@ class MapStatisticsService(
 
         val (accuracy, combo, misses) = parseAccuracyAndCombo(any, before)
 
-        val beatmap = beatmapset.beatmaps!!.find { it.beatmapID == beatmapID } ?: throw NoSuchElementException.Beatmap(beatmapID)
+        val beatmap = beatmapset.beatmaps?.find { it.beatmapID == beatmapID } ?: throw NoSuchElementException.Beatmap(beatmapID)
 
         val c = if (combo in 0.0..1.0) {
             (beatmap.maxCombo!! * combo).toInt()
@@ -245,34 +235,69 @@ class MapStatisticsService(
         return Triple(accuracy ?: 1.0, combo ?: 1.0, misses ?: 0)
     }
 
-    private fun fetchBeatmapsetFromBeatmapID(beatmapID: Long): Beatmapset? {
-        val beatmap = runCatching {
-            beatmapApiService.getBeatmap(beatmapID)
-        }.getOrNull()
-
-        if (beatmap == null) {
-            return null
+    /**
+     * 综合获取 Beatmap 的方法（高效率本地优先）
+     *
+     * @param anyID 可能是 beatmapID，也可能是 beatmapsetID
+     * @param assumeBeatmapID true 表示输入的 id 优先作为 BeatmapID 处理；false 表示优先作为 BeatmapsetID 处理
+     * @return 最终匹配到或兜底（topDiff）的 Beatmap 对象
+     */
+    fun fetchBeatmapsetAndBeatmapID(anyID: Long?, assumeBeatmapID: Boolean = true): Pair<Beatmapset?, Long?> {
+        if (anyID == null) {
+            return null to null
         }
 
-        return runCatching {
-            beatmapApiService.getBeatmapset(beatmap.beatmapsetID)
-        }.getOrNull() ?: runCatching {
-            beatmapApiService.getBeatmapset(beatmapID)
-        }.getOrNull()
+        val beatmapset = if (assumeBeatmapID) {
+            // 【路线 A】优先视为 BeatmapID
+            fetchByBeatmapID(anyID) ?: fetchByBeatmapsetID(anyID) // 降级：如果失败，尝试当成 setID 再试一次
+        } else {
+            // 【路线 B】优先视为 BeatmapsetID
+            fetchByBeatmapsetID(anyID) ?: fetchByBeatmapID(anyID) // 降级：如果失败，尝试当成 beatmapID 再试一次
+        }
+
+        if (beatmapset == null) {
+            return null to null
+        }
+
+        return if (assumeBeatmapID) {
+            beatmapset to anyID
+        } else {
+            beatmapset to beatmapset.getTopDiff()?.beatmapID
+        }
     }
 
-    private fun fetchBeatmapsetFromBeatmapsetID(beatmapsetID: Long): Beatmapset? {
-        val beatmapset = runCatching {
-            beatmapApiService.getBeatmapset(beatmapsetID)
-        }.getOrNull()
+// ----------------- 以下为内部高效率核心流转逻辑 -----------------
 
-        if (beatmapset != null) {
-            return beatmapset
+    /**
+     * 核心逻辑 1：专门负责通过 BeatmapsetID 获取 Beatmapset（优先本地）
+     */
+    private fun fetchByBeatmapsetID(beatmapsetID: Long): Beatmapset? {
+        // 1. 优先查本地是否存在
+        // if (beatmapDao.existsBeatmapsetFromExtend(beatmapsetID)) {
+            // 从你的本地 Repository 中直接获取实体对象并返回
+            // return extendBeatmapSetRepository.findByBeatmapsetID(beatmapsetID)
+        //}
+
+        // 2. 本地没有，走网络请求
+        return runCatching { beatmapApiService.getBeatmapset(beatmapsetID) }.getOrNull()
+    }
+
+    /**
+     * 核心逻辑 2：专门负责通过 BeatmapID 获取 Beatmapset（优先本地）
+     */
+    private fun fetchByBeatmapID(beatmapID: Long): Beatmapset? {
+        // 1. 优先从本地寻找关联的 BeatmapsetID，效率最高
+        val localSetID = beatmapDao.getBeatmapsetIDFromExtend(beatmapID)
+
+        if (localSetID != null) {
+            return fetchByBeatmapsetID(localSetID)
         }
 
-        return runCatching {
-            beatmapApiService.getBeatmapset(beatmapApiService.getBeatmap(beatmapsetID).beatmapsetID)
-        }.getOrNull()
+        // 2. 本地没有线索，请求网络获取 Beatmap 详情
+        val netBeatmap = runCatching { beatmapApiService.getBeatmap(beatmapID) }.getOrNull() ?: return null
+
+        // 3. 拿到网络返回的 setID 后，继续走统一的获取流程
+        return fetchByBeatmapsetID(netBeatmap.beatmapsetID)
     }
 
     fun MapStatisticsParam.getPanelRParam(): PanelRParam {

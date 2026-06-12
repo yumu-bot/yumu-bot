@@ -330,7 +330,7 @@ class ChunithmApiImpl(
                 }
             }
         } catch (e: Exception) {
-            if (e !is CancellationException) {
+            if (e !is CancellationException && e !is NetworkException.DivingFishException) {
                 log.error("水鱼查分器：获取失败", e)
                 throw NetworkException.DivingFishException.Undefined(e)
             } else {

@@ -278,7 +278,7 @@ class ImageService(
                 }
                 else -> {
                     val cause = e.cause
-                    if (cause !is CancellationException) {
+                    if (cause !is CancellationException && cause !is NetworkException) {
                         log.error("渲染模块：WS 内部错误", e)
                         throw NetworkException.RenderModuleException.Undefined(cause ?: e)
                     } else {

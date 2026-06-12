@@ -1,5 +1,6 @@
 package com.now.nowbot.controller
 
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.*
@@ -42,6 +43,7 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             }
 
             if (response.has("type") && response.get("type").asString() == "AUTH") {
+                // ... 保持你原有的 AUTH 处理逻辑不变 ...
                 val pid = response.get("pid").asInt()
 
                 if (session.attributes["PID"] == null) {
@@ -72,23 +74,31 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             val messageId = response.get("messageId")?.asString()
             val status = response.get("status")?.asString()
 
-            if (messageId != null && status == "success") {
-                val dataNode = response.get("data")
+            if (messageId != null) {
+                if (status == "success") {
+                    val dataNode = response.get("data")
 
-                val bytes: ByteArray = when {
-                    dataNode.isString -> Base64.getDecoder().decode(dataNode.asString())
-                    dataNode.isObject && dataNode.has("data") -> {
-                        val dataField = dataNode.get("data")
-                        when {
-                            dataField.isString -> Base64.getDecoder().decode(dataField.asString())
-                            dataField.isBinary -> dataField.binaryValue()
-                            else -> throw IllegalArgumentException("无法识别的 data 内部格式")
+                    val bytes: ByteArray = when {
+                        dataNode.isString -> Base64.getDecoder().decode(dataNode.asString())
+                        dataNode.isObject && dataNode.has("data") -> {
+                            val dataField = dataNode.get("data")
+                            when {
+                                dataField.isString -> Base64.getDecoder().decode(dataField.asString())
+                                dataField.isBinary -> dataField.binaryValue()
+                                else -> throw IllegalArgumentException("无法识别的 data 内部格式")
+                            }
                         }
+                        else -> throw IllegalArgumentException("无法识别的 data 结构")
                     }
-                    else -> throw IllegalArgumentException("无法识别的 data 结构")
-                }
 
-                pendingRequests.remove(messageId)?.complete(bytes)
+                    pendingRequests.remove(messageId)?.complete(bytes)
+
+                } else if (status == "error") {
+                    val errorMessage = response.get("error")?.asString() ?: "Node.js 端发生未知异常"
+                    log.warn("渲染服务器：收到 JS 进程错误响应 [ID: {}]: {}", messageId, errorMessage)
+
+                    pendingRequests.remove(messageId)?.completeExceptionally(NetworkException.RenderModuleException.InternalServerError())
+                }
             }
         } catch (e: Exception) {
             log.error("渲染服务器：解析 JS 返回消息失败", e)

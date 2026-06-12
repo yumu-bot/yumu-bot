@@ -64,7 +64,7 @@ class LxChunithmApiImpl(
                 504 -> throw NetworkException.LxnsException.GatewayTimeout()
 
                 else -> {
-                    if (e !is CancellationException) {
+                    if (e !is CancellationException && e !is NetworkException.LxnsException) {
                         log.error("落雪咖啡屋：获取失败", e)
                         throw NetworkException.LxnsException.Undefined(e)
                     } else {

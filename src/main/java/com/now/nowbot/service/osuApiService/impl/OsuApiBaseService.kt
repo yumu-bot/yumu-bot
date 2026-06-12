@@ -684,7 +684,7 @@ class OsuApiBaseService(
                 504 -> throw NetworkException.UserException.GatewayTimeout()
 
                 else -> {
-                    if (e !is CancellationException) {
+                    if (e !is CancellationException && e !is NetworkException.UserException) {
                         log.error("刷新玩家令牌：未知错误", e)
                         throw NetworkException.UserException.Undefined(e)
                     } else {
