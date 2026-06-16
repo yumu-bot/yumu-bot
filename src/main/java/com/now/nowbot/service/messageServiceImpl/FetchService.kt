@@ -146,7 +146,7 @@ class FetchService(
                 "musicDB.json"
             }
 
-            event.replyFileInGroup(fileArray, name)
+            event.replyFileInGroupAsync(fileArray, name)
         }
     }
 }

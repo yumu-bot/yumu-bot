@@ -57,7 +57,7 @@ object QQMsgUtil {
         val bs = getImages(images)
 
         for (b in bs) {
-            event.reply(b)
+            event.replyAsync(b)
             Thread.sleep(1000L)
         }
     }

@@ -43,7 +43,7 @@ class InfoCardService(
         }
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("迷你信息面板：发送失败", e)
             throw IllegalStateException.Send("迷你信息")

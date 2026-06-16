@@ -76,7 +76,7 @@ class SBTodayBPService(
         // param.asyncImage()
         val image = param.getMessageChain()
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("偏偏要上班今日最好成绩：发送失败", e)
             throw IllegalStateException.Send("偏偏要上班今日最好成绩")

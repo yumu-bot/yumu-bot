@@ -52,7 +52,7 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
         } catch (_: HttpClientErrorException.Forbidden) {
             throw TipsException("权限不足")
         }
-        event.reply(getCodeImage(JacksonUtil.objectToJsonPretty(json)))
+        event.replyAsync(getCodeImage(JacksonUtil.objectToJsonPretty(json)))
         return ServiceCallStatistic.building(event)
     }
 

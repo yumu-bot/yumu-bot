@@ -66,7 +66,7 @@ class SBOldAvatarService(
 
         try {
             if (images.size == 1) {
-                event.reply(images.first())
+                event.replyAsync(images.first())
             } else {
                 QQMsgUtil.sendImages(event, images)
             }

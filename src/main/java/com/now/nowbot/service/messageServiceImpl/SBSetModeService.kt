@@ -56,7 +56,7 @@ class SBSetModeService (
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: SBSetModeParam): ServiceCallStatistic? {
-        event.reply(getReply(param, event))
+        event.replyAsync(getReply(param, event))
 
         return ServiceCallStatistic.build(event, mode = param.mode)
     }

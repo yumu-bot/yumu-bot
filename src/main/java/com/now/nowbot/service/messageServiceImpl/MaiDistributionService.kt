@@ -120,7 +120,7 @@ import java.util.concurrent.ConcurrentHashMap
         val image = imageService.getPanel(body.toMap(), "MD")
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (_: Exception) {
             throw IllegalStateException.Send("舞萌拟合")
         }

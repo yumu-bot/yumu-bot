@@ -79,7 +79,7 @@ import java.util.regex.Matcher
             else -> "base"
         }
 
-        event.replyFileInGroup(sb.toString().toByteArray(),  "${bids.first()}(${m}).csv")
+        event.replyFileInGroupAsync(sb.toString().toByteArray(),  "${bids.first()}(${m}).csv")
 
         return null
     }

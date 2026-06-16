@@ -87,7 +87,7 @@ class ServiceCountService(
 
         val image = imageService.getPanelA6(md, "service")
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.building(event)
     }

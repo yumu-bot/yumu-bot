@@ -95,7 +95,7 @@ class GroupLeaderBoardService(
     ): ServiceCallStatistic {
         val image = imageService.getPanel(param, "A16")
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.build(event, beatmapID = param.beatmap.beatmapID, mode = param.mode).apply {
             this.setParam(mapOf(

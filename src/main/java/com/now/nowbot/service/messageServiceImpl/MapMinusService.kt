@@ -59,7 +59,7 @@ import kotlin.math.absoluteValue
         val image = getMapMinusImage(param, beatmapApiService, calculateApiService, imageService)
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("谱面 Minus：发送失败", e)
             throw IllegalStateException.Send("谱面 Minus")

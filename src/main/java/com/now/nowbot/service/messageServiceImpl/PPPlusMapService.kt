@@ -77,7 +77,7 @@ class PPPlusMapService(
         )
 
         val image = imageService.getPanel(dataMap, "B3")
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.build(event, beatmapID = map.beatmapID, beatmapsetID = map.beatmapsetID)
     }

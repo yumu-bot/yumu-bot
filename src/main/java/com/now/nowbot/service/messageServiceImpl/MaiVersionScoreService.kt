@@ -189,7 +189,7 @@ class MaiVersionScoreService(
 
         val image = imageService.getPanel(res, "MV")
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.building(event)
     }

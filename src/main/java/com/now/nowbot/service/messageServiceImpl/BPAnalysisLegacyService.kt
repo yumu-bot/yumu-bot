@@ -87,7 +87,7 @@ class BPAnalysisLegacyService(
         val image = imageService.getPanel(param.toMap(), "J")
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("最好成绩分析：发送失败", e)
             throw IllegalStateException.Send("最好成绩分析")

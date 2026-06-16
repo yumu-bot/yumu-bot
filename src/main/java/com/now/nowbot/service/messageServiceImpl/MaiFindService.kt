@@ -57,7 +57,7 @@ import java.util.regex.Matcher
     override fun handleMessage(event: MessageEvent, param: MaiFindParam): ServiceCallStatistic? {
         val image = imageService.getPanel(param.toMap(), "MF")
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(

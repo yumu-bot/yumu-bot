@@ -8,7 +8,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.AudioService.AudioParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
-import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -79,12 +78,9 @@ class AudioService(
             throw NoSuchElementException.Audio()
         }
 
-        try {
-            event.replyVoice(voice)
-        } catch (e: Exception) {
+        event.replyVoiceAsync(voice, { e ->
             log.error("谱面试听：发送失败", e)
-            throw IllegalStateException.Send("谱面试听")
-        }
+        })
 
         return if (currentType) {
             ServiceCallStatistic.build(event, beatmapID = param.id)

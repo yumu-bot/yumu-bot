@@ -171,7 +171,7 @@ class ChuBestScoreService(
 
                 imageService.getPanel(PanelME2Param(user, score, song).toMap(), "ME")
             }
-        event.reply(image)
+        event.replyAsync(image)
 
         val ids = (charts.selection10 + charts.best30 + charts.new20).map { it.songID }.distinct()
 

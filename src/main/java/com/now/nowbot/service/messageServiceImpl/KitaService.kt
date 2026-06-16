@@ -69,7 +69,7 @@ class KitaService(
         if (hasBG) {
             try {
                 val image = imageService.getPanelDelta(beatmap, round, mod, position, true)
-                event.reply(image)
+                event.replyAsync(image)
             } catch (e: Exception) {
                 log.error("KITA", e)
                 throw IllegalStateException.Send("喜多面板")

@@ -54,7 +54,7 @@ import java.util.regex.Matcher
         if (isMultiple) {
             try {
                 ids = parseDataString(param.group("data"))
-                event.reply("正在处理系列赛")
+                event.replyAsync("正在处理系列赛")
                 parseCRAs(sb, ids, matchApiService, beatmapApiService, calculateApiService)
             } catch (e: MRAException) {
                 throw e
@@ -65,7 +65,7 @@ import java.util.regex.Matcher
         } else {
             try {
                 id = param.group("data").toLong()
-                event.reply("正在处理$id")
+                event.replyAsync("正在处理$id")
                 parseCRA(sb, id, matchApiService, beatmapApiService, calculateApiService)
             } catch (e: NullPointerException) {
                 throw MRAException(MRAException.Type.RATING_Match_NotFound)
@@ -84,10 +84,10 @@ import java.util.regex.Matcher
 
         if (isMultiple && ids != null) {
             matchIDs = ids
-            event.replyFileInGroup(file, "${ids.first()}s.csv")
+            event.replyFileInGroupAsync(file, "${ids.first()}s.csv")
         } else {
             matchIDs = listOf(id)
-            event.replyFileInGroup(file, "$id.csv")
+            event.replyFileInGroupAsync(file, "$id.csv")
         }
 
         return ServiceCallStatistic.building(event) {

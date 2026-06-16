@@ -152,13 +152,13 @@ import java.nio.file.Files
 
             if (messages.isEmpty()) return
             else if (messages.size <= 20) {
-                this.reply(chain)
+                this.replyAsync(chain)
             } else {
                 for (msg in messages.chunked(20)) {
                     val b = MessageChainBuilder()
                     msg.filterIsInstance<ImageMessage>().forEach { b.addImage(it.data) }
 
-                    this.reply(b.build())
+                    this.replyAsync(b.build())
                     Thread.sleep(1000L)
                 }
             }

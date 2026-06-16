@@ -17,7 +17,7 @@ object ASyncMessageUtil {
     fun doubleCheck(
         event: MessageEvent,
         keyword: String = "OK",
-        onCheck: () -> Unit = { event.reply("是否要执行操作？回复 $keyword 确认。") },
+        onCheck: () -> Unit = { event.replyAsync("是否要执行操作？回复 $keyword 确认。") },
         onOverTime: () -> Unit = { throw TipsRuntimeException("超时了。") },
         onWrong: () -> Unit = { throw TipsRuntimeException("已取消操作。") },
         overtime: Duration = 30.seconds,

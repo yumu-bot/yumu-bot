@@ -67,7 +67,7 @@ class SBBPService(
         val message = param.getMessageChain()
 
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("偏偏要上班最好成绩：发送失败", e)
             throw IllegalStateException.Send("偏偏要上班最好成绩")

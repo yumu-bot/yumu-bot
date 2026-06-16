@@ -46,7 +46,7 @@ class UserPlayStatisticService(
                 }
             }
         if (all < 30) {
-            event.reply("根据本 bot 对你的计算: 计算个毛你都没怎么玩!")
+            event.replyAsync("根据本 bot 对你的计算: 计算个毛你都没怎么玩!")
             return null
         }
         val max = intervalCount
@@ -62,7 +62,7 @@ class UserPlayStatisticService(
             else -> "恭喜, 没有特点就是你最大的特点!"
         }
 
-        event.reply("根据本 bot 对你的计算: $message")
+        event.replyAsync("根据本 bot 对你的计算: $message")
         return ServiceCallStatistic.building(event)
     }
 

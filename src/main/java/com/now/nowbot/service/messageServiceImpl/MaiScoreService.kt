@@ -109,7 +109,7 @@ import java.util.regex.Matcher
             imageService.getPanel(param.toMap(), "MS")
         }
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.building(event) {
             val mais = if (param.songs.isNotEmpty()) {

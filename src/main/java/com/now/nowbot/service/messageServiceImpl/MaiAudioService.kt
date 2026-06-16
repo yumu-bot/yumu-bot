@@ -63,7 +63,7 @@ class MaiAudioService(
 
 
         try {
-            event.reply(getVoiceInfo(param.songs))
+            event.replyAsync(getVoiceInfo(param.songs))
         } catch (e: Exception) {
             log.error("舞萌试听：发送信息失败", e)
             throw IllegalStateException.Send("舞萌试听信息")
@@ -76,12 +76,9 @@ class MaiAudioService(
             throw e as? NetworkException.LxnsException ?: IllegalStateException.Fetch("舞萌试听")
         }
 
-        try {
-            event.replyVoice(voice)
-        } catch (e: Exception) {
+        event.replyVoiceAsync(voice, { e ->
             log.error("舞萌试听：发送歌曲失败", e)
-            throw IllegalStateException.Send("舞萌试听歌曲")
-        }
+        })
 
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(

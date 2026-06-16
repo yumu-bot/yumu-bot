@@ -259,7 +259,7 @@ import java.util.regex.Matcher
         val message = param.getMessageChain()
 
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("最好成绩分析：发送失败", e)
             throw IllegalStateException.Send("最好成绩分析")

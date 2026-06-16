@@ -68,7 +68,7 @@ class QuickplayService(
             "panel" to "RP"
         ), "F")
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return null
     }

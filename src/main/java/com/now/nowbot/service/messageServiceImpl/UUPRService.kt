@@ -78,10 +78,10 @@ class UUPRService(
 
         // 单成绩发送
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("最近成绩文字：发送失败", e)
-            event.reply("最近成绩文字：发送失败，请重试。")
+            event.replyAsync("最近成绩文字：发送失败，请重试。")
         }
 
         val pairs = param.scores.toList().take(5)

@@ -65,7 +65,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
                 if (i > 15) break
             }
 
-            event.reply(sb.toString())
+            event.replyAsync(sb.toString())
             return ServiceCallStatistic.building(event)
         }
         
@@ -110,7 +110,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
             if (i > 15) break
         }
 
-        event.reply(sb.toString())
+        event.replyAsync(sb.toString())
         return ServiceCallStatistic.building(event)
     }
 }

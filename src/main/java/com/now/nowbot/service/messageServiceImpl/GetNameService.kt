@@ -52,7 +52,7 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
             sb.append(user?.username ?: "-").append(',')
         }
 
-        event.reply(sb.toString().removeSuffix(","))
+        event.replyAsync(sb.toString().removeSuffix(","))
 
         /*
         for (i in idStrs) {

@@ -97,7 +97,7 @@ import java.util.regex.Matcher
                 "page" to split.second,
                 "max_page" to split.third
             ), "A2")
-            event.reply(img)
+            event.replyAsync(img)
         } catch (e: Exception) {
             log.error("过审谱面：", e)
             throw IllegalStateException.Send("过审谱面")

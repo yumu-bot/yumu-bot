@@ -84,7 +84,7 @@ class NewbiePlayStatisticsService(
             }
         }
 
-        event.reply(message)
+        event.replyAsync(message)
         return ServiceCallStatistic.building(event)
     }
 

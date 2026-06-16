@@ -54,7 +54,7 @@ class LocalCommandListener {
 
         if (message.startsWith("/") || message.startsWith("\\")) {
             try {
-                PermissionImplement.onTencentMessage(event, (event::reply))
+                PermissionImplement.onTencentMessage(event, (event::replyAsync))
             } catch (e: Exception) {
                 log.info("捕捉到腾讯异常：{}", e.message)
                 log.debug("异常详细信息:", e)

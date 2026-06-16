@@ -53,7 +53,7 @@ class BPFixService(
     override fun handleMessage(event: MessageEvent, param: BPFixParam): ServiceCallStatistic? {
         val image = param.getImage()
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("理论最好成绩：发送失败", e)
             throw IllegalStateException.Send("理论最好成绩")

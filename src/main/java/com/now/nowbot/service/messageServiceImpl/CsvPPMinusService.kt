@@ -55,7 +55,7 @@ class CsvPPMinusService(
     override fun handleMessage(event: MessageEvent, param: CSVPPMinusParam): ServiceCallStatistic? {
         val isOsuID = param.names.first().matches("\\d+".toRegex())
 
-        event.reply("CM：正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
+        event.replyAsync("CM：正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
 
         val ids = if (isOsuID) {
             param.names.mapNotNull { it.toLongOrNull() }
@@ -200,7 +200,7 @@ class CsvPPMinusService(
         }
 
         // 必须群聊
-        event.replyFileInGroup(file, fileName)
+        event.replyFileInGroupAsync(file, fileName)
         
         return ServiceCallStatistic.builds(event, userIDs = result.mapNotNull { it.user?.userID }.ifEmpty { null })
     }

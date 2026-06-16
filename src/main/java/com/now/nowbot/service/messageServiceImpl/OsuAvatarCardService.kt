@@ -51,7 +51,7 @@ class OsuAvatarCardService(
     override fun handleMessage(event: MessageEvent, param: OsuUser): ServiceCallStatistic? {
         val p = UserAvatarCardParam(param)
 
-        event.reply(imageService.getPanel(p, "Zeta"))
+        event.replyAsync(imageService.getPanel(p, "Zeta"))
 
         return ServiceCallStatistic.build(event, userID = param.userID)
     }

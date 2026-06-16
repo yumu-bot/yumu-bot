@@ -65,7 +65,7 @@ class SetGroupModeService (
         val isSuperAdmin = Permission.isSuperAdmin(event)
 
         if (param.group != null && param.group < 0L && isSuperAdmin) {
-            event.reply(getGroupModeCharts(0 - param.group.toInt()))
+            event.replyAsync(getGroupModeCharts(0 - param.group.toInt()))
             return ServiceCallStatistic.build(event, mode = param.mode)
         }
 
@@ -127,7 +127,7 @@ class SetGroupModeService (
             }
         }
 
-        event.reply(text)
+        event.replyAsync(text)
         return ServiceCallStatistic.build(event, mode = param.mode)
     }
 }

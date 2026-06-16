@@ -56,7 +56,7 @@ import org.springframework.stereotype.Service
         ), "F")
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("比赛结果：发送失败", e)
             throw IllegalStateException.Send("比赛结果")

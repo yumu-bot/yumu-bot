@@ -51,7 +51,7 @@ import java.util.regex.Matcher
         }
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("谱师信息：发送失败", e)
             throw IMapperException(IMapperException.Type.IM_Send_Error)

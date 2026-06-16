@@ -48,7 +48,7 @@ import java.util.regex.Matcher
             try {
                 val md = getMarkdownFile("Help/round.md")
                 val image = imageService.getPanelA6(md, "help")
-                event.reply(image)
+                event.replyAsync(image)
                 return null
             } catch (_: Exception) {
                 throw MatchRoundException(MatchRoundException.Type.MR_Instructions)
@@ -76,7 +76,7 @@ import java.util.regex.Matcher
                 try {
                     val md = getMarkdownFile("Help/round.md")
                     val image = imageService.getPanelA6(md, "help")
-                    event.reply(image)
+                    event.replyAsync(image)
                     return null
                 } catch (_: Exception) {
                     throw MatchRoundException(MatchRoundException.Type.MR_Instructions)
@@ -96,7 +96,7 @@ import java.util.regex.Matcher
         }
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("对局信息数据请求失败", e)
             throw IllegalStateException.Send("对局信息")

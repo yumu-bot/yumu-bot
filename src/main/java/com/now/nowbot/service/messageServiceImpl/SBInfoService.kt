@@ -47,7 +47,7 @@ class SBInfoService(
     override fun handleMessage(event: MessageEvent, param: InfoParam): ServiceCallStatistic? {
         val message = param.getMessageChain()
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("玩家信息：发送失败", e)
             throw IllegalStateException.Send("玩家信息")

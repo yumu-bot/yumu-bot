@@ -50,7 +50,7 @@ class MaiVersusService(
     ): ServiceCallStatistic? {
         val image = imageService.getPanel(param.toVersusResult(), "Theta")
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.building(event)
     }

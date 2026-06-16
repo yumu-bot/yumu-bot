@@ -100,7 +100,7 @@ class FriendService(
     }
 
     override fun handleMessage(event: MessageEvent, param: FriendParam): ServiceCallStatistic? {
-        event.reply(getMessageChain(param))
+        event.replyAsync(getMessageChain(param))
 
         return when (param) {
             is FriendPairParam -> {

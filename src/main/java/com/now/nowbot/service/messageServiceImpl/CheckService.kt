@@ -83,7 +83,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
             令牌过期时间：${timeStr}
         """.trimIndent()
 
-        event.reply(result)
+        event.replyAsync(result)
 
         return ServiceCallStatistic.build(event, userID = param.userID, mode = param.mode)
     }

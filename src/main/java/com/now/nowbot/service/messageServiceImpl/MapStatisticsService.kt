@@ -66,7 +66,7 @@ class MapStatisticsService(
 
         val image = imageService.getPanel(panel, "R")
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.build(
             event,

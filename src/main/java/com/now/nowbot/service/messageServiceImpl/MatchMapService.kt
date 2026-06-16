@@ -92,10 +92,10 @@ class MatchMapService(
         val image = imageService.getPanel(e7Param, "E7")
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("比赛谱面信息：发送失败: ", e)
-            event.reply(IllegalStateException.Send("比赛谱面信息"))
+            event.replyAsync(IllegalStateException.Send("比赛谱面信息"))
         }
 
         return ServiceCallStatistic.build(

@@ -47,7 +47,7 @@ class CalculateNewbieCupService(
 
         if (ids.isEmpty()) return false
 
-        event.reply("正在获取新人群群赛的比赛记录...")
+        event.replyAsync("正在获取新人群群赛的比赛记录...")
 
         val matches = getMatches(ids)
 
@@ -62,7 +62,7 @@ class CalculateNewbieCupService(
     }
 
     override fun handleMessage(event: MessageEvent, param: NewbieCupParam): ServiceCallStatistic? {
-        event.reply("正在获取玩家表现分...")
+        event.replyAsync("正在获取玩家表现分...")
 
         val result = getResult(param)
 
@@ -70,7 +70,7 @@ class CalculateNewbieCupService(
 
         val name = param.matches.first().name.split("\\s*$REG_COLON\\s*".toRegex()).firstOrNull()?.trim() ?: "OCNC"
 
-        event.replyFileInGroup(str.toByteArray(Charsets.UTF_8), "$name.csv")
+        event.replyFileInGroupAsync(str.toByteArray(Charsets.UTF_8), "$name.csv")
 
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(

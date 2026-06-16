@@ -102,13 +102,13 @@ class SBBindService(
             bindDao.bindSBQQ(param.qq, SBBindUser(user))
             bindDao.updateSBMode(user.userID, user.mode)
 
-            event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username, user.mode))
+            event.replyAsync(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username, user.mode))
 
             return
         }
 
         // 已有绑定：覆盖绑定
-        event.reply(BindException.BindConfirmException.RecoverBind(user.username, qb.bindUser.username, param.qq))
+        event.replyAsync(BindException.BindConfirmException.RecoverBind(user.username, qb.bindUser.username, param.qq))
 
         val lock = ASyncMessageUtil.getLock(event)
         val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
@@ -117,9 +117,9 @@ class SBBindService(
             bindDao.bindSBQQ(param.qq, SBBindUser(user))
             bindDao.updateSBMode(user.userID, user.mode)
 
-            event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username, user.mode))
+            event.replyAsync(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username, user.mode))
         } else {
-            event.reply(BindException.BindReceiveException.ReceiveRefused())
+            event.replyAsync(BindException.BindReceiveException.ReceiveRefused())
         }
     }
 
@@ -152,7 +152,7 @@ class SBBindService(
         val id: Long?
 
         if (param.name.isNullOrEmpty() && param.id == null) {
-            event.reply(BindException.BindReceiveException.ReceiveNoName())
+            event.replyAsync(BindException.BindReceiveException.ReceiveNoName())
 
             val lock = ASyncMessageUtil.getLock(event)
             val ev: MessageEvent = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()

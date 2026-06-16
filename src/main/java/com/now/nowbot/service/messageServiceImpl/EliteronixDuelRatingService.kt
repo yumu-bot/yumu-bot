@@ -55,7 +55,7 @@ class EliteronixDuelRatingService(
     ): ServiceCallStatistic? {
         val image = imageService.getPanel(param, "B4")
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.builds(event, userIDs = listOfNotNull(param.me.userID, param.other?.userID))
     }

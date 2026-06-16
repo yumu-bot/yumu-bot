@@ -116,7 +116,7 @@ class ExploreService(
     ): ServiceCallStatistic? {
         val image = param.getImage()
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.building(event) {
             setParam(

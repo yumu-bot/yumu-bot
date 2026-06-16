@@ -52,7 +52,7 @@ class TestPPMinusService(
         val image = getPanelB1(param.me, param.other, my, others, param.mode)
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("PP-：发送失败：", e)
             throw IllegalStateException.Send("PPM")

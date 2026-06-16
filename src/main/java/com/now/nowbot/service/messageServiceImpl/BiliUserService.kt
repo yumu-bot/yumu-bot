@@ -28,7 +28,7 @@ class BiliUserService(private val biliApiService: BiliApiService): MessageServic
     override fun handleMessage(event: MessageEvent, param: Long): ServiceCallStatistic? {
         val user = biliApiService.getUser(param)
 
-        event.reply(getMessage(user.data!!, biliApiService))
+        event.replyAsync(getMessage(user.data!!, biliApiService))
 
         return ServiceCallStatistic.building(event)
     }

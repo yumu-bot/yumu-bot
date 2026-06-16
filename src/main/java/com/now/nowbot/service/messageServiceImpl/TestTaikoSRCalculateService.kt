@@ -21,7 +21,7 @@ class TestTaikoSRCalculateService : MessageService<Matcher> {
     
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val str = param.group("data").trim {it <= ' '} .replace("\\s+".toRegex(), "-")
-        event.reply("结果：" + getResult(str))
+        event.replyAsync("结果：" + getResult(str))
 
         return null
     }

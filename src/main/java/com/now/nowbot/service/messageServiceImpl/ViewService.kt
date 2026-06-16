@@ -49,7 +49,7 @@ class ViewService(
         event: MessageEvent,
         param: ViewParam
     ): ServiceCallStatistic? {
-        event.reply(param.getMessageChain())
+        event.replyAsync(param.getMessageChain())
 
         return ServiceCallStatistic.build(event, beatmapID = param.beatmap.beatmapID)
     }

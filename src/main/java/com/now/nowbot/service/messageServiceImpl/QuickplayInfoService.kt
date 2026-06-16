@@ -37,7 +37,7 @@ class QuickplayInfoService(
         event: MessageEvent,
         param: QuickplayInfoParam
     ): ServiceCallStatistic? {
-        event.reply(param.getTextMessage())
+        event.replyAsync(param.getTextMessage())
 
         return ServiceCallStatistic.building(event)
     }

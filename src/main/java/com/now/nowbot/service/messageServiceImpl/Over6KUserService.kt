@@ -25,7 +25,7 @@ class Over6KUserService(private val userApiService: OsuUserApiService, fileConfi
             if (!DATA_FILE.exists()) {
                 DATA_FILE.createNewFile()
             }
-        } catch (err: IOException) {
+        } catch (_: IOException) {
             INITED = false
         }
 
@@ -46,13 +46,13 @@ class Over6KUserService(private val userApiService: OsuUserApiService, fileConfi
         val time: LocalDate
         try {
             time = LocalDate.parse(ps[2])
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw TipsException("日期格式错误, 必须为 yyyy-MM-dd")
         }
         val id: Long
         try {
             id = userApiService.getOsuID(name)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw TipsException("没找到用户 $name"
             )
         }
@@ -66,7 +66,7 @@ class Over6KUserService(private val userApiService: OsuUserApiService, fileConfi
         param: OverUser
     ): ServiceCallStatistic? {
         saveUser(param)
-        event.reply("添加成功")
+        event.replyAsync("添加成功")
         return null
     }
 

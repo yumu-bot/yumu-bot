@@ -63,7 +63,7 @@ class UUBAService(
         val image = imageService.getPanelAlpha(*panelParam)
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (_: Exception) {
             throw IllegalStateException.Send("最好成绩分析（文字版）")
         }

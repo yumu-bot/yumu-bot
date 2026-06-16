@@ -431,28 +431,28 @@ class GetItemsService(
 
     override fun handleMessage(event: MessageEvent, param: GetItemsParam): ServiceCallStatistic? {
         when(param) {
-            is PoolParam -> event.reply(param.getMapPoolText())
+            is PoolParam -> event.replyAsync(param.getMapPoolText())
             is NewbieBeatmapParam -> {
                 if (param.beatmapIDs.size <= 5) {
-                    event.reply(param.getNewbieBeatmapComponent())
+                    event.replyAsync(param.getNewbieBeatmapComponent())
                 } else {
-                    event.replyFileInGroup(param.getNewbieBeatmapComponent().toByteArray(Charsets.UTF_8), "beatmaps.md")
+                    event.replyFileInGroupAsync(param.getNewbieBeatmapComponent().toByteArray(Charsets.UTF_8), "beatmaps.md")
                 }
             }
             is NewbieBeatmapsetParam -> {
                 if (param.beatmapsetIDs.size <= 5) {
-                    event.reply(param.getNewbieBeatmapsetComponent())
+                    event.replyAsync(param.getNewbieBeatmapsetComponent())
                 } else {
-                    event.replyFileInGroup(param.getNewbieBeatmapsetComponent().toByteArray(Charsets.UTF_8), "beatmapsets.md")
+                    event.replyFileInGroupAsync(param.getNewbieBeatmapsetComponent().toByteArray(Charsets.UTF_8), "beatmapsets.md")
                 }
             }
-            is NewbiePlayerParam -> event.reply(param.getNewbiePlayerComponent())
-            is NewbieScoreParam -> event.reply(param.getNewbieScoreComponent())
+            is NewbiePlayerParam -> event.replyAsync(param.getNewbiePlayerComponent())
+            is NewbieScoreParam -> event.replyAsync(param.getNewbieScoreComponent())
             is NewbieBestParam -> {
                 if (param.bests.size <= 10) {
-                    event.reply(param.getNewbieBestsComponent())
+                    event.replyAsync(param.getNewbieBestsComponent())
                 } else {
-                    event.replyFileInGroup(param.getNewbieBestsComponent().toByteArray(Charsets.UTF_8), "${param.user.username}(${param.bests.size}).md")
+                    event.replyFileInGroupAsync(param.getNewbieBestsComponent().toByteArray(Charsets.UTF_8), "${param.user.username}(${param.bests.size}).md")
                 }
             }
         }

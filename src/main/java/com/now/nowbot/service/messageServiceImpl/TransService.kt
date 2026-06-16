@@ -47,7 +47,7 @@ class TransService : MessageService<Matcher> {
             }
         }
 
-        event.reply(sb.toString())
+        event.replyAsync(sb.toString())
         return ServiceCallStatistic.building(event)
     }
 

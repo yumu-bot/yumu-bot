@@ -46,7 +46,7 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
         // 防止key重复, 循环构造随机字符串
         while (LOGIN_USER_MAP.containsKey(
                 (getRoStr().also { code = it }).uppercase())) {}
-        event.reply("您的登录验证码: $code")
+        event.replyAsync("您的登录验证码: $code")
         LOGIN_USER_MAP[code!!.uppercase(Locale.getDefault())] = LoginUser(u.userID, u.username, System.currentTimeMillis())
 
         return null

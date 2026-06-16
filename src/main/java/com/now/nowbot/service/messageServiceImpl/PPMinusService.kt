@@ -242,7 +242,7 @@ class PPMinusService(
         val image = param.getPPMImage()
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("PP-：发送失败：", e)
             throw IllegalStateException.Send("PPM")

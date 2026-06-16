@@ -44,8 +44,8 @@ class WikiService internal constructor() : MessageService<Matcher> {
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic {
         val key = param.group("key")
-        val msg = event.reply(getWiki(key))
-        msg.recallIn((60 * 1000).toLong())
+
+        event.reply(getWiki(key)).recallIn((60 * 1000).toLong())
 
         return ServiceCallStatistic.building(event)
     }

@@ -67,9 +67,9 @@ class RefreshOsuFileService(
         }
 
         if (count == 0) {
-            event.reply(NoSuchElementException.BeatmapCache(s.previewName))
+            event.replyAsync(NoSuchElementException.BeatmapCache(s.previewName))
         } else {
-            event.reply("已成功刷新谱面 ${s.previewName} 的所有相关联的 $count 个缓存文件。")
+            event.replyAsync("已成功刷新谱面 ${s.previewName} 的所有相关联的 $count 个缓存文件。")
         }
 
         return ServiceCallStatistic.builds(event, beatmapIDs = s.beatmaps?.map { it.beatmapID })

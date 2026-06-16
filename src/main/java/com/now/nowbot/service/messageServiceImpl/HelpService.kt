@@ -54,7 +54,7 @@ class HelpService(
 
         if (mr.find() && Permission.isSuperAdmin(event.sender.contactID)) {
             imageCacheProvider.clearCache()
-            event.reply("已清除所有帮助文档的图片缓存。")
+            event.replyAsync("已清除所有帮助文档的图片缓存。")
             return false
         }
 
@@ -89,7 +89,7 @@ class HelpService(
         }
 
         try {
-            event.reply(image!!)
+            event.replyAsync(image!!)
         } catch (e: Exception) {
             log.error("帮助文档：发送失败", e)
             throw IllegalStateException.Send("帮助文档")

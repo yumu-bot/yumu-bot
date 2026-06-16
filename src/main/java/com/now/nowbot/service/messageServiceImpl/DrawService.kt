@@ -66,7 +66,7 @@ class DrawService(
 
         val sb = StringBuilder()
         clist.forEach(Consumer { c: DrawConfig.Card -> sb.append(c.name).append(", ") })
-        event.reply(sb.toString())
+        event.replyAsync(sb.toString())
         return ServiceCallStatistic.building(event)
     }
 

@@ -78,13 +78,13 @@ class UpdateTriggerService(
     override fun handleMessage(event: MessageEvent, param: Pair<UpdateType, String?>): ServiceCallStatistic? {
         when(param.first) {
             OSU_PERCENT -> {
-                event.reply("正在尝试更新玩家百分比数据！")
+                event.replyAsync("正在尝试更新玩家百分比数据！")
                 val count = infoDao.percentilesDailyUpsert()
-                event.reply("已更新 $count 条玩家百分比数据。")
+                event.replyAsync("已更新 $count 条玩家百分比数据。")
             }
 
             DIVING_FISH -> {
-                event.reply(
+                event.replyAsync(
                     """
                     正在尝试更新水鱼数据！
                     注意，这不会更新落雪数据。
@@ -105,7 +105,7 @@ class UpdateTriggerService(
 
                 val endTime = System.currentTimeMillis()
 
-                event.reply("""
+                event.replyAsync("""
                     更新水鱼数据完成。
                     舞萌歌曲库：${DataUtil.time2HMS(time1 - startTime)}
                     舞萌玩家排名库：${DataUtil.time2HMS(time3 - time1)}
@@ -119,7 +119,7 @@ class UpdateTriggerService(
             }
 
             LXNS -> {
-                event.reply("正在尝试更新落雪数据！")
+                event.replyAsync("正在尝试更新落雪数据！")
 
                 val startTime = System.currentTimeMillis()
                 lxMaiApiService.saveLxMaiSongs()
@@ -127,7 +127,7 @@ class UpdateTriggerService(
                 lxMaiApiService.saveLxMaiCollections()
                 val endTime = System.currentTimeMillis()
 
-                event.reply("""
+                event.replyAsync("""
                     更新落雪数据完成。
                     
                     歌曲数据库：${DataUtil.time2HMS(time1 - startTime)}
@@ -145,15 +145,15 @@ class UpdateTriggerService(
                 ASyncMessageUtil.doubleCheck(
                     event,
                     onCheck = {
-                        event.reply("高耗时操作：你确定要开始统计所有玩家的今日数据吗？回复 OK 确认。")
+                        event.replyAsync("高耗时操作：你确定要开始统计所有玩家的今日数据吗？回复 OK 确认。")
                     },
                     onSuccess = {
                         val startTime = System.currentTimeMillis()
 
-                        event.reply("已提交更新指令，系统正在后台处理...")
+                        event.replyAsync("已提交更新指令，系统正在后台处理...")
                         dailyStatisticsService.collectInfoAndScores {
                             val endTime = System.currentTimeMillis()
-                            event.reply("每日数据更新已完成，耗时：${DataUtil.time2HMS(endTime - startTime)}")
+                            event.replyAsync("每日数据更新已完成，耗时：${DataUtil.time2HMS(endTime - startTime)}")
                         }
                     }
                 )
@@ -171,7 +171,7 @@ class UpdateTriggerService(
                 ASyncMessageUtil.doubleCheck(
                     event,
                     onCheck = {
-                        event.reply("高危操作：你确定要删去 $modeStr 模式的星数吗？回复 OK 确认。")
+                        event.replyAsync("高危操作：你确定要删去 $modeStr 模式的星数吗？回复 OK 确认。")
                     },
                     onSuccess = {
                         val count = scoreDao.deleteByMode(mode)
@@ -182,7 +182,7 @@ class UpdateTriggerService(
                             ""
                         }
 
-                        event.reply("已经清除 $modeStr 模式的星数。${c}")
+                        event.replyAsync("已经清除 $modeStr 模式的星数。${c}")
                     }
                 )
             }

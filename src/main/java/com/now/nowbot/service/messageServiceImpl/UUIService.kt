@@ -78,10 +78,10 @@ class UUIService(
 
         val message = getUUInfo(user, avatar, param.historyUser)
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("UUI 数据发送失败", e)
-            event.reply("UUI 请求超时。\n请重试。或使用增强的 !yminfo。")
+            event.replyAsync("UUI 请求超时。\n请重试。或使用增强的 !yminfo。")
         }
 
         return ServiceCallStatistic.build(event, userID = user.userID, mode = user.currentOsuMode)

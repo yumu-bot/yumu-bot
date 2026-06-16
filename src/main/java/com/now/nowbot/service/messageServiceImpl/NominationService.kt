@@ -74,7 +74,7 @@ import kotlin.math.floor
         val image: ByteArray = imageService.getPanel(param.toMap(), "N")
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("提名信息：发送失败", e)
             throw IllegalStateException.Send("提名信息")

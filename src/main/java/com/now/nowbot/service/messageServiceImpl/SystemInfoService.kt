@@ -64,7 +64,7 @@ class SystemInfoService : MessageService<Boolean> {
 
         sb.append(message)
 
-        event.reply(sb.toString())
+        event.replyAsync(sb.toString())
         return ServiceCallStatistic.building(event)
     }
 

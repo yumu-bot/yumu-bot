@@ -112,7 +112,7 @@ class PPPlusService(
         }
 
         runCatching {
-            event.reply(image)
+            event.replyAsync(image)
         }.onFailure { e ->
             log.error("PP+ 发送失败", e)
             throw IllegalStateException.Send("PP+")

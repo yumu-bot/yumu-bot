@@ -56,7 +56,7 @@ import kotlin.random.Random
         if (res.recall > 0) {
             event.reply(res.text).recallIn(res.recall)
         } else {
-            event.reply(res.text)
+            event.replyAsync(res.text)
         }
 
         return res.statistic

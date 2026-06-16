@@ -67,7 +67,7 @@ class BestHistoryRecoverService(
 
         val chain = param.getMessageChain(selected - 1)
 
-        event.reply(chain)
+        event.replyAsync(chain)
 
         return ServiceCallStatistic.building(event)
     }
@@ -125,7 +125,7 @@ class BestHistoryRecoverService(
             sb.append("您可以输入对应的编号，或是含有 # 号的页码来翻页。\n")
             sb.append("当前第 $page 页，总共第 $maxPage 页")
 
-            current.reply(sb.toString())
+            current.replyAsync(sb.toString())
 
             // 3. 等待后续交互
             val lock = ASyncMessageUtil.getLock(current, 30 * 1000)
@@ -145,11 +145,11 @@ class BestHistoryRecoverService(
                     } else if (index in countPerPage..count) {
                         return index
                     } else {
-                        current.reply("请输入范围内的编号或页码！请重试。")
+                        current.replyAsync("请输入范围内的编号或页码！请重试。")
                         continuing = false
                     }
                 } else {
-                    current.reply("请输入正确的编号或页码！请重试。")
+                    current.replyAsync("请输入正确的编号或页码！请重试。")
                     continuing = false
                 }
             } else {

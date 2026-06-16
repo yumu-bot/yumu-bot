@@ -117,7 +117,7 @@ class OneBotListener {
             is UnknownHttpStatusCodeException
                 -> handleNetworkException(event, e)
             is LogException -> log.info(e.message)
-            is ExecutionException -> event.reply(MessageChain(e.cause!!.message!!))
+            is ExecutionException -> event.replyAsync(MessageChain(e.cause!!.message!!))
             is IllegalArgumentException -> log.error("正则异常", e)
             is DecodingException -> log.error("JSON 解码异常", e)
             else -> handleOtherException(event, e)
@@ -126,7 +126,7 @@ class OneBotListener {
 
     private fun handleBotException(event: MessageEvent, e: BotException) {
         if (e.hasImage()) {
-            event.reply(e.image!!)
+            event.replyAsync(e.image!!)
         } else {
             event.reply(e.message ?: return).recallIn(RECALL_TIME.toLong())
         }

@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean
         val image = getImage(param)
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (_: Exception) {
             throw IllegalStateException.Send("奖牌信息")
         }

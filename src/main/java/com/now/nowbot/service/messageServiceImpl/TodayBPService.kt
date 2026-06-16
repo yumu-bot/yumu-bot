@@ -80,7 +80,7 @@ class TodayBPService(
         val message = param.getMessageChain()
 
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("今日最好成绩：发送失败", e)
             throw IllegalStateException.Send("今日最好成绩")

@@ -55,7 +55,7 @@ class TeamService(
         val image = team.getImage(param.page)
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (_: Exception) {
             throw IllegalStateException.Send("战队信息")
         }

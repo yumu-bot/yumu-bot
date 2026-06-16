@@ -76,7 +76,7 @@ class SBScorePRService(
         val messageChain: MessageChain = param.getMessageChain()
 
         try {
-            event.reply(messageChain)
+            event.replyAsync(messageChain)
         } catch (e: Exception) {
             log.error("偏偏要上班最好成绩：发送失败", e)
             throw IllegalStateException.Send("偏偏要上班最好成绩")

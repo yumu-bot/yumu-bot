@@ -108,7 +108,7 @@ import org.springframework.stereotype.Service
 
         sb.removeSuffix("\n")
 
-        event.reply(
+        event.replyAsync(
             MessageChain.MessageChainBuilder().addText("这张图可能是？？：\n").addText(sb.toString()).build()
         )
 

@@ -193,7 +193,7 @@ class ScoreApiImpl(
             }.headers(base::insertHeader).toBody<LazerScore>()
         }
 
-        scoreDao.saveScoreAsync(listOfNotNull(score))
+        scoreDao.saveScoreAsync(listOf(score))
 
         return score
     }
@@ -368,7 +368,7 @@ class ScoreApiImpl(
             retry = buildUri(null)
         ).scores
 
-        scoreDao.saveScoreAsync(scores.take(50))
+        scoreDao.saveScoreAsync(scores)
 
         return scores
     }

@@ -30,7 +30,7 @@ import kotlin.math.roundToLong
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Double): ServiceCallStatistic? {
-        event.reply(getMessage(param))
+        event.replyAsync(getMessage(param))
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(
                 "star" to param.toFloat().toString()

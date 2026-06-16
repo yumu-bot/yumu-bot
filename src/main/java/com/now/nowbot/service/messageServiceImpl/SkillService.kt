@@ -77,7 +77,7 @@ import kotlin.math.sqrt
         val image = param.getImage()
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (_: Exception) {
             throw IllegalStateException.Send("技巧分析")
         }

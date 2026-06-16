@@ -158,7 +158,7 @@ class MaiBestScoreService(
 
                 imageService.getPanel(PanelMEParam(user, score, song, chart, diff).toMap(), "ME")
             }
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(

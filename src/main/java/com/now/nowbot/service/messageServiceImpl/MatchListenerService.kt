@@ -119,10 +119,10 @@ class MatchListenerService(
     private fun handleGlobalStop(event: MessageEvent, isSuper: Boolean) {
         if (isSuper) {
             val stopped = stopAllListenerFromSuper()
-            event.reply(MatchException.NormalOperate.StopAll(stopped))
+            event.replyAsync(MatchException.NormalOperate.StopAll(stopped))
         } else {
             val stopped = stopByGroup(event.subject.contactID)
-            event.reply(MatchException.NormalOperate.StopGroup(stopped))
+            event.replyAsync(MatchException.NormalOperate.StopGroup(stopped))
         }
     }
 
@@ -140,7 +140,7 @@ class MatchListenerService(
                     MatchException.ListListener(groupMatchIDs)
                 }
 
-                event.reply(msg)
+                event.replyAsync(msg)
                 return null
             }
 
@@ -152,7 +152,7 @@ class MatchListenerService(
                 }
 
                 register(event, param)
-                event.reply(MatchException.NormalOperate.Start(match))
+                event.replyAsync(MatchException.NormalOperate.Start(match))
             }
 
             Operation.STOP -> {
@@ -296,11 +296,11 @@ class MatchListenerService(
         private fun renderAndReply(param: Any, panelType: String, fallback: String? = null) {
             try {
                 val image = imageService.getPanel(param, panelType)
-                messageEvent.reply(image)
+                messageEvent.replyAsync(image)
             } catch (e: Exception) {
                 log.error("比赛监听：$panelType 图片渲染失败。", e)
 
-                fallback?.let { messageEvent.reply(it) }
+                fallback?.let { messageEvent.replyAsync(it) }
                     ?: throw IllegalStateException.Render("比赛监听")
             }
         }
@@ -311,7 +311,7 @@ class MatchListenerService(
                 return true
             }
 
-            messageEvent.reply(MatchException.NormalOperate.Continue(matchID, roundCounter))
+            messageEvent.replyAsync(MatchException.NormalOperate.Continue(matchID, roundCounter))
 
             val lock = ASyncMessageUtil.getLock(messageEvent.subject.contactID, null, 60000) {
                 it?.rawMessage?.contains("OK", ignoreCase = true) == true
@@ -330,21 +330,21 @@ class MatchListenerService(
             }
 
             if (shouldNotify) {
-                messageEvent.reply(MatchException.NormalOperate.Stop(matchID, type))
+                messageEvent.replyAsync(MatchException.NormalOperate.Stop(matchID, type))
             }
 
         }
 
         override fun onGameAbort(beatmapID: Long) {
-            messageEvent.reply(MatchException.MatchAborted(matchID, beatmapID))
+            messageEvent.replyAsync(MatchException.MatchAborted(matchID, beatmapID))
         }
 
         override fun onError(e: Throwable) {
             log.warn("比赛监听：发生错误: $matchID", e)
             when (e) {
                 is HttpClientErrorException -> return
-                is TipsRuntimeException -> messageEvent.reply(e.message ?: "未知错误")
-                else -> messageEvent.reply("监听期间出现错误, id: $matchID")
+                is TipsRuntimeException -> messageEvent.replyAsync(e.message ?: "未知错误")
+                else -> messageEvent.replyAsync("监听期间出现错误, id: $matchID")
             }
         }
     }

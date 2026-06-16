@@ -56,7 +56,7 @@ import java.util.regex.Matcher
         val message = param.getUUMessageChain()
 
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("谱面成绩：发送失败", e)
             throw IllegalStateException.Send("谱面成绩")

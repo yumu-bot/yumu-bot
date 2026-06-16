@@ -139,7 +139,7 @@ class ScorePRService(
         val messageChain: MessageChain = param.getMessageChain()
 
         try {
-            event.reply(messageChain)
+            event.replyAsync(messageChain)
         } catch (e: Exception) {
             log.error("最近成绩：发送失败", e)
             throw IllegalStateException.Send("最近成绩")

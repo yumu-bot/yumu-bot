@@ -79,24 +79,24 @@ import kotlin.math.floor
         if (param.hasBadge) {
             if (param.hostedCount > 0) {
                 if (param.isMyself) {
-                    event.reply("别人不能使用$takes，因为你已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
+                    event.replyAsync("别人不能使用$takes，因为你已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
                 } else {
-                    event.reply("你不能使用$takes，因为对方已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
+                    event.replyAsync("你不能使用$takes，因为对方已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
                 }
             } else {
                 if (param.isMyself) {
-                    event.reply("别人不能使用$takes，因为你已经获取主页奖牌 (badges)。")
+                    event.replyAsync("别人不能使用$takes，因为你已经获取主页奖牌 (badges)。")
                 } else {
-                    event.reply("你不能使用$takes，因为对方已经获取主页奖牌 (badges)。")
+                    event.replyAsync("你不能使用$takes，因为对方已经获取主页奖牌 (badges)。")
                 }
             }
 
             return ServiceCallStatistic.build(event, userID = param.user?.userID)
         } else if (param.hostedCount > 0) {
             if (param.isMyself) {
-                event.reply("别人不能使用$takes，因为你已经拥有上架 (ranked) 谱面。")
+                event.replyAsync("别人不能使用$takes，因为你已经拥有上架 (ranked) 谱面。")
             } else {
-                event.reply("你不能使用$takes，因为对方已经拥有上架 (ranked) 谱面。")
+                event.replyAsync("你不能使用$takes，因为对方已经拥有上架 (ranked) 谱面。")
             }
 
             return ServiceCallStatistic.build(event, userID = param.user?.userID)
@@ -208,7 +208,7 @@ import kotlin.math.floor
                     "之后你的玩家名会变成 ${user.username}_old。赶快回坑开一把！"
                 }
 
-                event.reply(
+                event.replyAsync(
                     """
                     别人现在就可以使用${takes}。${tips}
                     你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
@@ -217,7 +217,7 @@ import kotlin.math.floor
                     """.trimIndent()
                 )
             } else {
-                event.reply(
+                event.replyAsync(
                     """
                     你现在就可以使用${takes}。
                     玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
@@ -230,7 +230,7 @@ import kotlin.math.floor
         }
 
         if (param.isMyself) {
-            event.reply("""
+            event.replyAsync("""
                 别人${soon}可以使用${takes}。
                 你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
                 你的游戏次数：${pc}
@@ -238,7 +238,7 @@ import kotlin.math.floor
                 """.trimIndent()
             )
         } else {
-            event.reply("""
+            event.replyAsync("""
                 您${soon}可以使用${takes}。
                 玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
                 玩家的游戏次数：${pc}

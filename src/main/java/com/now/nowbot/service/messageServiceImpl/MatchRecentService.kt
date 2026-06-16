@@ -64,7 +64,7 @@ class MatchRecentService(
     override fun handleMessage(event: MessageEvent, param: MatchRecentParam): ServiceCallStatistic? {
         val image = param.getImage()
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("比赛最近成绩：发送失败", e)
             throw IllegalStateException.Send("比赛最近成绩")

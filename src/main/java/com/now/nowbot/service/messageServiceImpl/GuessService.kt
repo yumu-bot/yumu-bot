@@ -95,7 +95,7 @@ class GuessService(
                             try {
                                 delay(200L.milliseconds)
 
-                                g.event.reply(GuessReply.Restart)
+                                g.event.replyAsync(GuessReply.Restart)
 
                                 log.info("在群组 ${g.event.subject.contactID} 的猜词游戏重启通知发送成功")
                             } catch (e: Exception) {
@@ -360,7 +360,7 @@ class GuessService(
             val game = entry.value
 
             if (game.nearingTimeout && !game.reminded.get()) {
-                game.event.reply(GuessReply.NearingTimeout)
+                game.event.replyAsync(GuessReply.NearingTimeout)
                 game.reminded.set(true)
             }
 
@@ -865,7 +865,7 @@ class GuessService(
                     val cores = param.result.dropSuffix()
 
                     if (cores.length < 3) {
-                        event.reply(game.getHintForSpecialWords(param.result))
+                        event.replyAsync(game.getHintForSpecialWords(param.result))
                         return null
                     }
                 }
@@ -905,7 +905,7 @@ class GuessService(
                     throw TipsException("当前有正在进行中的猜歌，请等待此猜歌流程结束。")
                 }
 
-                event.reply(GuessReply.Initializing)
+                event.replyAsync(GuessReply.Initializing)
 
                 // 之前已经猜过的歌曲 set ID
                 val history = serviceCallStatisticsDao.getLast10BeatmapsetIDs(
@@ -1029,7 +1029,7 @@ class GuessService(
 
                 val message = game.tip(param.select, beatmapApiService)
 
-                event.reply(message)
+                event.replyAsync(message)
             }
         }
 
@@ -1162,19 +1162,19 @@ class GuessService(
             val image = imageService.getPanel(game.toMap(), "A8")
 
             if (text?.toString()?.isNotBlank() == true) {
-                this.reply(image, text.toString())
+                this.replyAsync(image, text.toString())
             } else {
-                this.reply(image)
+                this.replyAsync(image)
             }
 
         }.onFailure {
             if (text?.toString()?.isNotBlank() == true) {
-                this.reply(text)
+                this.replyAsync(text)
             }
 
             KALEIDXSCOPE.launch {
                 delay(500.milliseconds)
-                this@replyGuess.reply(game.getTextMessage())
+                this@replyGuess.replyAsync(game.getTextMessage())
             }
         }
     }
@@ -1192,7 +1192,7 @@ class GuessService(
         game.decryptAll()
 
         if (noGuess && text != null) {
-            game.event.reply(text)
+            game.event.replyAsync(text)
         } else {
             game.event.replyGuess(game, text)
         }

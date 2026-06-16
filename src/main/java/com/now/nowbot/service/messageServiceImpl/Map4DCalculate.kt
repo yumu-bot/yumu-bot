@@ -69,7 +69,7 @@ class Map4DCalculate : MessageService<Map4DParam> {
                     else -> "Unexpected value: " + param.type
                 }
 
-        event.reply(message)
+        event.replyAsync(message)
 
         return ServiceCallStatistic.building(event)
     }

@@ -33,7 +33,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
             val names = if (event.hasAt()) {
                 val b = bindDao.getQQLiteFromQQ(event.target) ?: throw BindException.NotBindException.UserNotBind()
 
-                event.reply(b.osuUser!!.osuID.toString())
+                event.replyAsync(b.osuUser!!.osuID.toString())
                 return false
             } else {
                 splitString(str)
@@ -92,7 +92,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
 
          */
 
-        event.reply(sb.toString().removeSuffix(","))
+        event.replyAsync(sb.toString().removeSuffix(","))
 
         return ServiceCallStatistic.builds(event, userIDs = ids.values)
     }

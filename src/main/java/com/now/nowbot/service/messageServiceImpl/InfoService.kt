@@ -163,7 +163,7 @@ class InfoService(
             data.value = getParam(event, matcher3, 1)
             return data.value != null
         } else if (matcher4.find()) {
-            event.reply("""
+            event.replyAsync("""
                 TEST INFO 已完成任务并下线。感谢您的支持。
                 功能等同于现在的 INFO。
                 
@@ -180,7 +180,7 @@ class InfoService(
     override fun handleMessage(event: MessageEvent, param: InfoParam): ServiceCallStatistic? {
         val message = param.getMessageChain()
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("玩家信息：发送失败", e)
             throw IllegalStateException.Send("玩家信息")

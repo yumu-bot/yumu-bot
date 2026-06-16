@@ -160,35 +160,35 @@ class CustomService(
                 Files.write(path, imgBytes)
             } catch (e: Exception) {
                 log.error("自定义：文件添加失败", e)
-                event.reply("设置 ${param.type} 失败。错误已记录。")
+                event.replyAsync("设置 ${param.type} 失败。错误已记录。")
                 return ServiceCallStatistic.building(event)
             }
 
             profile.applyType(param.type, path.toAbsolutePath().toString())
 
             userProfileRepository.saveAndFlush(profile)
-            event.reply("设置 ${param.type} 成功！")
+            event.replyAsync("设置 ${param.type} 成功！")
             return ServiceCallStatistic.building(event)
         } else {
             // 删除
             try {
                 Files.delete(path)
             } catch (_: NoSuchFileException) {
-                event.reply("""
+                event.replyAsync("""
                     删除 ${param.type} 失败。
                     数据库里不存在你设置的自定义图片呢。
                 """.trimIndent())
                 return ServiceCallStatistic.building(event)
             } catch (e: Exception) {
                 log.error("自定义：文件删除失败", e)
-                event.reply("删除 ${param.type} 失败。错误已记录。")
+                event.replyAsync("删除 ${param.type} 失败。错误已记录。")
                 return ServiceCallStatistic.building(event)
             }
 
             profile.applyType(param.type, null)
 
             userProfileRepository.saveAndFlush(profile)
-            event.reply("删除 ${param.type} 成功！")
+            event.replyAsync("删除 ${param.type} 成功！")
             return ServiceCallStatistic.building(event)
         }
     }

@@ -77,7 +77,7 @@ import kotlin.math.roundToInt
 
         val isOsuID = param.names.first().matches("\\d+".toRegex())
 
-        event.reply("TF：正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
+        event.replyAsync("TF：正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
 
         val ids = if (isOsuID) {
             param.names.mapNotNull { it.toLongOrNull() }
@@ -197,7 +197,7 @@ import kotlin.math.roundToInt
 
         log.info("TP：修补最好成绩成功，耗时：${DataUtil.time2HMS(System.currentTimeMillis() - time)}")
 
-        event.reply(sb.toString().removeSuffix(", "))
+        event.replyAsync(sb.toString().removeSuffix(", "))
 
         return null
     }

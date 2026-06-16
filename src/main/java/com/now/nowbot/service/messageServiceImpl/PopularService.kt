@@ -385,7 +385,7 @@ class PopularService(
         }
 
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("流行谱面：发送失败", e)
             throw IllegalStateException.Send("流行谱面")

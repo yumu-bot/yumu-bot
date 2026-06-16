@@ -5,6 +5,7 @@ import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.message.*
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException.NotGroup
+import org.slf4j.LoggerFactory
 import java.net.URL
 
 interface MessageEvent : Event {
@@ -13,6 +14,83 @@ interface MessageEvent : Event {
     val sender: Contact
 
     val message: MessageChain
+
+    fun async(block: () -> Unit, onError: ((Throwable) -> Unit)? = null) {
+        Thread.ofVirtual().start {
+            try {
+                block.invoke()
+            } catch (e: Exception) {
+                if (onError != null) {
+                    onError.invoke(e)
+                } else {
+                    log.warn("发送消息：发生未捕获异常: ${e.message}")
+                }
+            }
+        }
+    }
+
+    fun replyAsync(message: MessageChain, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { reply(message) },
+            onError
+        )
+    }
+
+    fun replyAsync(message: String, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { reply(message) },
+            onError
+        )
+    }
+
+    fun replyAsync(e: Throwable, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { reply(e) },
+            onError
+        )
+    }
+
+    fun replyAsync(image: ByteArray, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { reply(image) },
+            onError
+        )
+    }
+
+    fun replyAsync(image: ByteArray?, message: String, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { reply(image, message) },
+            onError
+        )
+    }
+
+    fun replyAsync(url: URL, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { reply(url) },
+            onError
+        )
+    }
+
+    fun replyAsync(any: Any, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { reply(any) },
+            onError
+        )
+    }
+
+    fun replyVoiceAsync(voice: ByteArray, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { replyVoice(voice) },
+            onError
+        )
+    }
+
+    fun replyFileInGroupAsync(data: ByteArray, name: String?, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { replyFileInGroup(data, name) },
+            onError
+        )
+    }
 
     fun reply(message: MessageChain): MessageReceipt {
         return this.subject.sendMessage(message)
@@ -141,5 +219,7 @@ interface MessageEvent : Event {
                 .filterIsInstance<T>()
                 .firstOrNull()
         }
+
+        private val log = LoggerFactory.getLogger(MessageEvent::class.java)
     }
 }

@@ -89,7 +89,7 @@ import kotlin.math.roundToInt
             val image: ByteArray = imageService.getPanel(mr, "C")
 
             try {
-                event.reply(image)
+                event.replyAsync(image)
             } catch (e: Exception) {
                 log.error("木斗力：发送失败", e)
                 throw IllegalStateException.Send("木斗力")

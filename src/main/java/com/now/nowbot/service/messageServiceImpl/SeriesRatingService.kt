@@ -55,7 +55,7 @@ class SeriesRatingService(
             try {
                 val md = getMarkdownFile("Help/series.md")
                 val image = imageService.getPanelA6(md, "help")
-                event.reply(image)
+                event.replyAsync(image)
                 return null
             } catch (_: Exception) {
                 throw MRAException(MRAException.Type.RATING_Series_Instructions)
@@ -74,11 +74,11 @@ class SeriesRatingService(
         val matchIDs = params!!.matchIDs
 
         if (param.group("csv") != null) {
-            event.reply(MRAException.Type.RATING_Series_Progressing.message)
+            event.replyAsync(MRAException.Type.RATING_Series_Progressing.message)
         }
 
         if (matchIDs.size > 50) {
-            event.reply(MRAException.Type.RATING_Series_TooManyMatch.message)
+            event.replyAsync(MRAException.Type.RATING_Series_TooManyMatch.message)
         }
 
         val sr: SeriesRating
@@ -112,7 +112,7 @@ class SeriesRatingService(
             val image: ByteArray
             try {
                 image = imageService.getPanel(sr, "C2")
-                event.reply(image)
+                event.replyAsync(image)
             } catch (e: Exception) {
                 log.error("系列斗力：数据请求失败", e)
                 throw IllegalStateException.Send("系列斗力")
@@ -127,7 +127,7 @@ class SeriesRatingService(
             }
         } else if (param.group("csv") != null) {
             // 必须群聊
-            event.replyFileInGroup(parseCSA(sr).toByteArray(StandardCharsets.UTF_8), "${sr.statistics.matchID}-results.csv")
+            event.replyFileInGroupAsync(parseCSA(sr).toByteArray(StandardCharsets.UTF_8), "${sr.statistics.matchID}-results.csv")
         }
 
         return ServiceCallStatistic.building(event) {
@@ -463,7 +463,7 @@ class SeriesRatingService(
                     throw MRAException(MRAException.Type.RATING_Series_TooManyRequest, m.toString())
                 }
 
-                event.reply(MRAException.Type.RATING_Series_ReachThreshold.message)
+                event.replyAsync(MRAException.Type.RATING_Series_ReachThreshold.message)
 
                 try {
                     Thread.sleep(10000)
@@ -481,7 +481,7 @@ class SeriesRatingService(
                     throw MRAException(MRAException.Type.RATING_Series_TooManyRequest, m.toString())
                 }
 
-                event.reply(MRAException.Type.RATING_Series_ReachThreshold.message)
+                event.replyAsync(MRAException.Type.RATING_Series_ReachThreshold.message)
 
                 try {
                     Thread.sleep(10000)
@@ -495,7 +495,7 @@ class SeriesRatingService(
             } catch (e: HttpClientErrorException.NotFound) {
                 log.error("SRA 对局找不到", e)
 
-                event.reply(
+                event.replyAsync(
                     m.toString().format(MRAException.Type.RATING_Series_NotFound.message)
                 )
             } catch (e: Exception) {

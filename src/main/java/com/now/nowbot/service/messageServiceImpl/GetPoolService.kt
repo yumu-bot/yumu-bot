@@ -66,7 +66,7 @@ class GetPoolService(
         val image = imageService.getPanel(body, "H")
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("生成图池：发送失败", e)
             throw IllegalStateException.Send("生成图池")

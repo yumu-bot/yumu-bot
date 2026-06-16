@@ -85,7 +85,7 @@ class MapPoolService(
                 sb.append("p.s. 请直接发送选项对应的数字")
 
                 val image2 = imageService.getPanelAlpha(sb)
-                event.reply(image2)
+                event.replyAsync(image2)
 
                 val lock = ASyncMessageUtil.getLock(event)
                 val newEvent = lock.get()
@@ -111,7 +111,7 @@ class MapPoolService(
 
         val image = imageService.getPanel(body, "H")
 
-        this.reply(image)
+        this.replyAsync(image)
     }
 
     fun searchByName(name: String): List<Pool> {

@@ -67,7 +67,7 @@ class GuestDifficultyService(
         val image = imageService.getPanel(body, "A11")
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("客串谱师：发送失败", e)
             throw IllegalStateException.Send("客串谱师")

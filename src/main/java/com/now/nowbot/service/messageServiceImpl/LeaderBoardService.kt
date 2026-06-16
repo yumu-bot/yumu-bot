@@ -219,7 +219,7 @@ class LeaderBoardService(
         }
 
         try {
-            event.reply(image)
+            event.replyAsync(image)
         } catch (e: Exception) {
             log.error("谱面排行：发送失败", e)
             throw IllegalStateException.Send("谱面排行")

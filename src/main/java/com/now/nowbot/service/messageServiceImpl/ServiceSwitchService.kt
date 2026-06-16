@@ -496,7 +496,7 @@ class ServiceSwitchService(
         event: MessageEvent,
         param: SwitchParam
     ): ServiceCallStatistic? {
-        event.reply(param.handle())
+        event.replyAsync(param.handle())
 
         return null
     }

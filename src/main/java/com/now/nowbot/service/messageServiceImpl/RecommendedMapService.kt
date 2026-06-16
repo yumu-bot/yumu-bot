@@ -62,7 +62,7 @@ class RecommendedMapService(
     override fun handleMessage(event: MessageEvent, param: OsuUser): ServiceCallStatistic {
         val p = getUserPrefer(param)
 
-        event.reply("正常获取！${p.favorite.size} ${p.bests.size}")
+        event.replyAsync("正常获取！${p.favorite.size} ${p.bests.size}")
 
         return ServiceCallStatistic.building(event)
     }

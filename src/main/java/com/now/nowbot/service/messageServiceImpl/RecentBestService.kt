@@ -65,7 +65,7 @@ class RecentBestService(
     ): ServiceCallStatistic? {
         val image = param.getImage()
 
-        event.reply(image)
+        event.replyAsync(image)
 
         return ServiceCallStatistic.builds(
             event,

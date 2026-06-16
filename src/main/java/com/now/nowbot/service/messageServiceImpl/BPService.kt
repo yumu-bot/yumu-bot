@@ -76,7 +76,7 @@ import java.util.regex.Matcher
         val message: MessageChain = param.getMessageChain()
 
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("最好成绩：发送失败", e)
             throw IllegalStateException.Send("最好成绩")

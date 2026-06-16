@@ -186,7 +186,7 @@ import java.util.function.Predicate
 
     private fun bindQQAt(event: MessageEvent, qq: Long) {
 
-        event.reply(BindException.BindReceiveException.ReceiveNoName())
+        event.replyAsync(BindException.BindReceiveException.ReceiveNoName())
 
         val lock = ASyncMessageUtil.getLock(event)
         var ev: MessageEvent = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
@@ -200,20 +200,20 @@ import java.util.function.Predicate
         if (qb == null) {
             bindDao.bindQQ(qq, BindUser(ou))
             bindDao.updateMode(ou.userID, ou.defaultOsuMode)
-            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultOsuMode))
+            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultOsuMode))
             return
         }
 
-        event.reply(BindException.BindConfirmException.RecoverBind(ou.username, qb.bindUser!!.username, qq))
+        event.replyAsync(BindException.BindConfirmException.RecoverBind(ou.username, qb.bindUser!!.username, qq))
 
         ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
             bindDao.bindQQ(qq, BindUser(ou))
 
-            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultOsuMode))
+            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultOsuMode))
         } else {
-            event.reply(BindException.BindReceiveException.ReceiveRefused())
+            event.replyAsync(BindException.BindReceiveException.ReceiveRefused())
         }
     }
 
@@ -241,7 +241,7 @@ import java.util.function.Predicate
                     throw RuntimeException()
                 }
 
-                event.reply(
+                event.replyAsync(
                     when (bindUser.isTokenAvailable) {
                         true -> BindException.BindConfirmException.StillAvailable(bindUser.userID, bindUser.username)
                         false -> BindException.BindConfirmException.MaybeAvailable(bindUser.userID, bindUser.username)
@@ -250,7 +250,7 @@ import java.util.function.Predicate
                 )
             } catch (e: Exception) {
                 if (e.findCauseOfType<HttpClientErrorException.Forbidden>() != null) {
-                    event.reply(BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username))
+                    event.replyAsync(BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username))
                 }
             }
 
@@ -258,7 +258,7 @@ import java.util.function.Predicate
                 val lock = ASyncMessageUtil.getLock(event)
                 val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
                 if (ev.rawMessage.uppercase().contains("OK").not()) {
-                    event.reply(BindException.BindReceiveException.ReceiveRefused())
+                    event.replyAsync(BindException.BindReceiveException.ReceiveRefused())
                     return
                 }
             } catch (_: Exception) { // 如果符合，直接允许绑定
@@ -272,7 +272,7 @@ import java.util.function.Predicate
 
     private fun bindUrl(event: MessageEvent, qq: Long) { // 将当前毫秒时间戳作为 key
         if (yumuConfig.bindDomain.contains("http")) {
-            event.reply(BindException.BindResultException.BindUrl(yumuConfig.bindDomain))
+            event.replyAsync(BindException.BindResultException.BindUrl(yumuConfig.bindDomain))
         } else {
             bindQQAt(event, qq)
         }
@@ -293,7 +293,7 @@ import java.util.function.Predicate
                 bindDao.bindQQ(qq, bu)
                 bindDao.updateMode(bu.userID, mode)
 
-                event.reply(BindException.BindResultException.BindSuccessWithMode(mode))
+                event.replyAsync(BindException.BindResultException.BindSuccessWithMode(mode))
                 return
             }
 
@@ -329,7 +329,7 @@ import java.util.function.Predicate
         } else {
             bindDao.bindQQ(qq, BindUser(ou))
             bindDao.updateMode(ou.userID, ou.defaultOsuMode)
-            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, name, ou.defaultOsuMode))
+            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, name, ou.defaultOsuMode))
         }
     }
 

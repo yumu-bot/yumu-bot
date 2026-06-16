@@ -88,7 +88,7 @@ class TestHiddenPPService(
             sb.append(round(hiddenPP)).append(',').append('\n')
         }
 
-        event.reply(sb.toString().removeSuffix(",\n"))
+        event.replyAsync(sb.toString().removeSuffix(",\n"))
 
         return null
     }

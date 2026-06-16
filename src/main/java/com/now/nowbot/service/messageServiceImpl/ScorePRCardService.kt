@@ -82,7 +82,7 @@ class ScorePRCardService(
 
         val message = getMessageChain(score)
         try {
-            event.reply(message)
+            event.replyAsync(message)
         } catch (e: Exception) {
             log.error("迷你成绩面板：发送失败", e)
             throw IllegalStateException.Send("迷你")

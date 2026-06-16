@@ -48,7 +48,7 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CsvInfoParam): ServiceCallStatistic? {
-        if (param.users.size >= 50) event.reply(
+        if (param.users.size >= 50) event.replyAsync(
             IllegalStateException.TooManyRequest("CSV"))
 
         //主获取
@@ -87,7 +87,7 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
         }
 
         //必须群聊
-        event.replyFileInGroup(sb.toString().toByteArray(StandardCharsets.UTF_8), param.name)
+        event.replyFileInGroupAsync(sb.toString().toByteArray(StandardCharsets.UTF_8), param.name)
 
         return ServiceCallStatistic.builds(event, userIDs = users.map { it.userID })
     }
