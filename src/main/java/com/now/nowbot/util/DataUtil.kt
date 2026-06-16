@@ -103,6 +103,27 @@ object DataUtil {
 
      */
 
+    fun ByteArray.getImageExtension(): String {
+        if (this.size < 4) return ".jpg" // 兜底
+
+        // 读取前4个字节并转为十六进制字符串
+        val hex = StringBuilder()
+        for (i in 0..3) {
+            hex.append(String.format("%02X", this[i]))
+        }
+        val header = hex.toString()
+
+        return when {
+            header.startsWith("89504E47") -> ".png"
+            header.startsWith("47494638") -> ".gif"
+            header.startsWith("FFD8FF") -> ".jpg"
+            header.startsWith("52494646") && this.size > 11 &&
+                    String(this.sliceArray(8..11)) == "WEBP" -> ".webp"
+            header.startsWith("424D") -> ".bmp"
+            else -> ".jpg" // 无法识别时默认使用 .jpg 作为兜底
+        }
+    }
+
     fun int2hex(color: Int): String {
         return "#" + color.toString(16).padStart(6, '0')
     }

@@ -24,6 +24,7 @@ import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
+import com.now.nowbot.util.DataUtil.getImageExtension
 import com.now.nowbot.util.DataUtil.parseRange2Limit
 import com.now.nowbot.util.DataUtil.parseRange2Offset
 import com.now.nowbot.util.JacksonUtil
@@ -84,9 +85,11 @@ import kotlin.math.min
         val param = PPMinusService.PPMinusParam(false, me, myBests, null, null, mode, -1)
 
         val data = imageService.getPanel(param.toMap(ppMinusDao), "Gamma")
+        val extension = data.getImageExtension()
+
         return ResponseEntity(
             data, getImageHeader(
-                "${name.trim()}-sn.jpg", data.size
+                "${name.trim()}-sn$extension", data.size
             ), HttpStatus.OK
         )
     }
@@ -123,9 +126,10 @@ import kotlin.math.min
 
         try {
             val data = imageService.getPanel(param.toMap(ppMinusDao), "B1")
+            val extension = data.getImageExtension()
             return ResponseEntity(
                 data, getImageHeader(
-                    "${name.trim()}-pm.jpg", data.size
+                    "${name.trim()}-pm$extension", data.size
                 ), HttpStatus.OK
             )
         } catch (_: Exception) {
@@ -158,9 +162,12 @@ import kotlin.math.min
 
         try {
             val data = imageService.getPanel(param.toMap(ppMinusDao), "B1")
+
+            val extension = data.getImageExtension()
+            
             return ResponseEntity(
                 data, getImageHeader(
-                    "${name.trim()} vs ${name2.trim()}-pv.jpg", data.size
+                    "${name.trim()} vs ${name2.trim()}-pv$extension", data.size
                 ), HttpStatus.OK
             )
         } catch (_: Exception) {
@@ -210,10 +217,12 @@ import kotlin.math.min
             log.error("比赛结果：API 异常", err)
             throw RuntimeException("比赛结果：API 异常")
         }
+        
+        val extension = image.getImageExtension()
 
         return ResponseEntity(
             image, getImageHeader(
-                "${matchID}-match.jpg", image.size
+                "${matchID}-match$extension", image.size
             ), HttpStatus.OK
         )
     }
@@ -257,9 +266,11 @@ import kotlin.math.min
             throw RuntimeException(MRAException.Type.RATING_Send_MRAFailed.message)
         }
 
+        val extension = image.getImageExtension()
+
         return ResponseEntity(
             image, getImageHeader(
-                "${matchID}-mra.jpg", image.size
+                "${matchID}-mra$extension", image.size
             ), HttpStatus.OK
         )
     }
@@ -285,9 +296,11 @@ import kotlin.math.min
         )
 
         val image = imageService.getPanel(body, "H")
+
+        val extension = image.getImageExtension()
         return ResponseEntity(
             image, getImageHeader(
-                "${mapPool.name}-pool.jpg", image.size
+                "${mapPool.name}-pool$extension", image.size
             ), HttpStatus.OK
         )
     }
@@ -343,7 +356,9 @@ import kotlin.math.min
                             "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "BS"
                         ), "A4"
                     )
-                    suffix = "-bps.jpg"
+
+                    val extension = data.getImageExtension()
+                    suffix = "-bps$extension"
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
@@ -355,7 +370,9 @@ import kotlin.math.min
                             IllegalStateException.Render("最好成绩")
                         )
                     }
-                    suffix = "-bp.jpg"
+
+                    val extension = data.getImageExtension()
+                    suffix = "-bp$extension"
                 }
             }
 
@@ -374,7 +391,9 @@ import kotlin.math.min
                         ), "A5"
                     )
 
-                    suffix = "-passes.jpg"
+                    val extension = data.getImageExtension()
+
+                    suffix = "-passes$extension"
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
@@ -385,7 +404,9 @@ import kotlin.math.min
                         throw RuntimeException(IllegalStateException.Render("通过成绩")
                         )
                     }
-                    suffix = "-pass.jpg"
+
+                    val extension = data.getImageExtension()
+                    suffix = "-pass$extension"
                 }
             }
 
@@ -404,7 +425,9 @@ import kotlin.math.min
                         ), "A5"
                     )
 
-                    suffix = "-recents.jpg"
+                    val extension = data.getImageExtension()
+
+                    suffix = "-recents$extension"
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
@@ -415,7 +438,9 @@ import kotlin.math.min
                         throw RuntimeException(IllegalStateException.Render("最近成绩")
                         )
                     }
-                    suffix = "-recent.jpg"
+
+                    val extension = data.getImageExtension()
+                    suffix = "-recent$extension"
                 }
             }
 
@@ -427,7 +452,9 @@ import kotlin.math.min
                 calculateApiService.applyStarToScores(scores)
 
                 data = imageService.getPanelGamma(score)
-                suffix = "-pass_card.jpg"
+
+                val extension = data.getImageExtension()
+                suffix = "-pass_card$extension"
             }
 
             ScoreType.RecentCard -> {
@@ -438,7 +465,9 @@ import kotlin.math.min
                 calculateApiService.applyStarToScores(scores)
 
                 data = imageService.getPanelGamma(score)
-                suffix = "-recent_card.jpg"
+
+                val extension = data.getImageExtension()
+                suffix = "-recent_card$extension"
             }
 
             else -> { // 时间计算
@@ -462,7 +491,9 @@ import kotlin.math.min
                         "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "T"
                     ), "A4"
                 )
-                suffix = "-todaybp.jpg"
+
+                val extension = data.getImageExtension()
+                suffix = "-todaybp$extension"
             }
         }
 
@@ -643,9 +674,11 @@ import kotlin.math.min
         } catch (_: Exception) {
             throw RuntimeException(IllegalStateException.Render("成绩列表"))
         }
+
+        val extension = image.getImageExtension()
         return ResponseEntity(
             image, getImageHeader(
-                "${name}@${bid}-score.jpg", image.size
+                "${name}@${bid}-score$extension", image.size
             ), HttpStatus.OK
         )
     }
@@ -683,9 +716,11 @@ import kotlin.math.min
         val param = BPAnalysisService.BAParam(user, bests, true, mappers, 2)
 
         val image = imageService.getPanel(param.toMap(), "J2")
+
+        val extension = image.getImageExtension()
         return ResponseEntity(
             image, getImageHeader(
-                "${name}-ba.jpg", image.size
+                "${name}-ba$extension", image.size
             ), HttpStatus.OK
         )
     }
@@ -782,9 +817,11 @@ import kotlin.math.min
 
             val image = imageService.getPanel(panel, "R")
 
+            val extension = image.getImageExtension()
+
             return ResponseEntity(
                 image, getImageHeader(
-                    "${bid}-mapinfo.jpg", image.size
+                    "${bid}-mapinfo$extension", image.size
                 ), HttpStatus.OK
             )
         } catch (e: Exception) {
@@ -823,9 +860,11 @@ import kotlin.math.min
 
         val image = imageService.getPanel(param.toMap(), "D3")
 
+        val extension = image.getImageExtension()
+
         return ResponseEntity(
             image, getImageHeader(
-                "${user.userID}-info.jpg", image.size
+                "${user.userID}-info$extension", image.size
             ), HttpStatus.OK
         )
     }
@@ -873,9 +912,11 @@ import kotlin.math.min
 
         val image = imageService.getPanel(IMapperService.getIMapperV1(param), "M")
 
+        val extension = image.getImageExtension()
+
         return ResponseEntity(
             image, getImageHeader(
-                "${user.userID}-mapper.jpg", image.size
+                "${user.userID}-mapper$extension", image.size
             ), HttpStatus.OK
         )
     }
@@ -915,9 +956,11 @@ import kotlin.math.min
         try {
             val image = imageService.getPanel(param.toMap(), "N")
 
+            val extension = image.getImageExtension()
+
             return ResponseEntity(
                 image, getImageHeader(
-                    "${sid ?: bid ?: 0}-nomination.jpg", image.size
+                    "${sid ?: bid ?: 0}-nomination$extension", image.size
                 ), HttpStatus.OK
             )
         } catch (e: Exception) {

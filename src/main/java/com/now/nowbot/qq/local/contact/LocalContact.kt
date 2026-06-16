@@ -3,6 +3,7 @@ package com.now.nowbot.qq.local.contact
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.qq.contact.Contact
 import com.now.nowbot.qq.message.*
+import com.now.nowbot.util.DataUtil.getImageExtension
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
@@ -24,7 +25,8 @@ open class LocalContact(override val contactID: Long = 1340691940, override val 
 
                 is ImageMessage -> {
                     val localPath = if (it.isByteArray) {
-                        saveFile("${System.currentTimeMillis()}.jpg", it.data!!)
+                        val ext = it.data!!.getImageExtension()
+                        saveFile("${System.currentTimeMillis()}$ext", it.data)
                     } else if (it.isUrl) {
                         downloadFile(it.path!!)
                     } else {
@@ -84,7 +86,7 @@ open class LocalContact(override val contactID: Long = 1340691940, override val 
             val urlObj = URI.create(url).toURL()
             val connection = urlObj.openConnection()
             val data = connection.getInputStream().readAllBytes()
-            val nPath: Path = path.resolve("${System.currentTimeMillis()}.jpg"
+            val nPath: Path = path.resolve("${System.currentTimeMillis()}${data.getImageExtension()}"
             )
             Files.write(nPath, data)
             return nPath.toAbsolutePath().toString()
@@ -94,11 +96,42 @@ open class LocalContact(override val contactID: Long = 1340691940, override val 
         }
     }
 
+    private fun Path.getExtension(): String {
+        // 1. 先尝试获取真实的 MIME 类型（例如 "image/png", "image/jpeg"）
+        val mimeType = try {
+            Files.probeContentType(this)
+        } catch (_: Exception) {
+            null
+        }
+
+        // 2. 根据 MIME 类型返回后缀
+        return when (mimeType) {
+            "image/jpeg", "image/jpg" -> ".jpg"
+            "image/png" -> ".png"
+            "image/gif" -> ".gif"
+            "image/webp" -> ".webp"
+            "image/bmp" -> ".bmp"
+            else -> {
+                // 3. 如果探测失败，尝试切分原文件名获取后缀（兜底）
+                val fileName = this.fileName.toString()
+                val dotIndex = fileName.lastIndexOf('.')
+                if (dotIndex in 1 until fileName.length - 1) {
+                    fileName.substring(dotIndex)
+                } else {
+                    ".jpg" // 彻底无法识别时，默认 .jpg
+                }
+            }
+        }
+    }
+
     private fun copyFile(source: Path): String {
         val path = Path.of(NowbotConfig.RUN_PATH, "debug")
         try {
             if (!Files.isDirectory(path)) Files.createDirectories(path)
-            val nPath: Path = path.resolve("${System.currentTimeMillis()}.jpg")
+
+            val ext = source.getExtension()
+
+            val nPath: Path = path.resolve("${System.currentTimeMillis()}$ext")
             Files.copy(source, nPath)
             return nPath.toAbsolutePath().toString()
         } catch (_: IOException) {
