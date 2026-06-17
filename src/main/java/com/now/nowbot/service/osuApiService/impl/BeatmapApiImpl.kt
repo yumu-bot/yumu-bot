@@ -15,6 +15,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
+import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -602,13 +603,13 @@ class BeatmapApiImpl(
     override fun isNotOverRating(bid: Long): Boolean {
         try {
             val map = beatmapDao.getBeatmapLite(bid)!!
-            return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating <= 5.7
+            return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating <= STAR_BOUNDARY
         } catch (_: Exception) {
         }
 
         try {
             val map = getBeatmap(bid)
-            return map.status.equals("ranked", ignoreCase = true) && map.starRating <= 5.7
+            return map.status.equals("ranked", ignoreCase = true) && map.starRating <= STAR_BOUNDARY
         } catch (_: NetworkException.BeatmapException.NotFound) {
             return false
         }

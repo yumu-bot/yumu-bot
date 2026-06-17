@@ -5,6 +5,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.NewbieRestrictService
+import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
@@ -42,14 +43,10 @@ import kotlin.math.roundToLong
         val message = StringBuilder()
          val silence: Long
 
-        if (star < 5.7) {
+        if (star < STAR_BOUNDARY) {
             throw IllegalArgumentException("未超星。")
-        } else if (star < 20.0) { // 超 0.01 星加 10 分钟，6星 以上所有乘以二
-            silence = if (star < 6.0) {
-                ((star - 5.7) * 1000).roundToLong()
-            } else {
-                ((star - 5.7) * 2000).roundToLong()
-            }
+        } else if (star < 20.0) {
+            silence = ((star - STAR_BOUNDARY) * 2000).roundToLong()
         } else {
             throw IllegalArgumentException.ExceedException.StarRating()
         }

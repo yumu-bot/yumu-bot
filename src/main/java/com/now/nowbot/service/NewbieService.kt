@@ -9,6 +9,7 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
+import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -51,7 +52,7 @@ class NewbieService(
             .getUserRankedScore(userId, OsuMode.OSU.modeValue, start, end)
             .filter {
                 val star = getStarRating(it.beatmapID, it.mods)
-                star in 0f..5.7f
+                star in 0f..STAR_BOUNDARY
             }
 
         val mapStatistics = scoreDao.getBeatmapStatistics(scores.map { it.beatmapID })

@@ -215,17 +215,17 @@ class NewbieRestrictService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(NewbieRestrictService::class.java)
 
+        const val STAR_BOUNDARY = 6f
+
         /**
          * 获取禁言时长（分钟）
          */
         private fun getSilence(star: Double): Long {
-            return if (star <= 5.71) {
+            return if (star <= STAR_BOUNDARY + 0.1) {
                 // 未超星
                 0L
-            } else if (star < 6.0) {
-                ((star - 5.7) * 1000).roundToLong()
             } else {
-                ((star - 5.7) * 2000).roundToLong()
+                ((star - STAR_BOUNDARY) * 2000).roundToLong()
             }
         }
 

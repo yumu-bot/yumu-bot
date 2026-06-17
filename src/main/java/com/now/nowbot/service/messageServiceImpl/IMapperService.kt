@@ -17,7 +17,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botException.IMapperException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -47,15 +47,12 @@ import java.util.regex.Matcher
             imageService.getPanel(map, "M")
         } catch (e: Exception) {
             log.error("谱师信息：渲染失败", e)
-            throw IMapperException(IMapperException.Type.IM_Fetch_Error)
+            throw IllegalStateException.Render("谱师信息")
         }
 
-        try {
-            event.replyAsync(image)
-        } catch (e: Exception) {
+        event.replyAsync(image, { e ->
             log.error("谱师信息：发送失败", e)
-            throw IMapperException(IMapperException.Type.IM_Send_Error)
-        }
+        })
 
         return ServiceCallStatistic.build(event, userID = param.user.userID)
     }
@@ -185,6 +182,8 @@ import java.util.regex.Matcher
             val favorite = mySets.sumOf { it.favouriteCount }
             val playcount = myDiffs.sumOf { it.playCount }
 
+            val averageRating = mySets.filter { it.ranked > 0 }.map { it.rating }.takeIf { it.isNotEmpty() }?.average() ?: 0.0
+
             return mapOf(
                 "user" to user,
                 "most_popular_beatmap" to mostPopularBeatmap,
@@ -200,10 +199,14 @@ import java.util.regex.Matcher
                 "favorite" to favorite,
                 "playcount" to playcount,
 
-                "guest_differs" to guestDifficultyOwners,
+                "guest_owners" to guestDifficultyOwners,
+                "guest_bids" to myGuestDiffs.map { it.beatmapID }.distinct(),
 
-                "total_gds" to myGuestDiffs.count(),
-                "total_diffs" to myDiffs.count(),
+                "total_guest" to myGuestDiffs.count(),
+                "total_guest_ranked" to myGuestDiffs.count { it.ranked > 0 },
+                "total_diff" to myDiffs.count(),
+
+                "average_rating" to averageRating
                 )
         }
 
