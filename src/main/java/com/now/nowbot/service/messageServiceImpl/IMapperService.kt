@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuLanguage
@@ -22,6 +23,7 @@ import com.now.nowbot.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -41,10 +43,10 @@ import java.util.regex.Matcher
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: IMapperParam): ServiceCallStatistic? {
-        val map = getIMapperV1(param)
+        val map = getIMapperV2(param)
 
         val image: ByteArray = try {
-            imageService.getPanel(map, "M")
+            imageService.getPanel(map, "M2")
         } catch (e: Exception) {
             log.error("谱师信息：渲染失败", e)
             throw IllegalStateException.Render("谱师信息")
@@ -65,9 +67,9 @@ import java.util.regex.Matcher
     }
 
     override fun reply(event: MessageEvent, param: IMapperParam): MessageChain? {
-        val map = getIMapperV1(param)
+        val map = getIMapperV2(param)
 
-        return MessageChainBuilder().addImage(imageService.getPanel(map, "M")).build()
+        return MessageChainBuilder().addImage(imageService.getPanel(map, "M2")).build()
     }
 
     data class IMapperParam(
@@ -75,6 +77,81 @@ import java.util.regex.Matcher
         val relatedSets: Sequence<Beatmapset>,
         val activities: List<ActivityEvent>,
     )
+
+
+    internal data class RecentlyRankedBeatmap(
+        @field:JsonProperty("id")
+        val beatmapID: Long,
+
+        @field:JsonProperty("difficulty_rating")
+        val starRating: Double,
+    ) {
+        constructor(beatmap: Beatmap) : this(
+            beatmapID = beatmap.beatmapID,
+            starRating = beatmap.starRating
+        )
+    }
+
+    internal data class RecentlyRankedBeatmapset(
+
+        @field:JsonProperty("type")
+        val type: String = "host",
+
+        @field:JsonProperty("id")
+        val beatmapsetID: Long,
+
+        @field:JsonProperty("title")
+        val title: String,
+
+        @field:JsonProperty("covers")
+        val covers: Covers,
+
+        @field:JsonProperty("creator")
+        var creator: String = "",
+
+        @field:JsonProperty("beatmaps")
+        val beatmaps: List<RecentlyRankedBeatmap>,
+
+        @field:JsonProperty(value = "ranked_date")
+        val rankedDate: OffsetDateTime? = null
+    ) {
+        constructor(set: Beatmapset, type: String = "host") : this(
+            type = type,
+            beatmapsetID = set.beatmapsetID,
+            title = set.title,
+            covers = set.covers,
+            creator = set.creator,
+            beatmaps = set.beatmaps.orEmpty().sortedBy { it.starRating }.map { RecentlyRankedBeatmap(it) },
+            rankedDate = set.rankedDate
+        )
+    }
+
+    internal data class MostPopularBeatmapset(
+
+        @field:JsonProperty("id")
+        val beatmapsetID: Long,
+
+        @field:JsonProperty("covers")
+        val covers: Covers = Covers(),
+
+        @field:JsonProperty("play_count")
+        val playCount: Long = 0,
+
+        @field:JsonProperty("favourite_count")
+        val favouriteCount: Long = 0,
+
+        @field:JsonProperty("rating")
+        val rating: Float = 0f,
+
+    ) {
+        constructor(set: Beatmapset) : this(
+            beatmapsetID = set.beatmapsetID,
+            covers = set.covers,
+            playCount = set.playCount,
+            favouriteCount = set.favouriteCount,
+            rating = set.rating
+        )
+    }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(IMapperService::class.java)
@@ -133,10 +210,11 @@ import java.util.regex.Matcher
                 it.sentRanked + it.receivedRanked
             }.take(7)
 
-            val mostPopularBeatmap = mySets
+            val mostPopularBeatmapset = mySets
                 .sortedByDescending { it.playCount }
                 .sortedByDescending { it.ranked }
                 .take(6)
+                .map { MostPopularBeatmapset(it) }
 
             val genre = findGenreCounts( myDiffs)
 
@@ -168,45 +246,47 @@ import java.util.regex.Matcher
                 }
             }
 
-            val mostRecentRankedBeatmap = mySets
+            val mostRecentlyRankedBeatmapset = (mySets
                 .filter { it.ranked > 0 }
+                .map { RecentlyRankedBeatmapset(it, "host") }
+                    + otherSets
+                        .filter { it.ranked > 0 }
+                        .map { RecentlyRankedBeatmapset(it, "guest") }
+                    )
                 .sortedByDescending { it.rankedDate?.toEpochSecond() }
-                .take(2)
-
-            val mostRecentRankedGuestDiff = otherSets
-                .filter { it.ranked > 0 }
-                .sortedByDescending { it.rankedDate?.toEpochSecond() }
-                .take(2)
-
+                .take(5)
 
             val favorite = mySets.sumOf { it.favouriteCount }
             val playcount = myDiffs.sumOf { it.playCount }
 
             val averageRating = mySets.filter { it.ranked > 0 }.map { it.rating }.takeIf { it.isNotEmpty() }?.average() ?: 0.0
+            val averageLength = myDiffs.map { it.totalLength }.takeIf { it.isNotEmpty() }?.average() ?: 0.0
+            val averageDifficulty = myDiffs.map { it.starRating }.takeIf { it.isNotEmpty() }?.average() ?: 0.0
 
             return mapOf(
                 "user" to user,
-                "most_popular_beatmap" to mostPopularBeatmap,
+                "most_popular_beatmapset" to mostPopularBeatmapset,
                 "genre" to genre,
                 "language" to language,
                 "difficulty_arr" to diffArr,
                 "length_arr" to lengthArr,
                 "recent_activity" to recentActivity,
 
-                "most_recent_ranked_beatmap" to mostRecentRankedBeatmap,
-                "most_recent_ranked_guest_diff" to mostRecentRankedGuestDiff,
+                "most_recent_ranked_beatmapset" to mostRecentlyRankedBeatmapset,
 
                 "favorite" to favorite,
                 "playcount" to playcount,
 
                 "guest_owners" to guestDifficultyOwners,
-                "guest_bids" to myGuestDiffs.map { it.beatmapID }.distinct(),
+                "associated_bids" to myDiffs.map { it.beatmapID }.toSet(),
 
                 "total_guest" to myGuestDiffs.count(),
                 "total_guest_ranked" to myGuestDiffs.count { it.ranked > 0 },
                 "total_diff" to myDiffs.count(),
 
-                "average_rating" to averageRating
+                "average_rating" to averageRating,
+                "average_length" to averageLength,
+                "average_difficulty" to averageDifficulty
                 )
         }
 

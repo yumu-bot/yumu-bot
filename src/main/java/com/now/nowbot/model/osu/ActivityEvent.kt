@@ -31,7 +31,7 @@ class ActivityEvent {
     ) {
         @get:JsonProperty("id")
         val id: Long
-            get() = url?.replace("/b/", "")?.toLongOrNull() ?: 0L
+            get() = url?.split("/")?.lastOrNull()?.toLongOrNull() ?: 0L
     }
 
     data class EventBeatmapset(
@@ -42,7 +42,7 @@ class ActivityEvent {
     ) {
         @get:JsonProperty("id")
         val id: Long
-            get() = url?.replace("/s/", "")?.toLongOrNull() ?: 0L
+            get() = url?.split("/")?.lastOrNull()?.toLongOrNull() ?: 0L
     }
 
     data class EventUser(
@@ -57,7 +57,7 @@ class ActivityEvent {
     ) {
         @get:JsonProperty("id")
         val id: Long
-            get() = url?.replace("/u/", "")?.toLongOrNull() ?: 0L
+            get() = url?.split("/")?.lastOrNull()?.toLongOrNull() ?: 0L
     }
 
     enum class EventType(vararg f: String) {

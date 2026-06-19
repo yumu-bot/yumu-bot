@@ -910,7 +910,7 @@ import kotlin.math.min
             user, relatedSets, activity
         )
 
-        val image = imageService.getPanel(IMapperService.getIMapperV1(param), "M")
+        val image = imageService.getPanel(IMapperService.getIMapperV2(param), "M2")
 
         val extension = image.getImageExtension()
 

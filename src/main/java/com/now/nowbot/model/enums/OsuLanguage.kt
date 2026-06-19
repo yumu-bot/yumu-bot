@@ -11,7 +11,7 @@ enum class OsuLanguage(val id: Byte, val formalName: String, val aliases: List<S
     GERMAN(8, "german", listOf("g", "ge", "ger", "germany", "german", "德语", "德文", "德")),
     SWEDISH(9, "swedish", listOf("w", "sw", "swe", "sweden", "swedish", "瑞典语", "瑞典文", "瑞典", "瑞")),
     SPANISH(10, "spanish", listOf("s", "sp", "esp", "spa", "spain", "spanish", "西班牙语", "西班牙文", "西班牙", "西", "西语")),
-    ITALIAN(11, "italic", listOf("t", "it", "ita", "italy", "italian", "意大利语", "意大利文", "意大利", "意")),
+    ITALIAN(11, "italian", listOf("t", "it", "ita", "italy", "italian", "意大利语", "意大利文", "意大利", "意")),
     RUSSIAN(12, "russian", listOf("r", "ru", "rus", "russia", "russian", "俄语", "俄文", "俄罗斯", "俄")),
     POLISH(13, "polish", listOf("p", "po", "pol", "poland", "polish", "波兰语", "波兰文", "波兰", "波")),
     OTHER(14, "other", listOf("o", "ot", "oth", "any", "other", "others", "其他"));
