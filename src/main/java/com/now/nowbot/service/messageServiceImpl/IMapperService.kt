@@ -140,6 +140,9 @@ import java.util.regex.Matcher
         @field:JsonProperty("favourite_count")
         val favouriteCount: Long = 0,
 
+        @field:JsonProperty("ranked")
+        val ranked: Byte = 0,
+
         @field:JsonProperty("rating")
         val rating: Float = 0f,
 
@@ -149,7 +152,8 @@ import java.util.regex.Matcher
             covers = set.covers,
             playCount = set.playCount,
             favouriteCount = set.favouriteCount,
-            rating = set.rating
+            ranked = set.ranked,
+            rating = set.rating,
         )
     }
 
@@ -192,27 +196,32 @@ import java.util.regex.Matcher
 
 
             val guestDifficultyOwners = relatedUsers.map { u ->
-                val re = guestDiffs.filter { it.mapperIDs.contains(u.userID) }
-
-                val received: Int = re.count()
-                val receivedRanked: Int = re.count { it.ranked > 0 }
+                val re = guestDiffs.filter { u.userID in it.mapperIDs }
+                val received = re.count()
+                val receivedRanked = re.count { it.ranked > 0 }
 
                 val se = myGuestDiffs.filter { it.beatmapset?.creatorID == u.userID }
-
-                val sent: Int = se.count()
-
-                val sentRanked: Int = se.count { it.ranked > 0 }
+                val sent = se.count()
+                val sentRanked = se.count { it.ranked > 0 }
 
                 GuestDifficultyService.GuestDifficultyOwner(u, received, receivedRanked, sent, sentRanked)
-            }.sortedByDescending {
-                it.sent + it.received
-            }.sortedByDescending {
-                it.sentRanked + it.receivedRanked
-            }.take(7)
+            }
+
+                // 过滤掉总数和 Ranked 数均为 0 的用户
+                .filter { it.sent + it.received > 0 }
+
+                //复合排序（先按具有资格的谱面数排序，相同再按总谱面数排序）
+                .sortedWith(
+                    compareByDescending<GuestDifficultyService.GuestDifficultyOwner> { it.sentRanked + it.receivedRanked }
+                        .thenByDescending { it.sent + it.received }
+                )
+                .take(7)
 
             val mostPopularBeatmapset = mySets
-                .sortedByDescending { it.playCount }
-                .sortedByDescending { it.ranked }
+                .sortedWith(
+                    compareByDescending<Beatmapset> { if (it.ranked > 0.toByte()) 1.toByte() else it.ranked }
+                        .thenByDescending { it.playCount }
+                )
                 .take(6)
                 .map { MostPopularBeatmapset(it) }
 
@@ -290,6 +299,7 @@ import java.util.regex.Matcher
                 )
         }
 
+        @Deprecated("use getImapperV2")
         fun getIMapperV1(
             param: IMapperParam
         ): Map<String, Any?> {

@@ -173,11 +173,17 @@ class GuestDifficultyService(
             val sentRanked: Int = se.count { it.hasLeaderBoard }
 
             GuestDifficultyOwner(u, received, receivedRanked, sent, sentRanked)
-        }.sortedByDescending {
-            it.sent + it.received
-        }.sortedByDescending {
-            it.sentRanked + it.receivedRanked
-        }.toList()
+        }
+            // 过滤掉总数和 Ranked 数均为 0 的用户
+            .filter { it.sent + it.received > 0 }
+
+            //复合排序（先按具有资格的谱面数排序，相同再按总谱面数排序）
+            .sortedWith(
+                compareByDescending<GuestDifficultyOwner> { it.sentRanked + it.receivedRanked }
+                    .thenByDescending { it.sent + it.received }
+            ).toList()
+
+
 
         if (guestDifficultyOwners.isEmpty()) {
             throw NoSuchElementException.GuestDiff()
