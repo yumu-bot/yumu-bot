@@ -3,6 +3,7 @@ package com.now.nowbot.qq.contact
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
 import com.now.nowbot.qq.message.MessageReceipt
+import com.now.nowbot.util.WebpUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
@@ -28,7 +29,7 @@ interface Contact {
     }
 
     fun sendImage(data: ByteArray): MessageReceipt {
-        return sendMessage(MessageChainBuilder().addImage(data).build())
+        return sendMessage(MessageChainBuilder().addImage(WebpUtil.extendWebpHeader(data)).build())
     }
 
     fun sendVoice(data: ByteArray): MessageReceipt {
