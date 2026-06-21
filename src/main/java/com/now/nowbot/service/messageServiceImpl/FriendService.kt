@@ -154,8 +154,8 @@ class FriendService(
                     val type = param.sortType.name.lowercase()
 
                     val body = mapOf(
-                        "me_card_A1" to param.user,
-                        "friend_card_A1" to param.friends,
+                        "me" to param.user,
+                        "friends" to param.friends,
                         "type" to type,
                     )
 
@@ -245,12 +245,14 @@ class FriendService(
             val sortParam: Pair<SortType, SortDirection> =
                 getSort(matcher.group("sort"))
 
-            // 排序成绩
-            val sortedFriends = sortFriends(async.second, sortParam.first, sortParam.second)
-
             // 筛选成绩
             val offset = id2.getOffset()
             val limit = min(id2.getLimit(20), 100)
+
+            val noShuffled = id2.fullRange()
+
+            // 排序成绩
+            val sortedFriends = sortFriends(async.second, noShuffled, sortParam.first, sortParam.second)
 
             val filteredFriends = MicroUserFilter.filterUsers(sortedFriends, conditions).drop(offset).take(limit)
 
@@ -393,16 +395,24 @@ class FriendService(
 
         /**
          * 重写排序方式
+         * @param noShuffled 如果为真，则不会主动打乱玩家
          */
-        private fun sortFriends(friends: List<MicroUser>, sortType: SortType, sortDirection: SortDirection): List<MicroUser> {
-            val sequence = if (sortDirection == DESCEND) {
+        private fun sortFriends(friends: List<MicroUser>, noShuffled: Boolean, sortType: SortType, sortDirection: SortDirection): List<MicroUser> {
+            val type: SortType = sortType
+            val direction: SortDirection = if (noShuffled && sortDirection == RANDOM) {
+                ASCEND
+            } else {
+                sortDirection
+            }
+
+            val sequence = if (direction == DESCEND) {
                 // 先翻一次，因为等会要翻回来，这样可以保证都是默认按名字升序排序的
                 friends.asSequence().sortedByDescending { it.username }
             } else {
                 friends.asSequence().sortedBy { it.username }
             }
 
-            val sorted = when (sortType) {
+            val sorted = when (type) {
                 PERFORMANCE -> sequence
                     .filter { it.statistics!!.pp!! > 0 }
                     .sortedBy { it.statistics!!.pp!! }
@@ -435,7 +445,7 @@ class FriendService(
                 else -> sequence
             }
 
-            val result = when (sortDirection) {
+            val result = when (direction) {
                 ASCEND, TRUE -> sorted.toList()
                 DESCEND -> sorted.toList().reversed()
                 RANDOM -> sorted.shuffled().toList()
@@ -451,7 +461,7 @@ class FriendService(
             }
 
             if (result.isEmpty()) {
-                if (sortType == NULL) {
+                if (type == NULL) {
                     throw NoSuchElementException.Friend()
                 } else {
                     throw NoSuchElementException.FriendMatched()

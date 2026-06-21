@@ -873,9 +873,9 @@ data class InstructionRange<T>(var data: T? = null, var start: Int? = null, var 
     // 如果为真，则默认为 1-100
     private var rangeZero = false
 
-    private fun halfRange() = start != null && end == null
+    fun halfRange() = start != null && end == null
 
-    private fun fullRange() = start != null && end != null
+    fun fullRange() = start != null && end != null
 
     fun setZeroToRange100() {
         rangeZero = (start == 0 && end == null)

@@ -7,6 +7,8 @@ import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.ActivityEvent
+import com.now.nowbot.model.osu.ActivityEvent.Companion.filterIsMapping
+import com.now.nowbot.model.osu.ActivityEvent.Companion.squash
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -433,7 +435,7 @@ import java.util.regex.Matcher
 
                 val async = AsyncMethodExecutor.awaitTriple(
                     { beatmapApiService.searchBeatmapsetParallel(query) },
-                    { userApiService.getUserRecentActivity(id).filter { it.isMapping } },
+                    { userApiService.getUserRecentActivity(id).filterIsMapping().squash() },
                     { userApiService.getOsuUser(id, mode.data!!) },
                 )
                 val sets = async.first.beatmapsets
@@ -453,7 +455,7 @@ import java.util.regex.Matcher
 
                 val async = AsyncMethodExecutor.awaitPair(
                     { beatmapApiService.searchBeatmapsetParallel(query) },
-                    { userApiService.getUserRecentActivity(user.userID).filter { it.isMapping } }
+                    { userApiService.getUserRecentActivity(user.userID).filterIsMapping().squash() }
                 )
 
                 val sets = async.first.beatmapsets

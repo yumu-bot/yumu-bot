@@ -31,7 +31,7 @@ class ActivityEvent {
     ) {
         @get:JsonProperty("id")
         val id: Long
-            get() = url?.split("/")?.lastOrNull()?.toLongOrNull() ?: 0L
+            get() = url?.substringBefore("?")?.split("/")?.lastOrNull()?.toLongOrNull() ?: 0L
     }
 
     data class EventBeatmapset(
@@ -42,7 +42,7 @@ class ActivityEvent {
     ) {
         @get:JsonProperty("id")
         val id: Long
-            get() = url?.split("/")?.lastOrNull()?.toLongOrNull() ?: 0L
+            get() = url?.substringBefore("?")?.split("/")?.lastOrNull()?.toLongOrNull() ?: 0L
     }
 
     data class EventUser(
@@ -139,6 +139,10 @@ class ActivityEvent {
     val isMapping: Boolean
         get() = type in MAPPING_EVENTS
 
+    // 自己记录，List.squash 后记录结果
+    @JsonProperty("repeated")
+    var repeated: Int = 1
+
     override fun equals(other: Any?): Boolean {
         if (other is ActivityEvent) {
             return this.type == other.type && (beatmapSet?.url == other.beatmapSet?.url)
@@ -162,5 +166,41 @@ class ActivityEvent {
             EventType.BeatmapsetUpdate,
             EventType.BeatmapsetUpload
         )
+
+        fun List<ActivityEvent>.filterIsMapping(): List<ActivityEvent> {
+            return this.filter { it.isMapping }
+        }
+
+        /**
+         * 合并日期相同、谱面相同、类型相同的 event
+         */
+        fun List<ActivityEvent>.squash(): List<ActivityEvent> {
+            if (this.isEmpty()) return emptyList()
+
+            data class EventGroupKey(
+                val date: java.time.LocalDate?,
+                val type: EventType?,
+                val beatmapID: Long?
+            )
+
+            val groups = linkedMapOf<EventGroupKey, ActivityEvent>()
+
+            for (current in this) {
+                val key = EventGroupKey(
+                    date = current.createdAt?.toLocalDate(),
+                    type = current.type,
+                    beatmapID = current.beatmap?.id
+                )
+
+                val firstSaved = groups[key]
+                if (firstSaved != null) {
+                    firstSaved.repeated++
+                } else {
+                    groups[key] = current
+                }
+            }
+
+            return groups.values.toList()
+        }
     }
 }

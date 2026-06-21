@@ -12,6 +12,8 @@ import com.now.nowbot.model.mappool.old.MapPoolDto
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.osu.ActivityEvent.Companion.filterIsMapping
+import com.now.nowbot.model.osu.ActivityEvent.Companion.squash
 import com.now.nowbot.model.skill.SkillMania
 import com.now.nowbot.model.skill.SkillMania6
 import com.now.nowbot.service.ImageService
@@ -894,7 +896,7 @@ import kotlin.math.min
         val async = AsyncMethodExecutor.awaitQuad(
             { beatmapApiService.searchBeatmapsetParallel(query) },
             { beatmapApiService.searchBeatmapsetParallel(query2) },
-            { userApiService.getUserRecentActivity(userID).filter { it.isMapping } },
+            { userApiService.getUserRecentActivity(userID).filterIsMapping().squash() },
             { userApiService.getOsuUser(userID) },
         )
 
