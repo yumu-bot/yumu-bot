@@ -128,6 +128,7 @@ class BeatmapDao(
     fun updateFailTimeByBeatmapID(beatmap: Beatmap): Int {
         return extendBeatmapRepository.updateFailTimeByBeatmapID(
             beatmapID = beatmap.beatmapID,
+            lazerOnly = beatmap.lazerOnly,
             fail = beatmap.failTimes?.toString(),
             owners = beatmap.owners?.map { o -> o.toNanoUserLite() }?.let { owners -> JacksonUtil.objectToJson(owners)})
     }
@@ -225,6 +226,7 @@ class BeatmapDao(
         val lite = BeatmapExtendLite(
             beatmapID = beatmap.beatmapID,
             beatmapset = savedSet,
+            lazerOnly = beatmap.lazerOnly,
             failTimes = beatmap.failTimes?.toString(),
             owners = beatmap.owners?.map { nu -> nu.toNanoUserLite() }?.let { JacksonUtil.toJson(it) },
             maxCombo = beatmap.maxCombo ?: 0,
@@ -312,6 +314,7 @@ class BeatmapDao(
 
         score.beatmap.apply {
             beatmapsetID = x.beatmapsetID
+            lazerOnly = b.lazerOnly
             failTimes = b.failTimes?.let { JacksonUtil.toNode(it) }
             owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
             maxCombo = b.maxCombo
@@ -363,6 +366,7 @@ class BeatmapDao(
             beatmapset = s
         }
 
+        lazerOnly = b.lazerOnly
         failTimes = b.failTimes?.let { JacksonUtil.toNode(it) }
         maxCombo = b.maxCombo
         owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }

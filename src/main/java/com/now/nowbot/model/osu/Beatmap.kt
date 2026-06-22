@@ -25,6 +25,9 @@ data class Beatmap(
     @Column(name = "id")
     var beatmapID: Long = 0L,
 
+    @field:JsonProperty("lazer_only")
+    var lazerOnly: Boolean = false,
+
     @set:JsonProperty("mode")
     @get:JsonIgnore
     var modeStr: String = "osu",

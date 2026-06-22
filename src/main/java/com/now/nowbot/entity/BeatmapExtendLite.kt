@@ -23,6 +23,9 @@ class BeatmapExtendLite(
     @JoinColumn(name = "beatmapset_id")
     val beatmapset: BeatmapsetExtendLite,
 
+    @Column(name = "lazer_only")
+    var lazerOnly: Boolean = false,
+
     @Type(JsonBinaryType::class)
     @Column(name = "fail_times", columnDefinition = "JSONB", nullable = true, updatable = true)
     var failTimes: String? = null,
