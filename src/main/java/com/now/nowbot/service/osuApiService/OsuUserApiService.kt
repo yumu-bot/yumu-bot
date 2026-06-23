@@ -8,7 +8,7 @@ import com.now.nowbot.model.calculate.ETXDuelRating
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.web.Quickplay
-import com.now.nowbot.service.web.TeamInfo
+import com.now.nowbot.service.web.QuickplayLeaderboardItem
 import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import org.springframework.web.client.HttpClientErrorException
@@ -106,15 +106,14 @@ interface OsuUserApiService {
 
     fun getTeam(teamID: Number, mode: OsuMode? = OsuMode.DEFAULT): Team
 
-    @Deprecated("please use getTeam()")
-    fun getTeamInfo(id: Int): TeamInfo?
-
     /**
      * @param page 最大 10 页，最小 1 页
      */
     fun getTopPlays(page: Int = 1, mode: OsuMode = OsuMode.OSU): TopPlays?
 
     fun getQuickplay(userID: Long): Quickplay
+
+    fun getQuickplayLeaderboard(page: Int = 1, mode: OsuMode = OsuMode.OSU, season: Int = 38): List<QuickplayLeaderboardItem>
 
     fun getEliteronixDuelRating(userID: Long): ETXDuelRating
 }

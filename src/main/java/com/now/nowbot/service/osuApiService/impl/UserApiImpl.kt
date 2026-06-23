@@ -11,9 +11,9 @@ import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.web.Quickplay
-import com.now.nowbot.service.web.TeamInfo
+import com.now.nowbot.service.web.QuickplayLeaderboardItem
 import com.now.nowbot.service.web.TopPlays
-import com.now.nowbot.service.web.parseTeamInfo
+import com.now.nowbot.service.web.parseQuickplayLeaderboard
 import com.now.nowbot.service.web.parseTopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -448,14 +448,6 @@ import java.util.concurrent.CancellationException
         }
     }
 
-    @Deprecated("please use getTeam()")
-    override fun getTeamInfo(id: Int): TeamInfo? {
-        val html = base.osuApiRestClient
-            .get().uri("https://osu.ppy.sh/teams/{id}", id).toBody<String>()
-
-        return parseTeamInfo(id, html)
-    }
-
     override fun getTopPlays(page: Int, mode: OsuMode): TopPlays? {
         val html = base.osuApiRestClient
             .get().uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").toBody<String>()
@@ -464,13 +456,20 @@ import java.util.concurrent.CancellationException
     }
 
     override fun getQuickplay(userID: Long): Quickplay {
-
         // 笑死，这里 Accept 填 json 居然真给 json 了
         val resp = base.osuApiRestClient
             .get().uri("https://osu.ppy.sh/users/$userID/ranked-play")
             .toBody<Quickplay>()
 
         return resp
+    }
+
+    override fun getQuickplayLeaderboard(page: Int, mode: OsuMode, season: Int): List<QuickplayLeaderboardItem> {
+        val html = base.osuApiRestClient
+            .get().uri("https://osu.ppy.sh/rankings/ranked-play/${mode.shortName}/${season}?page=${page}#scores")
+            .toBody<String>()
+
+        return parseQuickplayLeaderboard(html)
     }
 
     @OptIn(ExperimentalStdlibApi::class) override fun asyncDownloadAvatar(users: List<MicroUser>) {
