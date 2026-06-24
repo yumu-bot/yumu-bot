@@ -8,6 +8,7 @@ import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.ETXDuelRating
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.web.Quickplay
@@ -455,21 +456,55 @@ import java.util.concurrent.CancellationException
         return parseTopPlays(html)
     }
 
-    override fun getQuickplay(userID: Long): Quickplay {
-        // 笑死，这里 Accept 填 json 居然真给 json 了
+    override fun getQuickplay(userID: Long, times: Int): Quickplay {
+        val rooms = mutableListOf<RoomInfo>()
+        var cursor: String? = null
+        var count = 0
+        var typeGroup = ""
+
+        do {
+            val resp = getQuickplay(userID, cursor)
+
+            if (typeGroup.isEmpty()) {
+                typeGroup = resp.typeGroup
+            }
+
+            rooms.addAll(resp.rooms)
+
+            cursor = resp.cursorString
+            count++
+
+        } while (cursor != null && count < times)
+
+        return Quickplay(rooms, typeGroup, null)
+    }
+
+    fun getQuickplay(userID: Long, cursorString: String? = null): Quickplay {
         val resp = base.osuApiRestClient
-            .get().uri("https://osu.ppy.sh/users/$userID/ranked-play")
+            .get()
+            .uri { uriBuilder ->
+                uriBuilder.scheme("https")
+                    .host("osu.ppy.sh")
+                    .replacePath("/users/$userID/ranked-play")
+                    .apply {
+                        if (!cursorString.isNullOrEmpty()) {
+                            queryParam("cursor_string", cursorString)
+                        }
+                    }
+                    .build()
+            }
+            .headers { headers -> base.insertHeader(headers) }
             .toBody<Quickplay>()
 
         return resp
     }
 
-    override fun getQuickplayLeaderboard(page: Int, mode: OsuMode, season: Int): List<QuickplayLeaderboardItem> {
+    override fun getQuickplayLeaderboard(page: Int, mode: OsuMode, season: Int): Pair<Int, List<QuickplayLeaderboardItem>> {
         val html = base.osuApiRestClient
             .get().uri("https://osu.ppy.sh/rankings/ranked-play/${mode.shortName}/${season}?page=${page}#scores")
             .toBody<String>()
 
-        return parseQuickplayLeaderboard(html)
+        return parseQuickplayLeaderboard(html, page)
     }
 
     @OptIn(ExperimentalStdlibApi::class) override fun asyncDownloadAvatar(users: List<MicroUser>) {

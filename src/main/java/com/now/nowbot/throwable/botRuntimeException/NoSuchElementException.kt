@@ -205,6 +205,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class QuickplayEvent:
         NoSuchElementException("这场快速对局内没有成绩。")
 
+    class RankedPlay:
+        NoSuchElementException("没有找到您的排位赛成绩。")
+
     class RecentBestNoRecorded(name: String):
         NoSuchElementException("玩家 $name 可能没有绑定，因此没有最近记录成绩。")
 

@@ -35,7 +35,7 @@ class TestService(
 
         val sb = StringBuilder()
 
-        ls.take(5).forEach {
+        ls.second.take(5).forEach {
             sb.append(it.toString()).append("\n")
         }
 

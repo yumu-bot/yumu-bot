@@ -166,9 +166,12 @@ class SBScoreService(
             if (beforeBeatmapID != null) {
                 map = beatmapApiService.getBeatmap(beforeBeatmapID)
 
+                /*
                 if (!map.hasLeaderBoard) {
                     throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
                 }
+
+                 */
 
                 val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 

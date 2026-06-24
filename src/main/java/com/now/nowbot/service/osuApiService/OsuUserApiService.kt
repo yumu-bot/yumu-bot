@@ -111,9 +111,9 @@ interface OsuUserApiService {
      */
     fun getTopPlays(page: Int = 1, mode: OsuMode = OsuMode.OSU): TopPlays?
 
-    fun getQuickplay(userID: Long): Quickplay
+    fun getQuickplay(userID: Long, times: Int = 10): Quickplay
 
-    fun getQuickplayLeaderboard(page: Int = 1, mode: OsuMode = OsuMode.OSU, season: Int = 38): List<QuickplayLeaderboardItem>
+    fun getQuickplayLeaderboard(page: Int = 1, mode: OsuMode = OsuMode.OSU, season: Int = 38): Pair<Int, List<QuickplayLeaderboardItem>>
 
     fun getEliteronixDuelRating(userID: Long): ETXDuelRating
 }

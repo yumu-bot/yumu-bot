@@ -7,13 +7,16 @@ import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.multiplayer.RoomLeaderBoard
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.toBody
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
+import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class MatchApiImpl(
@@ -96,6 +99,18 @@ class MatchApiImpl(
                 .uri("rooms/${roomID}/leaderboard")
                 .headers(base::insertHeader)
                 .toBody<RoomLeaderBoard>()
+        }
+    }
+
+    override fun getRooms(infos: List<RoomInfo>, batch: Int): List<Room> {
+        val pairs = AsyncMethodExecutor.awaitBatch(
+            infos.map { info ->
+                Callable { info to getRoom(info.roomID) }
+            }, batch, 15.seconds
+        )
+
+        return pairs.map { (info, room) ->
+            room.copy(roomInfo = info)
         }
     }
 

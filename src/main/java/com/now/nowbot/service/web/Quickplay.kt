@@ -47,9 +47,15 @@ data class QuickplayLeaderboardItem(
 
     @field:JsonProperty("rank")
     val rank: Int,
+
+    @field:JsonProperty("absolute_rank")
+    val absoluteRank: Int,
+
+    @field:JsonProperty("provisional")
+    val isProvisional: Boolean,
 )
 
-fun parseQuickplayLeaderboard(htmlContent: String): List<QuickplayLeaderboardItem> {
+fun parseQuickplayLeaderboard(htmlContent: String, page: Int): Pair<Int, List<QuickplayLeaderboardItem>> {
     val document = Jsoup.parse(htmlContent)
 
     // 1. 获取所有的网格行内容 (排除掉作为表头的 header 行)
@@ -57,20 +63,22 @@ fun parseQuickplayLeaderboard(htmlContent: String): List<QuickplayLeaderboardIte
 
     val rankingList = ArrayList<QuickplayLeaderboardItem>(rows.size)
 
-    // 2. 循环遍历每一行
-    for (row in rows) {
+    // 2. 循环遍历每一行（改用 forIndexed 拿到物理索引 index）
+    for ((index, row) in rows.withIndex()) {
         try {
             val cols = row.select(".ranking-page-grid-item__col")
 
             // 确保这行有足够的数据列 (排位页面通常有 5 列)
             if (cols.size < 5) continue
 
-            // 第一列: 排名 (例如: "#1")
+            val absoluteRank = (page - 1) * 50 + (index + 1)
+
+            // 第一列: 排名 (例如: "#1") -> 转换为显示名次
             val rank = cols[0]
                 ?.text()
                 ?.trim()
                 ?.replace("#", "")
-                ?.toIntOrNull() ?: 0
+                ?.toIntOrNull() ?: absoluteRank // 如果官方没写或者出错了，用绝对名次保底
 
             // 第二列: 玩家信息 (包含国旗和名字)
             val username = cols[1]
@@ -100,8 +108,14 @@ fun parseQuickplayLeaderboard(htmlContent: String): List<QuickplayLeaderboardIte
             // 第四列: 所有场 / 游玩次数 (Plays)
             val playCount = cols[3]?.text()?.trim()?.replace(",", "")?.toIntOrNull() ?: 0
 
-            // 第五列: 排位分数 (Rating) - 注意有些分数带有星号(例如: 2,549*)，需要把星号也替换掉
-            val rating = (cols[4]?.text()?.trim() ?: "")
+            // 第五列: 排位分数 (Rating)
+            val ratingRaw = cols[4]?.text()?.trim() ?: ""
+
+            // 🌟 核心修改：判断是否包含星号
+            val isProvisional = ratingRaw.contains("*")
+
+            // 清洗数据：去掉逗号和星号
+            val rating = ratingRaw
                 .replace(",", "")
                 .replace("*", "")
                 .toIntOrNull() ?: 0
@@ -115,14 +129,24 @@ fun parseQuickplayLeaderboard(htmlContent: String): List<QuickplayLeaderboardIte
                     playCount = playCount,
                     rating = rating,
                     rank = rank,
+                    absoluteRank = absoluteRank,
+                    isProvisional = isProvisional
                 )
             )
         } catch (e: Exception) {
-            println("解析某行数据时出错: ${e.message}")
+            println("解析第 ${index + 1} 行数据时出错: ${e.message}")
         }
     }
 
-    return rankingList
+    // 1. 定位到所有包含页码的 a 标签
+    val pageLinks = document.select("ul.pagination-v2__col--pages li.pagination-v2__item a.pagination-v2__link")
+
+    // 2. 将它们的文本转换为 Int，并找出最大值。如果列表为空，则默认为第 1 页
+    val maxPage = pageLinks
+        .mapNotNull { it.text().toIntOrNull() }
+        .maxOrNull() ?: 1
+
+    return maxPage to rankingList
 }
 
 fun parseQuickplay(html: String): QuickplaySummary? {

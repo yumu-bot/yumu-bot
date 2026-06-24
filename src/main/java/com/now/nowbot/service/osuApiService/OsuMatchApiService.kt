@@ -25,4 +25,6 @@ interface OsuMatchApiService {
     fun getRoomInfo(roomID: Long): RoomInfo
 
     fun getRoomLeaderboard(roomID: Long): RoomLeaderBoard
+
+    fun getRooms(infos: List<RoomInfo>, batch: Int = 30): List<Room>
 }
