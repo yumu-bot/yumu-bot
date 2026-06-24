@@ -110,7 +110,9 @@ data class RoomStatistics(
                 calculateHealthMap[loserID] = (currentHealth - actualDamage).coerceAtLeast(0L)
             }
 
-            val roundUsers = currentScores.map { score ->
+            val roundUsers = currentScores
+                .sortedBy { score -> score.userID }
+                .map { score ->
                 RoomRecordScore(
                     user = room.users.firstOrNull { it.userID == score.userID } ?: MicroUser().apply {
                         this.userID = score.userID
