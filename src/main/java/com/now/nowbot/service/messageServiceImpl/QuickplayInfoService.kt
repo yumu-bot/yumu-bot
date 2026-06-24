@@ -61,6 +61,18 @@ class QuickplayInfoService(
         val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event))
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
+        val variant: Byte = when (mode.data) {
+            OsuMode.MANIA -> {
+                4
+            }
+            OsuMode.MANIA_7K -> {
+                7
+            }
+            else -> {
+                0
+            }
+        }
+
         val infos: List<RoomInfo>
 
         val user: OsuUser
@@ -80,10 +92,20 @@ class QuickplayInfoService(
 
         val m = OsuMode.getMode(mode.data, user.currentOsuMode)
 
-        val targetInfos = infos.filter { it.currentPlaylistItem?.beatmap?.mode == m }
+        val targetInfos = infos
+            .filter {
+                val b = it.currentPlaylistItem?.beatmap
+                val difficulty = b?.difficultyName
+
+                when(variant) {
+                    4.toByte() -> difficulty?.contains("4K", ignoreCase = true) == true
+                    7.toByte() -> difficulty?.contains("7K", ignoreCase = true) == true
+                    else -> b?.mode == m
+                }
+            }
             .take(50)
 
-        val current = user.matchmakingStats.maxByOrNull { it.poolID } ?: throw NoSuchElementException.RankedPlay()
+        val current = user.matchmakingStats.filter { it.pool.variantID == variant }.maxByOrNull { it.poolID } ?: throw NoSuchElementException.RankedPlay()
 
         if (targetInfos.size > 25) {
             event.replyAsync("""
@@ -95,7 +117,7 @@ class QuickplayInfoService(
 
         val rooms = matchApiService.getRooms(targetInfos, 25)
 
-        return QuickplayInfoParam(user, current, surrounding, rooms, maxPage)
+        return QuickplayInfoParam(user, current, surrounding, rooms, variant, maxPage)
     }
 
     private fun List<RoomStatistics>.getPlayerRating(userID: Long): Double {
@@ -168,6 +190,7 @@ class QuickplayInfoService(
             "recently" to roomStats.take(4),
             "surrounding" to surrounding,
             "rating" to rating,
+            "variant" to variant,
             "total_players" to ((maxPage - 1) * 50).coerceAtLeast(0),
         )
     }
@@ -228,6 +251,7 @@ class QuickplayInfoService(
         val matchmakingStats: OsuUser.MatchmakingStats,
         val surrounding: List<QuickplayLeaderboardItem>,
         val rooms: List<Room>,
+        val variant: Byte = 0,
         val maxPage: Int = 1,
     )
 

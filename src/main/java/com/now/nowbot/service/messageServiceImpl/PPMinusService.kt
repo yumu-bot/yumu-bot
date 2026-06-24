@@ -458,7 +458,7 @@ class PPMinusService(
                     -4.14 + 0.0458 * pp + 2.38E-06 * pp * pp
                 }
 
-                MANIA -> {
+                MANIA, MANIA_7K -> {
                     -0.601 + 0.0321 * pp + 7.69E-07 * pp * pp
                 }
 

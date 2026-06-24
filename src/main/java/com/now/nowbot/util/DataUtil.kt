@@ -350,7 +350,7 @@ object DataUtil {
                 stat.countMiss = n0
             }
 
-            MANIA -> {
+            MANIA, MANIA_7K -> {
                 val n320 = min(getTheoreticalCount(weight), max(total, 0))
                 val n200 = min(getTheoreticalCount(weight / 1.5), max(total - n320, 0))
                 val n100 = min(getTheoreticalCount(weight / 3), max(total - n320 - n200, 0))

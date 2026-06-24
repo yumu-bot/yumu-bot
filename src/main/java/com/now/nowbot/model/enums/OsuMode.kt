@@ -14,6 +14,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
     OSU_RELAX("osu!standard relax", "osu", "o", 4),
     TAIKO_RELAX("osu!taiko relax", "taiko", "t",  5),
     CATCH_RELAX("osu!catch relax", "fruits", "c",  6),
+    MANIA_7K("osu!mania", "mania", "m", 7),
     OSU_AUTOPILOT("osu!standard autopilot", "osu", "o",  8),
 
     ;
@@ -129,6 +130,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
                 "osu relax", "osurelax", "std relax", "stdrelax", "osurx", "osu rx", "4", "rx0" -> OSU_RELAX
                 "taiko relax", "taikorelax", "taikorx", "tr", "5", "rx1" -> TAIKO_RELAX
                 "catch relax", "catchrelax", "catchrx", "cr", "6", "rx2" -> CATCH_RELAX
+                "mania7k", "7k", "7", "osu!mania7k" -> MANIA_7K
                 "osu autopilot", "autopilot", "stdap", "std ap", "osuap", "oa", "8" -> OSU_AUTOPILOT
 
                 else -> DEFAULT
@@ -145,6 +147,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
                 4 -> OSU_RELAX
                 5 -> TAIKO_RELAX
                 6 -> CATCH_RELAX
+                7 -> MANIA_7K
                 8 -> OSU_AUTOPILOT
                 else -> DEFAULT
             }

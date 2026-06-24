@@ -214,7 +214,7 @@ val REG_USERNAME: String = "[0-9a-zA-Z\\[\\]\\-\\s_]"
 val REG_MOD: String = "([1-9a-zA-Z][a-zA-Z]|[vV]2)"
 
 @Language("RegExp")
-val REG_MODE: String = "(((osu|taiko|catch|ctb|fruits?|mania|std)\\s*(relax|autopilot|ap)?)|((rx|relax)\\s*[0-3])|[01234568]|[omcft]|[ocf]r|oa)"
+val REG_MODE: String = "(((osu|taiko|catch|ctb|fruits?|mania([47]k)?|std)\\s*(relax|autopilot|ap)?)|((rx|relax)\\s*[0-3])|[012345678]|[omcft]|[ocf]r|oa|[47]k)"
 
 // @Language("RegExp")
 // val REG_DIFF: String = "([0-4aebrm]|bsc|adv|exp|mas|rem|rms|ba|ad|ex|ma|re|basic|advanced|expert|master|re[:：]?\\s*master)"

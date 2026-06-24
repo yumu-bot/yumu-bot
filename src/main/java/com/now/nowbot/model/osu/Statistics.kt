@@ -163,7 +163,7 @@ open class Statistics : Cloneable {
             OsuMode.OSU, OsuMode.DEFAULT, OsuMode.OSU_RELAX, OsuMode.OSU_AUTOPILOT  -> c300 + c100 + c50 + c0
             OsuMode.TAIKO, OsuMode.TAIKO_RELAX -> c300 + c100 + c0
             OsuMode.CATCH, OsuMode.CATCH_RELAX -> c300 + c100 + c50 + c0 + cK
-            OsuMode.MANIA -> cG + c300 + cK + c100 + c50 + c0
+            OsuMode.MANIA, OsuMode.MANIA_7K -> cG + c300 + cK + c100 + c50 + c0
             null -> cG + c300 + cK + c100 + c50 + c0
         }
     }
@@ -189,7 +189,7 @@ open class Statistics : Cloneable {
                 (c50 + c100 + c300) * 1.0 / getCountAll(OsuMode.CATCH)
             }
 
-            OsuMode.MANIA -> {
+            OsuMode.MANIA, OsuMode.MANIA_7K -> {
                 (c50 / 6.0 + c100 / 3.0 + c300 + cK * 2.0 / 3.0 + cG) / getCountAll(
                     OsuMode.MANIA
                 )
