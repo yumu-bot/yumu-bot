@@ -78,8 +78,9 @@ class QuickplayInfoService(
             infos = userApiService.getQuickplay(user.userID).rooms
         }
 
-        // TODO 30 并发太狠了
-        val targetInfos = infos.filter { mode.data == null || (it.currentPlaylistItem?.beatmap?.mode == mode.data!!) }
+        val m = OsuMode.getMode(mode.data, user.currentOsuMode)
+
+        val targetInfos = infos.filter { it.currentPlaylistItem?.beatmap?.mode == m }
             .take(50)
 
         val current = user.matchmakingStats.maxByOrNull { it.poolID } ?: throw NoSuchElementException.RankedPlay()

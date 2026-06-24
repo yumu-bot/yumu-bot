@@ -412,7 +412,7 @@ enum class Instruction(val pattern: Pattern) {
 
     QUICK_PLAY_INFO(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("quick\\s*play\\s*info", "rank(ed)?\\s*play\\s*info", "qi", "ri", "iq", "ir")
-        appendModeQQUIDNameRange()
+        appendModeQQUIDName()
     }),
 
     GET_ID(CommandPatternBuilder.create {
