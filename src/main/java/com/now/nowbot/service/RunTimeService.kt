@@ -31,6 +31,8 @@ class RunTimeService(
     private val lxMaiApiService: LxMaiApiService,
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
+    private val percentileCacheService: PercentileCacheService,
+
     @param:Qualifier("kotlinTaskExecutor")
     private val taskExecutor: TaskExecutor,
     private val botContainer: BotContainer,
@@ -60,6 +62,12 @@ class RunTimeService(
     @Scheduled(cron = "0 20 5 * * *")
     fun collectPercentiles() {
         dailyStatisticsService.collectPercentiles()
+    }
+
+    // 每天凌晨5点22更新玩家百分比
+    @Scheduled(cron = "0 25 5 * * *")
+    fun refreshPercent() {
+        percentileCacheService.refreshCache()
     }
 
     // 每天凌晨5点30统计新人群用户信息

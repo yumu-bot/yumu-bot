@@ -84,7 +84,7 @@ class ScoreDao(
     fun saveScoreAsync(scores: List<LazerScore>) {
         Thread.startVirtualThread {
             try {
-                saveScores(scores)
+                saveScores(scores.toList())
             } catch (e: Throwable) {
                 log.error("成绩数据访问对象层：保存成绩时发生错误：", e)
             }
@@ -148,8 +148,8 @@ class ScoreDao(
         }
 
         try {
-            beatmapDao.saveBeatmapset(score.beatmapset)
-            beatmapDao.saveBeatmap(score.beatmap)
+            beatmapDao.saveBeatmapsetAsync(score.beatmapset)
+            beatmapDao.saveBeatmapAsync(score.beatmap)
         } catch (e: Exception) {
             log.error("统计成绩中存储 beatmap 异常", e)
         }

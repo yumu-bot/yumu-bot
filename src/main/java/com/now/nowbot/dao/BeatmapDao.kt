@@ -37,15 +37,35 @@ class BeatmapDao(
     private val extendBeatmapRepository: BeatmapExtendRepository,
     private val extendBeatmapSetRepository: BeatmapsetExtendLiteRepository,
 ) {
+    fun saveBeatmapsAndSaveExtendAsync(beatmaps: Collection<Beatmap>) {
+        Thread.startVirtualThread {
+            beatmaps.forEach { beatmap ->
+                try {
+                    saveBeatmap(beatmap.copy())
+                } catch (e: Exception) {
+                    log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面失败：", e)
+                }
+
+                try {
+                    saveExtendedBeatmap(beatmap.copy())
+                } catch (e: Exception) {
+                    log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
+                }
+            }
+        }
+    }
+
+
     fun saveBeatmapAndSaveExtendAsync(beatmap: Beatmap) {
         Thread.startVirtualThread {
             try {
-                saveBeatmap(beatmap)
+                saveBeatmap(beatmap.copy())
             } catch (e: Exception) {
                 log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面失败：", e)
             }
+
             try {
-                saveExtendedBeatmap(beatmap)
+                saveExtendedBeatmap(beatmap.copy())
             } catch (e: Exception) {
                 log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
             }
@@ -55,14 +75,42 @@ class BeatmapDao(
     fun saveBeatmapsetAsync(beatmapset: Beatmapset) {
         Thread.startVirtualThread {
             try {
-                saveBeatmapset(beatmapset)
+                saveBeatmapset(beatmapset.copy())
+                beatmapset.beatmaps?.forEach { beatmap ->
+                    saveBeatmap(beatmap.copy())
+                }
             } catch (e: Exception) {
                 log.warn("谱面数据访问对象层：保存 ${beatmapset.beatmapsetID} 谱面集失败：", e)
             }
         }
     }
 
-    fun saveBeatmap(beatmap: Beatmap): BeatmapLite {
+    fun saveBeatmapsetsAsync(beatmapsets: Collection<Beatmapset>) {
+        Thread.startVirtualThread {
+            beatmapsets.forEach { beatmapset ->
+                try {
+                    saveBeatmapset(beatmapset.copy())
+                    beatmapset.beatmaps?.forEach { beatmap ->
+                        saveBeatmap(beatmap.copy())
+                    }
+                } catch (e: Exception) {
+                    log.warn("谱面数据访问对象层：保存 ${beatmapset.beatmapsetID} 谱面集失败：", e)
+                }
+            }
+        }
+    }
+
+    fun saveBeatmapAsync(beatmap: Beatmap) {
+        Thread.startVirtualThread {
+            try {
+                saveBeatmap(beatmap.copy())
+            } catch (e: Exception) {
+                log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面失败：", e)
+            }
+        }
+    }
+
+    private fun saveBeatmap(beatmap: Beatmap): BeatmapLite {
         val set = beatmap.beatmapset
         if (set != null) {
             beatmapsetRepository.save(fromBeatmapsetModel(set))
@@ -139,11 +187,19 @@ class BeatmapDao(
         extendBeatmapSetRepository.deleteAllByBeatmapIDs(beatmapIDs)
     }
 
-    fun saveExtendedBeatmap(beatmaps: List<Beatmap>) {
-        beatmaps.forEach { saveExtendedBeatmap(it) }
+    fun saveExtendedBeatmapAsync(beatmaps: List<Beatmap>) {
+        Thread.startVirtualThread {
+            beatmaps.forEach { saveExtendedBeatmap(it) }
+        }
     }
 
-    fun saveExtendedBeatmap(beatmap: Beatmap) {
+    fun saveExtendedBeatmapAsync(beatmap: Beatmap) {
+        Thread.startVirtualThread {
+            saveExtendedBeatmap(beatmap)
+        }
+    }
+
+    private fun saveExtendedBeatmap(beatmap: Beatmap) {
         val hasGenreID = beatmap.beatmapset?.genreID != null
         val ranked = beatmap.beatmapset?.ranked
         val stabled = ranked != null && ranked in byteArrayOf(1, 2, 4)
@@ -277,7 +333,7 @@ class BeatmapDao(
             canBeHyped = !isRanked
             deletedAt = null
             discussionLocked = x.discussionLocked
-            scoreable = true
+            scoreAble = true
             lastUpdated = x.lastUpdated.atOffset(ZoneOffset.ofHours(8))
             legacyThreadUrl = x.threadID?.let { "https://osu.ppy.sh/community/forums/topics/$it" }
             nominationsSummary = Beatmapset.NominationsSummary(
@@ -407,7 +463,7 @@ class BeatmapDao(
         canBeHyped = x.ranked <= 0.toByte()
         deletedAt = null
         discussionLocked = x.discussionLocked
-        scoreable = true
+        scoreAble = true
         lastUpdated = x.lastUpdated.atOffset(ZoneOffset.ofHours(8))
         legacyThreadUrl = x.threadID?.let { "https://osu.ppy.sh/community/forums/topics/$it" }
         nominationsSummary = Beatmapset.NominationsSummary(

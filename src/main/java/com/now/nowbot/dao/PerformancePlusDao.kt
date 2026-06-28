@@ -67,9 +67,7 @@ class PerformancePlusDao(
             beforeStats = null
         }
 
-        Thread.startVirtualThread {
-            snapshotDao.upsertSnapshot(bests)
-        }
+        snapshotDao.upsertSnapshotAsync(bests)
 
         val exists = bests.mapNotNull { b ->
             val d = plusRepository.findDetailsByScoreID(b.scoreID, f.userID)

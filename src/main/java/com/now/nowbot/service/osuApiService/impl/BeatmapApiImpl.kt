@@ -24,6 +24,7 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.toBody
+import com.now.nowbot.util.toBodyList
 import io.ktor.util.collections.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -390,7 +391,7 @@ class BeatmapApiImpl(
 
         val beatmaps = AsyncMethodExecutor.awaitList(callables).flatten()
 
-        beatmapDao.saveExtendedBeatmap(beatmaps)
+        beatmapDao.saveBeatmapsAndSaveExtendAsync(beatmaps)
 
         return beatmaps
     }
@@ -438,7 +439,7 @@ class BeatmapApiImpl(
 
 
     private fun getUserBeatmapsetPrivate(id: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
-        val jsonString = request { client ->
+        val sets = request { client ->
             client.get()
                 .uri {
                     it
@@ -448,10 +449,12 @@ class BeatmapApiImpl(
                         .build()
                 }
                 .headers(base::insertHeader)
-                .toBody<String>()
+                .toBodyList<Beatmapset>()
         }
-        val json = JacksonUtil.toNode(jsonString)
-        return JacksonUtil.parseObjectList(json, Beatmapset::class.java)
+
+        beatmapDao.saveBeatmapsetsAsync(sets)
+
+        return sets
     }
 
     override fun getUserMostPlayedBeatmaps(id: Long, offset: Int, limit: Int): List<Beatmap> {
@@ -490,7 +493,7 @@ class BeatmapApiImpl(
             val beatmapset: Beatmapset,
         )
 
-        val jsonString = request { client ->
+        val most = request { client ->
             client.get()
                 .uri {
                     it
@@ -500,12 +503,8 @@ class BeatmapApiImpl(
                         .build()
                 }
                 .headers(base::insertHeader)
-                .toBody<String>()
+                .toBodyList<MostPlayed>()
         }
-
-        val node = JacksonUtil.toNode(jsonString)
-
-        val most = JacksonUtil.parseObjectList(node, MostPlayed::class.java)
 
         return most.map { mp ->
             mp.beatmap.copy().apply {
@@ -1075,7 +1074,7 @@ class BeatmapApiImpl(
     override fun applyBeatmapExtendForSameScore(scores: Collection<LazerScore>, beatmap: Beatmap) {
         if (scores.isEmpty()) return
 
-        beatmapDao.saveExtendedBeatmap(beatmap)
+        beatmapDao.saveExtendedBeatmapAsync(beatmap)
 
         for (score in scores) {
             applyBeatmapExtend(score, beatmap.copy())
@@ -1091,7 +1090,7 @@ class BeatmapApiImpl(
 
         val extends = getBeatmaps(ids)
 
-        beatmapDao.saveExtendedBeatmap(extends)
+        beatmapDao.saveExtendedBeatmapAsync(extends)
 
         val map = extends.associateBy { it.beatmapID }
 
@@ -1105,7 +1104,7 @@ class BeatmapApiImpl(
 
         val extends = getBeatmaps(ids)
 
-        beatmapDao.saveExtendedBeatmap(extends)
+        beatmapDao.saveExtendedBeatmapAsync(extends)
 
         val map = extends.associateBy { it.beatmapID }
 

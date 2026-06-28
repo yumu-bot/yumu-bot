@@ -13,97 +13,201 @@ import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.max
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-class Beatmapset {
+data class Beatmapset(
     @Column(name = "anime_cover")
-    var animeCover: Boolean = false
+    var animeCover: Boolean = false, 
 
-    @JsonProperty("artist")
-    var artist: String = ""
+    @field:JsonProperty("artist")
+    var artist: String = "", 
 
-    @JsonProperty("artist_unicode")
-    var artistUnicode: String = ""
+    @field:JsonProperty("artist_unicode")
+    var artistUnicode: String = "", 
 
-    @JsonProperty("covers")
-    var covers: Covers = Covers()
+    @field:JsonProperty("covers")
+    var covers: Covers = Covers(), 
 
-    @JsonProperty("creator")
-    var creator: String = ""
+    @field:JsonProperty("creator")
+    var creator: String = "", 
 
-    @JsonProperty("favourite_count")
-    var favouriteCount: Long = 0
+    @field:JsonProperty("favourite_count")
+    var favouriteCount: Long = 0, 
 
-    @JsonProperty("genre_id")
-    var genreID: Byte = 0
+    @field:JsonProperty("genre_id")
+    var genreID: Byte = 0, 
 
-    @JsonProperty("hype")
-    var hype: Hype? = null
+    @field:JsonProperty("hype")
+    var hype: Hype? = null, 
+
+    @field:JsonProperty("id")
+    var beatmapsetID: Long = 0L, 
+
+    @field:JsonProperty("language_id")
+    var languageID: Byte = 0, 
+
+    @field:JsonProperty("nsfw")
+    var nsfw: Boolean = false,
+        @field:JsonProperty("offset")
+    var offset: Short = 0, 
+
+    @field:JsonProperty("play_count")
+    var playCount: Long = 0, 
+
+    @field:JsonProperty("preview_url")
+    var previewUrl: String = "",
+
+        @field:JsonProperty("source")
+    var source: String = "",
+        @field:JsonProperty("status")
+    var status: String = "", 
+
+    @field:JsonProperty("spotlight")
+    var spotlight: Boolean = false,
+
+    var title: String = "", 
+
+    @field:JsonProperty("title_unicode")
+    var titleUnicode: String = "", 
+
+    @field:JsonProperty("track_id")
+    var trackID: Int? = null, 
+
+    @field:JsonProperty("user_id")
+    var creatorID: Long = 0,
+        @field:JsonProperty("video")
+    var video: Boolean = false, 
+
+    @field:JsonProperty("bpm")
+    var bpm: Float = 0f, 
+
+    @field:JsonProperty("can_be_hyped")
+    var canBeHyped: Boolean? = null, 
+
+    @field:JsonProperty("deleted_at")
+    var deletedAt: OffsetDateTime? = null,
+
+//已经弃用 Deprecated, all beatmapsets now have discussion enabled.
+//     @field:JsonProperty("discussion_enabled")
+//Boolean discussionEnabled
+//    , 
+
+    @field:JsonProperty("discussion_locked")
+    var discussionLocked: Boolean = false, 
+
+    @field:JsonProperty("is_scoreable")
+    var scoreAble: Boolean = false, 
+
+    @field:JsonProperty("last_updated")
+    var lastUpdated: OffsetDateTime = OffsetDateTime.now(), 
+
+    @field:JsonProperty("legacy_thread_url")
+    var legacyThreadUrl: String? = null,
+        @field:JsonProperty("ranked")
+    var ranked: Byte = 0, 
+
+    @field:JsonProperty("ranked_date")
+    var rankedDate: OffsetDateTime? = null,
+
+    var storyboard: Boolean = false, 
+
+    @field:JsonProperty("submitted_date")
+    var submittedDate: OffsetDateTime = OffsetDateTime.now(), 
+
+    @field:JsonProperty("tags")
+    var tags: String = "", 
+
+    @field:JsonProperty("availability")
+    var availability: Availability = Availability(), 
+
+    @field:JsonProperty("converts")
+    var converts: List<Beatmap>? = null, 
+
+    @field:JsonProperty("current_nominations")
+    var currentNominations: List<CurrentNominations>? = null,
+
+    var description: Description? = null, 
+
+    @field:JsonProperty("genre")
+    var genre: Genre? = null, 
+
+    @field:JsonProperty("language")
+    var language: Language? = null, 
+
+    @field:JsonProperty("pack_tags")
+    var packTags: List<String>? = null, 
+
+    @field:JsonProperty("ratings")
+    var ratings: List<Int> = listOf(), 
+
+    @field:JsonProperty("recent_favourites")
+    var recentFavourites: List<OsuUser>? = null, 
+
+    @field:JsonProperty("related_users")
+    var relatedUsers: List<OsuUser>? = null, 
+
+    @field:JsonProperty("user")
+    var creatorData: OsuUser? = null, 
+
+    @field:JsonProperty("related_tags")
+    var relatedTags: List<Tag> = listOf()
+) {
+
 
     data class Hype(val current: Int, val required: Int)
+    data class Language(val id: Int, val name: String)
 
-    @JsonProperty("id")
-    var beatmapsetID: Long = 0L
+    data class Genre(val id: Int, val name: String)
+    data class Description(
+        val description: String
+    )
 
-    @JsonProperty("language_id")
-    var languageID: Byte = 0
+    data class Availability(
+        @field:JsonProperty("download_disabled")
+        val downloadDisabled: Boolean = false,
 
-    @JsonProperty("nsfw")
-    var nsfw: Boolean = false
+        @field:JsonProperty("more_information")
+        val moreInformation: String? = null
+    )
 
-    var offset: Short = 0
+    data class CurrentNominations(
+        @field:JsonProperty("beatmapset_id")
+        val beatmapsetID: Long,
 
-    @JsonProperty("play_count")
-    var playCount: Long = 0
+            @field:JsonProperty("rulesets")
+        val mode: List<String>?,
 
-    @JsonProperty("preview_url")
-    var previewUrl: String = ""
+        val reset: Boolean,
 
-    var source: String = ""
+            @field:JsonProperty("user_id")
+        val userID: Long
+    )
 
-    var status: String = ""
+    data class RequiredMeta(
+        @field:JsonProperty("main_ruleset")
+        val main: Byte,  // 这个不准，需要重新计算并赋值。
 
-    @JsonProperty("spotlight")
-    var spotlight: Boolean = false
+        @field:JsonProperty("non_main_ruleset")
+        val secondary: Byte
 
-    var title: String = ""
+    )
 
-    @JsonProperty("title_unicode")
-    var titleUnicode: String = ""
+    // https://osu.ppy.sh/home/changelog/web/2024.603.0 改了
+    data class NominationsSummary(
+            @field:JsonProperty("current")
+        val current: Byte,
 
-    @JsonProperty("track_id")
-    var trackID: Int? = null
+        // 只有一个元素的列表，存储模式信息
 
-    @JsonProperty("user_id")
-    var creatorID: Long = 0
+            @field:JsonProperty("eligible_main_rulesets")
+        val mode: List<String>?,
 
-    var video: Boolean = false
+            @field:JsonProperty("required_meta")
+        val required: RequiredMeta
 
-    @JsonProperty("bpm")
-    var bpm: Float = 0f
+    )
 
-    @JsonProperty("can_be_hyped")
-    var canBeHyped: Boolean? = null
-
-    @JsonProperty("deleted_at")
-    var deletedAt: OffsetDateTime? = null
-
-    //已经弃用 Deprecated, all beatmapsets now have discussion enabled.
- //@JsonProperty("discussion_enabled")
- //Boolean discussionEnabled;
-    @JsonProperty("discussion_locked")
-    var discussionLocked: Boolean = false
-
-    @JsonProperty("is_scoreable")
-    var scoreable: Boolean = false
-
-    @JsonProperty("last_updated")
-    var lastUpdated: OffsetDateTime = OffsetDateTime.now()
-
-    @JsonProperty("legacy_thread_url")
-    var legacyThreadUrl: String? = null
-
-    @JsonProperty("nominations_summary")
+        @field:JsonProperty("nominations_summary")
     var nominationsSummary: NominationsSummary? = null
-        get(){
+        get() {
             val s = field ?: return null
 
             val r = s.required
@@ -133,155 +237,54 @@ class Beatmapset {
             return NominationsSummary(s.current, s.mode, RequiredMeta(r.main, secondary))
         }
 
-     // https://osu.ppy.sh/home/changelog/web/2024.603.0 改了
-    data class NominationsSummary (
-         @field:JsonProperty("current")
-         val current: Byte,
+        @field:JsonProperty("beatmaps")
+        var beatmaps: List<Beatmap>? = null
+            get() {
+                if (!field.isNullOrEmpty()) {
 
-         // 只有一个元素的列表，存储模式信息
+                    val s = Beatmapset()
 
-         @field:JsonProperty("eligible_main_rulesets")
-         val mode: List<String>?,
+                    s.availability = this.availability
+                    s.beatmapsetID = this.beatmapsetID
+                    s.creator = this.creator
+                    s.creatorID = this.creatorID
+                    s.covers = this.covers
 
-         @field:JsonProperty("required_meta")
-         val required: RequiredMeta
+                    s.artist = this.artist
+                    s.artistUnicode = this.artistUnicode
+                    s.title = this.title
+                    s.titleUnicode = this.titleUnicode
 
-    )
+                    s.ranked = this.ranked
+                    s.relatedUsers = this.relatedUsers
+                    s.language = this.language
+                    s.genre = this.genre
+                    s.source = this.source
+                    s.status = this.status
+                    s.tags = this.tags
 
-    data class RequiredMeta (
-        @field:JsonProperty("main_ruleset")
-        val main: Byte,  // 这个不准，需要重新计算并赋值。
+                    s.playCount = this.playCount
+                    s.favouriteCount = this.favouriteCount
 
-        @field:JsonProperty("non_main_ruleset")
-        val secondary: Byte
+                    s.nsfw = this.nsfw
 
-    )
+                    s.submittedDate = this.submittedDate
+                    s.rankedDate = this.rankedDate
 
-    var ranked: Byte = 0
+                    s.packTags = this.packTags
 
-    @JsonProperty("ranked_date")
-    var rankedDate: OffsetDateTime? = null
+                    s.currentNominations = this.currentNominations
 
-    var storyboard: Boolean = false
+                    field!!.forEach { it.beatmapset = s }
+                }
 
-    @JsonProperty("submitted_date")
-    var submittedDate: OffsetDateTime = OffsetDateTime.now()
-
-    @JsonProperty("tags")
-    var tags: String = ""
-
-    @JsonProperty("availability")
-    var availability: Availability = Availability()
-
-    data class Availability (
-        @field:JsonProperty("download_disabled")
-        val downloadDisabled: Boolean = false,
-
-        @field:JsonProperty("more_information")
-        val moreInformation: String? = null
-    )
-
-    @JsonProperty("beatmaps")
-    var beatmaps: List<Beatmap>? = null
-        get() {
-            if (!field.isNullOrEmpty()) {
-
-                val s = Beatmapset()
-
-                s.availability = this.availability
-                s.beatmapsetID = this.beatmapsetID
-                s.creator = this.creator
-                s.creatorID = this.creatorID
-                s.covers = this.covers
-
-                s.artist = this.artist
-                s.artistUnicode = this.artistUnicode
-                s.title = this.title
-                s.titleUnicode = this.titleUnicode
-
-                s.ranked = this.ranked
-                s.relatedUsers = this.relatedUsers
-                s.language = this.language
-                s.genre = this.genre
-                s.source = this.source
-                s.status = this.status
-                s.tags = this.tags
-
-                s.playCount = this.playCount
-                s.favouriteCount = this.favouriteCount
-
-                s.nsfw = this.nsfw
-
-                s.submittedDate = this.submittedDate
-                s.rankedDate = this.rankedDate
-
-                s.packTags = this.packTags
-
-                s.currentNominations = this.currentNominations
-
-                field!!.forEach { it.beatmapset = s }
+                return field
             }
-
-            return field
-        }
-
-    @JsonProperty("converts")
-    var converts: List<Beatmap>? = null
-
-    @JsonProperty("current_nominations")
-    var currentNominations: List<CurrentNominations>? = null
-
-    data class CurrentNominations (
-        @field:JsonProperty("beatmapset_id")
-        val beatmapsetID: Long,
-
-        @field:JsonProperty("rulesets")
-        val mode: List<String>?,
-
-        val reset: Boolean,
-
-        @field:JsonProperty("user_id")
-        val userID: Long
-    )
-
-    var description: Description? = null
-
-    data class Description (
-        val description: String
-    )
-
-    @JsonProperty("genre")
-    var genre: Genre? = null
-
-    data class Genre (val id: Int, val name: String)
-
-    @JsonProperty("language")
-    var language: Language? = null
-
-    data class Language (val id: Int, val name: String)
-
-    @JsonProperty("pack_tags")
-    var packTags: List<String>? = null
-
-    @JsonProperty("ratings")
-    var ratings: List<Int> = listOf()
-
-    @JsonProperty("recent_favourites")
-    var recentFavourites: List<OsuUser>? = null
-
-    @JsonProperty("related_users")
-    var relatedUsers: List<OsuUser>? = null
-
-    @JsonProperty("user")
-    var creatorData: OsuUser? = null
-
-    @JsonProperty("related_tags")
-    var relatedTags: List<Tag> = listOf()
 
     //自己算
     @get:JsonProperty("mappers")
     val mappers: MutableList<OsuUser>
-        get(){
+        get() {
             val m = mutableListOf<OsuUser>()
 
             if (relatedUsers.isNullOrEmpty().not()) {
@@ -298,24 +301,24 @@ class Beatmapset {
     //自己算
     @get:JsonProperty("nominators")
     val nominators: List<OsuUser>
-         get(){
-             val n = mutableListOf<OsuUser>()
+        get() {
+            val n = mutableListOf<OsuUser>()
 
-             if (currentNominations.isNotNull() && relatedUsers.isNotNull()) {
-                 for ((_, _, _, userID) in currentNominations!!) {
-                     for (u in relatedUsers!!) {
-                         if (u.userID == userID) {
-                             n.add(u)
-                             break
-                         }
-                     }
-                 }
-             }
+            if (currentNominations.isNotNull() && relatedUsers.isNotNull()) {
+                for ((_, _, _, userID) in currentNominations!!) {
+                    for (u in relatedUsers!!) {
+                        if (u.userID == userID) {
+                            n.add(u)
+                            break
+                        }
+                    }
+                }
+            }
 
-             return n.toList()
-         }
+            return n.toList()
+        }
 
-    @field:JsonProperty("rating")
+        @field:JsonProperty("rating")
     var rating: Float = 0f
         get() = if (field != 0f) {
             field
@@ -353,16 +356,16 @@ class Beatmapset {
     //自己算
     @get:JsonProperty("has_leader_board")
     val hasLeaderBoard: Boolean
-         get() {
-             return if (status.isNotBlank()) {
-                 (status == "ranked" || status == "qualified" || status == "loved" || status == "approved")
-             } else {
-                 when (ranked.toInt()) {
-                     1, 2, 3, 4 -> true
-                     else -> false
-                 }
-             }
-         }
+        get() {
+            return if (status.isNotBlank()) {
+                (status == "ranked" || status == "qualified" || status == "loved" || status == "approved")
+            } else {
+                when (ranked.toInt()) {
+                    1, 2, 3, 4 -> true
+                    else -> false
+                }
+            }
+        }
 
     var fromDatabase: Boolean? = null
 

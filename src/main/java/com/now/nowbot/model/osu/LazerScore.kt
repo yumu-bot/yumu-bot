@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
 )
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-open class LazerScore(
+data class LazerScore(
     @field:JsonProperty("classic_total_score")
     var classicScore: Long = 0L,
 
@@ -300,6 +300,16 @@ open class LazerScore(
     fun getWeightedPP(index: Int): Double {
         return this.weight?.pp
             ?: (FastPower095.pow(index) * this.pp)
+    }
+
+    override fun hashCode(): Int {
+        return scoreID.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other is LazerScore) return scoreID == other.scoreID
+        return false
     }
 
     companion object {

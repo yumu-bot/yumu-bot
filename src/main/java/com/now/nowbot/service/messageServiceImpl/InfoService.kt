@@ -151,7 +151,6 @@ class InfoService(
         val matcher = Instruction.INFO.matcher(messageText)
         val matcher2 = Instruction.WAIFU_INFO.matcher(messageText)
         val matcher3 = Instruction.LEGACY_INFO.matcher(messageText)
-        val matcher4 = Instruction.TEST_INFO.matcher(messageText)
 
         if (matcher.find()) {
             data.value = getParam(event, matcher, 3)
@@ -162,15 +161,6 @@ class InfoService(
         } else if (matcher3.find()) {
             data.value = getParam(event, matcher3, 1)
             return data.value != null
-        } else if (matcher4.find()) {
-            event.replyAsync("""
-                TEST INFO 已完成任务并下线。感谢您的支持。
-                功能等同于现在的 INFO。
-                
-                要查看老版本的 TEST INFO，可以输入 !IW。
-                要查看更老版本的 INFO，可以输入 !IL。
-                """.trimIndent())
-            return false
         }
 
         return false
@@ -247,26 +237,14 @@ class InfoService(
     }
 
     private fun InfoParam.getMessageChain(): MessageChain {
-        val name: String
+        val name: String = when(version) {
+            1 -> "D"
 
-        when(version) {
-            1 -> {
-                name = "D"
-            }
+            2 -> "D2"
 
-            2 -> {
-                name = "D2"
-                calculateApiService.applyStarToScores(bests.take(6))
-            }
+            3 -> "D3"
 
-            3 -> {
-                name = "D3"
-                calculateApiService.applyStarToScores(bests.take(6))
-            }
-
-            else -> {
-                name = "D"
-            }
+            else -> "D"
         }
 
         return try {
@@ -328,12 +306,12 @@ class InfoService(
 
                 count = bestsCount.values
 
-                val maxEntry = bestsCount.toList().maxByOrNull { it.second }
+                val maxEntry = bestsCount.maxByOrNull { it.value }
 
-                max = maxEntry?.second ?: 0
+                max = maxEntry?.value ?: 0
 
                 time = if (max > 0) {
-                    maxEntry?.first?.format(formatter) ?: "-"
+                    maxEntry?.key?.format(formatter) ?: "-"
                 } else {
                     "-"
                 }

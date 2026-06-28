@@ -4,6 +4,7 @@ import com.now.nowbot.listener.LocalCommandListener
 import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.PercentileCacheService
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.JacksonUtil
@@ -24,7 +25,8 @@ class IocAllReadyRunner(
     private val applicationContext: ApplicationContext,
     private val permission: Permission,
     private val permissionImplement: PermissionImplement,
-    private val messageServices: Map<String, MessageService<*>>
+    private val messageServices: Map<String, MessageService<*>>,
+    private val percentileCacheService: PercentileCacheService,
 ) : CommandLineRunner {
 
     companion object {
@@ -64,6 +66,13 @@ class IocAllReadyRunner(
         }, "endThread"))
 
         log.info("新人群配置: {}", env.getProperty("spring.datasource.newbie.enable", "false"))
+
+        try {
+            val refresh = percentileCacheService.refreshCache()
+            log.info("玩家信息：缓存数据已经加载: ${refresh.values.joinToString(", ")}")
+        } catch (e: Exception) {
+            log.warn("玩家信息：缓存数据加载错误", e)
+        }
 
         try {
             val debugging = ApplicationHome(NowbotConfig::class.java).source?.parentFile?.toString()?.contains("target") ?: false

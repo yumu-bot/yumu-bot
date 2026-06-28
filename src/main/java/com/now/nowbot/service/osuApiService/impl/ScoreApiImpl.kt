@@ -120,33 +120,18 @@ class ScoreApiImpl(
         } else {
             val firstBatch = getBests(id, mode, offset, step)
             val secondBatch = getBests(id, mode, offset + step, limit - step)
-            firstBatch + secondBatch
+
+            val combined = ArrayList<LazerScore>(firstBatch.size + secondBatch.size)
+            combined.addAll(firstBatch)
+            combined.addAll(secondBatch)
+            combined.toList()
         }
 
-        Thread.startVirtualThread {
-            if (offset == 0 && limit == 200) {
-                userSnapShotDao.upsertSnapshot(scores)
-            }
+        if (offset == 0 && limit == 200) {
+            userSnapShotDao.upsertSnapshotAsync(scores)
         }
 
         return scores
-
-
-//        val scores = AsyncMethodExecutor.awaitList(
-//            listOf(
-//                Callable { getBests(id, mode, offset, step) },
-//                Callable { getBests(id, mode, offset + step, limit - step) }
-//            )
-//        ).flatten()
-
-//        // 使用你现有的工具方法进行并发
-//        val result = AsyncMethodExecutor.awaitPairCallableExecute(
-//            { getBests(id, mode, offset, step) },
-//            { getBests(id, mode, offset + step, limit - step) }
-//        )
-//
-//        // result.first 是前 100 条，result.second 是后 100 条
-//        return result.first + result.second
     }
 
     override fun getPassedScore(

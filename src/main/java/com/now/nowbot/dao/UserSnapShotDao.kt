@@ -4,12 +4,25 @@ import com.now.nowbot.entity.UserBestSnapshot
 import com.now.nowbot.mapper.UserBestSnapshotRepository
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.util.DigestUtils
 import java.time.LocalDateTime
 
 @Component
 class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository) {
+
+    fun upsertSnapshotAsync(scores: Collection<LazerScore>) {
+
+        Thread.startVirtualThread {
+            try {
+                val ss = scores.map { it.copy() }
+                upsertSnapshot(ss)
+            } catch (e: Exception) {
+                log.warn("玩家快照：更新失败\n${e.message}")
+            }
+        }
+    }
 
     fun upsertSnapshot(scores: Collection<LazerScore>) {
         val f = scores.firstOrNull() ?: return
@@ -48,5 +61,9 @@ class UserSnapShotDao(private val snapshotRepository: UserBestSnapshotRepository
 
     fun getWithOffset(userID: Long, mode: OsuMode, offset: Int = 0): UserBestSnapshot? {
         return snapshotRepository.getWithOffset(userID, mode.modeValue, offset).firstOrNull()
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(UserSnapShotDao::class.java)
     }
 }

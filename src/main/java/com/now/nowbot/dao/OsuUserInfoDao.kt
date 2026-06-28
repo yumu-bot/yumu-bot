@@ -9,6 +9,7 @@ import com.now.nowbot.model.calculate.InfoLogStatistics
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
+import com.now.nowbot.service.PercentileCacheService
 import com.now.nowbot.util.JacksonUtil
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
@@ -23,6 +24,7 @@ import java.time.LocalTime
 class OsuUserInfoDao(
     private val infoRepository: OsuUserInfoRepository,
     private val percentileRepository: OsuUserInfoPercentilesLiteRepository,
+    private val percentileCacheService: PercentileCacheService
 ) {
     @PersistenceContext
     lateinit var entityManager: EntityManager
@@ -87,45 +89,8 @@ class OsuUserInfoDao(
             else -> mode.modeValue
         }
 
-        val all = percentileRepository.findAll()
-
-        // 使用 List 替代 TreeSet，保留所有数据
-        val globalRankList = mutableListOf<Long>()
-        val countryRankList = mutableListOf<Long>()
-        val levelList = mutableListOf<Int>()
-        val rankCountScoreList = mutableListOf<Int>()
-        val playCountList = mutableListOf<Long>()
-        val totalHitList = mutableListOf<Long>()
-        val playTimeList = mutableListOf<Long>()
-        val rankedScoreList = mutableListOf<Long>()
-        val totalScoreList = mutableListOf<Long>()
-        val beatmapPlaycountList = mutableListOf<Int>()
-        val replaysWatchedList = mutableListOf<Int>()
-        val maximumComboList = mutableListOf<Int>()
-        val achievementCountList = mutableListOf<Int>()
-
-        all.asSequence().forEach {
-            if (it.mode == modeValue) {
-                if (it.globalRank != null && it.globalRank!! > 0) {
-                    globalRankList.add(it.globalRank!!)
-                }
-                if (it.countryRank != null && it.countryRank!! > 0) {
-                    countryRankList.add(it.countryRank!!)
-                }
-                if (it.level > 0) levelList.add(it.level)
-                if (it.rankCountScore > 0) rankCountScoreList.add(it.rankCountScore)
-                if (it.playCount > 0) playCountList.add(it.playCount)
-                if (it.totalHits > 0) totalHitList.add(it.totalHits)
-                if (it.playTime > 0) playTimeList.add(it.playTime)
-                if (it.rankedScore > 0) rankedScoreList.add(it.rankedScore)
-                if (it.totalScore > 0) totalScoreList.add(it.totalScore)
-                if (it.replaysWatched > 0) replaysWatchedList.add(it.replaysWatched)
-                if (it.maximumCombo > 0) maximumComboList.add(it.maximumCombo)
-            }
-
-            if (it.beatmapPlaycount > 0) beatmapPlaycountList.add(it.beatmapPlaycount)
-            if (it.achievementsCount > 0) achievementCountList.add(it.achievementsCount)
-        }
+        val stats = percentileCacheService.cachedData[modeValue]
+            ?: return emptyMap()
 
         val stat = user.statistics
         val global = if (user.globalRank <= 0) Long.MAX_VALUE else user.globalRank
@@ -133,78 +98,73 @@ class OsuUserInfoDao(
         val rankCountScore = 3 * ((stat?.countSS ?: 0) + (stat?.countSSH ?: 0)) + 2 * ((stat?.countSH ?: 0) + (stat?.countS ?: 0)) + (stat?.countA ?: 0)
         val level = user.levelCurrent * 100 + user.levelProgress
 
-        // 一次性排序所有列表
-        globalRankList.sort()
-        countryRankList.sort()
-        levelList.sort()
-        rankCountScoreList.sort()
-        playCountList.sort()
-        totalHitList.sort()
-        playTimeList.sort()
-        rankedScoreList.sort()
-        totalScoreList.sort()
-        beatmapPlaycountList.sort()
-        replaysWatchedList.sort()
-        maximumComboList.sort()
-        achievementCountList.sort()
-
         return mapOf(
-            "global_rank" to calculatePercentileForList(globalRankList, global, false),
-            "country_rank" to calculatePercentileForList(countryRankList, country, false),
-            "level" to calculatePercentileForList(levelList, level, true),
-            "rank_count_score" to calculatePercentileForList(rankCountScoreList, rankCountScore, true),
-            "play_count" to calculatePercentileForList(playCountList, user.playCount, true),
-            "total_hits" to calculatePercentileForList(totalHitList, user.totalHits, true),
-            "play_time" to calculatePercentileForList(playTimeList, user.playTime, true),
-            "ranked_score" to calculatePercentileForList(rankedScoreList, stat?.rankedScore, true),
-            "total_score" to calculatePercentileForList(totalScoreList, stat?.totalScore, true),
-            "beatmap_playcount" to calculatePercentileForList(beatmapPlaycountList, user.beatmapPlaycount, true),
-            "replays_watched" to calculatePercentileForList(replaysWatchedList, stat?.replaysWatchedByOthers, true),
-            "maximum_combo" to calculatePercentileForList(maximumComboList, stat?.maxCombo, true),
-            "achievements_count" to calculatePercentileForList(achievementCountList, user.userAchievementsCount, true)
+            "global_rank" to calculatePercentile(stats.globalRanks, global, false),
+            "country_rank" to calculatePercentile(stats.countryRanks, country, false),
+            "level" to calculatePercentile(stats.levels, level, true),
+            "rank_count_score" to calculatePercentile(stats.rankCountScores, rankCountScore, true),
+            "play_count" to calculatePercentile(stats.playCounts, user.playCount, true),
+            "total_hits" to calculatePercentile(stats.totalHits, user.totalHits, true),
+            "play_time" to calculatePercentile(stats.playTimes, user.playTime, true),
+            "ranked_score" to calculatePercentile(stats.rankedScores, stat?.rankedScore, true),
+            "total_score" to calculatePercentile(stats.totalScores, stat?.totalScore, true),
+            "beatmap_playcount" to calculatePercentile(stats.beatmapPlaycounts, user.beatmapPlaycount, true),
+            "replays_watched" to calculatePercentile(stats.replaysWatcheds, stat?.replaysWatchedByOthers, true),
+            "maximum_combo" to calculatePercentile(stats.maximumCombos, stat?.maxCombo, true),
+            "achievements_count" to calculatePercentile(stats.achievementCounts, user.userAchievementsCount, true)
         )
     }
 
-    private fun <T : Comparable<T>> calculatePercentileForList(
-        sortedList: List<T>,
-        value: T?,
-        higherIsBetter: Boolean = true
-    ): Double {
-        if (value == null || sortedList.isEmpty()) return 0.0
+    fun calculatePercentile(longs: LongArray, value: Long?, higherIsBetter: Boolean): Double {
+        if (value == null) return 0.0
+        return calculatePercentileCore(
+            longs.size, value,
+            { longs.binarySearch(value) },
+            { longs[it] },
+            higherIsBetter
+        )
+    }
 
-        return if (higherIsBetter) {
-            // 对于数值越大越好的指标：计算小于等于该值的元素数量
-            val index = sortedList.binarySearch(value)
-            val count = if (index >= 0) {
-                // 找到确切值，处理重复元素
+    fun calculatePercentile(ints: IntArray, value: Int?, higherIsBetter: Boolean): Double {
+        if (value == null) return 0.0
+        return calculatePercentileCore(
+            ints.size, value.toLong(),
+            { ints.binarySearch(value) },
+            { ints[it].toLong() },
+            higherIsBetter
+        )
+    }
+
+    private fun calculatePercentileCore(
+        size: Int,
+        value: Long,
+        binarySearchOp: () -> Int,
+        getAtIndex: (Int) -> Long,
+        higherIsBetter: Boolean
+    ): Double {
+        if (size == 0) return 0.0
+
+        val index = binarySearchOp()
+        val count = if (higherIsBetter) {
+            // 数值越大越好：小于等于该值
+            if (index >= 0) {
                 var lastIndex = index
-                while (lastIndex + 1 < sortedList.size && sortedList[lastIndex + 1] == value) {
-                    lastIndex++
-                }
+                while (lastIndex + 1 < size && getAtIndex(lastIndex + 1) == value) lastIndex++
                 lastIndex + 1
             } else {
-                // 没找到确切值，计算插入点
-                val insertionPoint = -index - 1
-                insertionPoint
+                -index - 1
             }
-            count.toDouble() / sortedList.size
         } else {
-            // 对于数值越小越好的指标（排名）：计算大于等于该值的元素数量
-            val index = sortedList.binarySearch(value)
-            val count = if (index >= 0) {
-                // 找到确切值，处理重复元素
+            // 数值越小越好：大于等于该值
+            if (index >= 0) {
                 var firstIndex = index
-                while (firstIndex - 1 >= 0 && sortedList[firstIndex - 1] == value) {
-                    firstIndex--
-                }
-                sortedList.size - firstIndex
+                while (firstIndex - 1 >= 0 && getAtIndex(firstIndex - 1) == value) firstIndex--
+                size - firstIndex
             } else {
-                // 没找到确切值，计算插入点
-                val insertionPoint = -index - 1
-                sortedList.size - insertionPoint
+                size - (-index - 1)
             }
-            count.toDouble() / sortedList.size
         }
+        return count.toDouble() / size
     }
 
     fun saveUserToday(user: OsuUser, mode: OsuMode) {
