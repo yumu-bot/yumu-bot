@@ -29,7 +29,6 @@ import io.ktor.util.collections.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
@@ -1090,7 +1089,7 @@ class BeatmapApiImpl(
 
         val extends = getBeatmaps(ids)
 
-        beatmapDao.saveExtendedBeatmapAsync(extends)
+        beatmapDao.saveExtendedBeatmapsAsync(extends)
 
         val map = extends.associateBy { it.beatmapID }
 
@@ -1104,7 +1103,7 @@ class BeatmapApiImpl(
 
         val extends = getBeatmaps(ids)
 
-        beatmapDao.saveExtendedBeatmapAsync(extends)
+        beatmapDao.saveExtendedBeatmapsAsync(extends)
 
         val map = extends.associateBy { it.beatmapID }
 

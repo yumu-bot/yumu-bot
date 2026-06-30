@@ -180,22 +180,44 @@ class BPFixService(
 
         // 合并结果：修复后的分数 + 不需要修复的分数
         val fixedBests = (fixedScores + scoresToKeep.map { it.second }).sortedByDescending { score ->
-            if (score is LazerScoreWithFcPP && score.fcPP > 0) {
-                score.fcPP
-            } else {
-                score.pp
+            when (score) {
+                is LazerScoreWithFcPP -> if (score.fcPP > 0) {
+                    score.fcPP
+                } else {
+                    score.score.pp
+                }
+
+                is LazerScore -> {
+                    score.pp
+                }
+
+                else -> {
+                    0.0
+                }
             }
         }
 
         // 这里的 i 是重排过后的，从 0 开始
         val newBestsSum = fixedBests.mapIndexed { index, score ->
             val weight: Double = FastPower095.pow(index)
-            val pp: Double
-            if (score is LazerScoreWithFcPP) {
-                pp = score.fcPP
-                score.indexAfter = index + 1
-            } else {
-                pp = score.pp
+            val pp: Double = when (score) {
+                is LazerScoreWithFcPP -> {
+                    score.indexAfter = index + 1
+
+                    if (score.fcPP > 0) {
+                        score.fcPP
+                    } else {
+                        score.score.pp
+                    }
+                }
+
+                is LazerScore -> {
+                    score.pp
+                }
+
+                else -> {
+                    0.0
+                }
             }
 
             weight * pp
@@ -213,11 +235,8 @@ class BPFixService(
     }
 
     private fun initFixScore(score: LazerScore, index: Int): LazerScoreWithFcPP {
-        val result = LazerScoreWithFcPP.copyOf(score)
-        result.index = index
-        try {
-            val pp = calculateApiService.getScoreFullComboPP(score)
-            result.fcPP = when(pp) {
+        val fcPP = try {
+            when(val pp = calculateApiService.getScoreFullComboPP(score)) {
                 is RosuPerformance -> pp.pp
                 is CosuPerformance -> pp.pp
 
@@ -225,8 +244,10 @@ class BPFixService(
             }
         } catch (e: Exception) {
             log.error("修补成绩：获取第 $index 成绩 (${score.previewName}) 全连 PP 出错：", e)
+            0.0
         }
-        return result
+
+        return LazerScoreWithFcPP(score, fcPP = fcPP, index = index)
     }
 
     private fun BPFixParam.getImage(): ByteArray {

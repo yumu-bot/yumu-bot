@@ -522,7 +522,7 @@ import kotlin.time.Duration.Companion.seconds
                     "user" to user,
 
                     "rank" to (1..(scores.size)).toList(),
-                    "score" to scores,
+                    "scores" to scores,
                     "panel" to "SS",
                     "compact" to ((isCompact && scores.size >= 10) || scores.size > 100)
                 )

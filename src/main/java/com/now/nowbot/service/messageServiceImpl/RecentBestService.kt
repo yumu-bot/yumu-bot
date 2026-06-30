@@ -177,13 +177,13 @@ class RecentBestService(
         val body = mapOf(
             "user" to user,
             "history_user" to history,
-            "score" to ss,
+            "scores" to ss,
             "rank" to List(ss.size) { it + 1 },
             "panel" to "RB",
             "compact" to (ss.size > 100),
         )
 
-        val image = imageService.getPanel(body, "A5")
+        val image = imageService.getPanel(body, "A4")
 
         return image
     }

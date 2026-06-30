@@ -389,7 +389,7 @@ import kotlin.math.min
                 if (isMultipleScore) {
                     data = imageService.getPanel(
                         mapOf(
-                            "user" to osuUser, "score" to scores, "rank" to ranks, "panel" to "PS"
+                            "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "PS"
                         ), "A5"
                     )
 
@@ -423,7 +423,7 @@ import kotlin.math.min
 
                     data = imageService.getPanel(
                         mapOf(
-                            "user" to osuUser, "score" to scores, "rank" to ranks, "panel" to "RS"
+                            "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "RS"
                         ), "A5"
                     )
 

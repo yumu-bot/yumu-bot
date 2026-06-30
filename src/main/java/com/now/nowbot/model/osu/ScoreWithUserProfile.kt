@@ -1,31 +1,45 @@
-package com.now.nowbot.model.osu;
+package com.now.nowbot.model.osu
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.now.nowbot.entity.UserProfileLite;
-import org.springframework.beans.BeanUtils;
-import tools.jackson.databind.PropertyNamingStrategies;
-import tools.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonUnwrapped
+import com.now.nowbot.entity.UserProfileLite
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class ScoreWithUserProfile extends LazerScore {
-    UserProfileLite profile;
+@JsonNaming(
+    PropertyNamingStrategies.SnakeCaseStrategy::class
+)
 
-    public static ScoreWithUserProfile copyOf(LazerScore score) {
-        var result = new ScoreWithUserProfile();
-        BeanUtils.copyProperties(score, result);
-        return result;
+data class ScoreWithUserProfile(
+    @field:JsonUnwrapped
+    @get:JsonUnwrapped
+    val score: LazerScore,
+
+    @JvmField
+    @field:JsonProperty("profile")
+    var profile: UserProfileLite? = null
+) {
+
+    override fun hashCode(): Int {
+        return score.scoreID.hashCode()
     }
 
-    public UserProfileLite getProfile() {
-        return profile;
-    }
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
 
-    public void setProfile(UserProfileLite profile) {
-        this.profile = profile;
+        val otherID = when (other) {
+            is LazerScore -> other.scoreID
+            is LazerScoreWithFcPP -> other.score.scoreID
+            is ScoreWithUserProfile -> other.score.scoreID
+            else -> return false
+        }
+
+        return this.score.scoreID == otherID
     }
 }

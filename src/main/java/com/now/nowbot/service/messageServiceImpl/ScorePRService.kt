@@ -60,7 +60,7 @@ class ScorePRService(
     data class PanelE5Param(
         val user: OsuUser,
         val history: OsuUser? = null,
-        val score: LazerScore,
+        val scores: LazerScore,
         val position: Int?,
         val density: IntArray,
         val progress: Double,
@@ -72,7 +72,7 @@ class ScorePRService(
         fun toMap(): Map<String, Any?> {
             val out = mapOf(
                 "user" to user,
-                "score" to score,
+                "scores" to scores,
                 "history_user" to history,
                 "density" to density,
                 "progress" to progress,
@@ -95,11 +95,11 @@ class ScorePRService(
 
             other as PanelE5Param
 
-            return score.scoreID == other.score.scoreID
+            return scores.scoreID == other.scores.scoreID
         }
 
         override fun hashCode(): Int {
-            return score.scoreID.hashCode()
+            return scores.scoreID.hashCode()
         }
     }
 
@@ -445,7 +445,7 @@ class ScorePRService(
                 val body = mapOf(
                     "user" to user,
                     "history_user" to history,
-                    "score" to scores,
+                    "scores" to scores,
                     "rank" to ranks,
                     "panel" to if (isPass) "PS" else "RS",
                     "compact" to ((isCompact && scores.size >= 10) || scores.size > 100)

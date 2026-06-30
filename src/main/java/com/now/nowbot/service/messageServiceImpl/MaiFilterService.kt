@@ -37,7 +37,7 @@ class MaiFilterService(
 
             return mapOf(
                 "user" to user,
-                "score" to score.drop((page - 1) * 50).take(50),
+                "scores" to score.drop((page - 1) * 50).take(50),
                 "page" to page,
                 "max_page" to maxPage,
                 "type" to type,

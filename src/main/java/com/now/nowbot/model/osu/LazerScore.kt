@@ -308,8 +308,15 @@ data class LazerScore(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other is LazerScore) return scoreID == other.scoreID
-        return false
+
+        val otherID = when (other) {
+            is LazerScore -> other.scoreID
+            is LazerScoreWithFcPP -> other.score.scoreID
+            is ScoreWithUserProfile -> other.score.scoreID
+            else -> return false
+        }
+
+        return this.scoreID == otherID
     }
 
     companion object {

@@ -38,23 +38,9 @@ class BeatmapDao(
     private val extendBeatmapSetRepository: BeatmapsetExtendLiteRepository,
 ) {
     fun saveBeatmapsAndSaveExtendAsync(beatmaps: Collection<Beatmap>) {
-        Thread.startVirtualThread {
-            beatmaps.forEach { beatmap ->
-                try {
-                    saveBeatmap(beatmap.copy())
-                } catch (e: Exception) {
-                    log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面失败：", e)
-                }
-
-                try {
-                    saveExtendedBeatmap(beatmap.copy())
-                } catch (e: Exception) {
-                    log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
-                }
-            }
-        }
+        saveBeatmapsAsync(beatmaps)
+        saveExtendedBeatmapsAsync(beatmaps)
     }
-
 
     fun saveBeatmapAndSaveExtendAsync(beatmap: Beatmap) {
         Thread.startVirtualThread {
@@ -118,7 +104,17 @@ class BeatmapDao(
         return beatmapRepository.save(fromBeatmapModel(beatmap))
     }
 
-    fun saveBeatmaps(beatmaps: Collection<Beatmap>) {
+    fun saveBeatmapsAsync(beatmaps: Collection<Beatmap>) {
+        Thread.startVirtualThread {
+            try {
+                saveBeatmaps(beatmaps)
+            } catch (e: Exception) {
+                log.warn("谱面数据访问对象层：保存 ${beatmaps.joinToString(", ") { it.beatmapID.toString() }} 等谱面失败：", e)
+            }
+        }
+    }
+
+    private fun saveBeatmaps(beatmaps: Collection<Beatmap>) {
         val exists = beatmapRepository.findExistingIds(beatmaps.map { it.beatmapID.toInt() }).toSet()
 
         val s = beatmaps.filterNot { it.beatmapsetID.toInt() in exists }.map { fromBeatmapModel(it) }
@@ -187,9 +183,52 @@ class BeatmapDao(
         extendBeatmapSetRepository.deleteAllByBeatmapIDs(beatmapIDs)
     }
 
-    fun saveExtendedBeatmapAsync(beatmaps: List<Beatmap>) {
+    fun saveExtendedBeatmapsAsync(beatmaps: Collection<Beatmap>) {
         Thread.startVirtualThread {
-            beatmaps.forEach { saveExtendedBeatmap(it) }
+            val validBeatmaps = beatmaps.filter { beatmap ->
+                val hasGenreID = beatmap.beatmapset?.genreID != null
+                val ranked = beatmap.beatmapset?.ranked
+                val stabled = ranked != null && ranked in byteArrayOf(1, 2, 4)
+                hasGenreID && stabled
+            }
+
+            if (validBeatmaps.isEmpty()) return@startVirtualThread
+
+            // 2. 内存去重并批量保存 Beatmapset
+            // 用一个 Map 来存储保存成功（或原本就存在）的 BeatmapsetExtendLite 对象，供后面关联使用
+            val savedSetMap = mutableMapOf<Long, BeatmapsetExtendLite>()
+
+            validBeatmaps.mapNotNull { it.beatmapset }
+                .distinctBy { it.beatmapsetID }
+                .forEach { s ->
+                    val id = s.beatmapsetID
+
+                    val savedSet = try {
+                        saveExtendedBeatmapsetLite(s)
+                    } catch (_: Exception) {
+                        extendBeatmapSetRepository.findByBeatmapsetID(id)
+                    }
+
+                    savedSet?.let { savedSetMap[id] = it }
+                }
+
+            // 3. 此时所有需要的 set 都在 savedSetMap 缓存中了，直接调用 saveExtendBeatmapLite 保存谱面
+            validBeatmaps.forEach { beatmap ->
+                val associatedSet = savedSetMap[beatmap.beatmapsetID]
+                if (associatedSet != null) {
+                    try {
+                        // 如果原谱面已存在，先删除（对齐原 saveExtendedBeatmap 的逻辑）
+                        if (extendBeatmapRepository.existsByBeatmapID(beatmap.beatmapID)) {
+                            extendBeatmapRepository.deleteById(beatmap.beatmapID)
+                        }
+
+                        // 直接使用拆分出来的 Lite 方法进行保存
+                        saveExtendedBeatmapLite(beatmap, associatedSet)
+                    } catch (e: Exception) {
+                        log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
+                    }
+                }
+            }
         }
     }
 
@@ -220,62 +259,17 @@ class BeatmapDao(
         val savedSet = if (hasBeatmapset) {
             extendBeatmapSetRepository.findByBeatmapsetID(beatmap.beatmapsetID)!!
         } else {
-            val set = BeatmapsetExtendLite(
-                beatmapsetID = s.beatmapsetID,
-                animeCover = s.animeCover,
-                artist = s.artist,
-                artistUnicode = s.artistUnicode,
-                coverID = s.covers.cover
-                    .split("?").getOrNull(1)?.toLongOrNull(),
-                creator = s.creator,
-                favouriteCount = s.favouriteCount,
-                genreID = s.genreID,
-                creatorID = s.creatorID,
-                languageID = s.languageID,
-                nsfw = s.nsfw,
-                recommendOffset = s.offset,
-                playCount = s.playCount,
-                source = s.source,
-                status = s.status,
-                spotlight = s.spotlight,
-                title = s.title,
-                titleUnicode = s.titleUnicode,
-                trackID = s.trackID,
-                video = s.video,
-                bpm = s.bpm,
-                discussionLocked = s.discussionLocked,
-                lastUpdated = s.lastUpdated.toLocalDateTime(),
-                threadID = s.legacyThreadUrl?.split("/")?.lastOrNull()?.toLongOrNull(),
-                nominationsCurrent = s.nominationsSummary?.current,
-                nominationsRulesets = s.nominationsSummary?.mode
-                    ?.map { mode ->
-                        when(mode) {
-                            "osu" -> 1
-                            "taiko" -> 2
-                            "catch", "fruits" -> 4
-                            "mania" -> 8
-                            else -> 0
-                        }
-                    }?.sum()?.toByte(),
-                nominationsRequiredMain = s.nominationsSummary?.required?.main,
-                nominationsRequiredSecondary = s.nominationsSummary?.required?.secondary,
-                ranked = s.ranked,
-                rankedDate = s.rankedDate?.toLocalDateTime(),
-                rating = s.rating,
-                storyboard = s.storyboard,
-                submittedDate = s.submittedDate.toLocalDateTime(),
-                tags = s.tags,
-                downloadDisabled = s.availability.downloadDisabled,
-                moreInformation = s.availability.moreInformation,
-                ratings = s.ratings.toTypedArray(),
-            )
-
-            extendBeatmapSetRepository.save(set)
+            saveExtendedBeatmapsetLite(s)
         }
 
         if (hasBeatmap) {
             extendBeatmapRepository.deleteById(beatmap.beatmapID)
         }
+
+        saveExtendedBeatmapLite(beatmap, savedSet)
+    }
+
+    private fun saveExtendedBeatmapLite(beatmap: Beatmap, savedSet: BeatmapsetExtendLite): BeatmapExtendLite {
 
         val now = LocalDateTime.now()
 
@@ -290,7 +284,61 @@ class BeatmapDao(
             updatedAt = now
         )
 
-        extendBeatmapRepository.save(lite)
+        return extendBeatmapRepository.save(lite)
+    }
+
+    private fun saveExtendedBeatmapsetLite(set: Beatmapset): BeatmapsetExtendLite {
+        val entity = BeatmapsetExtendLite(
+            beatmapsetID = set.beatmapsetID,
+            animeCover = set.animeCover,
+            artist = set.artist,
+            artistUnicode = set.artistUnicode,
+            coverID = set.covers.cover
+                .split("?").getOrNull(1)?.toLongOrNull(),
+            creator = set.creator,
+            favouriteCount = set.favouriteCount,
+            genreID = set.genreID,
+            creatorID = set.creatorID,
+            languageID = set.languageID,
+            nsfw = set.nsfw,
+            recommendOffset = set.offset,
+            playCount = set.playCount,
+            source = set.source,
+            status = set.status,
+            spotlight = set.spotlight,
+            title = set.title,
+            titleUnicode = set.titleUnicode,
+            trackID = set.trackID,
+            video = set.video,
+            bpm = set.bpm,
+            discussionLocked = set.discussionLocked,
+            lastUpdated = set.lastUpdated.toLocalDateTime(),
+            threadID = set.legacyThreadUrl?.split("/")?.lastOrNull()?.toLongOrNull(),
+            nominationsCurrent = set.nominationsSummary?.current,
+            nominationsRulesets = set.nominationsSummary?.mode
+                ?.map { mode ->
+                    when(mode) {
+                        "osu" -> 1
+                        "taiko" -> 2
+                        "catch", "fruits" -> 4
+                        "mania" -> 8
+                        else -> 0
+                    }
+                }?.sum()?.toByte(),
+            nominationsRequiredMain = set.nominationsSummary?.required?.main,
+            nominationsRequiredSecondary = set.nominationsSummary?.required?.secondary,
+            ranked = set.ranked,
+            rankedDate = set.rankedDate?.toLocalDateTime(),
+            rating = set.rating,
+            storyboard = set.storyboard,
+            submittedDate = set.submittedDate.toLocalDateTime(),
+            tags = set.tags,
+            downloadDisabled = set.availability.downloadDisabled,
+            moreInformation = set.availability.moreInformation,
+            ratings = set.ratings.toTypedArray(),
+        )
+
+        return extendBeatmapSetRepository.save(entity)
     }
 
     /**

@@ -222,7 +222,7 @@ class MatchRecentService(
                 user, null, score, "MR", beatmapApiService, calculateApiService
             ).toMap().toMutableMap()
 
-            e5["match"] = match.statistics.matchID
+            e5["match_id"] = match.statistics.matchID
 
             e5
         } else {
@@ -232,10 +232,11 @@ class MatchRecentService(
                 { calculateApiService.applyPPToScores(filteredScores) }
             )
 
+
             mapOf(
                 "user" to user,
                 "history_user" to null,
-                "match" to match.statistics.matchID,
+                "match_id" to match.statistics.matchID,
                 "scores" to filteredScores,
                 "rank" to List(filteredScores.size) { index ->
                     index + 1
@@ -248,7 +249,7 @@ class MatchRecentService(
             if (filteredScores.size == 1) {
                 imageService.getPanel(body, "E5")
             } else {
-                imageService.getPanel(body, "A4")
+                imageService.getPanel(body, "A5")
             }
         } catch (e: Exception) {
             log.error("比赛最近成绩：渲染失败", e)

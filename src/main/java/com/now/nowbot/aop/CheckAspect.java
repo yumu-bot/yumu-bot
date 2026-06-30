@@ -287,16 +287,14 @@ public class CheckAspect {
         return null;
     }
 
-    private LazerScore getScore(LazerScore score) {
+    private Object getScore(LazerScore score) {
         if (score == null || score.getUser().getUserID() == 0L) return score;
         var profile = userProfileRepository.findTopById(score.getUser().getUserID());
 
         if (profile == null) {
             return score;
         } else {
-            var score2 = ScoreWithUserProfile.copyOf(score);
-            score2.setProfile(profile);
-            return score2;
+            return new ScoreWithUserProfile(score, profile);
         }
     }
 
