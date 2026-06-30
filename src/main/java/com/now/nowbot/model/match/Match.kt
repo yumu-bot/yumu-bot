@@ -78,7 +78,7 @@ data class Match(
         @field:JsonProperty("beatmap_id") val beatmapID: Long,
         @field:JsonProperty("start_time") val startTime: OffsetDateTime,
         @field:JsonProperty("end_time") val endTime: OffsetDateTime?,
-        val modeInt: Int,
+        val modeInt: Int? = null,
         val mods: List<String>,
         var scores: List<LazerScore>,
         val teamType: String,

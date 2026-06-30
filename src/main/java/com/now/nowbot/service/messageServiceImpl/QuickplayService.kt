@@ -9,6 +9,7 @@ import com.now.nowbot.model.match.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.model.multiplayer.Room
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -129,8 +130,13 @@ class QuickplayService(
      * 需要从 events 接口拿来
      */
     fun Room.eventsToMatch(): Match {
-        val roundIDs = this.events.mapNotNull { it.itemID }.toSet()
-        val itemMap = this.items.associateBy { i -> i.listID }
+        val room = this
+
+        val roundIDs = room.events.mapNotNull { it.itemID }.toSet()
+        val itemMap = room.items.associateBy { i -> i.listID }
+        val beatmaps = room.beatmaps.associateBy { it.beatmapID }
+        val info = room.roomInfo
+        val players = room.users.associateBy { it.userID }
 
         val its = roundIDs.mapNotNull { r -> itemMap[r] }
 
@@ -138,30 +144,34 @@ class QuickplayService(
         val teamVS = playedUserSet.size == 2
 
         return Match(
-            statistics = Match.MatchStat(this.roomInfo.roomID, this.roomInfo.startedTime, this.roomInfo.endedTime, this.roomInfo.name),
+            statistics = Match.MatchStat(info.roomID, info.startedTime, info.endedTime, info.name),
             events = its.map { i ->
+                val beatmap = beatmaps.getOrDefault(i.beatmapID, Beatmap(beatmapID = i.beatmapID))
 
-                val beatmap = this.beatmaps.find { bs -> bs.beatmapID == i.beatmapID } ?: Beatmap(beatmapID = i.beatmapID)
+                val scores = i.scores.orEmpty().onEach { s ->
+
+                    // 给 room 手动赋红蓝
+                    val slot = playedUserSet.indexOf(s.userID)
+                    val team = if (slot != -1 && teamVS) {
+                        if (slot % 2 == 0) {
+                            "blue"
+                        } else {
+                            "red"
+                        }
+                    } else {
+                        "none"
+                    }
+
+                    s.playerStat = LazerScore.MatchScorePlayerStat(slot.toByte(), team, s.passed)
+                    s.user = players.getOrDefault(s.userID, MicroUser().apply {
+                        this.userID = s.userID
+                    })
+                }
 
                 val round = Match.MatchRound(
-                    i.listID, beatmap, i.beatmapID, i.createdTime, i.playedTime, beatmap.modeInt ?: 0,
+                    i.listID, beatmap, i.beatmapID, i.createdTime, i.playedTime, beatmap.modeInt,
                     mods = i.allowedMods.map { it.acronym },
-                    scores = i.scores.orEmpty().onEach { s ->
-
-                        // 给 room 手动赋红蓝
-                        val slot = playedUserSet.indexOf(s.userID)
-                        val team = if (slot != -1 && teamVS) {
-                            if (slot % 2 == 0) {
-                                "blue"
-                            } else {
-                                "red"
-                            }
-                        } else {
-                            "none"
-                        }
-
-                        s.playerStat = LazerScore.MatchScorePlayerStat(slot.toByte(), team, s.passed)
-                    },
+                    scores = scores,
                     teamType = if (teamVS) "team-vs" else i.details?.teams ?: "head-to-head",
                     scoringType = "score-v2",
                 )
@@ -175,9 +185,9 @@ class QuickplayService(
                     round = round,
                 )
             },
-            players = this.users,
-            firstEventID = this.firstEventID,
-            latestEventID = this.latestEventID
+            players = room.users,
+            firstEventID = room.firstEventID,
+            latestEventID = room.latestEventID
         )
     }
 }
