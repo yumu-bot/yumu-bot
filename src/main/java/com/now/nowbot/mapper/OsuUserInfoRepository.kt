@@ -27,6 +27,18 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
 
     @Query(
         value = """
+        SELECT DISTINCT ON (mode) mode, country_rank 
+        FROM osu_user_info_archive 
+        WHERE osu_id = :userID
+          AND mode IN (0, 1, 2, 3)
+          AND country_rank IS NOT NULL 
+        ORDER BY mode, time DESC;
+    """, nativeQuery = true
+    )
+    fun getLatestCountryRanks(userID: Long): List<Array<Any>>
+
+    @Query(
+        value = """
                 select distinct on (osu_id, mode)
                 osu_id, mode as mode_short, play_count
                 from (

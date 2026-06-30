@@ -113,8 +113,8 @@ class ScoreDao(
         val uniqueSets = notExistsScore.map { it.beatmapset }.sortedBy { it.beatmapsetID }.associateBy { it.beatmapsetID }.values
         val uniqueBeatmaps = notExistsScore.map { it.beatmap }.sortedBy { it.beatmapID }.associateBy { it.beatmapID }.values
 
-        beatmapDao.saveBeatmapsAsync(uniqueBeatmaps)
         beatmapDao.saveBeatmapsetsAsync(uniqueSets)
+        beatmapDao.saveBeatmapsAsync(uniqueBeatmaps)
 
         // 3. 准备成绩基础数据和统计数据
         val scoreLites = mutableListOf<LazerScoreLite>()

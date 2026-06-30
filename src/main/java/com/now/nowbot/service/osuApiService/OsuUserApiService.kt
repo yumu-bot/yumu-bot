@@ -37,7 +37,7 @@ interface OsuUserApiService {
     fun applyBindUserDetails(user: BindUser)
 
     @Throws(HttpClientErrorException::class)
-    fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser
+    fun getOsuUser(bindUser: BindUser, mode: OsuMode): OsuUser
 
     @Throws(HttpClientErrorException::class)
     fun getOsuUser(name: String, mode: OsuMode): OsuUser
@@ -70,7 +70,7 @@ interface OsuUserApiService {
      * @param users 单次请求量无限制
      * @param isVariant 是否需要额外的四模式信息
      */
-    fun <T : Number> getUsers(
+    fun <T : Number> getMicroUsers(
         users: Collection<T>,
         isVariant: Boolean = false,
         isBackground: Boolean = false

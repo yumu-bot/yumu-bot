@@ -216,7 +216,7 @@ class MatchListenerService(
         // 批量获取用户信息
         val missingUserIds = game.scores.map { it.userID }.filterNot { listener.userMap.containsKey(it) }
         if (missingUserIds.isNotEmpty()) {
-            userApiService.getUsers(missingUserIds).forEach { listener.userMap[it.userID] = it }
+            userApiService.getMicroUsers(missingUserIds).forEach { listener.userMap[it.userID] = it }
         }
     }
 

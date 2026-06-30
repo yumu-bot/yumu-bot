@@ -357,7 +357,7 @@ class PopularService(
             (shown.map { it.beatmapID }.toSet() + bestPerformanceTriple.second).filter { it > 0L }
         ).associateBy { it.beatmapID }
 
-        val maxRetryPlayers = userApiService.getUsers(
+        val maxRetryPlayers = userApiService.getMicroUsers(
             shown.map { it.maxRetry.userID }.toSet() + bestPerformanceTriple.first
         ).associateBy { it.userID }
 

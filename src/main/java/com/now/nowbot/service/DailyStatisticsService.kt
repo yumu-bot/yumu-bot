@@ -138,7 +138,7 @@ class DailyStatisticsService(
     private fun collectingUsers(users: List<BindUser>): Triple<Int, Int, Int> {
         val ids = users.map { it.userID }
 
-        val stats = userApiService.getUsers(users = ids, isVariant = true, isBackground = true)
+        val stats = userApiService.getMicroUsers(users = ids, isVariant = true, isBackground = true)
 
         val needUpdate = stats.flatMap { micro ->
             val plays = userInfoDao.getPlayCountsFromUserIDBeforeToday(micro.userID)

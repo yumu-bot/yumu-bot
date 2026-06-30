@@ -8,5 +8,5 @@ import org.springframework.data.repository.query.Param
 
 interface BeatmapsetRepository : JpaRepository<BeatmapsetLite, Int>, JpaSpecificationExecutor<BeatmapsetLite> {
     @Query("SELECT b.id FROM BeatmapsetLite b WHERE b.id IN :ids")
-    fun findExistingIds(@Param("ids") ids: Collection<Int>): List<Int>
+    fun exists(@Param("ids") ids: Collection<Long>): List<Long>
 }

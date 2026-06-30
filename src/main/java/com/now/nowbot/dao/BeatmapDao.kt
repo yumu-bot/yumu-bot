@@ -99,7 +99,7 @@ class BeatmapDao(
     fun saveBeatmapAsync(beatmap: Beatmap) {
         Thread.startVirtualThread {
             try {
-                saveBeatmap(beatmap.copy())
+                saveBeatmap(beatmap)
             } catch (e: Exception) {
                 log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面失败：", e)
             }
@@ -117,6 +117,7 @@ class BeatmapDao(
     fun saveBeatmapsAsync(beatmaps: Collection<Beatmap>) {
         Thread.startVirtualThread {
             runCatching {
+                saveBeatmapsets(beatmaps.mapNotNull { it.beatmapset }.toSet())
                 saveBeatmaps(beatmaps)
             }.onFailure { e ->
                 if (e is DataIntegrityViolationException) return@onFailure
@@ -134,14 +135,14 @@ class BeatmapDao(
     }
 
     fun saveBeatmapset(beatmapset: Beatmapset): BeatmapsetLite {
-        return beatmapsetRepository.save(fromBeatmapsetModel(beatmapset))
+        return beatmapsetRepository.saveAndFlush(fromBeatmapsetModel(beatmapset))
     }
 
     fun saveBeatmapsets(beatmapsets: Collection<Beatmapset>) {
-        val exists = beatmapsetRepository.findExistingIds(beatmapsets.map { it.beatmapsetID.toInt() }).toSet()
+        val exists = beatmapsetRepository.exists(beatmapsets.map { it.beatmapsetID }).toSet()
 
-        val s = beatmapsets.filterNot { it.beatmapsetID.toInt() in exists }.map { fromBeatmapsetModel(it) }
-        beatmapsetRepository.saveAll(s)
+        val s = beatmapsets.filterNot { it.beatmapsetID in exists }.map { fromBeatmapsetModel(it) }
+        beatmapsetRepository.saveAllAndFlush(s)
     }
 
     fun getBeatmapLite(id: Long): BeatmapLite? {

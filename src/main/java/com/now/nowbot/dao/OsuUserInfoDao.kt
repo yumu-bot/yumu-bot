@@ -167,7 +167,17 @@ class OsuUserInfoDao(
         return count.toDouble() / size
     }
 
-    fun saveUserToday(user: OsuUser, mode: OsuMode) {
+    fun saveUserTodayAsync(user: OsuUser, mode: OsuMode) {
+        Thread.startVirtualThread {
+            runCatching {
+                saveUserToday(user, mode)
+            }.onFailure { e ->
+                log.info("玩家数据存储：存储失败：", e)
+            }
+        }
+    }
+
+    private fun saveUserToday(user: OsuUser, mode: OsuMode) {
         val now = LocalDateTime.now()
         val today = LocalDate.now()
 
@@ -187,16 +197,35 @@ class OsuUserInfoDao(
         infoRepository.saveAndFlush(lite)
     }
 
-    fun saveUsersToday(users: List<MicroUser>) {
+    fun saveUsersTodayAsync(users: List<MicroUser>) {
+        Thread.startVirtualThread {
+            runCatching {
+                saveUsersToday(users)
+            }.onFailure { e ->
+                log.info("玩家数据存储：批量存储失败：", e)
+            }
+        }
+    }
+
+    private fun saveUsersToday(users: List<MicroUser>) {
         val now = LocalDateTime.now().toLocalDate()
 
         users.flatMap {
             if (it.rulesets == null) return@flatMap emptyList<OsuUserInfoArchiveLite>()
 
-            val oc = infoRepository.getLatestCountryRank(it.userID, OsuMode.OSU)
-            val tc = infoRepository.getLatestCountryRank(it.userID, OsuMode.TAIKO)
-            val cc = infoRepository.getLatestCountryRank(it.userID, OsuMode.CATCH)
-            val mc = infoRepository.getLatestCountryRank(it.userID, OsuMode.MANIA)
+            val crs: List<Array<Any>> = infoRepository.getLatestCountryRanks(it.userID)
+
+            val rankMap = crs.associate { array ->
+                val modeByte = (array[0] as Number).toByte()
+                val countryRank = (array[1] as Number).toLong()
+
+                modeByte to countryRank
+            }
+
+            val oc = rankMap[OsuMode.OSU.modeValue]
+            val tc = rankMap[OsuMode.TAIKO.modeValue]
+            val cc = rankMap[OsuMode.CATCH.modeValue]
+            val mc = rankMap[OsuMode.MANIA.modeValue]
 
             val osu = fromStatistics(it.rulesets!!.osu, OsuMode.OSU, oc)
             if (osu != null) {

@@ -53,7 +53,7 @@ class GroupLeaderBoardService(
     private fun List<LazerScore>.applyMicroUser() {
         val userIDs = this.map { it.userID }.toSet()
 
-        val users = userApiService.getUsers(userIDs, isVariant = false, isBackground = false).associateBy { it.userID }
+        val users = userApiService.getMicroUsers(userIDs, isVariant = false, isBackground = false).associateBy { it.userID }
 
         this.onEach { score ->
             users[score.userID]?.let {

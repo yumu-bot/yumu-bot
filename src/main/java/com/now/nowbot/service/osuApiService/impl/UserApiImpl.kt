@@ -24,6 +24,7 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.toBody
+import com.now.nowbot.util.toBodyList
 import kotlinx.io.IOException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -138,62 +139,57 @@ import java.util.concurrent.CancellationException
         }
     }
 
-    override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
-        if (user.isTokenAvailable == null) return getOsuUser(user.userID, mode)
+    override fun getOsuUser(bindUser: BindUser, mode: OsuMode): OsuUser {
+        if (bindUser.isTokenAvailable == null) return getOsuUser(bindUser.userID, mode)
 
-        val data = request { client -> client
+        val user = request { client -> client
             .get().uri("me/{mode}", mode.shortName)
             .headers { headers ->
-                base.insertHeader(headers, user)
+                base.insertHeader(headers, bindUser)
             }.toBody<OsuUser>()
         }
 
-        userInfoDao.saveUserToday(data, mode)
-        user.userID = data.userID
-        user.username = data.username
-        user.mode = mode
-        data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+        bindUser.userID = user.userID
+        bindUser.username = user.username
+        bindUser.mode = mode
 
-        Thread.startVirtualThread {
-            bindDao.updateNameToID(data)
-        }
+        user.currentOsuMode = getMode(mode, user.defaultOsuMode)
 
-        return data
+        userInfoDao.saveUserTodayAsync(user, user.currentOsuMode)
+        bindDao.updateNameToIDAsync(user)
+
+        return user
     }
 
     override fun getOsuUser(name: String, mode: OsuMode): OsuUser {
-        val data = request { client ->
+        val user = request { client ->
             client.get().uri {
                     it.path("users/{data}/{mode}").build("@$name", mode.shortName)
             }.headers(base::insertHeader).toBody<OsuUser>()
         }
-        userInfoDao.saveUserToday(data, mode)
-        data.currentOsuMode = getMode(mode, data.defaultOsuMode)
 
-        Thread.startVirtualThread {
-            bindDao.updateNameToID(data)
-        }
+        user.currentOsuMode = getMode(mode, user.defaultOsuMode)
 
-        return data
+        userInfoDao.saveUserTodayAsync(user, user.currentOsuMode)
+        bindDao.updateNameToIDAsync(user)
+
+        return user
     }
 
     override fun getOsuUser(id: Long, mode: OsuMode): OsuUser {
-        val data = request { client ->
+        val user = request { client ->
             client.get().uri {
                 it.path("users/{id}/{mode}").build(id, mode.shortName)
             }.headers(base::insertHeader)
                 .toBody<OsuUser>()
-        } // 执行到这里，数据已经回到了虚拟线程
-
-        // 以下逻辑在虚拟线程中执行，不会卡死 Netty
-        userInfoDao.saveUserToday(data, mode)
-        data.currentOsuMode = getMode(mode, data.defaultOsuMode)
-
-        Thread.startVirtualThread {
-            bindDao.updateNameToID(data)
         }
 
-        return data
+        user.currentOsuMode = getMode(mode, user.defaultOsuMode)
+
+        userInfoDao.saveUserTodayAsync(user, user.currentOsuMode)
+        bindDao.updateNameToIDAsync(user)
+
+        return user
     }
 
     override fun getOsuUsers(ids: List<Long>, mode: OsuMode, batchSize: Int, latencyMillis: Long): List<OsuUser> {
@@ -220,15 +216,12 @@ import java.util.concurrent.CancellationException
 
     override fun getOsuID(name: String): Long {
         val id = bindDao.getOsuID(name)
+
         if (id != null) {
             return id
         }
 
         val user = getOsuUser(name)
-
-        Thread.startVirtualThread {
-            bindDao.updateNameToID(user)
-        }
 
         return user.userID
     }
@@ -240,15 +233,15 @@ import java.util.concurrent.CancellationException
      * @param users 注意, 单次请求数量无限制
      * @param isVariant 是否获取玩家的多模式信息
      */
-    override fun <T : Number> getUsers(users: Collection<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
+    override fun <T : Number> getMicroUsers(users: Collection<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
         if (users.size <= 50) {
-            return getUsersPrivate(users = users, isVariant = isVariant, isBackground = isBackground)
+            return getMicroUsersPrivate(users = users, isVariant = isVariant, isBackground = isBackground)
         } else {
             val idChunk = users.chunked(50)
 
             val callables = idChunk.map {
                 Callable {
-                    getUsersPrivate(it, isVariant = isVariant, isBackground = isBackground)
+                    getMicroUsersPrivate(it, isVariant = isVariant, isBackground = isBackground)
                 }
             }
 
@@ -262,7 +255,7 @@ import java.util.concurrent.CancellationException
      * @param users 注意, 单次请求数量必须小于50
      * @param isVariant 是否获取玩家的多模式信息
      */
-    private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
+    private fun <T : Number> getMicroUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
         val data = request(isBackground) { client ->
             client.get().uri {
                 val ids = users.map { u -> u.toLong() }.toList()
@@ -276,7 +269,7 @@ import java.util.concurrent.CancellationException
         val userList = JacksonUtil.parseObjectList(
             data["users"], MicroUser::class.java
         )
-        userInfoDao.saveUsersToday(userList)
+        userInfoDao.saveUsersTodayAsync(userList)
         return userList
     }
 
@@ -289,24 +282,28 @@ import java.util.concurrent.CancellationException
             }
         }
 
-        val json = request { client ->
+        val friends = request { client ->
             client.get().uri("friends")
                 .headers { headers ->
                     base.insertHeader(headers, user)
                 }
-                .toBody<JsonNode>()
+                .toBodyList<LazerFriend>()
         }
-        return JacksonUtil.parseObjectList(json, LazerFriend::class.java)
+
+        userInfoDao.saveUsersTodayAsync(
+            friends.map { it.target }
+        )
+
+        return friends
     }
 
     override fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent> {
-        val json = request { client ->
+        return request { client ->
             client.get().uri {
                     it.path("users/{userId}/recent_activity").queryParam("offset", offset).queryParam("limit", limit)
                         .build(id)
-            }.headers(base::insertHeader).toBody<JsonNode>()
+            }.headers(base::insertHeader).toBodyList<ActivityEvent>()
         }
-        return JacksonUtil.parseObjectList(json, ActivityEvent::class.java)
     }
 
     override fun getUserKudosu(user: BindUser): KudosuHistory {
@@ -349,7 +346,7 @@ import java.util.concurrent.CancellationException
         val userSet = (beatmapsets.flatMap { it.beatmaps.orEmpty() }
             .flatMap { it.mapperIDs } + beatmapsets.map { it.creatorID }).toSet()
 
-        val users = getUsers(userSet).associateBy { it.userID }
+        val users = getMicroUsers(userSet).associateBy { it.userID }
 
         beatmapsets.forEach { set ->
             users[set.creatorID]?.let { set.creatorData = OsuUser(it) }

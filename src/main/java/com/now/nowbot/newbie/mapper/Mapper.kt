@@ -136,7 +136,7 @@ class NewbieDao(
         // 分批次 筛选出pp小于3600的用户
         uid.chunked(50) { i ->
             Thread.sleep(3000)
-            osuUserService.getUsers(i)
+            osuUserService.getMicroUsers(i)
                 .filter { it.rulesets != null && it.rulesets!!.osu != null && it.rulesets!!.osu!!.pp!! < 3600 }
                 .map {
                     userPP[it.userID] = it.rulesets!!.osu!!.pp!!.toFloat()

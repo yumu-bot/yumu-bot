@@ -461,6 +461,12 @@ class BindDao(
         return osuFindNameMapper.countByUserID(userID)
     }
 
+    fun updateNameToIDAsync(user: OsuUser) {
+        Thread.startVirtualThread {
+            updateNameToID(user)
+        }
+    }
+
     fun updateNameToID(user: OsuUser) {
         val names = listOf(user.username) + (user.previousNames.orEmpty())
 

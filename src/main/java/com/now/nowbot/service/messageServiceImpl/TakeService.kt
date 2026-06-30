@@ -106,7 +106,7 @@ import kotlin.math.floor
         val user = param.user ?: throw NoSuchElementException.TakePlayer(param.name)
 
         val micro = try {
-            userApiService.getUsers(listOf(user.userID), isVariant = true).first()
+            userApiService.getMicroUsers(listOf(user.userID), isVariant = true).first()
         } catch (_: Exception) {
             throw NoSuchElementException.TakePlayer(user.username)
         }

@@ -202,7 +202,7 @@ class GroupStatisticsService(
                 group.sendMessage(String.format("%d 统计进行到 %.2f%%", groupId, 100f * count / groupInfo.size))
             }
             if (nowOsuId.size >= 50) {
-                val result = userApiService.getUsers(nowOsuId.keys)
+                val result = userApiService.getMicroUsers(nowOsuId.keys)
                 for (uInfo in result) {
                     users[nowOsuId[uInfo.userID] ?: continue] = uInfo
                 }
