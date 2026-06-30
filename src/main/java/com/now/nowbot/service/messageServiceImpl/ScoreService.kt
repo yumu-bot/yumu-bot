@@ -297,10 +297,10 @@ import kotlin.time.Duration.Companion.seconds
 
     // 备用方法：先获取最近成绩，再获取谱面
     private fun getFromRecentScore(userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher, mods: List<LazerMod>): ScoreData {
-        event.reply("""
+        event.replyAndRecallAsync("""
             没有获取到 24 小时内的可用谱面。
             正在查询您最近成绩所属的谱面上的最好成绩。
-        """.trimIndent()).recallIn(60 * 1000)
+        """.trimIndent(), 60.seconds)
 
         val recent: LazerScore
         val user: OsuUser
@@ -383,9 +383,7 @@ import kotlin.time.Duration.Companion.seconds
             listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。")
         )
 
-        val receipt = event.reply(mixin.joinToString("\n") { it.random() })
-
-        receipt.recallIn(60 * 1000)
+        event.replyAndRecallAsync(mixin.joinToString("\n") { it.random() })
 
         val (passed, set) = runBlocking(Dispatchers.IO) {
             val includeConverts = map.mode.isConvertAble(mode)
@@ -409,8 +407,6 @@ import kotlin.time.Duration.Companion.seconds
         }
 
         if (passed.size >= 16) {
-            receipt.recallIn(10 * 1000)
-
             val mixin2 = listOf(
                 listOf("检测到您在此谱面留有大量不同难度的成绩。", "这张谱面难度好多啊，你肯定刷了很久。"),
                 listOf("\n"),
@@ -418,7 +414,7 @@ import kotlin.time.Duration.Companion.seconds
                 listOf("只会尝试在星数较高的 16 个成绩中查询。", "星数太低的成绩不会纳入考虑。")
             )
 
-            event.reply(mixin2.joinToString("") { it.random() }).recallIn(60 * 1000)
+            event.replyAndRecallAsync(mixin2.joinToString("") { it.random() })
         } else if (passed.isEmpty()) {
             throw NoSuchElementException.BeatmapScore(set.previewName)
         }
@@ -480,17 +476,15 @@ import kotlin.time.Duration.Companion.seconds
             listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。")
         )
 
-        val receipt = event.reply(mixin3.joinToString("") { it.random() })
+        event.replyAndRecallAsync(mixin3.joinToString("") { it.random() }, 10.seconds)
 
         val scores = scoreDao.getBeatmapScores(user, beatmap, mode)
 
         if (scores.isEmpty()) {
-            receipt.recallIn(10 * 1000)
             throw NoSuchElementException.DatabaseBeatmapScore(beatmap.previewName)
         }
 
         val filtered = scores.filterMod(mods) {
-            receipt.recallIn(10 * 1000)
             throw NoSuchElementException.DatabaseBeatmapScoreWithMod(beatmap.previewName)
         }
 

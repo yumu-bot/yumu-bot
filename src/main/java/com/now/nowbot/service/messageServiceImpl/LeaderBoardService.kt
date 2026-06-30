@@ -118,9 +118,9 @@ class LeaderBoardService(
 
                 if (beatmap == null || !beatmap.hasLeaderBoard) {
                     if (beatmap == null) {
-                        event.reply("没有获取到 24 小时内的参数。正在为您查询最近成绩的谱面排行榜。").recallIn(60 * 1000L)
+                        event.replyAndRecallAsync("没有获取到 24 小时内的参数。正在为您查询最近成绩的谱面排行榜。")
                     } else {
-                        event.reply("之前的参数对应的谱面没有榜。正在为您查询最近成绩的谱面排行榜。").recallIn(60 * 1000L)
+                        event.replyAndRecallAsync("之前的参数对应的谱面没有榜。正在为您查询最近成绩的谱面排行榜。")
                     }
 
                     val score = scoreApiService.getRecentScore(bindUser, param.mode, 0, 1).firstOrNull()

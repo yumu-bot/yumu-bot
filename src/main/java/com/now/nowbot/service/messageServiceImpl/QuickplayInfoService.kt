@@ -108,7 +108,7 @@ class QuickplayInfoService(
         val current = user.matchmakingStats.filter { it.pool.variantID == variant }.maxByOrNull { it.poolID } ?: throw NoSuchElementException.RankedPlay()
 
         if (targetInfos.size > 25) {
-            event.replyAsync("""
+            event.replyAndRecallAsync("""
                 当前信息太多，需要一点时间来获取...
             """.trimIndent())
         }

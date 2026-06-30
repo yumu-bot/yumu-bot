@@ -34,6 +34,7 @@ import kotlin.String
 import kotlin.Suppress
 import kotlin.Throwable
 import kotlin.Throws
+import kotlin.time.Duration.Companion.milliseconds
 
 ////////////////////////////////////////////////////////////////////
 //                          _ooOoo_                               //
@@ -134,12 +135,12 @@ class OneBotListener {
 
     private fun handleNetworkException(event: MessageEvent, e: Exception) {
         log.info("连接超时：", e)
-        event.reply("请求超时。").recallIn(RECALL_TIME.toLong())
+        event.replyAndRecallAsync("请求超时。", RECALL_TIME.milliseconds)
     }
 
     private fun handleOtherException(event: MessageEvent, e: Throwable) {
         if (Permission.isSuperAdmin(event.sender.contactID)) {
-            event.reply(e).recallIn(RECALL_TIME.toLong())
+            event.replyAndRecallAsync(e, RECALL_TIME.milliseconds)
         }
         log.error("捕捉其他异常：", e)
     }

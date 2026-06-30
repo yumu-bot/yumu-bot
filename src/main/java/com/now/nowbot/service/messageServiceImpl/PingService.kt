@@ -30,7 +30,7 @@ import java.nio.file.Path
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Unit): ServiceCallStatistic? {
-        event.reply(getMessageChain()).recallIn(10 * 1000L)
+        event.replyAndRecallAsync(getMessageChain(), )
         return ServiceCallStatistic.building(event)
     }
 

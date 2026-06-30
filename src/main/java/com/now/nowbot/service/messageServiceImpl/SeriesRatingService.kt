@@ -24,6 +24,7 @@ import org.springframework.web.client.HttpClientErrorException
 import java.nio.charset.StandardCharsets
 import java.util.regex.Matcher
 import kotlin.math.round
+import kotlin.time.Duration.Companion.seconds
 
 @Service("SERIES_RATING")
 class SeriesRatingService(
@@ -120,7 +121,7 @@ class SeriesRatingService(
         } else if (param.group("uu") != null) {
             val str = parseUSA(sr)
             try {
-                event.reply(str).recallIn(60000)
+                event.replyAndRecallAsync(str, 60.seconds)
             } catch (e: Exception) {
                 log.error("系列斗力文字：发送失败", e)
                 throw IllegalStateException.Send("系列斗力文字版")

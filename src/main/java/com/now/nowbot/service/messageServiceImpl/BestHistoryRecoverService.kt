@@ -154,7 +154,7 @@ class BestHistoryRecoverService(
                 }
             } else {
                 // 超时，结束循环
-                current.reply("已取消操作。").recallIn(30 * 1000)
+                current.replyAndRecallAsync("已取消操作。")
                 continuing = false
             }
         }

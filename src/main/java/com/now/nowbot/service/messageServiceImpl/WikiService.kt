@@ -16,6 +16,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import kotlin.time.Duration.Companion.seconds
 
 class WikiService internal constructor() : MessageService<Matcher> {
     var log: Logger = LoggerFactory.getLogger(WikiService::class.java)
@@ -45,7 +46,7 @@ class WikiService internal constructor() : MessageService<Matcher> {
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic {
         val key = param.group("key")
 
-        event.reply(getWiki(key)).recallIn((60 * 1000).toLong())
+        event.replyAndRecallAsync(getWiki(key), 60.seconds)
 
         return ServiceCallStatistic.building(event)
     }

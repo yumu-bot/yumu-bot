@@ -22,6 +22,8 @@ import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import kotlin.math.*
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Service("DICE") class DiceService : MessageService<DiceParam>, TencentMessageService<DiceParam> {
     // dice：骰子次数，默认为 1
@@ -53,8 +55,8 @@ import kotlin.random.Random
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: DiceParam): ServiceCallStatistic? {
         val res = handle(event, param)
 
-        if (res.recall > 0) {
-            event.reply(res.text).recallIn(res.recall)
+        if (res.recall > 5.seconds) {
+            event.replyAndRecallAsync(res.text, res.recall)
         } else {
             event.replyAsync(res.text)
         }
@@ -105,7 +107,7 @@ import kotlin.random.Random
     data class DiceResponse(
         val text: String,
         val statistic: ServiceCallStatistic,
-        val recall: Long = -1
+        val recall: Duration = Duration.ZERO
     )
 
     private fun handle(event: MessageEvent, param: DiceParam): DiceResponse {
@@ -127,9 +129,9 @@ import kotlin.random.Random
 
                     // 容易被识别成 QQ
                     val recall = if (r in 1000000.0..<1000000000.0) {
-                        (60 * 1000).toLong()
+                        60.seconds
                     } else {
-                        -1
+                        Duration.ZERO
                     }
 
                     val stat = ServiceCallStatistic.building(event) {
@@ -181,9 +183,9 @@ import kotlin.random.Random
                 val harmonised = "○|(\\[和谐])".toRegex()
 
                 val recall = if (message.contains(harmonised)) { // 被和谐就撤回
-                    (60 * 1000).toLong()
+                    60.seconds
                 } else {
-                    -1
+                    Duration.ZERO
                 }
 
                 val stat = ServiceCallStatistic.building(event) {
@@ -204,7 +206,7 @@ import kotlin.random.Random
             throw DiceException.Unexpected()
         }
 
-        return DiceResponse("出错了...", ServiceCallStatistic.building(event), -1)
+        return DiceResponse("出错了...", ServiceCallStatistic.building(event), Duration.ZERO)
     }
 
     internal enum class Split(val pattern: Pattern, val onlyC3: Boolean) {

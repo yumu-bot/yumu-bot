@@ -7,6 +7,8 @@ import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException.NotGroup
 import org.slf4j.LoggerFactory
 import java.net.URL
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 interface MessageEvent : Event {
     val subject: Contact
@@ -27,6 +29,14 @@ interface MessageEvent : Event {
                 }
             }
         }
+    }
+
+
+    fun replyAndRecallAsync(message: Any, recallIn: Duration = 30.seconds, onError: ((Throwable) -> Unit)? = null) {
+        async(
+            { reply(message).recallIn(recallIn.inWholeMilliseconds) },
+            onError
+        )
     }
 
     fun replyAsync(message: MessageChain, onError: ((Throwable) -> Unit)? = null) {

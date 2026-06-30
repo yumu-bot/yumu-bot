@@ -215,7 +215,7 @@ class SBScoreService(
             // 备用方法：先获取最近成绩，再获取谱面
             val recent: LazerScore
 
-            event.reply("没有获取到 24 小时内的参数。正在为您查询最近成绩所对应的谱面的在线成绩。").recallIn(60 * 1000L)
+            event.replyAndRecallAsync("没有获取到 24 小时内的参数。正在为您查询最近成绩所对应的谱面的在线成绩。")
 
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 

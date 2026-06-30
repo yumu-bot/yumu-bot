@@ -29,6 +29,7 @@ import java.time.LocalDateTime
 import java.util.*
 import java.util.regex.Matcher
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.seconds
 
 @Service("MU_RATING") class MuRatingService(
     private val matchApiService: OsuMatchApiService,
@@ -80,7 +81,7 @@ import kotlin.math.roundToInt
             val str = parseCSA(mr)
 
             try {
-                event.reply(str).recallIn(60000)
+                event.replyAndRecallAsync(str, 60.seconds)
             } catch (e: Exception) {
                 log.error("木斗力文字版：发送失败", e)
                 throw IllegalStateException.Send("木斗力")

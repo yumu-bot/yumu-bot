@@ -16,6 +16,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.*
+import kotlin.time.Duration.Companion.seconds
 
 @Service("MUTUAL")
 class MutualService(private val userApiService: OsuUserApiService, private val bindDao: BindDao) :
@@ -52,7 +53,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: List<MutualParam>): ServiceCallStatistic? {
         try {
-            event.reply(mutual2MessageChain(param)).recallIn((60 * 1000).toLong())
+            event.replyAndRecallAsync(mutual2MessageChain(param), 60.seconds)
         } catch (e: Exception) {
             log.error("添加好友：发送失败！", e)
         }
