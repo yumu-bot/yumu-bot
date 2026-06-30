@@ -22,6 +22,8 @@ import com.now.nowbot.model.osu.Tag
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.orm.ObjectRetrievalFailureException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -44,43 +46,51 @@ class BeatmapDao(
 
     fun saveBeatmapAndSaveExtendAsync(beatmap: Beatmap) {
         Thread.startVirtualThread {
-            try {
-                saveBeatmap(beatmap.copy())
-            } catch (e: Exception) {
-                log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面失败：", e)
-            }
+            saveBeatmapAsync(beatmap)
 
-            try {
-                saveExtendedBeatmap(beatmap.copy())
-            } catch (e: Exception) {
-                log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
-            }
+            saveExtendedBeatmapAsync(beatmap)
         }
     }
 
     fun saveBeatmapsetAsync(beatmapset: Beatmapset) {
         Thread.startVirtualThread {
-            try {
-                saveBeatmapset(beatmapset.copy())
-                beatmapset.beatmaps?.forEach { beatmap ->
-                    saveBeatmap(beatmap.copy())
-                }
-            } catch (e: Exception) {
-                log.warn("谱面数据访问对象层：保存 ${beatmapset.beatmapsetID} 谱面集失败：", e)
-            }
+            saveBeatmapset(beatmapset)
         }
+        saveBeatmapsAsync(beatmapset.beatmaps.orEmpty())
     }
 
     fun saveBeatmapsetsAsync(beatmapsets: Collection<Beatmapset>) {
         Thread.startVirtualThread {
-            beatmapsets.forEach { beatmapset ->
-                try {
-                    saveBeatmapset(beatmapset.copy())
-                    beatmapset.beatmaps?.forEach { beatmap ->
-                        saveBeatmap(beatmap.copy())
+            val sets = beatmapsets.toSet()
+            val beatmaps = sets.flatMap { it.beatmaps.orEmpty() }.toSet()
+
+            // 1. 保存 谱面集 (父表)
+            sets.forEach { set ->
+                runCatching {
+                    saveBeatmapset(set)
+                }.onFailure { e ->
+                    if (e is DataIntegrityViolationException) return@onFailure
+                    log.warn("谱面数据访问对象层：保存 ${set.beatmapsetID} 谱面集失败：", e)
+                }
+            }
+
+            val setIDs = sets.map { it.beatmapsetID }.toSet()
+
+            beatmaps.forEach { beatmap ->
+                runCatching {
+                    val parentID = beatmap.beatmapsetID
+
+                    if (parentID !in setIDs && !extendBeatmapSetRepository.existsByBeatmapsetID(parentID)) {
+                        log.info("谱面数据访问对象层：放弃保存谱面 ${beatmap.beatmapID}，因其所属的谱面集 $parentID 无论在内存还是数据库中均不存在。")
+                        return@forEach
                     }
-                } catch (e: Exception) {
-                    log.warn("谱面数据访问对象层：保存 ${beatmapset.beatmapsetID} 谱面集失败：", e)
+
+                    saveBeatmap(beatmap)
+                }.onFailure { e ->
+                    if (e is DataIntegrityViolationException) return@onFailure
+                    if (e is ObjectRetrievalFailureException) return@onFailure
+
+                    log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面失败：", e)
                 }
             }
         }
@@ -106,9 +116,10 @@ class BeatmapDao(
 
     fun saveBeatmapsAsync(beatmaps: Collection<Beatmap>) {
         Thread.startVirtualThread {
-            try {
+            runCatching {
                 saveBeatmaps(beatmaps)
-            } catch (e: Exception) {
+            }.onFailure { e ->
+                if (e is DataIntegrityViolationException) return@onFailure
                 log.warn("谱面数据访问对象层：保存 ${beatmaps.joinToString(", ") { it.beatmapID.toString() }} 等谱面失败：", e)
             }
         }
@@ -194,8 +205,6 @@ class BeatmapDao(
 
             if (validBeatmaps.isEmpty()) return@startVirtualThread
 
-            // 2. 内存去重并批量保存 Beatmapset
-            // 用一个 Map 来存储保存成功（或原本就存在）的 BeatmapsetExtendLite 对象，供后面关联使用
             val savedSetMap = mutableMapOf<Long, BeatmapsetExtendLite>()
 
             validBeatmaps.mapNotNull { it.beatmapset }
@@ -212,17 +221,17 @@ class BeatmapDao(
                     savedSet?.let { savedSetMap[id] = it }
                 }
 
-            // 3. 此时所有需要的 set 都在 savedSetMap 缓存中了，直接调用 saveExtendBeatmapLite 保存谱面
             validBeatmaps.forEach { beatmap ->
                 val associatedSet = savedSetMap[beatmap.beatmapsetID]
                 if (associatedSet != null) {
-                    try {
+                    runCatching {
                         if (extendBeatmapRepository.existsByBeatmapID(beatmap.beatmapID)) {
                             extendBeatmapRepository.deleteByBeatmapID(beatmap.beatmapID)
                         }
 
                         saveExtendedBeatmapLite(beatmap, associatedSet)
-                    } catch (e: Exception) {
+                    }.onFailure { e ->
+                        if (e is DataIntegrityViolationException) return@onFailure
                         log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
                     }
                 }
