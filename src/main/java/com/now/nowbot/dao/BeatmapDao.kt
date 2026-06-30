@@ -115,9 +115,9 @@ class BeatmapDao(
     }
 
     private fun saveBeatmaps(beatmaps: Collection<Beatmap>) {
-        val exists = beatmapRepository.findExistingIds(beatmaps.map { it.beatmapID.toInt() }).toSet()
+        val exists = beatmapRepository.exists(beatmaps.map { it.beatmapID }).toSet()
 
-        val s = beatmaps.filterNot { it.beatmapsetID.toInt() in exists }.map { fromBeatmapModel(it) }
+        val s = beatmaps.filterNot { it.beatmapID in exists }.map { fromBeatmapModel(it) }
 
         beatmapRepository.saveAll(s)
     }
@@ -217,12 +217,10 @@ class BeatmapDao(
                 val associatedSet = savedSetMap[beatmap.beatmapsetID]
                 if (associatedSet != null) {
                     try {
-                        // 如果原谱面已存在，先删除（对齐原 saveExtendedBeatmap 的逻辑）
                         if (extendBeatmapRepository.existsByBeatmapID(beatmap.beatmapID)) {
-                            extendBeatmapRepository.deleteById(beatmap.beatmapID)
+                            extendBeatmapRepository.deleteByBeatmapID(beatmap.beatmapID)
                         }
 
-                        // 直接使用拆分出来的 Lite 方法进行保存
                         saveExtendedBeatmapLite(beatmap, associatedSet)
                     } catch (e: Exception) {
                         log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
@@ -263,7 +261,7 @@ class BeatmapDao(
         }
 
         if (hasBeatmap) {
-            extendBeatmapRepository.deleteById(beatmap.beatmapID)
+            extendBeatmapRepository.deleteByBeatmapID(beatmap.beatmapID)
         }
 
         saveExtendedBeatmapLite(beatmap, savedSet)

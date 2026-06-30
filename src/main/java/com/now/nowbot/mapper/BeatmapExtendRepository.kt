@@ -32,6 +32,11 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     @Transactional
     @Query("UPDATE osu_extend_beatmap SET lazer_only = :lazerOnly, fail_times = CAST(:fail AS jsonb), owners = CAST(:owners AS jsonb), updated_at = CURRENT_TIMESTAMP WHERE beatmap_id = :beatmapID", nativeQuery = true)
     fun updateFailTimeByBeatmapID(@Param("beatmapID") beatmapID: Long, @Param("lazerOnly") lazerOnly: Boolean, @Param("fail") fail: String?, @Param("owners") owners: String?): Int
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM osu_extend_beatmap b WHERE beatmap_id = :beatmapID", nativeQuery = true)
+    fun deleteByBeatmapID(@Param("beatmapID") beatmapID: Long)
 }
 
 @Repository

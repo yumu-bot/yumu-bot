@@ -16,5 +16,5 @@ interface BeatmapRepository : JpaRepository<BeatmapLite, Long>, JpaSpecification
     ) fun getBeatmapHitLength(id: Collection<Long>): List<BeatmapHitLengthResult>
 
     @Query("SELECT b.id FROM BeatmapLite b WHERE b.id IN :ids")
-    fun findExistingIds(@Param("ids") ids: Collection<Int>): List<Int>
+    fun exists(@Param("ids") ids: Collection<Long>): List<Long>
 }

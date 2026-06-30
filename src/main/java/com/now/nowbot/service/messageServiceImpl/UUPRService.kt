@@ -242,8 +242,11 @@ class UUPRService(
 
         val scores = scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
 
-        calculateApiService.applyStarToScores(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
+        AsyncMethodExecutor.awaitTriple(
+            { calculateApiService.applyStarToScores(scores) },
+            { calculateApiService.applyPPToScores(scores) },
+            { BeatmapUtil.applyBeatmapChanges(scores) }
+        )
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
@@ -301,8 +304,11 @@ class UUPRService(
             }
         }
 
-        calculateApiService.applyStarToScores(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
+        AsyncMethodExecutor.awaitTriple(
+            { calculateApiService.applyStarToScores(scores) },
+            { calculateApiService.applyPPToScores(scores) },
+            { BeatmapUtil.applyBeatmapChanges(scores) }
+        )
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -328,27 +334,6 @@ class UUPRService(
 
         return offset to limit
     }
-
-    /*
-    @Deprecated("已过时")
-    private fun getTextOutput(score: LazerScore, event: MessageEvent) {
-        val d = UUScore(score, beatmapApiService, calculateApiService)
-
-        val img = try {
-            base.osuApiRestClient.get()
-                .uri(d.url ?: "")
-                .toBody<ByteArray>()
-        } catch (_: Exception) {
-            try {
-                Files.readAllBytes(Path.of(System.getenv("EXPORT_FILE_V3") + "avatar_guest.jpg"))
-            } catch (_: IOException) {
-                throw NoSuchElementException.Avatar()
-            }
-        }
-        event.reply(img, d.scoreLegacyOutput)
-    }
-
-     */
 
     private fun ScorePRParam.getUUMessageChain(): MessageChain {
         return if (scores.size > 1) {
