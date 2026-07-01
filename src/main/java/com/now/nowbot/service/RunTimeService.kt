@@ -1,6 +1,7 @@
 package com.now.nowbot.service
 
 import com.mikuac.shiro.core.BotContainer
+import com.now.nowbot.cache.PercentileCacheProvider
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
@@ -31,7 +32,7 @@ class RunTimeService(
     private val lxMaiApiService: LxMaiApiService,
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
-    private val percentileCacheService: PercentileCacheService,
+    private val percentileCacheProvider: PercentileCacheProvider,
 
     @param:Qualifier("kotlinTaskExecutor")
     private val taskExecutor: TaskExecutor,
@@ -67,7 +68,7 @@ class RunTimeService(
     // 每天凌晨5点22更新玩家百分比
     @Scheduled(cron = "0 25 5 * * *")
     fun refreshPercent() {
-        percentileCacheService.refreshCache()
+        percentileCacheProvider.refreshCache()
     }
 
     // 每天凌晨5点30统计新人群用户信息

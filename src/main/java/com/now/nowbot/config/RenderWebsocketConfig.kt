@@ -1,6 +1,7 @@
 package com.now.nowbot.config
 
 import com.now.nowbot.controller.RenderWebSocketHandler
+import com.now.nowbot.util.KB
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.socket.config.annotation.EnableWebSocket
@@ -24,8 +25,8 @@ class RenderWebSocketConfig(
     fun createWebSocketContainer(): ServletServerContainerFactoryBean {
         val container = ServletServerContainerFactoryBean()
 
-        container.maxTextMessageBufferSize = 512 * 1024
-        container.maxBinaryMessageBufferSize = 512 * 1024
+        container.maxTextMessageBufferSize = 512.KB.bytesInt
+        container.maxBinaryMessageBufferSize = 512.KB.bytesInt
         container.maxSessionIdleTimeout = 1.minutes.inWholeMilliseconds
 
         return container

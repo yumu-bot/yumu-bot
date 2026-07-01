@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
-import com.now.nowbot.service.ImageCacheProvider
+import com.now.nowbot.cache.ImageCacheProvider
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain

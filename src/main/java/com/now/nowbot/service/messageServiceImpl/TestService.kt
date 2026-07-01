@@ -1,18 +1,18 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.mikuac.shiro.core.BotContainer
+import com.now.nowbot.cache.QQMessageCacheProvider
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.osuApiService.OsuUserApiService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service("TEST")
 class TestService(
-    private val userApiService: OsuUserApiService,
+    private val qqMessageCacheProvider: QQMessageCacheProvider,
     private val botContainer: BotContainer,
 ): MessageService<String> {
     override fun isHandle(
@@ -31,15 +31,9 @@ class TestService(
     }
 
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
-        val ls = userApiService.getQuickplayLeaderboard()
 
-        val sb = StringBuilder()
-
-        ls.second.take(5).forEach {
-            sb.append(it.toString()).append("\n")
-        }
-
-        event.reply(sb.toString())
+        event.replyAsync(qqMessageCacheProvider.getMessagesByGroup(event.subject.contactID)
+            .take(5).joinToString(", ") { it.toString() })
 
         return null
     }

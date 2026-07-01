@@ -1,11 +1,12 @@
-package com.now.nowbot.service
+package com.now.nowbot.cache
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.mapper.OsuUserInfoPercentilesLiteRepository
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 
-@Service
-class PercentileCacheService(
+@Component
+class PercentileCacheProvider(
     private val percentileRepository: OsuUserInfoPercentilesLiteRepository,
 ) {
     // 使用只读的 Map 存储各模式的统计数据，确保线程安全

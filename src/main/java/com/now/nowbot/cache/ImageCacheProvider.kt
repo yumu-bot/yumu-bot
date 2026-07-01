@@ -1,16 +1,17 @@
-package com.now.nowbot.service
+package com.now.nowbot.cache
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import org.springframework.stereotype.Service
+import com.now.nowbot.util.MB
+import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 
-@Service
+@Component
 class ImageCacheProvider {
     private val imageCache: Cache<String, ByteArray> = Caffeine.newBuilder()
         .expireAfterWrite(7, TimeUnit.DAYS)
-        .maximumWeight(12 * 1024 * 1024)
+        .maximumWeight(12.MB.bytes)
         .weigher { _: String, value: ByteArray -> value.size }
         // .softValues() // 留着吧
         .build()

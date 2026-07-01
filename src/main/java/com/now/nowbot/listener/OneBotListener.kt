@@ -4,6 +4,7 @@ import com.mikuac.shiro.annotation.GroupMessageHandler
 import com.mikuac.shiro.annotation.common.Shiro
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent
+import com.now.nowbot.cache.QQMessageCacheProvider
 import com.now.nowbot.config.Permission
 import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.event.MessageEvent
@@ -13,7 +14,6 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.util.ContextUtil
-import jakarta.annotation.Resource
 import kotlinx.coroutines.TimeoutCancellationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -29,12 +29,12 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import kotlin.Exception
 import kotlin.IllegalArgumentException
-import kotlin.Int
 import kotlin.String
 import kotlin.Suppress
 import kotlin.Throwable
 import kotlin.Throws
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 ////////////////////////////////////////////////////////////////////
 //                          _ooOoo_                               //
@@ -63,11 +63,11 @@ import kotlin.time.Duration.Companion.milliseconds
 @Order(9)
 @Component("OneBotListener")
 @Suppress("UNUSED")
-class OneBotListener {
+class OneBotListener(
+    private val idempotentService: IdempotentService,
+    private val messageCacheProvider: QQMessageCacheProvider,
+) {
     var log: Logger = LoggerFactory.getLogger(OneBotListener::class.java)
-
-    @Resource
-    var idempotentService: IdempotentService? = null
 
     @Throws(BeansException::class)
     fun init(beanMap: MutableMap<String?, MessageService<*>?>?) {
@@ -76,27 +76,30 @@ class OneBotListener {
 
     @GroupMessageHandler
     @Async
-    fun handle(bot: Bot, onebotEvent: GroupMessageEvent) {
-        val groupId = onebotEvent.groupId
-        // val message = ShiroUtils.unescape(onebotEvent.message)
-        val messageId = String.format(
-            "[%s|%s]%s(%s)",
-            groupId.toString(),
-            onebotEvent.sender.userId.toString(),
-            onebotEvent.subType,
-            onebotEvent.time.toString()
-        )
-        if (!idempotentService!!.checkByMessageId(messageId)) {
+    fun handle(bot: Bot, groupEvent: GroupMessageEvent) {
+        val groupID = groupEvent.groupId
+        val messageID = "[${groupID}|${groupEvent.sender.userId}]${groupEvent.subType}(${groupEvent.time})"
+        if (!idempotentService.checkByMessageId(messageID)) {
             return
         }
-        log.debug("收到消息 {}", messageId)
+
+        log.debug("收到消息 {}", messageID)
+
         var nowTime = System.currentTimeMillis()
-        if (onebotEvent.time < 1e10) {
+        if (groupEvent.time < 1e10) {
             nowTime /= 1000
         }
+
         // 对于超过 30秒 的消息直接舍弃, 解决重新登陆后疯狂刷命令
-        if (nowTime - onebotEvent.time > 30) return
-        val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent)
+        if (nowTime - groupEvent.time > 30) return
+
+        val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, groupEvent)
+
+        messageCacheProvider.putMessage(
+            botID = bot.selfId,
+            message = groupEvent
+        )
+
         // if (event.getGroup().getId() != 746671531) return;
         if (event.sender.contactID == 365246692L) {
             ContextUtil.setContext("isTest", java.lang.Boolean.TRUE)
@@ -129,24 +132,24 @@ class OneBotListener {
         if (e.hasImage()) {
             event.replyAsync(e.image!!)
         } else {
-            event.reply(e.message ?: return).recallIn(RECALL_TIME.toLong())
+            event.replyAndRecallAsync(e.message ?: return, RECALL_TIME)
         }
     }
 
     private fun handleNetworkException(event: MessageEvent, e: Exception) {
         log.info("连接超时：", e)
-        event.replyAndRecallAsync("请求超时。", RECALL_TIME.milliseconds)
+        event.replyAndRecallAsync("请求超时。", RECALL_TIME)
     }
 
     private fun handleOtherException(event: MessageEvent, e: Throwable) {
         if (Permission.isSuperAdmin(event.sender.contactID)) {
-            event.replyAndRecallAsync(e, RECALL_TIME.milliseconds)
+            event.replyAndRecallAsync(e, RECALL_TIME)
         }
         log.error("捕捉其他异常：", e)
     }
 
     companion object {
-        var RECALL_TIME: Int = 1000 * 100
+        val RECALL_TIME: Duration = 100.seconds
         private var messageServiceMap: MutableMap<String?, MessageService<*>?>? = null
     }
 }

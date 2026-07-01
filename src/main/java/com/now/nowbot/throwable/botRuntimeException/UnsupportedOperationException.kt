@@ -7,31 +7,37 @@ import com.now.nowbot.throwable.botRuntimeException.PermissionException.GroupExc
 
 open class UnsupportedOperationException(message: String?): TipsRuntimeException(message), BotException {
 
-    // class AudioNotSafeForWork:
-    //    UnsupportedOperationException("这种歌曲，还是有点唱不出口呢。")
-
     open class BotOperation(message: String?): UnsupportedOperationException(message) {
 
-        class SenderUnavailable():
+        class SenderUnavailable:
             BotOperation("无法获取消息的发送者。")
 
+        class LatestMessageUnavailable:
+            BotOperation("无法获取最后一条消息。")
+
+        class MessageIDUnavailable:
+            BotOperation("无法获取消息。")
+
         class MessageUnavailable(messageID: Any):
-            BotOperation("无法获取消息 $messageID。")
+            BotOperation("无法获取消息 ${messageID}。")
 
         class BotOffline:
-            BotOperation("这个机器人并未上线。")
+            BotOperation("机器人并未上线。")
+
+        class RoledBotOffline(botID: Any):
+            BotOperation("承担服务的 $botID 机器人并未上线。")
 
         class BotMainOffline:
             BotOperation("主机器人并未上线。")
+
+        class NoRoledBot:
+            BotOperation("没有可用的承担服务的机器人。")
 
         class NotFriend(userID: Any):
             BotOperation("机器人不是 $userID 的好友，无法发送消息。")
 
         class NotInGroup(groupID: Any):
             BotOperation("机器人不在 $groupID 群组中，无法发送消息。")
-
-        class MustReply :
-            BotOperation("必须选中回复的消息，机器人才会尝试撤回。")
 
         class Overtime:
             GroupException("无法操作，因为超过 2 分钟了。")

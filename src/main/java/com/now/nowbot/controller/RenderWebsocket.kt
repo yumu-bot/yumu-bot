@@ -7,6 +7,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.MB
 import jakarta.annotation.PreDestroy
 import org.springframework.web.socket.BinaryMessage
 import org.springframework.web.socket.CloseStatus
@@ -184,8 +185,8 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             return
         }
 
-        session.binaryMessageSizeLimit = 30 * 1024 * 1024
-        session.textMessageSizeLimit = 5 * 1024 * 1024
+        session.binaryMessageSizeLimit = 30.MB.bytesInt
+        session.textMessageSizeLimit = 5.MB.bytesInt
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {

@@ -9,7 +9,7 @@ import com.now.nowbot.model.calculate.InfoLogStatistics
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
-import com.now.nowbot.service.PercentileCacheService
+import com.now.nowbot.cache.PercentileCacheProvider
 import com.now.nowbot.util.JacksonUtil
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
@@ -24,7 +24,7 @@ import java.time.LocalTime
 class OsuUserInfoDao(
     private val infoRepository: OsuUserInfoRepository,
     private val percentileRepository: OsuUserInfoPercentilesLiteRepository,
-    private val percentileCacheService: PercentileCacheService
+    private val percentileCacheProvider: PercentileCacheProvider
 ) {
     @PersistenceContext
     lateinit var entityManager: EntityManager
@@ -89,7 +89,7 @@ class OsuUserInfoDao(
             else -> mode.modeValue
         }
 
-        val stats = percentileCacheService.cachedData[modeValue]
+        val stats = percentileCacheProvider.cachedData[modeValue]
             ?: return emptyMap()
 
         val stat = user.statistics
