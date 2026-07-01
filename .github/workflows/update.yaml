@@ -26,6 +26,7 @@ jobs:
             echo "should_update=true" >> $GITHUB_OUTPUT
           fi
   build:
+    needs: check-time
     runs-on: self-hosted
     env:
       MAVEN_OPTS: --enable-preview
