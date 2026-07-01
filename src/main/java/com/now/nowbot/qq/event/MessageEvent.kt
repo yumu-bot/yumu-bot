@@ -41,7 +41,7 @@ interface MessageEvent : Event {
                 is Throwable -> reply(message)
                 is URL -> reply(message)
                 else -> reply(message.toString())
-            }.recallIn(recallIn.inWholeMilliseconds) },
+            }.recallIn(recallIn.coerceIn(5.seconds, 115.seconds).inWholeMilliseconds) },
             onError
         )
     }

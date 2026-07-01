@@ -49,7 +49,14 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: List<MutualParam>): ServiceCallStatistic? {
         try {
-            event.replyAndRecallAsync(mutual2MessageChain(param), 60.seconds)
+            val chain = mutual2MessageChain(param)
+
+            if (chain.messageList.size < 5) {
+                event.replyAsync(chain)
+            } else {
+                event.replyAndRecallAsync(chain, 60.seconds)
+            }
+
         } catch (e: Exception) {
             log.error("添加好友：发送失败！", e)
         }
