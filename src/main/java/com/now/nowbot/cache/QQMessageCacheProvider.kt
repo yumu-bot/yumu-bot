@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.stats.CacheStats
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
@@ -20,6 +21,7 @@ class QQMessageCacheProvider {
 
     private val messageCache: Cache<MessageKey, GroupMessageEvent> = Caffeine.newBuilder()
         .expireAfterWrite(2, TimeUnit.MINUTES)
+        .recordStats() // 为了性能，请注释
         .evictionListener<MessageKey, GroupMessageEvent> { key, _, _ ->
             key?.let { removeIndex(it) }
         }
@@ -27,6 +29,7 @@ class QQMessageCacheProvider {
 
     private val botSelfCache: Cache<MessageKey, GroupMessageEvent> = Caffeine.newBuilder()
         .expireAfterWrite(24, TimeUnit.HOURS)
+        .recordStats() // 为了性能，请注释
         .evictionListener<MessageKey, GroupMessageEvent> { key, _, _ ->
             key?.let { removeIndex(it) }
         }
@@ -43,6 +46,8 @@ class QQMessageCacheProvider {
         val groupID = message.groupId ?: 0L
 
         val key = MessageKey(messageID, groupID, botID, senderID)
+
+        log.debug("g: {} m: {} b: {} s: {}", groupID, messageID, botID, senderID)
 
         if (senderID == botID) {
             botSelfCache.put(key, message)
@@ -99,5 +104,9 @@ class QQMessageCacheProvider {
                 groupIndex.remove(key.groupID)
             }
         }
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(QQMessageCacheProvider::class.java)
     }
 }
