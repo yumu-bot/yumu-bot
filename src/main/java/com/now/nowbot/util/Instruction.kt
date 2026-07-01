@@ -427,17 +427,16 @@ enum class Instruction(val pattern: Pattern) {
 
     // #4 osu! 谱面指令
     AUDIO(CommandPatternBuilder.create {
-        appendCommandsIgnore(REG_IGNORE_BS, "audio", "song", "a")
-        appendColonCaptureGroup(FLAG_TYPE, REG_BID_SID, prefixLevel = MAYBE)
+        appendCommandsIgnoreAll("audio", "song", "a")
         appendSpace()
-        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
+        appendBIDOrSID()
     }),
 
     MAP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("beatmap", "map", "m")
 
         appendMode()
-        appendBID()
+        appendBIDOrSID()
         appendSpace()
         appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_PLUS, MORE)
         appendSpace()
@@ -449,7 +448,7 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("beatmap\\s*la[zs]er", "map\\s*la[zs]er", "mz")
 
         appendMode()
-        appendBID()
+        appendBIDOrSID()
         appendSpace()
         appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_PLUS, MORE)
         appendSpace()

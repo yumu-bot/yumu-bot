@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.IDType
+import com.now.nowbot.model.enums.IDType.*
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
@@ -17,19 +19,24 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_ANY
-import com.now.nowbot.util.command.FLAG_BID
+import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_MOD
 import com.now.nowbot.util.command.FLAG_MODE
+import com.now.nowbot.util.command.FLAG_TYPE
+import com.now.nowbot.util.command.REG_EQUAL
 import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
 import com.now.nowbot.util.command.REG_OPERATOR_WITH_SPACE
 import org.intellij.lang.annotations.Language
 import org.springframework.stereotype.Service
+import java.util.concurrent.Callable
 import java.util.regex.Matcher
+import kotlin.collections.lastOrNull
 
 @Service("MAP")
 class MapStatisticsService(
@@ -103,45 +110,29 @@ class MapStatisticsService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isLazer: Boolean = false): MapStatisticsParam {
-
-        val idStr: String? = matcher.group(FLAG_BID)
-        val anyID: Long? = idStr?.toLongOrNull()
-
-        val existSet = anyID?.let { beatmapDao.existsBeatmapsetFromExtend(anyID) } ?: false
-        val exists = anyID?.let { beatmapDao.existsBeatmapFromExtend(anyID) } ?: false
-
-        val heritage = dao.getLastBeatmapID(event)
-
-        val before: String? = if (anyID != null && anyID <= 10000) {
-            if (!existSet && !exists) {
-                idStr
-            } else {
-                null
-            }
-        } else {
-            idStr
-        }
+        val idStr: String? = matcher.group(FLAG_ID)
+        val (inputType, inputID) = IDType.parse(matcher.group(FLAG_TYPE), idStr)
 
         // val groupMode = bindDao.getGroupModeConfig(event)
 
         val beatmapset: Beatmapset?
         val beatmapID: Long
 
-        val (s, i) = fetchBeatmapsetAndBeatmapID(anyID)
+        val (s, i) = fetchBeatmapsetAndBeatmapID(inputType, inputID)
 
         if (s != null && i != null) {
             beatmapset = s
             beatmapID = i
-        } else if (heritage != null) {
+        } else {
+            val heritage = dao.getLastBeatmapID(event)
+                ?: throw IllegalArgumentException.WrongException.BeatmapID()
             beatmapID = heritage
             beatmapset = beatmapApiService.getBeatmapset(heritage)
-        } else {
-            throw IllegalArgumentException.WrongException.BeatmapID()
         }
 
         val any: String? = matcher.group(FLAG_ANY)
 
-        val (accuracy, combo, misses) = parseAccuracyAndCombo(any, before)
+        val (accuracy, combo, misses) = parseAccuracyAndCombo(any)
 
         val beatmap = beatmapset.beatmaps?.find { it.beatmapID == beatmapID } ?: throw NoSuchElementException.Beatmap(beatmapID)
 
@@ -152,10 +143,9 @@ class MapStatisticsService(
         }
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
+        val inputMode = OsuMode.getMode(matcher.group(FLAG_MODE))
 
-        val inputMode = OsuMode.getMode(matcher.group(FLAG_MODE)) // OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), groupMode)
         val mode = OsuMode.getConvertableMode(inputMode, beatmap.mode)
-
         val expected = Expected(mode, accuracy, c, misses, mods, isLazer)
 
         return MapStatisticsParam(beatmapset, beatmap, expected)
@@ -167,7 +157,7 @@ class MapStatisticsService(
         MISS("(m(is)?s|[msx0]|不可|红|失误|漏击)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
     }
 
-    private fun parseAccuracyAndCombo(input: String?, before: String?): Triple<Double, Double, Int> {
+    private fun parseAccuracyAndCombo(input: String?, before: String? = null): Triple<Double, Double, Int> {
         val conditions = DataUtil.getConditions(input, MapFilter.entries.map { it.regex })
 
         var accuracy: Double? = null
@@ -177,12 +167,19 @@ class MapStatisticsService(
         if (conditions.isNotEmpty()) {
             conditions.mapIndexed { index, cond ->
                 val type = MapFilter.entries[index]
-                val first = cond.firstOrNull()
+                val value = cond.firstOrNull()?.split(REG_OPERATOR_WITH_SPACE.toRegex())?.lastOrNull() ?: ""
 
                 when(type) {
-                    ACCURACY -> accuracy = first?.toDoubleOrNull() ?: 1.0
-                    COMBO -> combo = first?.toDoubleOrNull() ?: 1.0
-                    MISS -> misses = first?.toIntOrNull() ?: 0
+                    ACCURACY -> accuracy = when(val rd = value.toDoubleOrNull()) {
+                        null -> null
+                        in 0.0..1.0 -> rd
+                        in 1.0..100.0 -> rd / 100.0
+                        in 100.0..1000.0 -> rd / 1000.0
+                        in 1000.0..10000.0 -> rd / 10000.0
+                        else -> ((rd % 10) / 10).coerceIn(0.0, 1.0)
+                    }
+                    COMBO -> combo = value.toDoubleOrNull()
+                    MISS -> misses = value.toIntOrNull()
                 }
             }
         }
@@ -193,10 +190,13 @@ class MapStatisticsService(
             input ?: ""
         }
 
-        val remain = reconstruct.replace("[^\\d.\\s]".toRegex(), "")
+        val kvRegex = "\\w+${REG_EQUAL}\\S+".toRegex()
+
+        val remain = reconstruct.replace(kvRegex, "")
             .trim()
-            .split("\\s*".toRegex())
+            .split("\\s+".toRegex())
             .map { it.trim() }
+            .filter { it.isNotEmpty() }
 
         remain.forEach { r ->
             if (accuracy == null) {
@@ -239,30 +239,26 @@ class MapStatisticsService(
      * 综合获取 Beatmap 的方法（高效率本地优先）
      *
      * @param anyID 可能是 beatmapID，也可能是 beatmapsetID
-     * @param assumeBeatmapID true 表示输入的 id 优先作为 BeatmapID 处理；false 表示优先作为 BeatmapsetID 处理
+     * @param idType
      * @return 最终匹配到或兜底（topDiff）的 Beatmap 对象
      */
-    fun fetchBeatmapsetAndBeatmapID(anyID: Long?, assumeBeatmapID: Boolean = true): Pair<Beatmapset?, Long?> {
+    fun fetchBeatmapsetAndBeatmapID(idType: IDType, anyID: Long?): Pair<Beatmapset?, Long?> {
         if (anyID == null) {
             return null to null
         }
 
-        val beatmapset = if (assumeBeatmapID) {
-            // 【路线 A】优先视为 BeatmapID
-            fetchByBeatmapID(anyID) ?: fetchByBeatmapsetID(anyID) // 降级：如果失败，尝试当成 setID 再试一次
-        } else {
-            // 【路线 B】优先视为 BeatmapsetID
-            fetchByBeatmapsetID(anyID) ?: fetchByBeatmapID(anyID) // 降级：如果失败，尝试当成 beatmapID 再试一次
+        val beatmapset = when (idType) {
+            BeatmapID -> fetchByBeatmapID(anyID) ?: fetchByBeatmapsetID(anyID)
+            BeatmapsetID -> fetchByBeatmapsetID(anyID) ?: fetchByBeatmapID(anyID)
         }
 
         if (beatmapset == null) {
             return null to null
         }
 
-        return if (assumeBeatmapID) {
-            beatmapset to anyID
-        } else {
-            beatmapset to beatmapset.getTopDiff()?.beatmapID
+        return when (idType) {
+            BeatmapID -> beatmapset to anyID
+            BeatmapsetID -> beatmapset to beatmapset.getTopDiff()?.beatmapID
         }
     }
 
@@ -311,19 +307,29 @@ class MapStatisticsService(
             val centerIndex = sortedList.indexOfFirst { it.beatmapID == beatmap.beatmapID }
 
             if (centerIndex != -1) {
-                val start = (centerIndex - 8).coerceAtLeast(0)
-                val end = (centerIndex + 8).coerceAtMost(sortedList.lastIndex)
+                var start = (centerIndex - 4).coerceAtLeast(0)
 
-                sortedList.subList(start, end + 1).forEach { view ->
-                    calculateApiService.applyStarToBeatmap(view,
-                        OsuMode.getConvertableMode(expected.mode, view.mode), expected.mods
-                    )
+                // 2. 敲定终点：从起点往后取8个跨度（保证总数为9），最大不能超过列表尾部
+                val end = (start + 8).coerceAtMost(sortedList.lastIndex)
 
-//                    // 插入标签
-//                    beatmapApiService.extendBeatmapTag(view)
+                // 3. 最终修正起点：从终点往前倒推8个跨度（处理“后面不足向前面借”的情况）
+                start = (end - 8).coerceAtLeast(0)
 
+                val views = sortedList.subList(start, end + 1)
+
+                views.forEach { view ->
                     BeatmapUtil.applyBeatmapChanges(view, expected.mods)
                 }
+
+                AsyncMethodExecutor.awaitList(
+                    views.map { v ->
+                        Callable { calculateApiService.applyStarToBeatmap(v,
+                            OsuMode.getConvertableMode(expected.mode, v.mode), expected.mods
+                        ) }
+                    }
+                )
+
+                // 插入标签 beatmapApiService.extendBeatmapTag(view)
             }
 
             sortedList

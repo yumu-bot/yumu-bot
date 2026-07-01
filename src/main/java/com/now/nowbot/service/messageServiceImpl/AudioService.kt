@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.IDType
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -10,9 +11,12 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_ID
+import com.now.nowbot.util.command.FLAG_TYPE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import kotlin.math.absoluteValue
 
 @Service("AUDIO")
 class AudioService(
@@ -20,7 +24,7 @@ class AudioService(
     private val dao: ServiceCallStatisticsDao,
 ) : MessageService<AudioParam> {
 
-    data class AudioParam(var id: Long = 0, var isBid: Boolean = false)
+    data class AudioParam(var id: Long = 0, var type: IDType = IDType.BeatmapID)
 
     @Throws(Exception::class)
     override fun isHandle(
@@ -32,49 +36,46 @@ class AudioService(
         if (!matcher.find()) {
             return false
         }
-        val idStr: String? = matcher.group("id")
-        val type: String? = matcher.group("type")
 
-        var isBID = !(type != null && (type == "s" || type == "sid"))
+        val (inputType, inputID) = IDType.parse(matcher.group(FLAG_TYPE), matcher.group(FLAG_ID))
 
-        val id = idStr?.toLongOrNull()
-            ?: run {
-                val last = dao.getLastBeatmapID(event)
+        val id: Long
+        val type: IDType
 
-                if (last != null) {
-                    isBID = true
-                }
+        if (inputID == null) {
+            val last = dao.getLastBeatmapID(event)
+            id = last ?: throw IllegalArgumentException.WrongException.Audio()
+            type = IDType.BeatmapID
+        } else if (inputID > 0) {
+            id = inputID
+            type = inputType
+        } else {
+            id = inputID.absoluteValue
+            type = inputType
+        }
 
-                last ?: throw IllegalArgumentException.WrongException.Audio()
-            }
-
-
-        data.value = AudioParam(id, isBID)
+        data.value = AudioParam(id, type)
         return true
     }
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: AudioParam): ServiceCallStatistic? {
-        var currentType: Boolean = param.isBid
+        var type: IDType = param.type
 
-        val voice =
-            if (param.isBid) {
-                // 先 b 再 s
-                getVoiceFromBID(param.id) ?: run {
-                    currentType = false
-                    getVoiceFromSID(param.id)
-                }
-            } else {
-                // 先 s 再 b
-                getVoiceFromSID(param.id) ?: run {
-                    currentType = true
-                    getVoiceFromSID(param.id)
-                }
+        val voice = when (param.type) {
+            IDType.BeatmapID -> getVoiceFromBID(param.id) ?: run {
+                type = IDType.BeatmapsetID
+                getVoiceFromSID(param.id)
             }
 
+            IDType.BeatmapsetID -> getVoiceFromSID(param.id) ?: run {
+                type = IDType.BeatmapID
+                getVoiceFromBID(param.id)
+            }
+        }
+
         if (voice == null) {
-            val type = if (param.isBid) 'B' else 'S'
-            log.info("谱面试听：无法获取 ${type}${param.id} 的音频")
+            log.info("谱面试听：无法获取 ${type.abbr}${param.id} 的音频")
             throw NoSuchElementException.Audio()
         }
 
@@ -82,26 +83,11 @@ class AudioService(
             log.error("谱面试听：发送失败", e)
         })
 
-        return if (currentType) {
-            ServiceCallStatistic.build(event, beatmapID = param.id)
-        } else {
-            ServiceCallStatistic.build(event, beatmapsetID = param.id)
-        }
+        return when (type) {
+            IDType.BeatmapID -> ServiceCallStatistic.build(event, beatmapID = param.id)
+            IDType.BeatmapsetID -> ServiceCallStatistic.build(event, beatmapsetID = param.id)
 
-        /*
-        // 这两种都可以, 选其中一个
-        // val old = ServiceCallStatisticLite.build(event, param)
-        val new = ServiceCallStatistic.build(event /* , param=xxx */) {
-            val key = if (param.isBid) {
-                "bid"
-            } else{
-                "sid"
-            }
-            setParam(mapOf(key to param.id))
         }
-        return new
-
-         */
     }
 
     private fun getVoiceFromSID(sid: Long): ByteArray? {

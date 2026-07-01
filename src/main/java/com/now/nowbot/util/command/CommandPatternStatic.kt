@@ -102,6 +102,9 @@ val REG_NUMBER_15: String = "\\d{1,5}"
 val REG_NUMBER: String = "\\d"
 
 @Language("RegExp")
+val REG_SIGNED_NUMBER: String = "[-\u2010\u2013\u2014\u2212\uFF0D\\d\\s]"
+
+@Language("RegExp")
 val REG_QQ: String = "\\d{6,10}"
 
 @Language("RegExp")

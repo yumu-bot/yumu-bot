@@ -480,6 +480,14 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
+     * 允许玩家输入 bid 或者 sid。b12345、s12345，负号默认为 sid，不带负号默认为 bid。
+     */
+    fun appendBIDOrSID() {
+        appendCaptureGroup(FLAG_TYPE, "[bs]", contentLevel = MAYBE, bodyLevel = MAYBE)
+        appendCaptureGroup(FLAG_ID, REG_SIGNED_NUMBER, contentLevel = MORE, bodyLevel = MAYBE)
+    }
+
+    /**
      * 添加空格。**默认添加任意个（\\s*）。注意！**
      * @param level 匹配等级。
      * @return 无
