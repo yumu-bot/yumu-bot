@@ -1309,6 +1309,10 @@ class BeatmapApiImpl(
             .toBody<BeatmapsetWithRankTime>()
     }
 
+    override fun getBeatmapsetIDFromBeatmapIDByExtend(beatmapID: Long): Long? {
+        return beatmapDao.getBeatmapsetIDFromExtend(beatmapID)
+    }
+
     /**
      * 错误包装
      */

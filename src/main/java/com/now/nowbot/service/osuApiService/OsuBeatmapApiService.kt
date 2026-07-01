@@ -159,4 +159,6 @@ interface OsuBeatmapApiService {
     fun applyExtend(beatmaps: Collection<Beatmap>)
 
     fun applyExtendFromAPI(beatmaps: Collection<Beatmap>)
+
+    fun getBeatmapsetIDFromBeatmapIDByExtend(beatmapID: Long): Long?
 }

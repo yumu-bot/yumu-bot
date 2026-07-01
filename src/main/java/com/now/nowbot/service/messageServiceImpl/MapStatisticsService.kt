@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.IDType
@@ -44,7 +43,6 @@ class MapStatisticsService(
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao,
-    private val beatmapDao: BeatmapDao,
     // private val bindDao: BindDao
 ) : MessageService<MapStatisticsService.MapStatisticsParam>, TencentMessageService<MapStatisticsService.MapStatisticsParam> {
     override fun isHandle(
@@ -127,7 +125,10 @@ class MapStatisticsService(
             val heritage = dao.getLastBeatmapID(event)
                 ?: throw IllegalArgumentException.WrongException.BeatmapID()
             beatmapID = heritage
-            beatmapset = beatmapApiService.getBeatmapset(heritage)
+
+            val setID = beatmapApiService.getBeatmapsetIDFromBeatmapIDByExtend(heritage)
+                ?: beatmapApiService.getBeatmap(heritage).beatmapsetID
+            beatmapset = beatmapApiService.getBeatmapset(setID)
         }
 
         val any: String? = matcher.group(FLAG_ANY)
@@ -146,7 +147,7 @@ class MapStatisticsService(
         val inputMode = OsuMode.getMode(matcher.group(FLAG_MODE))
 
         val mode = OsuMode.getConvertableMode(inputMode, beatmap.mode)
-        val expected = Expected(mode, accuracy, c, misses, mods, isLazer)
+        val expected = Expected(mode, accuracy, c, misses, mods, beatmap.lazerOnly || isLazer)
 
         return MapStatisticsParam(beatmapset, beatmap, expected)
     }
@@ -283,7 +284,7 @@ class MapStatisticsService(
      */
     private fun fetchByBeatmapID(beatmapID: Long): Beatmapset? {
         // 1. 优先从本地寻找关联的 BeatmapsetID，效率最高
-        val localSetID = beatmapDao.getBeatmapsetIDFromExtend(beatmapID)
+        val localSetID = beatmapApiService.getBeatmapsetIDFromBeatmapIDByExtend(beatmapID)
 
         if (localSetID != null) {
             return fetchByBeatmapsetID(localSetID)
