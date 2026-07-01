@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
 import com.now.nowbot.service.MessageService
@@ -11,11 +10,9 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MutualService.MutualParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 @Service("MUTUAL")
@@ -34,11 +31,10 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
         if (!m.find()) return false
 
         val name = m.group("names") ?: ""
-        val atList = QQMsgUtil.getTypeAll(event.message, AtMessage::class.java)
 
         val users =
-            if (atList.isEmpty().not()) {
-                atList.map { this.at2Mutual(it) }
+            if (event.hasAt()) {
+                event.targets.map { qq2Mutual(it) }
             } else if (name.isNotBlank()) {
                 name.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                     .map { this.name2Mutual(name) }
@@ -61,39 +57,42 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
         return ServiceCallStatistic.builds(event, userIDs = param.mapNotNull { it.uid }.ifEmpty { null })
     }
 
-    private fun at2Mutual(at: AtMessage?): MutualParam {
-        return qq2Mutual(at!!.target)
-    }
-
     private fun qq2Mutual(qq: Long): MutualParam {
-        val u = bindDao.getBindFromQQOrNull(qq) ?: return MutualParam(null, qq, "$qq : 未绑定或绑定状态失效！")
+        val u = bindDao.getBindFromQQOrNull(qq) ?: return MutualParam(null, qq, "$qq: 未绑定或绑定状态失效！")
         return MutualParam(u.userID, qq, u.username)
     }
 
     private fun name2Mutual(name: String): MutualParam {
         try {
-            val id = userApiService.getOsuID(name)
+            val id = bindDao.getOsuID(name) ?: userApiService.getOsuID(name)
             return MutualParam(id, null, name)
         } catch (_: Exception) {
-            return MutualParam(null, null, "$name : 找不到玩家或网络错误！")
+            return MutualParam(null, null, "$name: 找不到玩家或网络错误！")
         }
     }
 
     private fun mutual2MessageChain(users: List<MutualParam>): MessageChain {
         val sb = MessageChainBuilder()
 
-        for (u in users) {
-            if (Objects.isNull(u.uid)) {
-                sb.addText("${u.name}\n")
+        for ((index, u) in users.withIndex()) {
+            val isLast = index == users.lastIndex
+
+            if (u.uid == null) {
+                sb.addText(u.name)
+                if (!isLast) sb.addText("\n")
                 break
             }
 
-            if (Objects.nonNull(u.qq)) {
-                sb.addAt(u.qq!!)
+            if (u.qq != null) {
+                sb.addAt(u.qq)
                 sb.addText("\n")
             }
 
-            sb.addText("${u.name}：https://osu.ppy.sh/users/${u.uid}\n")
+            sb.addText("${u.name}：https://osu.ppy.sh/users/${u.uid}")
+
+            if (!isLast) {
+                sb.addText("\n")
+            }
         }
 
         return sb.build()

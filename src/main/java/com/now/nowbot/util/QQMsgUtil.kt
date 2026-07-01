@@ -24,8 +24,7 @@ object QQMsgUtil {
     }
 
     fun byte2str(data: ByteArray?): String {
-        if (Objects.isNull(data)) return ""
-        return base64Util.encodeToString(data)
+        return base64Util.encodeToString(data ?: return "")
     }
 
     inline fun <reified T : Message> getType(msg: MessageChain, clazz: Class<T>): T? {

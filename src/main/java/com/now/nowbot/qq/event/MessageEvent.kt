@@ -34,7 +34,14 @@ interface MessageEvent : Event {
 
     fun replyAndRecallAsync(message: Any, recallIn: Duration = 30.seconds, onError: ((Throwable) -> Unit)? = null) {
         async(
-            { reply(message).recallIn(recallIn.inWholeMilliseconds) },
+            { when(message) {
+                is String -> reply(message)
+                is MessageChain -> reply(message)
+                is ByteArray -> reply(message)
+                is Throwable -> reply(message)
+                is URL -> reply(message)
+                else -> reply(message.toString())
+            }.recallIn(recallIn.inWholeMilliseconds) },
             onError
         )
     }
@@ -220,14 +227,19 @@ interface MessageEvent : Event {
     }
 
     val target: Long
-        get() = this.at?.target ?: 0L
+        get() = getMessageType<AtMessage>()?.target ?: 0L
+
+    val targets: List<Long>
+        get() = getMessageTypes<AtMessage>().map { it.target }
 
     companion object {
         // 这个太常用了，所以写进来了，本来是 QQMsgUtil 的 getType
         private inline fun <reified T : Message> MessageEvent.getMessageType(): T? {
+            return getMessageTypes<T>().firstOrNull()
+        }
+        private inline fun <reified T : Message> MessageEvent.getMessageTypes(): List<T> {
             return this.message.messageList
                 .filterIsInstance<T>()
-                .firstOrNull()
         }
 
         private val log = LoggerFactory.getLogger(MessageEvent::class.java)

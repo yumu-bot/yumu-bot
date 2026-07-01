@@ -11,7 +11,6 @@ import kotlinx.coroutines.withTimeout
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Instant
-import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.StructuredTaskScope.ShutdownOnFailure
 import java.util.concurrent.locks.Condition
@@ -599,8 +598,7 @@ object AsyncMethodExecutor {
         }
 
         fun getAndRemove(lock: Condition): Int {
-            val count = conditionCount.remove(lock)
-            return if (Objects.nonNull(count)) count!! else 0
+            return conditionCount.remove(lock) ?: 0
         }
     }
 }

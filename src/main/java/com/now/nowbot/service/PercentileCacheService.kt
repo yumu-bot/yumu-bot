@@ -38,19 +38,19 @@ class PercentileCacheService(
         val newData = all.groupBy { it.mode }.mapValues { (_, records) ->
 
             // 使用 List 替代 TreeSet，保留所有数据
-            val globalRankList = mutableListOf<Long>()
-            val countryRankList = mutableListOf<Long>()
-            val levelList = mutableListOf<Int>()
-            val rankCountScoreList = mutableListOf<Int>()
-            val playCountList = mutableListOf<Long>()
-            val totalHitList = mutableListOf<Long>()
-            val playTimeList = mutableListOf<Long>()
-            val rankedScoreList = mutableListOf<Long>()
-            val totalScoreList = mutableListOf<Long>()
-            val beatmapPlaycountList = mutableListOf<Int>()
-            val replaysWatchedList = mutableListOf<Int>()
-            val maximumComboList = mutableListOf<Int>()
-            val achievementCountList = mutableListOf<Int>()
+            val globalRankList = ArrayList<Long>(records.size)
+            val countryRankList = ArrayList<Long>(records.size)
+            val levelList = ArrayList<Int>(records.size)
+            val rankCountScoreList = ArrayList<Int>(records.size)
+            val playCountList = ArrayList<Long>(records.size)
+            val totalHitList = ArrayList<Long>(records.size)
+            val playTimeList = ArrayList<Long>(records.size)
+            val rankedScoreList = ArrayList<Long>(records.size)
+            val totalScoreList = ArrayList<Long>(records.size)
+            val beatmapPlaycountList = ArrayList<Int>(records.size)
+            val replaysWatchedList = ArrayList<Int>(records.size)
+            val maximumComboList = ArrayList<Int>(records.size)
+            val achievementCountList = ArrayList<Int>(records.size)
 
             records.forEach {
                 if (it.globalRank != null && it.globalRank!! > 0) {

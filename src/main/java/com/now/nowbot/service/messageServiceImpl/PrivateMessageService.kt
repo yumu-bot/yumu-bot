@@ -15,7 +15,6 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.JacksonUtil
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import java.util.*
 import java.util.regex.Pattern
 
 @Service("PRIVATE_MESSAGE")
@@ -28,15 +27,12 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
         if (!messageText.startsWith("!testmsg")) return false
         val m = pattern.matcher(messageText)
         if (!m.matches()) return false
+
         val type = Type.valueOf(m.group("type"))
-        var s: String
-        val id: Long?
-        if (Objects.isNull(m.group("id").also { s = it })) {
-            id = null
-        } else {
-            id = s.toLong()
-        }
-        s = m.group("msg")
+
+        val id = m.group("id")?.toLongOrNull()
+
+        val s = m.group("msg")
 
         data.value = PMParam(type, id, s)
         return true

@@ -664,14 +664,14 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("view", "v")
         appendBID()
         appendSpace()
-        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, contentLevel = MAYBE, prefixLevel = MAYBE)
     }),
 
     VIEW_VARIATION(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(var(iation)?|sv)\\s*view", "view\\s*(var(iation)?|sv)", "view\\s*(\\+|plus)", "v[\\s:：]*v")
         appendBID()
         appendSpace()
-        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, contentLevel = MAYBE, prefixLevel = MAYBE)
     }),
 
     // #5 osu! 比赛指令

@@ -142,25 +142,17 @@ class GroupStatisticsService(
             return
         } else {
             val targetGroup = bot.getGroupInfo(groupId, true).data
-            if (Objects.isNull(targetGroup) || targetGroup.memberCount <= 0) {
+            if (targetGroup == null || targetGroup.memberCount <= 0) {
                 throw TipsException("获取群信息失败, 可能未加入此群")
             }
         }
         group.sendMessage("开始统计: $groupId")
 
-        var groupInfo: List<GroupMemberInfoResp>? = null
+        val groupInfo: List<GroupMemberInfoResp> =
+            bot.getGroupMemberList(groupId).data
+                ?.filter { r: GroupMemberInfoResp -> r.role.equals("member", ignoreCase = true) }
+                ?: throw TipsException("获取群成员失败")
 
-        for (i in 0..4) {
-            try {
-                groupInfo = bot.getGroupMemberList(groupId).data
-            } catch (_: Exception) {
-                continue
-            }
-            if (groupInfo == null) break
-        }
-
-        if (groupInfo == null) throw TipsException("获取群成员失败")
-        groupInfo = groupInfo.filter { r: GroupMemberInfoResp -> r.role.equals("member", ignoreCase = true) }
         val checkPoints = groupInfo.size / 5
         // qq-info
         val users: MutableMap<Long, MicroUser?> = HashMap(groupInfo.size)
