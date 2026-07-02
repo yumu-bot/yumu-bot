@@ -97,8 +97,11 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class LeaderboardScore:
         NoSuchElementException("没有找到这张谱面在线排行榜内的成绩。")
 
-    class LeaderboardScoreFiltered(type: String):
+    class LeaderboardScoreType(type: String):
         NoSuchElementException("没有找到这张谱面在线排行榜内的 $type 成绩。")
+
+    class LeaderboardScoreFiltered(name: Any):
+        NoSuchElementException("没有找到谱面 $name 内符合条件的成绩。")
 
     class LocalBG:
         NoSuchElementException("""

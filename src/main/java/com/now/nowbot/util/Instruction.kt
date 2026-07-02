@@ -488,10 +488,11 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("leader\\s*board", "leader", "list", "l")
 
         appendMode()
-        appendBID()
-        appendRange()
+        appendBIDOrSID()
 
-        appendStarCaptureGroup(FLAG_TYPE, REG_WORD, MORE)
+        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+        appendStarCaptureGroup(FLAG_TYPE2, REG_WORD, MORE)
         appendSpace()
 
         appendMod()
@@ -501,7 +502,7 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("group\\s*leaderboard", "group\\s*leader", "g(roup)?\\s*list", "good\\s*luck", "gl", "lg")
 
         appendMode()
-        appendBID()
+        appendBIDOrSID()
         appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
         appendMod()
@@ -511,10 +512,11 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("legacy\\s*leaderboard", "legacy\\s*leader", "legacy\\s*list", "love\\s*live", "ll")
 
         appendMode()
-        appendBID()
-        appendRange()
+        appendBIDOrSID()
 
-        appendStarCaptureGroup(FLAG_TYPE, REG_WORD, MORE)
+        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+        appendStarCaptureGroup(FLAG_TYPE2, REG_WORD, MORE)
         appendSpace()
 
         appendMod()

@@ -95,11 +95,12 @@ class AudioService(
     }
 
     private fun getVoiceFromBID(bid: Long): ByteArray? {
-        val b = runCatching {
-            beatmapApiService.getBeatmap(bid)
-        }.getOrNull() ?: return null
+        val setID = runCatching { beatmapApiService.getBeatmapsetIDFromBeatmapIDByExtend(bid) ?: error("null") }
+            .recoverCatching { beatmapApiService.getBeatmapFromDatabase(bid).beatmapsetID }
+            .recoverCatching { beatmapApiService.getBeatmap(bid).beatmapsetID }
+            .getOrNull() ?: return null
 
-        return beatmapApiService.getVoice(b.beatmapsetID)
+        return beatmapApiService.getVoice(setID)
     }
 
     companion object {
