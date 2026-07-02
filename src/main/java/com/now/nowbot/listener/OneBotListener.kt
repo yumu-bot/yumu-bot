@@ -96,7 +96,6 @@ class OneBotListener(
         val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, groupEvent)
 
         messageCacheProvider.putMessage(
-            botID = bot.selfId,
             message = groupEvent
         )
 

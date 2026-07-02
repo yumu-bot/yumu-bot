@@ -3,6 +3,7 @@ package com.now.nowbot.cache
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.stats.CacheStats
+import com.mikuac.shiro.core.BotContainer
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -11,11 +12,12 @@ import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
 
 @Component
-class QQMessageCacheProvider {
+class QQMessageCacheProvider(
+    private val botContainer: BotContainer
+) {
     data class MessageKey(
         val messageID: Long,
         val groupID: Long,
-        val botID: Long,
         val senderID: Long
     )
 
@@ -40,16 +42,16 @@ class QQMessageCacheProvider {
     /**
      * 写入普通消息（原方法，内部默认 senderID 传入 event 里的发送者）
      */
-    fun putMessage(botID: Long, message: GroupMessageEvent) {
+    fun putMessage(message: GroupMessageEvent) {
         val messageID = message.messageId?.toLong() ?: 0L
         val senderID = message.sender?.userId ?: 0L
         val groupID = message.groupId ?: 0L
 
-        val key = MessageKey(messageID, groupID, botID, senderID)
+        val key = MessageKey(messageID, groupID, senderID)
 
-        log.debug("g: {} m: {} b: {} s: {}", groupID, messageID, botID, senderID)
+        log.debug("g: {} m: {} s: {}", groupID, messageID, senderID)
 
-        if (senderID == botID) {
+        if (senderID in botContainer.robots.keys) {
             botSelfCache.put(key, message)
         } else {
             messageCache.put(key, message)
@@ -84,8 +86,8 @@ class QQMessageCacheProvider {
     /**
      * 精准查询（先查普通，再查自身）
      */
-    fun getMessage(botID: Long, groupID: Long, messageID: Long, senderID: Long): GroupMessageEvent? {
-        val key = MessageKey(messageID, groupID, botID, senderID)
+    fun getMessage(groupID: Long, messageID: Long, senderID: Long): GroupMessageEvent? {
+        val key = MessageKey(messageID, groupID, senderID)
         return messageCache.getIfPresent(key) ?: botSelfCache.getIfPresent(key)
     }
 
