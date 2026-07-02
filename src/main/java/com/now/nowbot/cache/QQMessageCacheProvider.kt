@@ -24,7 +24,8 @@ class QQMessageCacheProvider(
     private val messageCache: Cache<MessageKey, GroupMessageEvent> = Caffeine.newBuilder()
         .expireAfterWrite(2, TimeUnit.MINUTES)
         .recordStats() // 为了性能，请注释
-        .evictionListener<MessageKey, GroupMessageEvent> { key, _, _ ->
+        .evictionListener<MessageKey, GroupMessageEvent> { key, _, cause ->
+            log.debug("普通消息 Key: {}, 原因: {}", key, cause.name)
             key?.let { removeIndex(it) }
         }
         .build()
@@ -32,7 +33,8 @@ class QQMessageCacheProvider(
     private val botSelfCache: Cache<MessageKey, GroupMessageEvent> = Caffeine.newBuilder()
         .expireAfterWrite(24, TimeUnit.HOURS)
         .recordStats() // 为了性能，请注释
-        .evictionListener<MessageKey, GroupMessageEvent> { key, _, _ ->
+        .evictionListener<MessageKey, GroupMessageEvent> { key, _, cause ->
+            log.debug("机器消息 Key: {}, 原因: {}", key, cause.name)
             key?.let { removeIndex(it) }
         }
         .build()
