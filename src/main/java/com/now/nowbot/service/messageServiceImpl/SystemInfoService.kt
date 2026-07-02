@@ -70,7 +70,7 @@ class SystemInfoService(
         sb.append('\n')
 
         val stats = """
-            QQ 消息缓存：已命中 ${param.hitCount()}，未命中 ${param.missCount()} (${(param.hitRate() * 100.0).digit2()}%)
+            QQ 消息缓存：已命中 ${param.hitCount()}，未命中 ${param.missCount()} (${(param.hitRate()).digit2()}%)
             成功 ${param.loadSuccessCount()}，失败 ${param.loadFailureCount()}，回收 ${param.evictionCount()}
         """.trimIndent()
 
