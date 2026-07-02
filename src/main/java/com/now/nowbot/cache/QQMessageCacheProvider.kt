@@ -57,7 +57,7 @@ class QQMessageCacheProvider(
             messageCache.put(key, message)
         }
 
-        groupIndex.computeIfAbsent(groupID) { CopyOnWriteArraySet() }.add(key)
+        groupIndex.computeIfAbsent(groupID) { ConcurrentHashMap.newKeySet() }.add(key)
     }
 
     /**
