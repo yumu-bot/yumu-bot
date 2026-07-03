@@ -1,8 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.github.benmanes.caffeine.cache.stats.CacheStats
 import com.now.nowbot.aop.CheckPermission
-import com.now.nowbot.cache.QQMessageCacheProvider
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -19,18 +17,16 @@ import java.lang.management.ManagementFactory
 // 不过没有用呢...Jvm酱最终也没有逃脱坏掉的命运...看，Jvm酱OOM了呢..
 
 @Service("SYS_INFO")
-class SystemInfoService(
-    private val messageCacheProvider: QQMessageCacheProvider,
-) : MessageService<CacheStats> {
+class SystemInfoService : MessageService<Boolean> {
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: DataValue<CacheStats>
+        data: DataValue<Boolean>
     ): Boolean {
         val matcher = Instruction.SYSTEM_INFO.matcher(messageText)
 
         if (matcher.find()) {
-            data.value = messageCacheProvider.getStats()
+            data.value = true
             return true
         }
 
@@ -39,7 +35,7 @@ class SystemInfoService(
 
     @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
-        param: CacheStats
+        param: Boolean
     ): ServiceCallStatistic? {
         fun Long.toMega(): Long {
             return this / 1024L / 1024L
@@ -67,14 +63,6 @@ class SystemInfoService(
         """.trimIndent()
 
         sb.append(message)
-        sb.append('\n')
-
-        val stats = """
-            QQ 消息缓存：已命中 ${param.hitCount()}，未命中 ${param.missCount()} (${(param.hitRate()).digit2()}%)
-            成功 ${param.loadSuccessCount()}，失败 ${param.loadFailureCount()}，回收 ${param.evictionCount()}
-        """.trimIndent()
-
-        sb.append(stats)
 
         event.replyAsync(sb.toString())
         return ServiceCallStatistic.building(event)

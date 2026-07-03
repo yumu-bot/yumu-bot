@@ -2,13 +2,11 @@ package com.now.nowbot.cache
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.stats.CacheStats
 import com.mikuac.shiro.core.BotContainer
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
 
 @Component
@@ -23,7 +21,7 @@ class QQMessageCacheProvider(
 
     private val messageCache: Cache<MessageKey, GroupMessageEvent> = Caffeine.newBuilder()
         .expireAfterWrite(2, TimeUnit.MINUTES)
-        .recordStats() // 为了性能，请注释
+        //.recordStats() // 为了性能，请注释
         .evictionListener<MessageKey, GroupMessageEvent> { key, _, cause ->
             log.debug("普通消息 Key: {}, 原因: {}", key, cause.name)
             key?.let { removeIndex(it) }
@@ -32,7 +30,7 @@ class QQMessageCacheProvider(
 
     private val botSelfCache: Cache<MessageKey, GroupMessageEvent> = Caffeine.newBuilder()
         .expireAfterWrite(24, TimeUnit.HOURS)
-        .recordStats() // 为了性能，请注释
+        //.recordStats() // 为了性能，请注释
         .evictionListener<MessageKey, GroupMessageEvent> { key, _, cause ->
             log.debug("机器消息 Key: {}, 原因: {}", key, cause.name)
             key?.let { removeIndex(it) }
@@ -91,10 +89,6 @@ class QQMessageCacheProvider(
     fun getMessage(groupID: Long, messageID: Long, senderID: Long): GroupMessageEvent? {
         val key = MessageKey(messageID, groupID, senderID)
         return messageCache.getIfPresent(key) ?: botSelfCache.getIfPresent(key)
-    }
-
-    fun getStats(): CacheStats {
-        return messageCache.stats()
     }
 
     /**
