@@ -98,7 +98,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     VIEW_GROUP_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("view\\s*group\\s*mode", "vm", "查看群聊模式")
+        appendCommandsIgnoreAll("view\\s*group\\s*mode", "vm", "查看(群聊)?模式")
         appendCaptureGroup(FLAG_RANGE,
             REG_NUMBER,
             ANY
@@ -107,21 +107,21 @@ enum class Instruction(val pattern: Pattern) {
 
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("set\\s*(game\\s*)?mode", "(game\\s*)?mode", "sm", "mo")
+        appendCommandsIgnoreAll("set\\s*(game\\s*)?mode", "(game\\s*)?mode", "sm", "mo", "(游戏)?模式")
         appendColonCaptureGroup(FLAG_MODE, REG_MODE, prefixLevel = MAYBE)
         appendSpace()
         appendQQUIDName()
     }),
 
     SB_SET_MODE(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("set\\s*(game\\s*)?mode", "(game\\s*)?mode", "sm", "mo")
+        appendSBCommandsIgnoreAll("set\\s*(game\\s*)?mode", "(game\\s*)?mode", "sm", "mo", "(游戏|偏偏要上班|ppysb|sb(服|\\s*)?)?模式")
         appendColonCaptureGroup(FLAG_MODE, REG_MODE, prefixLevel = MAYBE)
         appendSpace()
         appendQQUIDSBName()
     }),
 
     SET_GROUP_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(set)?\\s*group\\s*mode", "gm")
+        appendCommandsIgnoreAll("(set)?\\s*group\\s*mode", "gm", "群聊?模式")
         appendColonCaptureGroup(FLAG_MODE, REG_MODE, prefixLevel = MAYBE)
         appendSpace()
         appendQQ(isDefaultGroup = true)
@@ -129,7 +129,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SCORE_PR(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))((?<s>s)|(?<w>(show|w)))?")
+        appendCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p|通过成绩)|(?<recent>(recent|r|最近成绩)))((?<s>s)|(?<w>(show|w)))?")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
@@ -139,12 +139,12 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     RECENT_BEST(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("recents?\\s*bests?|rbs?|red\\s*bull")
+        appendCommandsIgnoreAll("recents?\\s*bests?|rbs?|red\\s*bull|(最近)?优秀成绩")
         appendModeQQUIDNameRange()
     }),
 
     SB_SCORE_PR(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))((?<s>s)|(?<w>(show|w)))?")
+        appendSBCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p|通过成绩)|(?<recent>(recent|r|最近成绩)))((?<s>s)|(?<w>(show|w)))?")
         appendModeQQUIDSBNameRange()
         appendIgnore(REG_OPERATOR)
         appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
@@ -154,7 +154,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     PR_CARD(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(?<pass>(passcard|pc))", "(?<recent>(recentcard|rc))")
+        appendCommandsIgnoreAll("(?<pass>(passcard|pc|通过卡片?))", "(?<recent>(recentcard|rc|最近卡片?))")
         appendModeQQUIDNameRange()
     }),
 
@@ -169,12 +169,12 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SCORE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(score|s)")
+        appendCommandsIgnoreAll("(score|s)", "成绩")
         appendModeBIDQQUIDNameMod()
     }),
 
     SCORE_SHOW(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(score|s)\\s*(show|w)")
+        appendCommandsIgnoreAll("(score|s)\\s*(show|w)", "展示成绩")
         appendModeBIDQQUIDNameMod()
     }),
 
@@ -184,12 +184,12 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SCORES(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("scores", "ss")
+        appendCommandsIgnoreAll("scores", "ss", "多成绩")
         appendModeBIDQQUIDNameMod()
     }),
 
     SB_SCORE(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("(score|s)")
+        appendSBCommandsIgnoreAll("(score|s|成绩)")
         appendModeBIDQQUIDSBNameMod()
     }),
 
@@ -199,12 +199,12 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SB_SCORES(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("scores", "ss")
+        appendSBCommandsIgnoreAll("scores", "ss", "多成绩")
         appendModeBIDQQUIDSBNameMod()
     }),
 
     BP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(bestperformance|best|bp|b)((?<s>s)|(?<w>show|w))?")
+        appendCommandsIgnoreAll("(bestperformance|best|bp|b|最[好佳]成绩)((?<s>s)|(?<w>show|w))?")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
@@ -214,7 +214,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SB_BP(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("(bestperformance|best|bp|b)((?<s>s)|(?<w>show|w))?")
+        appendSBCommandsIgnoreAll("(bestperformance|best|bp|b|最[好佳]成绩)((?<s>s)|(?<w>show|w))?")
         appendModeQQUIDSBNameRange()
         appendIgnore(REG_OPERATOR)
         appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
@@ -224,7 +224,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     TODAY_BP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
+        appendCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t", "今日(最[好佳])?成绩")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
@@ -234,7 +234,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SB_TODAY_BP(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
+        appendSBCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t", "今日(最[好佳])?成绩")
         appendModeQQUIDSBNameRange()
         appendIgnore(REG_OPERATOR)
         appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
@@ -244,45 +244,52 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     BP_FIX(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf", "boy\\s*friends?")
+        appendCommandsIgnoreAll("(b(p|est))\\s*fix", "fix(b(p|est))", "bestperformancefix", "bpf", "bf", "boy\\s*friends?", "修补(最[好佳])?成绩")
         appendModeQQUIDNameRange()
     }),
 
     BP_ANALYSIS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bp\\s*analysis", "blue\\s*archive", "bpa", "ba")
+        appendCommandsIgnoreAll("(b(p|est))\\s*analysis", "blue\\s*archive", "bpa", "ba", "分析(最[好佳])?成绩")
         appendModeQQUIDName()
     }),
 
     BP_ANALYSIS_LEGACY(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bp\\s*analysis\\s*legacy", "bpal", "bal", "al")
+        appendCommandsIgnoreAll("(b(p|est))\\s*analysis\\s*legacy", "bpal", "bal", "al")
         appendModeQQUIDName()
     }),
 
     UU_BA(CommandPatternBuilder.create {
-        appendUUIgnoreAll("(bp?)?a", "(bp\\s*analysis)")
+        appendUUIgnoreAll("(bp?)?a", "((b(p|est))\\s*analysis)")
         appendModeQQUIDName()
     }),
 
     BP_HISTORY(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bp\\s*history", "bh")
+        appendCommandsIgnoreAll("(b(p|est))\\s*history", "bh", "bph", "历史(最[好佳])?(成绩)?切片")
         appendModeQQUIDName()
+    }),
+
+    TOP_PLAYS(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("top\\s*plays?", "top", "tp")
+
+        appendMode()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_12, prefixLevel = MAYBE)
     }),
 
     // #3 osu! 玩家指令
     INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("information", "info", "i")
+        appendCommandsIgnoreAll("information", "info", "i", "(玩家|个人)?信息|玩家")
         appendModeQQUIDName()
         appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
     SB_INFO(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("information", "info", "i")
+        appendSBCommandsIgnoreAll("information", "info", "i", "(玩家|个人)?信息|玩家")
         appendModeQQUIDName()
         appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
     WAIFU_INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("info(rmation)?s?\\s*(wif[ei]|waifu)", "iw", "waifu", "wife", "i\\s*wanna")
+        appendCommandsIgnoreAll("info(rmation)?s?\\s*(wif[ei]|waifu)", "iw", "waifu", "wife", "i\\s*wanna", "(老婆)?信息|老婆")
         appendModeQQUIDName()
         appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
@@ -293,14 +300,8 @@ enum class Instruction(val pattern: Pattern) {
         appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
-    TEST_INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("testinformation", "testinfo", "ti")
-        appendModeQQUIDName()
-        appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
-    }),
-
     INFO_CARD(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("informationcard", "infocard", "ic")
+        appendCommandsIgnoreAll("informationcard", "infocard", "ic", "(玩家|个人)?信息卡片?", "(玩家|个人)卡片?")
         appendModeQQUIDName()
     }),
 
@@ -317,12 +318,12 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     I_MAPPER(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mapper", "immapper", "imapper", "im")
+        appendCommandsIgnoreAll("mapper", "immapper", "imapper", "im", "(谱师|作者)信息|(谱师|作者)")
         appendQQUIDName()
     }),
 
     FRIEND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("friends?", "fuck", "f")
+        appendCommandsIgnoreAll("friends?", "fuck", "f", "([好朋]|好朋)友(信息)?", "操")
         appendColonCaptureGroup("sort", REG_ANYTHING_BUT_NO_SPACE, MORE)
         appendQQ()
         appendUID()
@@ -335,18 +336,18 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MUTUAL(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mutual", "mu")
+        appendCommandsIgnoreAll("mutual", "mua?", "亲亲", "主页链接|主页|链接")
         appendCaptureGroup("names", REG_USERNAME_SEPERATOR, ANY)
     }),
 
     PP_MINUS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(p?p[m\\-])", "(pp)?minus")
+        appendCommandsIgnoreAll("(p?p[m\\-])", "(pp)?minus", "表现分减")
         appendModeQQUID()
         append2Name()
     }),
 
     PP_MINUS_VS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(p?pv)", "p?pm(inus)?vs")
+        appendCommandsIgnoreAll("(p?pv)", "p?pm(inus)?vs", "表现分减对抗")
         appendModeQQUID()
         append2Name()
     }),
@@ -358,7 +359,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     TEAM(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("tm", "team", "clan")
+        appendCommandsIgnoreAll("tm", "team", "clan", "战队(信息)?")
         appendModeQQUIDName()
         appendStarCaptureGroup(FLAG_ID, REG_NUMBER, MORE)
         appendSpace()
@@ -366,41 +367,41 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SKILL(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("skills?", "k")
+        appendCommandsIgnoreAll("skills?", "k", "(玩家)?技[巧术]")
         appendModeQQUID()
         append2Name()
     }),
 
     SKILL_VS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("skills?\\s*v(ersu)?s", "kv")
+        appendCommandsIgnoreAll("skills?\\s*v(ersu)?s", "kv", "(玩家)?技[巧术]对抗")
         appendModeQQUID()
         append2Name()
     }),
 
     ETX(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("elite(ronix)?", "ex", "et", "etx")
+        appendCommandsIgnoreAll("elite(ronix)?", "ex", "et", "etx", "精英分数?")
         appendModeQQUID()
         append2Name()
     }),
 
     ETX_VS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("elite(ronix)?\\s*v(ersu)?s", "ev", "etx\\s*vs")
+        appendCommandsIgnoreAll("elite(ronix)?\\s*v(ersu)?s", "ev", "etx\\s*vs", "精英分数?对抗")
         appendModeQQUID()
         append2Name()
     }),
 
     BADGE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("badge", "bd")
+        appendCommandsIgnoreAll("badge", "bd", "(主页)?(奖牌|牌子)")
         appendQQUIDName()
     }),
 
     GUEST_DIFFICULTY(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(get)?\\s*guest", "guest\\s*diff(er)?", "gd(er)?")
+        appendCommandsIgnoreAll("(get)?\\s*guest", "guest\\s*diff(er)?", "gd(er)?", "客串(谱师|作者)?")
         appendModeQQUIDNameRange()
     }),
 
     QUICK_PLAY_INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("quick\\s*play\\s*info", "rank(ed)?\\s*play\\s*info", "qi", "ri", "iq", "ir")
+        appendCommandsIgnoreAll("quick\\s*play\\s*info", "rank(ed)?\\s*play\\s*info", "qi", "ri", "iq", "ir", "(排位|(快速)?匹配|快匹)信息")
         appendModeQQUIDName()
     }),
 
@@ -511,13 +512,6 @@ enum class Instruction(val pattern: Pattern) {
         appendMod()
     }),
 
-    TOP_PLAYS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("top\\s*plays?", "top", "tp")
-
-        appendMode()
-        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_12, prefixLevel = MAYBE)
-    }),
-
     MAP_MINUS(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mapminus", "mm")
         appendMode()
@@ -577,39 +571,39 @@ enum class Instruction(val pattern: Pattern) {
     ),
 
     RECOMMEND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("recommend(ed)?", "rec", "j")
+        appendCommandsIgnoreAll("recommend(ed)?", "rec", "j", "推荐(谱面)?")
         appendModeQQUIDName()
     }),
 
     POPULAR(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("popular\\s*(group)?", "pu", "pg")
+        appendCommandsIgnoreAll("popular\\s*(group)?", "pu", "pg", "(热门|流行)(谱面)?")
         appendMode()
         appendQQGroup(isDefaultGroup = true)
         appendRange()
     }),
 
     GET_MAP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("get\\s*beatmap", "get\\s*map", "ga")
+        appendCommandsIgnoreAll("get\\s*(((beat)?map)|diff(icult(y|ies))?)", "get\\s*map", "ga", "获取难度")
         appendID()
         appendMod()
     }),
 
     GET_NEWBIE_MAP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beat)?map", "get\\s*map", "gw")
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beat)?map", "get\\s*map", "gw", "获取(新人(群?玩家)?)?谱面")
         appendMode()
         appendCaptureGroup(FLAG_ID, REG_NUMBER_SEPERATOR, MORE)
         appendMod()
     }),
 
     GET_NEWBIE_SET(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beatmap)?set", "get\\s*(map)?set", "gy")
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beatmap)?set", "get\\s*(map)?set", "gy", "获取(新人(群?玩家)?)?谱面[集组]")
         appendMode()
         appendCaptureGroup(FLAG_ID, REG_NUMBER_SEPERATOR, MORE)
         appendMod()
     }),
 
     GET_NEWBIE_SCORE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*score", "get\\s*score", "gx")
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*score", "get\\s*score", "gx", "获取(新人(群?玩家)?)?成绩")
         appendMode()
         appendID()
         appendCaptureGroup("accuracy", "($REG_NUMBER_DECIMAL)", MAYBE)
@@ -624,7 +618,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     GET_NEWBIE_BEST(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*((best)|s)", "get\\s*best", "gt")
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*((best)|s)", "get\\s*best", "获取(新人(群?玩家)?)?最[好佳](成绩)?")
         appendModeQQUIDName()
         appendStarCaptureGroup(FLAG_TIME, REG_TIME, MAYBE)
         appendSpace()
@@ -632,13 +626,13 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     GET_NEWBIE_PLAYER(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(user|player)", "get\\s*(user|player)", "gu")
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(user|player)", "get\\s*(user|player)", "gu", "获取新人(群?玩家)?")
         appendModeQQUIDName()
         appendHashCaptureGroup(FLAG_DATA, REG_NUMBER_DECIMAL, MAYBE)
     }),
 
     GET_BG(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("get\\s*background", "get\\s*bg", "gb", "bg")
+        appendCommandsIgnoreAll("get\\s*background", "get\\s*bg", "gb", "bg", "获取(谱面)?背景")
         appendSpace()
         appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
     }),

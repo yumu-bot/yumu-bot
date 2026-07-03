@@ -213,11 +213,13 @@ class BeatmapDao(
                 .forEach { s ->
                     val id = s.beatmapsetID
 
-                    val savedSet = try {
-                        saveExtendedBeatmapsetLite(s)
-                    } catch (_: Exception) {
-                        extendBeatmapSetRepository.findByBeatmapsetID(id)
-                    }
+                    val setEntity = s.toEntity()
+
+                    log.debug("hello, sid {} saved", s.beatmapsetID)
+
+                    extendBeatmapSetRepository.insertIfNotExists(setEntity)
+
+                    val savedSet = extendBeatmapSetRepository.findByBeatmapsetID(s.beatmapsetID)
 
                     savedSet?.let { savedSetMap[id] = it }
                 }
@@ -264,11 +266,13 @@ class BeatmapDao(
             return
         }
 
-        val savedSet = if (hasBeatmapset) {
-            extendBeatmapSetRepository.findByBeatmapsetID(beatmap.beatmapsetID)!!
-        } else {
-            saveExtendedBeatmapsetLite(s)
-        }
+        log.debug("hello, sid {} of beatmap {} saved", beatmap.beatmapsetID, beatmap.beatmapID)
+
+        val setEntity = s.toEntity()
+
+        extendBeatmapSetRepository.insertIfNotExists(setEntity)
+
+        val savedSet = extendBeatmapSetRepository.findByBeatmapsetID(beatmap.beatmapsetID)!!
 
         if (hasBeatmap) {
             extendBeatmapRepository.deleteByBeatmapID(beatmap.beatmapID)
@@ -295,7 +299,9 @@ class BeatmapDao(
         return extendBeatmapRepository.save(lite)
     }
 
-    private fun saveExtendedBeatmapsetLite(set: Beatmapset): BeatmapsetExtendLite {
+    private fun Beatmapset.toEntity(): BeatmapsetExtendLite {
+        val set = this
+
         val entity = BeatmapsetExtendLite(
             beatmapsetID = set.beatmapsetID,
             animeCover = set.animeCover,
@@ -346,7 +352,7 @@ class BeatmapDao(
             ratings = set.ratings.toTypedArray(),
         )
 
-        return extendBeatmapSetRepository.save(entity)
+        return entity
     }
 
     /**

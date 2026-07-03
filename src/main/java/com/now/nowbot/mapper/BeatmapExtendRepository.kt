@@ -76,4 +76,31 @@ interface BeatmapsetExtendLiteRepository : JpaRepository<BeatmapsetExtendLite, L
         """, nativeQuery = true)
     fun updateFailTimeByBeatmapsetID(@Param("beatmapsetID") beatmapsetID: Long, animeCover: Boolean, favouriteCount: Long, recommendOffset: Short, playCount: Long, spotlight: Boolean, trackID: Int?, discussionLocked: Boolean, rating: Float, ratings: Array<Int>): Int
 
+    @Modifying
+    @Transactional
+    @Query(
+        value = """
+            INSERT INTO osu_extend_beatmapset (
+                beatmapset_id, anime_cover, artist, artist_unicode, cover_cache, creator,
+                favourite_count, genre_id, user_id, language_id, nsfw, recommend_offset,
+                play_count, source, status, spotlight, title, title_unicode, track_id,
+                video, bpm, discussion_locked, last_updated, legacy_thread_url_id, nominations_current,
+                nominations_rulesets, nominations_required_main, nominations_required_secondary,
+                ranked, ranked_date, rating, storyboard, submitted_date, tags,
+                availability_download_disabled, availability_more_information, ratings
+            ) VALUES (
+                :#{#s.beatmapsetID}, :#{#s.animeCover}, :#{#s.artist}, :#{#s.artistUnicode}, :#{#s.coverID}, :#{#s.creator},
+                :#{#s.favouriteCount}, :#{#s.genreID}, :#{#s.creatorID}, :#{#s.languageID}, :#{#s.nsfw}, :#{#s.recommendOffset},
+                :#{#s.playCount}, :#{#s.source}, :#{#s.status}, :#{#s.spotlight}, :#{#s.title}, :#{#s.titleUnicode}, :#{#s.trackID},
+                :#{#s.video}, :#{#s.bpm}, :#{#s.discussionLocked}, :#{#s.lastUpdated}, :#{#s.threadID}, :#{#s.nominationsCurrent},
+                :#{#s.nominationsRulesets}, :#{#s.nominationsRequiredMain}, :#{#s.nominationsRequiredSecondary},
+                :#{#s.ranked}, :#{#s.rankedDate}, :#{#s.rating}, :#{#s.storyboard}, :#{#s.submittedDate}, :#{#s.tags},
+                :#{#s.downloadDisabled}, :#{#s.moreInformation}, :#{#s.ratings}
+            )
+            ON CONFLICT (beatmapset_id) DO NOTHING
+        """,
+        nativeQuery = true
+    )
+    fun insertIfNotExists(@Param("s") s: BeatmapsetExtendLite): Int
+
 }
