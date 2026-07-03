@@ -491,8 +491,6 @@ import kotlin.time.Duration.Companion.seconds
         beatmapApiService.applyBeatmapExtend(filtered)
         beatmapApiService.applyVersion(filtered)
 
-        BeatmapUtil.applyBeatmapChanges(filtered)
-
         calculateApiService.applyStarToScores(filtered)
         calculateApiService.applyPPToScores(filtered)
 
@@ -523,7 +521,7 @@ import kotlin.time.Duration.Companion.seconds
 
                 MessageChain(imageService.getPanel(body, "A5"))
             } else {
-                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, null, scores.first(), "S", beatmapApiService, calculateApiService)
+                val e5Param = ScorePRService.getE5Param(user, null, scores.first(), map, null, "S", beatmapApiService, calculateApiService)
 
                 MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
             }
