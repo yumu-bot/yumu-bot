@@ -8,12 +8,12 @@ import java.util.regex.Pattern
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("h")
+        appendCommandsIgnoreAll("h", "完整帮助")
         appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
     SIMPLIFIED_HELP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("help", "helps", "帮助")
+        appendCommandsIgnoreAll("help", "helps", "帮助", "文档")
         appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
@@ -21,7 +21,7 @@ enum class Instruction(val pattern: Pattern) {
     PING(CommandPatternBuilder.create {
         appendGroup {
             appendGroup {
-                appendCommandsIgnoreAll("ping", "pi")
+                appendCommandsIgnoreAll("ping", "pi", "探测")
             }
             append(CHAR_SEPARATOR)
             appendGroup {
@@ -31,7 +31,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     BIND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(?<ub>ub)", "(?<bi>bi)", "(?<un>un)?(?<bind>bind)")
+        appendCommandsIgnoreAll("(?<ub>ub|解绑|解除绑定)", "(?<bi>bi|绑定)", "(?<un>un)?(?<bind>bind)")
         appendColonCaptureGroup("full", "f")
         appendSpace()
         appendQQ()
@@ -39,24 +39,13 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SB_BIND(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("(?<ub>ub)", "(?<bi>bi)", "(?<un>un)?(?<bind>bind)")
+        appendSBCommandsIgnoreAll("(?<ub>ub|解绑|解除绑定)", "(?<bi>bi|绑定)", "(?<un>un)?(?<bind>bind)")
         appendQQ()
         appendSBName()
     }),
 
-    BAN(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("super", "sp", "operate", "op")
-        appendColonCaptureGroup("operate", "((black|white|ban)?list|add|remove|(un)?ban|[lkarubw])", prefixLevel = MAYBE)
-        appendSpace()
-        appendIgnore()
-        appendSpace()
-        appendQQ()
-        appendQQGroup()
-        appendName()
-    }),
-
     SERVICE_SWITCH_ON(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(switch|service)\\s*on", "so")
+        appendCommandsIgnoreAll("(switch|service)\\s*on", "so", "服务开启", "服务打开", "服务启用")
         appendQQOrQQGroup()
         appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃]", MORE)
         appendSpace()
@@ -64,7 +53,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SERVICE_SWITCH_OFF(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(switch|service)\\s*off", "sf")
+        appendCommandsIgnoreAll("(switch|service)\\s*off", "sf", "服务关闭", "服务禁用")
         appendQQOrQQGroup()
         appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃]", MORE)
         appendSpace()
@@ -72,7 +61,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SERVICE_SWITCH_LIST(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(switch|service)\\s*list", "sl")
+        appendCommandsIgnoreAll("(switch|service)\\s*list", "sl", "服务列表")
         appendQQOrQQGroup()
         appendCaptureGroup(FLAG_SERVICE, "\\D", MORE)
         appendSpace()
@@ -80,7 +69,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     ECHO(CommandPatternBuilder.create {
-        append("(#echo\\s*|([!！]\\s*(ym)?(echo|e[co])(?![A-Za-z\\-_])))")
+        append("(#echo\\s*|([!！]\\s*(ym)?(echo|回声|e[co])(?![A-Za-z\\-_])))")
         appendSpace()
         appendQQOrQQGroup(true, MORE) {
             appendCaptureGroup(FLAG_ANY, "(?:(?!(?:group[＝=])?\\d{6,10}\\b).)+", EXIST, EXIST)
@@ -92,7 +81,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SERVICE_COUNT(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("servicecount", "统计服务调用", "sc")
+        appendCommandsIgnoreAll("servicecount", "sc", "统计服务调用", "统计")
         appendCaptureGroup(FLAG_TIME,
             REG_TIME,
             ANY
@@ -100,16 +89,16 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SYSTEM_INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("systeminfo", "sys(tem)?", "si", "sy")
+        appendCommandsIgnoreAll("systeminfo", "sys(tem)?", "si", "sy", "系统")
     }),
 
     CHECK(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("check", "ck")
+        appendCommandsIgnoreAll("check", "ck", "检查")
         appendQQUIDName()
     }),
 
     VIEW_GROUP_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("view\\s*group\\s*mode", "vm")
+        appendCommandsIgnoreAll("view\\s*group\\s*mode", "vm", "查看群聊模式")
         appendCaptureGroup(FLAG_RANGE,
             REG_NUMBER,
             ANY
