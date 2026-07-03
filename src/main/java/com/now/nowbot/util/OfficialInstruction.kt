@@ -278,7 +278,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendOfficialCommandsIgnoreAll("m", "map", "beatmap")
 
         appendMode()
-        appendBID()
+        appendBIDOrSID()
         appendSpace()
         appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_PLUS, MORE)
         appendSpace()
@@ -290,7 +290,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendOfficialCommandsIgnoreAll("mz", "map\\s*lazer", "beatmap\\s*lazer", "lazer\\s*map")
 
         appendMode()
-        appendBID()
+        appendBIDOrSID()
         appendSpace()
         appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_PLUS, MORE)
         appendSpace()
@@ -330,10 +330,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendOfficialCommandsIgnoreAll("leaderboard", "leader", "list", "l")
 
         appendMode()
-        appendBID()
-        appendRange()
+        appendBIDOrSID()
 
-        appendStarCaptureGroup(FLAG_TYPE, REG_WORD, MORE)
+        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+        appendStarCaptureGroup(FLAG_TYPE2, REG_WORD, MORE)
         appendSpace()
     }),
 
