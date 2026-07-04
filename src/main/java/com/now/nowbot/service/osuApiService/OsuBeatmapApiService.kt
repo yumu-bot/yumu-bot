@@ -66,11 +66,9 @@ interface OsuBeatmapApiService {
 
     fun extendBeatmapInScoreFromAPI(scores: Iterable<LazerScore>): List<LazerScore>
 
-    fun getBeatmapFromDatabase(bid: Int): Beatmap {
-        return getBeatmapFromDatabase(bid.toLong())
-    }
-
     fun getBeatmapFromDatabase(bid: Long): Beatmap
+
+    fun getBeatmapsetFromDatabase(sid: Long): Beatmapset
 
     fun isNotOverRating(bid: Long): Boolean
 

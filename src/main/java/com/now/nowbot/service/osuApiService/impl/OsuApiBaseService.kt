@@ -1,7 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.mikuac.shiro.common.utils.JsonUtils
 import com.now.nowbot.config.IocAllReadyRunner
 import com.now.nowbot.config.OsuConfig
 import com.now.nowbot.config.YumuConfig
@@ -631,6 +630,12 @@ class OsuApiBaseService(
         CLOSED, OPEN, // HALF_OPEN
     }
 
+    data class OauthTokenResponse(
+        @field:JsonProperty("access_token") val accessToken: String,
+        @field:JsonProperty("refresh_token") val refreshToken: String,
+        @field:JsonProperty("expires_in") val expiresIn: Long,
+    )
+
     fun syncUserToken(user: BindUser, isFirstTime: Boolean): String? {
         val token = user.refreshToken
 
@@ -652,15 +657,13 @@ class OsuApiBaseService(
             "$key=$value"
         }
 
-        val s = try {
-            val jsonString = osuApiRestClient.post()
+        val resp = try {
+            osuApiRestClient.post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(rawFormString)
-                .toBody<String>()
-
-            JsonUtils.parseObject(jsonString).get()
+                .toBody<OauthTokenResponse>()
         } catch (e: Exception) {
             val ex = e.findCauseOfType<HttpClientErrorException>()
 
@@ -671,7 +674,6 @@ class OsuApiBaseService(
                     bindDao.downgradeBind(user.userID)
                     log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
                     return null
-                    //throw NetworkException.UserException.Unauthorized()
                 }
 
                 403 -> throw NetworkException.UserException.Forbidden()
@@ -695,23 +697,21 @@ class OsuApiBaseService(
 
         }
 
-        val accessToken: String = s["access_token"].asString()
-        user.accessToken = accessToken
-        val refreshToken: String = s["refresh_token"].asString()
-        user.refreshToken = refreshToken
-        val time: Long = user.setTimeToAfter(s["expires_in"].asLong() * 1000)
+        user.accessToken = resp.accessToken
+        user.refreshToken = resp.refreshToken
+        val time = user.setTimeToAfter(resp.expiresIn * 1000)
 
-        val result = BindUser(user.userID, accessToken, refreshToken, time)
+        log.debug("同步用户令牌：{}, {}, {}s", user.userID, user.username, resp.expiresIn)
 
         if (isFirstTime) {
             // 不要在这里绑定！这样会导致已经绑定过的玩家数据库里又多一份绑定信息
             // 并且，这里的 userID 一定是 0
             // bindDao.saveBind(result)
         } else {
-            bindDao.updateToken(result)
+            bindDao.updateToken(BindUser(user.userID, resp.accessToken, resp.refreshToken, time))
         }
 
-        return accessToken
+        return resp.accessToken
     }
 
     @EventListener(ApplicationReadyEvent::class)

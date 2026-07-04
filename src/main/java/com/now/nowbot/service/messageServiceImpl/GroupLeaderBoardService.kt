@@ -6,6 +6,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.IDType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
@@ -28,8 +29,9 @@ import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.command.FLAG_ANY
-import com.now.nowbot.util.command.FLAG_BID
+import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_PAGE
+import com.now.nowbot.util.command.FLAG_TYPE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -126,11 +128,18 @@ class GroupLeaderBoardService(
 
         val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event)).data
 
-        val id = matcher.group(FLAG_BID)?.toLongOrNull()
+        val (type, id) = IDType.parse(matcher.group(FLAG_TYPE), matcher.group(FLAG_ID))
 
-        val beatmapID = id ?: dao.getLastBeatmapID(event) ?: throw IllegalArgumentException.WrongException.BeatmapID()
+        val beatmap = if (id == null) {
+            val lastID = dao.getLastBeatmapID(event) ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
-        val beatmap = beatmapApiService.getBeatmap(beatmapID)
+            beatmapApiService.getBeatmap(lastID)
+        } else {
+            when (type) {
+                IDType.BeatmapID -> beatmapApiService.getBeatmap(id)
+                IDType.BeatmapsetID -> beatmapApiService.getBeatmapset(id).getTopDiff()!!
+            }
+        }
 
         val m = OsuMode.getConvertableMode(mode, beatmap.mode)
 
@@ -166,7 +175,7 @@ class GroupLeaderBoardService(
 
                 val userIDs = bindDao.getAllQQBindUser(members).map { it.uid }
 
-                val scores = scoreDao.getBeatmapScores(userIDs, beatmapID, m).ifEmpty {
+                val scores = scoreDao.getBeatmapScores(userIDs, beatmap.beatmapID, m).ifEmpty {
                     throw NoSuchElementException.GroupBeatmapScore(beatmap.previewName)
                 }
 

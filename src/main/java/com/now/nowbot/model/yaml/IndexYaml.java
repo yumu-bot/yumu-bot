@@ -12,7 +12,7 @@ public class IndexYaml {
     static ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     static {
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        mapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
         mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     }
 

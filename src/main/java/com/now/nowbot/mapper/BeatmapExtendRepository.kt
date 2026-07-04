@@ -37,6 +37,22 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     @Transactional
     @Query("DELETE FROM osu_extend_beatmap b WHERE beatmap_id = :beatmapID", nativeQuery = true)
     fun deleteByBeatmapID(@Param("beatmapID") beatmapID: Long)
+
+    @Modifying
+    @Query(
+        value = """
+        INSERT INTO osu_extend_beatmap (beatmap_id, lazer_only, fail_times, owners, max_combo, created_at, updated_at) 
+        VALUES (:#{#lite.beatmapID}, :#{#lite.lazerOnly}, :#{#lite.failTimes}, :#{#lite.owners}, :#{#lite.maxCombo}, :#{#lite.createdAt}, :#{#lite.updatedAt}) 
+        ON CONFLICT (beatmap_id) DO UPDATE SET 
+            lazer_only = EXCLUDED.lazer_only,
+            fail_times = EXCLUDED.fail_times,
+            owners = EXCLUDED.owners,
+            max_combo = EXCLUDED.max_combo,
+            updated_at = EXCLUDED.updated_at
+    """,
+        nativeQuery = true
+    )
+    fun upsert(@Param("lite") lite: BeatmapExtendLite): Int
 }
 
 @Repository
@@ -97,10 +113,46 @@ interface BeatmapsetExtendLiteRepository : JpaRepository<BeatmapsetExtendLite, L
                 :#{#s.ranked}, :#{#s.rankedDate}, :#{#s.rating}, :#{#s.storyboard}, :#{#s.submittedDate}, :#{#s.tags},
                 :#{#s.downloadDisabled}, :#{#s.moreInformation}, :#{#s.ratings}
             )
-            ON CONFLICT (beatmapset_id) DO NOTHING
-        """,
+            ON CONFLICT (beatmapset_id) DO UPDATE SET
+            anime_cover                     = EXCLUDED.anime_cover,
+            artist                          = EXCLUDED.artist,
+            artist_unicode                  = EXCLUDED.artist_unicode,
+            cover_cache                     = EXCLUDED.cover_cache,
+            creator                         = EXCLUDED.creator,
+            favourite_count                 = EXCLUDED.favourite_count,
+            genre_id                        = EXCLUDED.genre_id,
+            user_id                         = EXCLUDED.user_id,
+            language_id                     = EXCLUDED.language_id,
+            nsfw                            = EXCLUDED.nsfw,
+            recommend_offset                = EXCLUDED.recommend_offset,
+            play_count                      = EXCLUDED.play_count,
+            source                          = EXCLUDED.source,
+            status                          = EXCLUDED.status,
+            spotlight                       = EXCLUDED.spotlight,
+            title                           = EXCLUDED.title,
+            title_unicode                   = EXCLUDED.title_unicode,
+            track_id                        = EXCLUDED.track_id,
+            video                           = EXCLUDED.video,
+            bpm                             = EXCLUDED.bpm,
+            discussion_locked               = EXCLUDED.discussion_locked,
+            last_updated                    = EXCLUDED.last_updated,
+            legacy_thread_url_id            = EXCLUDED.legacy_thread_url_id,
+            nominations_current             = EXCLUDED.nominations_current,
+            nominations_rulesets            = EXCLUDED.nominations_rulesets,
+            nominations_required_main       = EXCLUDED.nominations_required_main,
+            nominations_required_secondary  = EXCLUDED.nominations_required_secondary,
+            ranked                          = EXCLUDED.ranked,
+            ranked_date                     = EXCLUDED.ranked_date,
+            rating                          = EXCLUDED.rating,
+            storyboard                      = EXCLUDED.storyboard,
+            submitted_date                  = EXCLUDED.submitted_date,
+            tags                            = EXCLUDED.tags,
+            availability_download_disabled  = EXCLUDED.availability_download_disabled,
+            availability_more_information   = EXCLUDED.availability_more_information,
+            ratings                         = EXCLUDED.ratings
+    """,
         nativeQuery = true
     )
-    fun insertIfNotExists(@Param("s") s: BeatmapsetExtendLite): Int
+    fun upsert(@Param("s") s: BeatmapsetExtendLite): Int
 
 }

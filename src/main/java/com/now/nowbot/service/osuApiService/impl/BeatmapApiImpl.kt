@@ -579,6 +579,15 @@ class BeatmapApiImpl(
         }
     }
 
+    override fun getBeatmapsetFromDatabase(sid: Long): Beatmapset {
+        try {
+            val lite = beatmapDao.getBeatmapsetLite(sid)
+            return BeatmapDao.fromBeatmapsetLite(lite!!)
+        } catch (_: Exception) {
+            return getBeatmapset(sid)
+        }
+    }
+
     override fun applyVersion(scores: Collection<LazerScore>) {
         val existSet = scores.mapNotNull { s ->
             val b = beatmapDao.getBeatmapLite(s.beatmapID)

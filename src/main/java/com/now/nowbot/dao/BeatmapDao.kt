@@ -213,26 +213,20 @@ class BeatmapDao(
                 .forEach { s ->
                     val id = s.beatmapsetID
 
-                    val setEntity = s.toEntity()
+                    val entity = s.toEntity()
 
-                    log.debug("hello, sid {} saved", s.beatmapsetID)
+                    extendBeatmapSetRepository.upsert(entity)
 
-                    extendBeatmapSetRepository.insertIfNotExists(setEntity)
-
-                    val savedSet = extendBeatmapSetRepository.findByBeatmapsetID(s.beatmapsetID)
-
-                    savedSet?.let { savedSetMap[id] = it }
+                    savedSetMap[id] = entity
                 }
 
             validBeatmaps.forEach { beatmap ->
                 val associatedSet = savedSetMap[beatmap.beatmapsetID]
                 if (associatedSet != null) {
                     runCatching {
-                        if (extendBeatmapRepository.existsByBeatmapID(beatmap.beatmapID)) {
-                            extendBeatmapRepository.deleteByBeatmapID(beatmap.beatmapID)
-                        }
+                        val entity = beatmap.toEntity(associatedSet)
 
-                        saveExtendedBeatmapLite(beatmap, associatedSet)
+                        extendBeatmapRepository.upsert(entity)
                     }.onFailure { e ->
                         if (e is DataIntegrityViolationException) return@onFailure
                         log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
@@ -255,33 +249,26 @@ class BeatmapDao(
 
         if (!(hasGenreID && stabled)) return
 
-        val s = beatmap.beatmapset!!
+        val set = beatmap.beatmapset!!
 
         val hasBeatmap = extendBeatmapRepository.existsByBeatmapID(beatmap.beatmapID)
         val hasBeatmapset = extendBeatmapSetRepository.existsByBeatmapsetID(beatmap.beatmapsetID)
 
         if (hasBeatmap && hasBeatmapset) {
             updateFailTimeByBeatmapID(beatmap)
-            updateFailTimeByBeatmapsetID(s)
+            updateFailTimeByBeatmapsetID(set)
             return
         }
 
-        log.debug("hello, sid {} of beatmap {} saved", beatmap.beatmapsetID, beatmap.beatmapID)
+        val setEntity = set.toEntity()
+        val mapEntity = beatmap.toEntity(setEntity)
 
-        val setEntity = s.toEntity()
-
-        extendBeatmapSetRepository.insertIfNotExists(setEntity)
-
-        val savedSet = extendBeatmapSetRepository.findByBeatmapsetID(beatmap.beatmapsetID)!!
-
-        if (hasBeatmap) {
-            extendBeatmapRepository.deleteByBeatmapID(beatmap.beatmapID)
-        }
-
-        saveExtendedBeatmapLite(beatmap, savedSet)
+        extendBeatmapSetRepository.upsert(setEntity)
+        extendBeatmapRepository.upsert(mapEntity)
     }
 
-    private fun saveExtendedBeatmapLite(beatmap: Beatmap, savedSet: BeatmapsetExtendLite): BeatmapExtendLite {
+    private fun Beatmap.toEntity(savedSet: BeatmapsetExtendLite): BeatmapExtendLite {
+        val beatmap = this
 
         val now = LocalDateTime.now()
 
@@ -296,7 +283,7 @@ class BeatmapDao(
             updatedAt = now
         )
 
-        return extendBeatmapRepository.save(lite)
+        return lite
     }
 
     private fun Beatmapset.toEntity(): BeatmapsetExtendLite {
@@ -562,14 +549,6 @@ class BeatmapDao(
         return this
     }
 
-    fun existsBeatmapsetFromExtend(beatmapsetID: Long): Boolean {
-        return extendBeatmapSetRepository.existsByBeatmapsetID(beatmapsetID)
-    }
-
-    fun existsBeatmapFromExtend(beatmapID: Long): Boolean {
-        return extendBeatmapRepository.existsByBeatmapID(beatmapID)
-    }
-
     fun getBeatmapsetIDFromExtend(beatmapID: Long): Long? {
         return extendBeatmapRepository.findByBeatmapID(beatmapID)?.beatmapset?.beatmapsetID
     }
@@ -591,7 +570,7 @@ class BeatmapDao(
             return s
         }
 
-        private fun fromBeatmapsetLite(set: BeatmapsetLite): Beatmapset {
+        fun fromBeatmapsetLite(set: BeatmapsetLite): Beatmapset {
             val s = Beatmapset()
             s.beatmapsetID = set.id.toLong()
             s.creatorID = set.mapperId.toLong()
