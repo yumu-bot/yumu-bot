@@ -2,7 +2,6 @@ package com.now.nowbot.mapper
 
 import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.ScoreStatisticLite
-import org.spring.osu.model.LazerScoreStatistics
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying

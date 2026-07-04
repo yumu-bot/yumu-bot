@@ -141,7 +141,7 @@ class TachyonScoreLite(
     }
 
     companion object {
-        fun fromLazerScore(score: LazerScore): TachyonScoreLite {
+        fun fromScore(score: LazerScore): TachyonScoreLite {
             val (mods, modsData) = score.mods.toEntity()
 
             return TachyonScoreLite(

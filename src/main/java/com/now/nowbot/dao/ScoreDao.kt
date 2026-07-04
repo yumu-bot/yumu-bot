@@ -1,10 +1,10 @@
 package com.now.nowbot.dao
 
-import com.now.nowbot.entity.LazerScoreLite
-import com.now.nowbot.entity.ScoreStatisticLite
+import com.now.nowbot.entity.TachyonScoreLite
+import com.now.nowbot.entity.TachyonStatisticsLite
 import com.now.nowbot.mapper.BeatmapStarRatingCacheRepository
-import com.now.nowbot.mapper.LazerScoreRepository
-import com.now.nowbot.mapper.LazerScoreStatisticRepository
+import com.now.nowbot.mapper.TachyonScoreRepository
+import com.now.nowbot.mapper.TachyonStatisticsRepository
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
@@ -12,7 +12,6 @@ import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.util.JacksonUtil
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
@@ -27,8 +26,8 @@ import java.time.ZonedDateTime
 @Component
 class ScoreDao(
     private val beatmapDao: BeatmapDao,
-    private val scoreRepository: LazerScoreRepository,
-    private val statisticRepository: LazerScoreStatisticRepository,
+    private val scoreRepository: TachyonScoreRepository,
+    private val statisticRepository: TachyonStatisticsRepository,
     private val beatmapStarRatingCacheRepository: BeatmapStarRatingCacheRepository
 ) {
 
@@ -81,10 +80,10 @@ class ScoreDao(
     // 不可以在 @Transactional 内使用虚拟线程
     // 可能会导致事务失效、数据库连接泄露等疑难杂症
     // @Transactional
-    fun saveScoreAsync(scores: List<LazerScore>) {
+    fun saveScoreAsync(scores: Collection<LazerScore>) {
         Thread.startVirtualThread {
             try {
-                saveScores(scores.toList())
+                saveScores(scores)
             } catch (e: Throwable) {
                 log.error("成绩数据访问对象层：保存成绩时发生错误：", e)
             }
@@ -92,7 +91,7 @@ class ScoreDao(
     }
 
     @Transactional
-    fun saveScores(scores: List<LazerScore>) {
+    fun saveScores(scores: Collection<LazerScore>) {
         val ss = scores.map { it.scoreID }
 
         val exists = ss.chunked(1000) { sss ->
@@ -117,16 +116,16 @@ class ScoreDao(
         beatmapDao.saveBeatmapsAsync(uniqueBeatmaps)
 
         // 3. 准备成绩基础数据和统计数据
-        val scoreLites = mutableListOf<LazerScoreLite>()
-        val allStatistics = mutableListOf<ScoreStatisticLite>()
+        val scoreLites = mutableListOf<TachyonScoreLite>()
+        val allStatistics = mutableListOf<TachyonStatisticsLite>()
 
         notExistsScore.forEach { score ->
-            scoreLites.add(LazerScoreLite(score))
-            allStatistics.add(ScoreStatisticLite.createByScore(score))
+            scoreLites.add(TachyonScoreLite.fromScore(score))
+            allStatistics.add(TachyonStatisticsLite.fromScore(score))
         }
 
         notExistsBeatmap.forEach { score ->
-            allStatistics.add(ScoreStatisticLite.createByBeatmap(score))
+            allStatistics.add(TachyonStatisticsLite.fromMaximumStatistics(score))
         }
 
         scoreRepository.saveAll(scoreLites)
@@ -134,7 +133,7 @@ class ScoreDao(
     }
 
     fun saveScore(score: LazerScore) {
-        if (scoreRepository.exists(score.scoreID)) {
+        if (scoreRepository.existsById(score.scoreID)) {
             return
         }
 
@@ -145,14 +144,14 @@ class ScoreDao(
             log.error("统计成绩中存储 beatmap 异常", e)
         }
 
-        val data = LazerScoreLite(score)
-        val statisticList: List<ScoreStatisticLite>
-        val statistic = ScoreStatisticLite.createByScore(score)
+        val data = TachyonScoreLite.fromScore(score)
+        val statisticList: List<TachyonStatisticsLite>
+        val statistic = TachyonStatisticsLite.fromScore(score)
 
         statisticList = if (statisticRepository.exists(score.beatmapID) || (!score.isLazer && !score.passed)) {
             listOf(statistic)
         } else {
-            listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
+            listOf(statistic, TachyonStatisticsLite.fromMaximumStatistics(score))
         }
 
         scoreRepository.save(data)
@@ -180,8 +179,7 @@ class ScoreDao(
     fun getBeatmapStatistics(beatmapIDs: Collection<Long>): Map<Long, LazerStatistics> {
         return statisticRepository
             .getStatistics(beatmapIDs, -1)
-            .distinctBy { it.id }
-            .associate { it.id to JacksonUtil.parseObject(it.data)!! }
+            .associate { it.statisticsID to it.statistics }
     }
 
     /**
@@ -211,36 +209,37 @@ class ScoreDao(
         return scoreRepository.getScoresFromIDs(scoreIDs).applyStatistics()
     }
 
-    fun Collection<LazerScoreLite>.applyStatistics(): List<LazerScore> {
+    fun Collection<TachyonScoreLite>.applyStatistics(): List<LazerScore> {
         if (this.isEmpty()) return emptyList()
 
-        val mode = this.firstOrNull()?.mode?.toByte() ?: 0.toByte()
+        val map = this.groupBy { it.mode }
 
-        return this.chunked(1000) { ss ->
-            val ids = ss.map { it.id }
-            val bs = ss.map { it.beatmapId }.distinct()
+        return map.flatMap { (mode, ss) ->
+            val ids = ss.map { it.scoreID }
+            val bs = ss.map { it.beatmapID }.toSet()
 
-            val tm = statisticRepository.getStatistics(ids, -1)
-                .associateBy { it.id }
+            val st = ids.chunked(1000).flatMap { si ->
+                statisticRepository.getStatistics(si, -1)
+            }.associateBy { it.statisticsID }
 
-            val bm = statisticRepository.getStatistics(bs, mode)
-                .associateBy { it.id }
+            val mt = bs.chunked(1000).flatMap { bi ->
+                statisticRepository.getStatistics(bi, mode)
+            }.associateBy { it.statisticsID }
 
             ss.map { s ->
+                val t = st[s.scoreID]
+                val m = mt[s.beatmapID]
+
                 s.toLazerScore().apply {
-                    val t = tm[s.id]
-                    val b = bm[s.beatmapId]
-
-                    t?.setStatus(this)
-
-                    if (b != null) {
-                        b.setStatus(this)
-                    } else if (t != null) {
-                        this.maximumStatistics = this.statistics.constructMaxStatistics(OsuMode.getMode(s.mode))
+                    if (t != null) {
+                        statistics = t.statistics
+                        maximumStatistics = m?.statistics ?: t.statistics.constructMaxStatistics(mode)
+                    } else if (m != null) {
+                        maximumStatistics = m.statistics
                     }
                 }
             }
-        }.flatten()
+        }
     }
 
     companion object {

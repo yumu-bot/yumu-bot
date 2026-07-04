@@ -172,7 +172,7 @@ class MatchRecentService(
                 s.beatmap = b
                 b.beatmapset?.let { s.beatmapset = it }
                 s.beatmapID = round.beatmapID
-                s.maximumStatistics = s.statistics.constructMaxStatistics(s.mode)
+                s.maximumStatistics = s.statistics.constructMaxStatistics(s.mode.toSafeModeValue())
             }
 
             ss
