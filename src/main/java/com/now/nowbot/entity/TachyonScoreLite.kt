@@ -22,6 +22,7 @@ import java.time.OffsetDateTime
         Index(name = "idx_tachyon_user_query", columnList = "user_id, mode, time DESC"),
         Index(name = "idx_tachyon_user_beatmap_query", columnList = "user_id, beatmap_id, mode, time DESC"),
 
+        // CREATE INDEX idx_tachyon_time_brin ON tachyon_score USING BRIN (time) WITH (pages_per_range = 32);
         // CREATE INDEX idx_tachyon_mods_gin ON public.tachyon_score USING GIN (mods);
         /*
         Index(
@@ -148,7 +149,7 @@ class TachyonScoreLite(
                 scoreID = score.scoreID,
                 userID = score.userID,
                 beatmapID = score.beatmapID,
-                buildID = score.buildID?.toInt(),
+                buildID = score.buildID?.toInt()?.takeIf { it > 0 },
                 mods = mods,
                 modsData = modsData,
                 pp = score.pp.toFloat(),

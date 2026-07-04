@@ -9,6 +9,8 @@ import java.time.LocalDateTime
     indexes = [
         Index(name = "index_time_id_mode", columnList = "time DESC, osu_id, mode"),
         Index(name = "index_id_mode_time", columnList = "osu_id, mode, time DESC"),
+
+    // CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_info_archive_time_brin ON osu_user_info_archive USING BRIN (time) WITH (pages_per_range = 32);
     ]
 )
 class OsuUserInfoArchiveLite {
