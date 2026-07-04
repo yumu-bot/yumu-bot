@@ -39,6 +39,7 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     fun deleteByBeatmapID(@Param("beatmapID") beatmapID: Long)
 
     @Modifying
+    @Transactional
     @Query(
         value = """
         INSERT INTO osu_extend_beatmap (beatmap_id, lazer_only, fail_times, owners, max_combo, created_at, updated_at) 
