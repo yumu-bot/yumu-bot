@@ -38,13 +38,14 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     @Query("DELETE FROM osu_extend_beatmap b WHERE beatmap_id = :beatmapID", nativeQuery = true)
     fun deleteByBeatmapID(@Param("beatmapID") beatmapID: Long)
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query(
         value = """
-        INSERT INTO osu_extend_beatmap (beatmap_id, lazer_only, fail_times, owners, max_combo, created_at, updated_at) 
-        VALUES (:#{#lite.beatmapID}, :#{#lite.lazerOnly}, CAST(:#{#lite.failTimes} AS jsonb), CAST(:#{#lite.owners} AS jsonb), :#{#lite.maxCombo}, :#{#lite.createdAt}, :#{#lite.updatedAt}) 
+        INSERT INTO osu_extend_beatmap (beatmap_id, beatmapset_id, lazer_only, fail_times, owners, max_combo, created_at, updated_at) 
+        VALUES (:#{#lite.beatmapID}, :#{#lite.beatmapset.beatmapsetID}, :#{#lite.lazerOnly}, CAST(:#{#lite.failTimes} AS jsonb), CAST(:#{#lite.owners} AS jsonb), :#{#lite.maxCombo}, :#{#lite.createdAt}, :#{#lite.updatedAt}) 
         ON CONFLICT (beatmap_id) DO UPDATE SET 
+            beatmapset_id = EXCLUDED.beatmapset_id,
             lazer_only = EXCLUDED.lazer_only,
             fail_times = EXCLUDED.fail_times,
             owners = EXCLUDED.owners,
@@ -75,7 +76,7 @@ interface BeatmapsetExtendLiteRepository : JpaRepository<BeatmapsetExtendLite, L
     fun deleteAllByBeatmapIDs(beatmapIDs: Iterable<Long>)
 
     // 批量更新字段
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query("""
         UPDATE osu_extend_beatmapset SET 
