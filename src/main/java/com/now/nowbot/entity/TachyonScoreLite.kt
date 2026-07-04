@@ -165,19 +165,19 @@ class TachyonScoreLite(
         }
 
         fun List<LazerMod>.toEntity(): Pair<List<String>?, String?> {
-            val acronyms = this.map {
-                if (it.acronym.length > 2) {
-                    if (it.acronym == "10K") {
-                        "XK"
-                    } else {
-                        it.acronym.take(2)
-                    }
-                } else {
-                    it.acronym
+            val processed = this.map { mod ->
+                val safeAcronym = when (mod.acronym) {
+                    "10K" -> "XK"
+                    else -> if (mod.acronym.length > 2) mod.acronym.take(2) else mod.acronym
                 }
-            }.takeIf { it.isNotEmpty() }
+                safeAcronym to mod.settings
+            }
 
-            val settings = this.associate { it.acronym to it.settings }.filterValues { ss -> ss != null }
+            val acronyms = processed.map { it.first }.takeIf { it.isNotEmpty() }
+
+            val settings = processed
+                .associate { it.first to it.second }
+                .filterValues { ss -> ss != null }
 
             val jsonb = settings.takeIf { it.isNotEmpty() }?.let { ss -> JacksonUtil.objectToJson(ss) }
 
