@@ -2719,6 +2719,19 @@ sealed class LazerMod {
             }
         }
 
+        fun containsHiddenAcronym(strings: List<String>?): Boolean {
+            if (strings.isNullOrEmpty()) return false
+
+            val hiddenSet = setOf(
+                Hidden.type,
+                Flashlight.type,
+                Blinds.type,
+                FadeIn.type,
+            )
+
+            return strings.any { hiddenSet.contains(it) }
+        }
+
         inline fun <reified T: LazerMod> List<T>.containsHidden(): Boolean {
             val hiddenSet = setOf(
                 Hidden::class,

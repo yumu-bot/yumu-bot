@@ -2,6 +2,7 @@ package com.now.nowbot.mapper
 
 import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.ScoreStatisticLite
+import org.spring.osu.model.LazerScoreStatistics
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -107,6 +108,13 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
         LIMIT 1000
     """, nativeQuery = true)
     fun findByIDRange(firstID: Long, lastID: Long): List<LazerScoreLite>
+
+    @Query(
+        """
+        SELECT * FROM lazer_score_lite
+        LIMIT :limit OFFSET :offset
+    """, nativeQuery = true)
+    fun findByOffset(offset: Int, limit: Int): List<LazerScoreLite>
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {
@@ -123,4 +131,11 @@ interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, Scor
         SELECT id FROM score_statistic WHERE id IN (:ids) AND mode = :mode
     """, nativeQuery = true)
     fun exists(ids: Collection<Long>, mode: Byte = -1): List<Long>
+
+    @Query(
+        """
+        SELECT * FROM score_statistic
+        LIMIT :limit OFFSET :offset
+    """, nativeQuery = true)
+    fun findByOffset(offset: Int, limit: Int): List<ScoreStatisticLite>
 }

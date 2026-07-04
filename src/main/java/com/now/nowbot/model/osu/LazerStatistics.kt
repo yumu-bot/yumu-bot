@@ -4,53 +4,90 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.util.JacksonUtil
+import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import kotlin.math.roundToInt
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+@Embeddable
 data class LazerStatistics(
     // M 320
-    @field:JsonProperty("perfect") var perfect: Int = 0,
+    @field:JsonProperty("perfect")
+    @Column(name = "perfect", nullable = false)
+    var perfect: Int = 0,
 
     // O、T、C、M 300
-    @field:JsonProperty("great") var great: Int = 0,
+    @field:JsonProperty("great")
+    @Column(name = "great", nullable = false)
+    var great: Int = 0,
 
     // M 200
-    @field:JsonProperty("good") var good: Int = 0,
+    @field:JsonProperty("good")
+    @Column(name = "good", nullable = false)
+    var good: Int = 0,
 
     // T、M 100
-    @field:JsonProperty("ok") var ok: Int = 0,
+    @field:JsonProperty("ok")
+    @Column(name = "ok", nullable = false)
+    var ok: Int = 0,
 
     // O、M 50
-    @field:JsonProperty("meh") var meh: Int = 0,
+    @field:JsonProperty("meh")
+    @Column(name = "meh", nullable = false)
+    var meh: Int = 0,
 
     // O、T、C、M 0
-    @field:JsonProperty("miss") var miss: Int = 0,
+    @field:JsonProperty("miss")
+    @Column(name = "miss", nullable = false)
+    var miss: Int = 0,
 
     // ?
-    @field:JsonProperty("ignore_hit") var ignoreHit: Int = 0,
-    @field:JsonProperty("ignore_miss") var ignoreMiss: Int = 0,
+    @field:JsonProperty("ignore_hit")
+    @Column(name = "ignore_hit", nullable = false)
+    var ignoreHit: Int = 0,
+    @field:JsonProperty("ignore_miss")
+    @Column(name = "ignore_miss", nullable = false)
+    var ignoreMiss: Int = 0,
 
     // O SliderTick、C Large Droplet (medium)
-    @field:JsonProperty("large_tick_hit") var largeTickHit: Int = 0,
-    @field:JsonProperty("large_tick_miss") var largeTickMiss: Int = 0,
+    @field:JsonProperty("large_tick_hit")
+    @Column(name = "large_tick_hit", nullable = false)
+    var largeTickHit: Int = 0,
+
+    @field:JsonProperty("large_tick_miss")
+    @Column(name = "large_tick_miss", nullable = false)
+    var largeTickMiss: Int = 0,
 
     // C Small Droplet (small)
-    @field:JsonProperty("small_tick_hit") var smallTickHit: Int = 0,
-    @field:JsonProperty("small_tick_miss") var smallTickMiss: Int = 0,
+    @field:JsonProperty("small_tick_hit")
+    @Column(name = "small_tick_hit", nullable = false)
+    var smallTickHit: Int = 0,
+
+    @field:JsonProperty("small_tick_miss")
+    @Column(name = "small_tick_miss", nullable = false)
+    var smallTickMiss: Int = 0,
 
     // O SliderTail
-    @field:JsonProperty("slider_tail_hit") var sliderTailHit: Int = 0,
+    @field:JsonProperty("slider_tail_hit")
+    @Column(name = "slider_tail_hit", nullable = false)
+    var sliderTailHit: Int = 0,
 
     // O Spinner Bonus、T Spinner Drumroll、C Banana
-    @field:JsonProperty("large_bonus") var largeBonus: Int = 0,
+    @field:JsonProperty("large_bonus")
+    @Column(name = "large_bonus", nullable = false)
+    var largeBonus: Int = 0,
 
     // O Spinner Base
-    @field:JsonProperty("small_bonus") var smallBonus: Int = 0,
+    @field:JsonProperty("small_bonus")
+    @Column(name = "small_bonus", nullable = false)
+    var smallBonus: Int = 0,
 
     // 仅 MAX 有
-    @field:JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int = 0,
+    @field:JsonProperty("legacy_combo_increase")
+    @Column(name = "legacy_combo_increase", nullable = false)
+    var legacyComboIncrease: Int = 0,
 ) {
     fun getTotalHits(mode: OsuMode) = when (mode) {
         OSU -> great + ok + meh + miss

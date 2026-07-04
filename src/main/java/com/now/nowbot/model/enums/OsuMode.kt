@@ -137,20 +137,32 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             }
         }
 
+        private val sortedEntries = OsuMode.entries.sortedBy { it.modeValue }
+
+        // 2. 提取出纯基本类型的 IntArray，用于二分查找（无装箱开销）
+        private val keysTable: ByteArray = sortedEntries.map { it.modeValue }.toByteArray()
+
+        // 3. 提取出对应的枚举实例数组
+        private val valuesTable: Array<OsuMode> = sortedEntries.toTypedArray()
+
+        fun Byte?.toOsuMode(): OsuMode {
+            return getMode(this)
+        }
+
         @JvmStatic
-        fun getMode(num: Number?): OsuMode {
-            return when (num?.toInt()) {
-                0 -> OSU
-                1 -> TAIKO
-                2 -> CATCH
-                3 -> MANIA
-                4 -> OSU_RELAX
-                5 -> TAIKO_RELAX
-                6 -> CATCH_RELAX
-                7 -> MANIA_7K
-                8 -> OSU_AUTOPILOT
-                else -> DEFAULT
-            }
+        fun getMode(num: Byte?): OsuMode {
+            val index = keysTable.binarySearch(num ?: return DEFAULT)
+            return if (index >= 0) valuesTable[index] else DEFAULT
+        }
+
+        @JvmStatic
+        fun getMode(num: Int?): OsuMode {
+            return getMode(num?.toByte())
+        }
+
+        @JvmStatic
+        fun getMode(num: Short?): OsuMode {
+            return getMode(num?.toByte())
         }
 
         @JvmStatic
