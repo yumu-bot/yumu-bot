@@ -43,7 +43,7 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     @Query(
         value = """
         INSERT INTO osu_extend_beatmap (beatmap_id, lazer_only, fail_times, owners, max_combo, created_at, updated_at) 
-        VALUES (:#{#lite.beatmapID}, :#{#lite.lazerOnly}, :#{#lite.failTimes}, :#{#lite.owners}, :#{#lite.maxCombo}, :#{#lite.createdAt}, :#{#lite.updatedAt}) 
+        VALUES (:#{#lite.beatmapID}, :#{#lite.lazerOnly}, :#{#lite.failTimes::jsonb}, :#{#lite.owners::jsonb}, :#{#lite.maxCombo}, :#{#lite.createdAt}, :#{#lite.updatedAt}) 
         ON CONFLICT (beatmap_id) DO UPDATE SET 
             lazer_only = EXCLUDED.lazer_only,
             fail_times = EXCLUDED.fail_times,
