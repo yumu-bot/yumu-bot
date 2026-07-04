@@ -3,7 +3,6 @@ package com.now.nowbot.mapper
 import com.now.nowbot.entity.TachyonScoreLite
 import com.now.nowbot.entity.TachyonStatisticsKey
 import com.now.nowbot.entity.TachyonStatisticsLite
-import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
@@ -36,13 +35,9 @@ interface TachyonScoreRepository: JpaRepository<TachyonScoreLite, Long> {
         SELECT s.time FROM tachyon_score s 
         WHERE s.user_id = :userID AND s.time BETWEEN :start AND :end
     """,
-        countQuery = """
-        SELECT COUNT(*) FROM tachyon_score s 
-        WHERE s.user_id = :userID AND s.time BETWEEN :start AND :end
-    """,
         nativeQuery = true
     )
-    fun getUserAllScoreTime(userID: Long, start: OffsetDateTime, end: OffsetDateTime, page: Pageable): List<OffsetDateTime>
+    fun getUserAllScoreTime(userID: Long, start: OffsetDateTime, end: OffsetDateTime): List<OffsetDateTime>
 
     @Query("""
         select * from tachyon_score s
@@ -88,7 +83,7 @@ interface TachyonScoreRepository: JpaRepository<TachyonScoreLite, Long> {
 
 interface TachyonStatisticsRepository: JpaRepository<TachyonStatisticsLite, TachyonStatisticsKey> {
     @Query("""
-        SELECT s FROM tachyon_statistics s WHERE s.id IN (:ids) AND s.mode = :mode
+        SELECT * FROM tachyon_statistics WHERE id IN (:ids) AND mode = :mode
     """, nativeQuery = true)
     fun getStatistics(ids: Collection<Long>, mode: Byte = -1): List<TachyonStatisticsLite>
 

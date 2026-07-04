@@ -13,7 +13,6 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.model.osu.OsuUser
 import org.slf4j.LoggerFactory
-import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -165,7 +164,7 @@ class ScoreDao(
         val end = ZonedDateTime
             .now(ZoneOffset.systemDefault())
             .toOffsetDateTime()
-        return scoreRepository.getUserAllScoreTime(userID, start, end, PageRequest.ofSize(500))
+        return scoreRepository.getUserAllScoreTime(userID, start, end)
     }
 
     fun getUserRankedScore(userID: Long, mode: Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScore> {
