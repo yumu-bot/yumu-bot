@@ -157,7 +157,7 @@ class TachyonScoreLite(
                 time = score.endedTime,
                 perfect = score.perfectCombo,
                 passed = score.passed,
-                legacy = score.legacyScore?.toInt(),
+                legacy = score.legacyScore?.toInt()?.takeIf { it > 0 },
                 score = score.score.toInt(),
                 mode = score.mode.modeValue,
                 rank = RankConverter.rankToByte(score.rank)
@@ -249,7 +249,7 @@ class TachyonScoreLite(
                 time = legacy.time,
                 perfect = legacy.perfectCombo,
                 passed = legacy.passed,
-                legacy = legacy.legacyScore,
+                legacy = legacy.legacyScore.takeIf { it > 0 },
                 score = legacy.lazerScore,
                 mode = legacy.mode.toByte(),
                 rank = legacy.rankByte
