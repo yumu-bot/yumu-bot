@@ -52,49 +52,43 @@ class LazerToTachyonService(
     }
 
     override fun handleMessage(event: MessageEvent, param: Boolean): ServiceCallStatistic? {
-        var lastId: Long  // 起始ID
         var totalInserted = 0
 
         if (param) {
+            var lastId: Long = 0
             while (true) {
-                // 1. 批量读取
-                val batch = legacyScoreRepository.findByOffset(totalInserted, BATCH_SIZE)
+                val batch = legacyScoreRepository.findByLastID(lastId, BATCH_SIZE)
                 if (batch.isEmpty()) break
 
-                // 2. 转换并准备插入
                 val toInsert = batch.map { TachyonScoreLite.transfer(it) }
-
-                // 3. 批量插入
                 batchInsertScore(toInsert)
 
-                // 4. 更新进度
-                totalInserted += BATCH_SIZE
+                totalInserted += batch.size
                 lastId = batch.last().id
 
-                log.info("已处理: $totalInserted 条，当前：${lastId}")
+                if (totalInserted % 10000 == 0 || batch.size < BATCH_SIZE) {
+                    log.info("【Score】已处理: $totalInserted 条，当前 ID：${lastId}")
+                }
             }
         } else {
+            var lastId: Long = 0
             while (true) {
-                // 1. 批量读取
-                val batch = legacyStatisticsRepository.findByOffset(totalInserted, BATCH_SIZE)
+                val batch = legacyStatisticsRepository.findByLastID(lastId, BATCH_SIZE)
                 if (batch.isEmpty()) break
 
-                // 2. 转换并准备插入
                 val toInsert = batch.map { TachyonStatisticsLite.transfer(it) }
-
-                // 3. 批量插入
                 batchInsertStats(toInsert)
 
-                // 4. 更新进度
-                totalInserted += BATCH_SIZE
-                lastId = batch.last().id
+                totalInserted += batch.size
+                lastId = batch.last().id // 确保这里的 id 类型和上面的 lastId 一致
 
-                log.info("已处理: $totalInserted 条，当前：${lastId}")
+                if (totalInserted % 10000 == 0 || batch.size < BATCH_SIZE) {
+                    log.info("【Stats】已处理: $totalInserted 条，当前 ID：${lastId}")
+                }
             }
         }
 
         event.reply("处理完成！总插入：${totalInserted}")
-
         return null
     }
 

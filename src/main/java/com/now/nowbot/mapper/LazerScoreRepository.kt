@@ -111,9 +111,11 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     @Query(
         """
         SELECT * FROM lazer_score_lite
-        LIMIT :limit OFFSET :offset
-    """, nativeQuery = true)
-    fun findByOffset(offset: Int, limit: Int): List<LazerScoreLite>
+        WHERE id > :lastId
+        ORDER BY id
+        LIMIT :limit
+""", nativeQuery = true)
+    fun findByLastID(lastId: Long, limit: Int): List<LazerScoreLite>
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {
@@ -134,7 +136,9 @@ interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, Scor
     @Query(
         """
         SELECT * FROM score_statistic
-        LIMIT :limit OFFSET :offset
-    """, nativeQuery = true)
-    fun findByOffset(offset: Int, limit: Int): List<ScoreStatisticLite>
+        WHERE id > :lastId
+        ORDER BY id
+        LIMIT :limit
+""", nativeQuery = true)
+    fun findByLastID(lastId: Long, limit: Int): List<ScoreStatisticLite>
 }
