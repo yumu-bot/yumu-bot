@@ -165,7 +165,17 @@ class TachyonScoreLite(
         }
 
         fun List<LazerMod>.toEntity(): Pair<List<String>?, String?> {
-            val acronyms = this.map { it.acronym }.takeIf { it.isNotEmpty() }
+            val acronyms = this.map {
+                if (it.acronym.length > 2) {
+                    if (it.acronym == "10K") {
+                        "XK"
+                    } else {
+                        it.acronym.take(2)
+                    }
+                } else {
+                    it.acronym
+                }
+            }.takeIf { it.isNotEmpty() }
 
             val settings = this.associate { it.acronym to it.settings }.filterValues { ss -> ss != null }
 
@@ -192,7 +202,14 @@ class TachyonScoreLite(
             // 3. 遍历 acronyms，直接拼装 JsonNode
             acronyms.forEach { acronym ->
                 val modNode = mapper.createObjectNode()
-                modNode.put("acronym", acronym)
+
+                val acronym2 = if (acronym == "XK") {
+                    "10K"
+                } else {
+                    acronym
+                }
+
+                modNode.put("acronym", acronym2)
 
                 val modSettings = settingsTree.get(acronym)
                 if (modSettings != null && !modSettings.isNull) {
