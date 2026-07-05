@@ -13,8 +13,6 @@ import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import java.time.format.TextStyle
-import java.util.Locale
 
 @Service("GROUP_COLLECT")
 @CheckPermission(isSuperAdmin = true)
@@ -86,18 +84,48 @@ class GroupCollectService(
 
         sb.append("\n")
 
-        val dayOfWeekCount = this.groupingBy { it.createTime.dayOfWeek }
-            .eachCount()
-            .toList()
-            .sortedByDescending { it.second }.take(5)
+        sb.append("最活跃的星期段：\n")
 
-        sb.append("最活跃的星期：\n")
+        if (this.isNotEmpty()) {
+            // 1. 将所有调用时间提取为 LocalDate 并排序
+            val dates = this.map { it.createTime.toLocalDate() }.sorted()
 
-        if (dayOfWeekCount.isNotEmpty()) {
-            dayOfWeekCount.forEach { (day, count) ->
-                val dayName = day.getDisplayName(TextStyle.FULL, Locale.SIMPLIFIED_CHINESE)
-                sb.append("$dayName: $count 次\n")
+            var maxCount = 0
+            var bestStartDate = dates.first()
+            var bestEndDate = dates.first().plusDays(6)
+
+            // 2. 双指针滑动窗口：找出包含数据最多的 7 天区间
+            var right = 0
+            for (left in dates.indices) {
+                val start = dates[left]
+                val end = start.plusDays(6) // 包含开始当天，一共 7 天
+
+                // 右指针向右扩展，直到超出 7 天范围
+                while (right < dates.size && !dates[right].isAfter(end)) {
+                    right++
+                }
+
+                // 当前窗口内的调用次数
+                val currentCount = right - left
+                if (currentCount > maxCount) {
+                    maxCount = currentCount
+                    bestStartDate = start
+                    bestEndDate = end
+                }
             }
+
+            // 3. 格式化输出
+            sb.append("${bestStartDate.format(formatter)} 到 ${bestEndDate.format(formatter)}: $maxCount 次\n")
+        } else {
+            sb.append("无\n")
+        }
+
+        sb.append("\n")
+
+        val latest = this.maxOfOrNull { it.createTime }
+
+        if (latest != null) {
+            sb.append("最近调用：${latest.format(formatter)}\n")
         } else {
             sb.append("无\n")
         }
@@ -111,4 +139,5 @@ class GroupCollectService(
         return sb.toString()
     }
 
+    private val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy年M月d日")
 }
