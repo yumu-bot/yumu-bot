@@ -25,8 +25,8 @@ class RenderWebSocketConfig(
     fun createWebSocketContainer(): ServletServerContainerFactoryBean {
         val container = ServletServerContainerFactoryBean()
 
-        container.maxTextMessageBufferSize = 512.KB.bytesInt
-        container.maxBinaryMessageBufferSize = 512.KB.bytesInt
+        container.maxTextMessageBufferSize = 64.KB.bytesInt
+        container.maxBinaryMessageBufferSize = 256.KB.bytesInt
         container.maxSessionIdleTimeout = 1.minutes.inWholeMilliseconds
 
         return container

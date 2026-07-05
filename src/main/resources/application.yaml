@@ -74,8 +74,8 @@ shiro:
       enable: true
       url: "/pub/onebotSocket"
     timeout: 10
-    max-binary-message-buffer-size: 5120000
-    max-text-message-buffer-size: 512000
+    max-binary-message-buffer-size: 512000
+    max-text-message-buffer-size: 131072
   # 关闭 shiro 默认构造的线程池, 本项目已启用虚拟线程
   task-pool:
     enable-task-pool: false
