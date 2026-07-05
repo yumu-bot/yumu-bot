@@ -72,7 +72,7 @@ class GroupCollectService(
             .append("\n")
             .append("最常用的功能：\n")
 
-        val most = this.groupingBy { it.name }.eachCount().toList().take(5)
+        val most = this.groupingBy { it.name }.eachCount().toList().sortedByDescending { it.first }.take(5)
 
         if (most.isNotEmpty()) {
             most.forEach { (name, count) ->
