@@ -89,7 +89,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SYSTEM_INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("systeminfo", "sys(tem)?", "si", "sy", "系统")
+        appendCommandsIgnoreAll("system\\s*info", "sys(tem)?", "si", "sy", "系统")
     }),
 
     CHECK(CommandPatternBuilder.create {
@@ -103,6 +103,11 @@ enum class Instruction(val pattern: Pattern) {
             REG_NUMBER,
             ANY
         )
+    }),
+
+    GROUP_COLLECT(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("group\\s*collect(ion)?", "go", "群组回收")
+        appendQQOrQQGroup(isDefaultGroup = true)
     }),
 
     // #2 osu! 成绩指令

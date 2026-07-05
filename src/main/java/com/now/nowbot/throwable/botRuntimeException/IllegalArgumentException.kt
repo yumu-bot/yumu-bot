@@ -88,6 +88,9 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class PlayerID:
             WrongException("请输入正确的玩家编号！")
 
+        class QQ:
+            WrongException("请输入正确的 QQ！")
+
         class Quotation:
             WrongException("请使用成对的引号！")
 

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
 interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatistic, Long> {
+
     @Query(
         value = """
             SELECT * FROM service_call_stat
