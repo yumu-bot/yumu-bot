@@ -20,9 +20,8 @@ import java.time.OffsetDateTime
 @Table(name = "tachyon_score",
     indexes = [
         Index(name = "idx_tachyon_user_query", columnList = "user_id, mode, time DESC"),
-        Index(name = "idx_tachyon_user_beatmap_query", columnList = "user_id, beatmap_id, mode, time DESC"),
+        Index(name = "idx_tachyon_score_beatmap_user_best", columnList = "beatmap_id, mode, user_id, pp DESC, accuracy DESC")
 
-        // CREATE INDEX idx_tachyon_time_brin ON tachyon_score USING BRIN (time) WITH (pages_per_range = 32);
         // CREATE INDEX idx_tachyon_mods_gin ON public.tachyon_score USING GIN (mods);
         /*
         Index(

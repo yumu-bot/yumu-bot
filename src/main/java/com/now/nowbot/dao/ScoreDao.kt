@@ -193,7 +193,7 @@ class ScoreDao(
     }
 
     fun getBeatmapScores(userIDs: Collection<Long>, beatmapID: Long, mode: OsuMode): List<LazerScore> {
-        return userIDs.chunked(500).flatMap { chunkedIDs ->
+        return userIDs.chunked(1000).flatMap { chunkedIDs ->
             scoreRepository.getUsersBestScore(chunkedIDs, beatmapID, mode.modeValue)
         }.applyStatistics()
     }

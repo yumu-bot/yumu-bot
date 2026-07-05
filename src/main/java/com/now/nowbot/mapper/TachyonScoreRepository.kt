@@ -58,18 +58,12 @@ interface TachyonScoreRepository: JpaRepository<TachyonScoreLite, Long> {
     fun getUsersRankedScore(userIDs: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<TachyonScoreLite>
 
     @Query("""
-    SELECT t.* FROM (
-        SELECT s.*, 
-               ROW_NUMBER() OVER (
-                   PARTITION BY s.user_id 
-                   ORDER BY s.pp DESC, s.accuracy DESC, s.time DESC
-               ) as rn
-        FROM tachyon_score s
-        WHERE s.user_id IN (:userIDs)
-          AND s.beatmap_id = :beatmapID
-          AND s.mode = :mode
-    ) t
-    WHERE t.rn = 1
+    SELECT DISTINCT ON (s.user_id) s.*
+    FROM tachyon_score s
+    WHERE s.user_id IN (:userIDs)
+      AND s.beatmap_id = :beatmapID
+      AND s.mode = :mode
+    ORDER BY s.user_id, s.pp DESC, s.accuracy DESC
 """, nativeQuery = true)
     fun getUsersBestScore(userIDs: Collection<Long>, beatmapID: Long, mode: Byte): List<TachyonScoreLite>
 
