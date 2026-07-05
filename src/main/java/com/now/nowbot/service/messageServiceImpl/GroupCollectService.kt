@@ -76,7 +76,7 @@ class GroupCollectService(
 
         if (most.isNotEmpty()) {
             most.forEach { (name, count) ->
-                val percent = String.format("%.2f", 100.0 * count / most.size.coerceAtLeast(1))
+                val percent = String.format("%.2f", 100.0 * count / this.size.coerceAtLeast(1))
 
                 sb.append("$name: $count (${percent}%)\n")
             }
