@@ -9,7 +9,8 @@ import java.io.Serializable
 import kotlin.math.roundToInt
 
 @Entity(name = "maimai_song")
-@Table(indexes = [Index(name = "mai_title_query", columnList = "query_text")])
+// @Table(indexes = [Index(name = "mai_title_query", columnList = "query_text")])
+// CREATE INDEX mai_title_trgm ON maimai_song USING gin (query_text gin_trgm_ops);
 class MaiSongLite(
     @Id
     var songID: Int? = null,
@@ -357,8 +358,10 @@ class ChuAliasLite(
     }
 }
 
-@Entity(name = "chunithm_song")
-@Table(indexes = [Index(name = "chu_title_query", columnList = "query_text")])
+@Entity
+@Table(name = "chunithm_song")
+// @Table(indexes = [Index(name = "chu_title_query", columnList = "query_text")])
+// CREATE INDEX chu_title_trgm ON chunithm_song USING gin (query_text gin_trgm_ops);
 class ChuSongLite(
     @Id
     @Column(columnDefinition = "integer")
@@ -490,7 +493,8 @@ class ChuChartLite(
 @Entity
 @Table(
     name = "lx_maimai_song",
-    indexes = [Index(name = "lx_mai_title_query", columnList = "query_text")]
+    // indexes = [Index(name = "lx_mai_title_query", columnList = "query_text")]
+    // CREATE INDEX lx_mai_title_trgm ON lx_maimai_song USING gin (query_text gin_trgm_ops);
 )
 class LxMaiSongLite {
     @Id
