@@ -273,7 +273,7 @@ class LeaderBoardService(
                 calculateApiService.applyPPToScoresWithSameBeatmap(scores)
 
                 val filteredScores = ScoreFilter.filterScores(
-                    List(scores.size) { it + 1 }.zip(scores)
+                    List(scores.size) { it }.zip(scores)
                         .onEach {
                             (i, score) -> score.ranking = i + 1
                         }.toMap(),

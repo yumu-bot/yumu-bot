@@ -328,7 +328,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     FRIEND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("friends?", "fuck", "f", "([好朋]|好朋)友(信息)?", "操")
+        appendCommandsIgnoreAll("friends?", "fuck", "f", "([好朋]|好朋)友(信息|关系)?", "操")
         appendColonCaptureGroup("sort", REG_ANYTHING_BUT_NO_SPACE, MORE)
         appendQQ()
         appendUID()
