@@ -198,10 +198,22 @@ class GroupLeaderBoardService(
                         throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
                     })
 
-                filtered.sortedWith(
-                    compareBy<LazerScore> { if (it.rank == "F") 1 else 0 }
-                        .thenByDescending { it.pp }
-                )
+                filtered.sortedWith { a, b ->
+                    val aIsF = a.rank == "F"
+                    val bIsF = b.rank == "F"
+
+                    when {
+                        aIsF != bIsF -> if (aIsF) 1 else -1
+
+                        aIsF -> {
+                            val aStats = if (a.mode.toSafeModeValue() == 3.toByte()) a.statistics.perfect else a.statistics.great
+                            val bStats = if (b.mode.toSafeModeValue() == 3.toByte()) b.statistics.perfect else b.statistics.great
+                            bStats.compareTo(aStats)
+                        }
+
+                        else -> b.pp.compareTo(a.pp)
+                    }
+                }
             }
 
             val userDeferred = async {

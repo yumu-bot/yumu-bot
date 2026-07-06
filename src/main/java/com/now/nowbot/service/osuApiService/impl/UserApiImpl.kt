@@ -155,7 +155,7 @@ import java.util.concurrent.CancellationException
 
         user.currentOsuMode = getMode(mode, user.defaultOsuMode)
 
-        userInfoDao.saveUserTodayAsync(user, user.currentOsuMode)
+        userInfoDao.upsertUserTodayAsync(user, user.currentOsuMode)
         bindDao.updateNameToIDAsync(user)
 
         return user
@@ -170,7 +170,7 @@ import java.util.concurrent.CancellationException
 
         user.currentOsuMode = getMode(mode, user.defaultOsuMode)
 
-        userInfoDao.saveUserTodayAsync(user, user.currentOsuMode)
+        userInfoDao.upsertUserTodayAsync(user, user.currentOsuMode)
         bindDao.updateNameToIDAsync(user)
 
         return user
@@ -186,7 +186,7 @@ import java.util.concurrent.CancellationException
 
         user.currentOsuMode = getMode(mode, user.defaultOsuMode)
 
-        userInfoDao.saveUserTodayAsync(user, user.currentOsuMode)
+        userInfoDao.upsertUserTodayAsync(user, user.currentOsuMode)
         bindDao.updateNameToIDAsync(user)
 
         return user

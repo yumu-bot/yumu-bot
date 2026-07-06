@@ -167,34 +167,33 @@ class OsuUserInfoDao(
         return count.toDouble() / size
     }
 
-    fun saveUserTodayAsync(user: OsuUser, mode: OsuMode) {
+    fun upsertUserTodayAsync(user: OsuUser, mode: OsuMode) {
         Thread.startVirtualThread {
             runCatching {
-                saveUserToday(user, mode)
+                upsertUserToday(user, mode)
             }.onFailure { e ->
                 log.info("玩家数据存储：存储失败：", e)
             }
         }
     }
 
-    private fun saveUserToday(user: OsuUser, mode: OsuMode) {
-        val now = LocalDateTime.now()
+    private fun upsertUserToday(user: OsuUser, mode: OsuMode) {
         val today = LocalDate.now()
 
         val last = getLastToday(user.userID, mode, today)
 
-        if (last != null && user.playCount > 0) {
-
-            // 今天内已经有数据，但是最新的数据发生了变化
-            if (user.playCount != last.playCount) {
-                infoRepository.removeBetween(user.userID, mode, LocalDateTime.of(today, LocalTime.MIN), now)
-            } else {
+        if (last != null) {
+            if (user.playCount == last.playCount || user.playCount <= 0) {
                 return
             }
-        }
 
-        val lite = fromModel(user, mode)
-        infoRepository.saveAndFlush(lite)
+            last.updateFrom(user, mode)
+
+            infoRepository.saveAndFlush(last)
+        } else {
+            val lite = OsuUserInfoArchiveLite().updateFrom(user, mode)
+            infoRepository.saveAndFlush(lite)
+        }
     }
 
     fun saveUsersTodayAsync(users: List<MicroUser>) {
@@ -391,23 +390,23 @@ class OsuUserInfoDao(
             return user
         }
 
-        fun fromModel(data: OsuUser, mode: OsuMode): OsuUserInfoArchiveLite {
-            val archive = OsuUserInfoArchiveLite()
+        private fun OsuUserInfoArchiveLite.updateFrom(user: OsuUser, mode: OsuMode): OsuUserInfoArchiveLite {
+            val archive = this
 
-            archive.userID = data.userID
-            archive.setLiteStatistics(data.statistics)
+            archive.userID = user.userID
+            archive.setLiteStatistics(user.statistics)
 
-            archive.playCount = data.playCount
-            archive.playTime = data.playTime
-            data.rankHistory?.let { archive.rankHistory = it.data.toString() }
-            archive.beatmapPlaycount = data.beatmapPlaycount
-            archive.achievementsCount = data.userAchievementsCount
+            archive.playCount = user.playCount
+            archive.playTime = user.playTime
+            user.rankHistory?.let { archive.rankHistory = it.data.toString() }
+            archive.beatmapPlaycount = user.beatmapPlaycount
+            archive.achievementsCount = user.userAchievementsCount
 
             // 过滤掉非法的游戏模式
             if (mode.isDefault()) {
-                archive.mode = OsuMode.getMode(data.currentOsuMode.modeValue % 4)
+                archive.mode = OsuMode.getMode(user.currentOsuMode.toSafeModeValue())
             } else {
-                archive.mode = OsuMode.getMode(mode.modeValue % 4)
+                archive.mode = OsuMode.getMode(mode.toSafeModeValue())
             }
 
             archive.time = LocalDateTime.now()

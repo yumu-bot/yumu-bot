@@ -47,7 +47,7 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
                     and osu_id is not null
                     and mode is not null
                     and play_count is not null
-                    order by osu_id, mode, play_count
+                    ORDER BY osu_id, mode, time DESC
                 ) as shadow
                 """, nativeQuery = true
     ) fun getFromUserIDs(
@@ -93,6 +93,7 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
     """,
         nativeQuery = true
     )
+    // 这个很重，每天执行一次
     fun getLatestBetween(
         from: LocalDateTime,
         to: LocalDateTime
@@ -115,12 +116,22 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
 
     @Query(
         value = """
+        (
             SELECT * FROM osu_user_info_archive 
-            WHERE osu_id = :userID 
-              AND mode = :mode 
-            ORDER BY ABS(pp - :target) 
+            WHERE osu_id = :userID AND mode = :mode AND pp >= :target
+            ORDER BY pp
             LIMIT 1
-        """,
+        )
+        UNION ALL
+        (
+            SELECT * FROM osu_user_info_archive 
+            WHERE osu_id = :userID AND mode = :mode AND pp < :target
+            ORDER BY pp DESC
+            LIMIT 1
+        )
+        ORDER BY ABS(pp - :target)
+        LIMIT 1
+    """,
         nativeQuery = true
     )
     fun getClosestFromTarget(
