@@ -11,10 +11,13 @@ import java.util.UUID
 interface BeatmapCountMapper : JpaRepository<BeatmapCountLite, Long> {
 
     @Query("""
-         select density from beatmap_count where id = :beatmapID and hash = :hash::uuid limit 1
-    """, nativeQuery = true)
+     select density from beatmap_count 
+     where id = :beatmapID and hash = CAST(:hash AS uuid) 
+     limit 1
+""", nativeQuery = true)
     fun getDensityByBeatmapIDAndHash(
-        @Param("beatmapID") beatmapID: Long, @Param("hash") hash: UUID
+        @Param("beatmapID") beatmapID: Long,
+        @Param("hash") hash: UUID
     ): IntArray?
 
     @Query("select density from beatmap_count where id = :beatmapID limit 1", nativeQuery = true)
