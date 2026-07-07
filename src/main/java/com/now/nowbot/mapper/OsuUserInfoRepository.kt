@@ -139,4 +139,9 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
         mode: OsuMode,
         target: Double
     ): OsuUserInfoArchiveLite?
+
+    @Query(value = """
+        SELECT * FROM osu_user_info_archive WHERE id > :lastId ORDER BY id LIMIT 1000
+    """, nativeQuery = true)
+    fun findTop1000ByIdGreaterThanOrderByIdAsc(lastId: Long): List<OsuUserInfoArchiveLite>
 }

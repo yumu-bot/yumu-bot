@@ -210,7 +210,7 @@ class OsuUserInfoDao(
         }
     }
 
-    private fun upsertUserToday(user: OsuUser) {
+    fun upsertUserToday(user: OsuUser) {
         upsertPercent(user)
         upsertGlobalRank(user)
         upsertUserInfo(user)
@@ -403,12 +403,11 @@ class OsuUserInfoDao(
             userRankPercentRepository.upsert(entity)
         } else {
             // 新增
-            val entity = UserInfoLite().updateFrom(user).apply {
-                this.createdAt = today
-                this.updatedAt = today
-            }
+            val entity = UserRankPercentLite().updateFrom(user)?.apply {
+                this.date = today
+            } ?: return
 
-            userInfoRepository.upsert(entity)
+            userRankPercentRepository.upsert(entity)
         }
     }
 
@@ -556,7 +555,7 @@ class OsuUserInfoDao(
                 this.updatedAt = today
             }
 
-            userStatisticsRepository.save(entity)
+            userStatisticsRepository.upsert(entity)
         }
     }
 
