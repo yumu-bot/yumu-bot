@@ -8,20 +8,20 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.sql.Types
+import java.util.UUID
 
 @Entity
 @Table(
     name = "beatmap_count",
 )
 class BeatmapCountLite(
-        @Id
+    @Id
         @Column(name = "id")
     val beatmapID: Long,
 
-    @JdbcTypeCode(Types.CHAR)
-    @Column(name = "hash", columnDefinition = "CHAR(32)")
-    var hash: String? = null,
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "hash", columnDefinition = "uuid")
+    var hash: UUID? = null,
 
     @JdbcTypeCode(SqlTypes.VARBINARY)
     @Column(name = "delta")
@@ -36,11 +36,16 @@ class BeatmapCountLite(
         return delta?.let { TimestampConverter.bytesToIntArray(it) }
     }
 
-    /**
-     * 写入时间戳数组（自动转为二进制存储）
-     */
     fun writeTimestamps(ints: IntArray?) {
         this.delta = ints?.let { TimestampConverter.intArrayToBytes(it) }
+    }
+
+    fun readHash(): String? {
+        return hash?.let { UUIDConverter.uuidToMD5(it) }
+    }
+
+    fun writeHash(hash: String?) {
+        this.hash = hash?.let { UUIDConverter.md5ToUUID(it) }
     }
 
     interface TimeResult {
@@ -49,7 +54,25 @@ class BeatmapCountLite(
     }
 }
 
+object UUIDConverter {
+    fun md5ToUUID(md5: String): UUID {
+        require(md5.length == 32) { "MD5 length must be 32" }
+
+        // 拼接成标准 UUID 格式: 8-4-4-4-12
+        val uuidStr = "${md5.substring(0, 8)}-${md5.substring(8, 12)}-${md5.substring(12, 16)}-${md5.substring(16, 20)}-${md5.substring(20)}"
+        return UUID.fromString(uuidStr)
+    }
+
+    /**
+     * 将 UUID 对象还原为 32 位纯 MD5 字符串
+     */
+    fun uuidToMD5(uuid: UUID): String {
+        return uuid.toString().replace("-", "")
+    }
+}
+
 object TimestampConverter {
+
 
     /**
      * 将绝对时间戳数组转为【Variant 差值字节数组】

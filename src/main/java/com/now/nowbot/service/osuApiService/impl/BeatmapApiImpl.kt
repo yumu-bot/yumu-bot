@@ -7,6 +7,7 @@ import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapCountLite
 import com.now.nowbot.entity.TimestampConverter
+import com.now.nowbot.entity.UUIDConverter
 import com.now.nowbot.mapper.BeatmapCountMapper
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.CosuRequest
@@ -805,9 +806,9 @@ class BeatmapApiImpl(
 
         val result = BeatmapCountLite(beatmapID).apply {
             this.writeTimestamps(times)
+            this.writeHash(md5)
 
             this.density = grouping
-            this.hash = md5
         }
 
         return result
@@ -821,7 +822,7 @@ class BeatmapApiImpl(
 
         if (!md5.isNullOrBlank()) {
             result = beatmapCountMapper.getDensityByBeatmapIDAndHash(
-                beatmap.beatmapID, md5
+                beatmap.beatmapID, UUIDConverter.md5ToUUID(md5)
             )
         }
 

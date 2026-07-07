@@ -1,5 +1,6 @@
 package com.now.nowbot;
 
+import com.now.nowbot.config.FuckOffRedisConfig;
 import com.now.nowbot.config.OneBotConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,9 @@ public class NowbotApplication {
 
     public static void main(String[] args) throws IOException {
         var application = new SpringApplication(NowbotApplication.class);
+        application.addListeners(new FuckOffRedisConfig());
         application.setBannerMode(Banner.Mode.OFF);
+
         application.run(args);
     }
 }

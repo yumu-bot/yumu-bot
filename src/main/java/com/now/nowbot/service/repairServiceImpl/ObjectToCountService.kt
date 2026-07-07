@@ -78,11 +78,11 @@ class ObjectToCountService(
                 // 创建新实体
                 val newEntity = BeatmapCountLite(
                     beatmapID = bid,
-                    hash = oldData.check,
                     density = oldData.density
                 )
 
                 newEntity.writeTimestamps(oldTimestamps)
+                newEntity.writeHash(oldData.check)
 
                 newEntity
             }
