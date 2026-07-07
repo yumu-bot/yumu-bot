@@ -52,6 +52,11 @@ class BeatmapCountLite(
         val beatmapID: Long
         val delta: ByteArray
     }
+
+    interface DensityResult {
+        val density: IntArray?
+        val hash: UUID?
+    }
 }
 
 object UUIDConverter {

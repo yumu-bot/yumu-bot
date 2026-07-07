@@ -821,9 +821,9 @@ class BeatmapApiImpl(
         var result: IntArray? = null
 
         if (!md5.isNullOrBlank()) {
-            result = beatmapCountMapper.getDensityByBeatmapIDAndHash(
-                beatmap.beatmapID, UUIDConverter.md5ToUUID(md5)
-            )
+            val entity = beatmapCountMapper.getDensityResultByBeatmapID(beatmap.beatmapID)
+
+            result = entity?.takeIf { it.hash == UUIDConverter.md5ToUUID(md5) }?.density
         }
 
         if (result == null) {
