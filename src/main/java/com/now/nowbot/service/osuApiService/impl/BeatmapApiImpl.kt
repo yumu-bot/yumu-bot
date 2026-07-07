@@ -5,8 +5,9 @@ import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.BeatmapDao
-import com.now.nowbot.entity.BeatmapObjectCountLite
-import com.now.nowbot.mapper.BeatmapObjectCountMapper
+import com.now.nowbot.entity.BeatmapCountLite
+import com.now.nowbot.entity.TimestampConverter
+import com.now.nowbot.mapper.BeatmapCountMapper
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.CosuRequest
 import com.now.nowbot.model.calculate.CosuResponse
@@ -36,7 +37,9 @@ import org.springframework.util.DigestUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import tools.jackson.databind.JsonNode
+import java.io.BufferedReader
 import java.io.IOException
+import java.io.StringReader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -49,7 +52,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.regex.Pattern
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
@@ -61,7 +63,7 @@ class BeatmapApiImpl(
     private val base: OsuApiBaseService,
     private val beatmapDao: BeatmapDao,
     private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
-    private val beatmapObjectCountMapper: BeatmapObjectCountMapper,
+    private val beatmapCountMapper: BeatmapCountMapper,
 
     @param:Qualifier("proxyRestClient") private val proxyClient: RestClient,
 
@@ -624,159 +626,266 @@ class BeatmapApiImpl(
         }
     }
 
-    /**
-     * @throws IndexOutOfBoundsException 谱面不完整的时候会丢这个
-     */
-    @Throws(IndexOutOfBoundsException::class)
-    private fun getMapObjectList(mapStr: String): List<Int> {
-        val start = mapStr.indexOf("[HitObjects]") + 12
-        val end = mapStr.indexOf("[", start)
-        val hit = if (end > start) {
-            mapStr.substring(start, end)
-        } else {
-            mapStr.substring(start)
+    private fun getTimestamp(str: String): IntArray {
+        val hitObjectsIdx = str.indexOf("[HitObjects]")
+        if (hitObjectsIdx == -1) {
+            return intArrayOf()
         }
 
-        val hitObjects = hit.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        val hitObjectStr = hitObjects.filterNot { it.isBlank() }
+        // 截取 [HitObjects] 之后的内容，减少后续处理的文本量
+        val hitSection = str.substring(hitObjectsIdx + 12)
 
-        val p = Pattern.compile("^\\d+,\\d+,(\\d+)")
+        // 使用动态扩容的 IntArray 避免 List<Int> 的自动装箱操作
+        var capacity = 512
+        var result = IntArray(capacity)
+        var size = 0
 
-        return hitObjectStr.map {
-            val m2 = p.matcher(it)
-            if (m2.find()) {
-                return@map m2.group(1).toInt()
-            } else {
-                return@map 0
+        // 使用 BufferedReader 逐行读取，内存极度友好
+        BufferedReader(StringReader(hitSection)).use { reader ->
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                val trimmed = line!!.trim()
+                if (trimmed.isEmpty()) continue
+
+                // 如果遇到了下一个配置组（例如 [TimingPoints]），直接提前结束读取
+                if (trimmed.startsWith("[")) {
+                    break
+                }
+
+                // 高效的手动字符串切分，替代复杂的正则表达式
+                // osu 格式: x,y,time,type,hitSound,objectParams...
+                val firstComma = trimmed.indexOf(',')
+                if (firstComma == -1) continue
+
+                val secondComma = trimmed.indexOf(',', firstComma + 1)
+                if (secondComma == -1) continue
+
+                val thirdComma = trimmed.indexOf(',', secondComma + 1)
+                // 考虑有些滑条或转盘参数较少，如果没有第三个逗号，说明时间戳是最后的整段
+                val timeStr = if (thirdComma == -1) {
+                    trimmed.substring(secondComma + 1)
+                } else {
+                    trimmed.substring(secondComma + 1, thirdComma)
+                }
+
+                // 安全转换为 Int
+                val time = timeStr.toIntOrNull() ?: 0
+
+                // 动态扩容 IntArray
+                if (size == capacity) {
+                    capacity *= 2
+                    result = result.copyOf(capacity)
+                }
+                result[size++] = time
             }
+        }
+
+        // 裁剪到实际大小并返回
+        return if (size == result.size) {
+            result
+        } else {
+            result.copyOf(size)
         }
     }
 
-    private fun getGrouping(x: List<Int>, groups: Int = 26): List<Int> {
+    private fun getGrouping(x: IntArray, groups: Int = 26): IntArray {
         require(groups >= 1)
-        if (x.isEmpty()) return emptyList()
 
-        val steps: Int = (x.last() - x.first()) / (groups + 1)
-        val out = LinkedList<Int>()
-        var m: Int = x.first() + steps
-        var sum: Short = 0
-        for (i in x) {
-            if (i < m) {
-                sum++
-            } else {
-                out.add(sum.toInt())
-                sum = 0
-                m += steps
+        if (x.isEmpty()) return IntArray(groups)
+
+        val firstTime = x.first()
+        val lastTime = x.last()
+        val totalDuration = lastTime - firstTime
+
+        if (totalDuration == 0) {
+            val out = IntArray(groups)
+            out[0] = x.size
+            return out
+        }
+
+        val out = IntArray(groups)
+
+        for (time in x) {
+            var bucketIndex = ((time - firstTime).toLong() * groups / totalDuration).toInt()
+
+            if (bucketIndex >= groups) {
+                bucketIndex = groups - 1
             }
+
+            out[bucketIndex]++
         }
 
         return out
     }
 
-    private fun getCount(bid: Long): BeatmapObjectCountLite? {
-        val result = BeatmapObjectCountLite()
-        result.bid = bid
-        var file = getBeatmapFileString(bid)
-        if (file == null) {
-            refreshBeatmapFileFromDirectory(bid)
-            file = getBeatmapFileString(bid)
-            if (file == null) {
-                return null
+    private inline fun <T> tryWithRetry(
+        fn: () -> T?,
+        refresh: () -> Unit
+    ): T? {
+        // 1. 尝试第一次获取
+        return fn() ?: run {
+            refresh()
+            fn()
+        }
+    }
+
+    /**
+     * 通用的异常重试高阶函数
+     * @param E 期望捕获的异常类型
+     * @param T 返回的数据类型
+     * @param block 核心执行逻辑
+     * @param onException 发生异常时的刷新/补偿逻辑
+     * @param onFailure 彻底失败（第二次也崩溃）时的兜底返回值
+     */
+    private inline fun <reified E : Throwable, T> tryWithExceptionRetry(
+        block: () -> T,
+        onException: () -> Unit,
+        onFailure: () -> T
+    ): T {
+        return try {
+            block()
+        } catch (e: Throwable) {
+            if (e is E) {
+                onException() // 触发刷新
+                try {
+                    block() // 再次尝试
+                } catch (second: Throwable) {
+                    if (second is E) onFailure() else throw second
+                }
+            } else {
+                throw e
             }
         }
+    }
+    
+    private fun getTimeStampByBeatmapIDAndIndex(beatmapID: Long, index: Int): Int? {
+        val entity = beatmapCountMapper.findById(beatmapID).orElse(null) ?: return null
+        val times = entity.readTimestamps() ?: return null
+
+        val ktIndex = index - 1
+        if (ktIndex !in times.indices) return null
+
+        return times[ktIndex] - times[0]
+    }
+
+    private fun getTimeStampPercentageByBeatmapIDAndIndex(beatmapID: Long, index: Int): Double? {
+        val entity = beatmapCountMapper.findById(beatmapID).orElse(null) ?: return null
+
+        return getPercentageByEntity(entity.readTimestamps(), index)
+    }
+
+    private fun getPercentageByEntity(times: IntArray?, index: Int): Double? {
+        if (times == null) return null
+
+        val ktIndex = index - 1
+        if (ktIndex !in times.indices || times.size < 2) return null
+
+        val totalDuration = times.last() - times[0]
+        if (totalDuration == 0) return 0.0
+
+        val currentOffset = times[ktIndex] - times[0]
+        return currentOffset.toDouble() / totalDuration
+    }
+
+    private fun getBeatmapCountLite(beatmapID: Long): BeatmapCountLite? {
+        val file: String = tryWithRetry(
+            fn = { getBeatmapFileString(beatmapID) },
+            refresh = { refreshBeatmapFileFromDirectory(beatmapID) }
+        ) ?: return null
+
         val md5 = getBeatmapMD5(file)
 
-        result.check = md5
+        val times: IntArray = tryWithExceptionRetry<IndexOutOfBoundsException, IntArray>(
+            block = { getTimestamp(file) },
+            onException = { refreshBeatmapFileFromDirectory(beatmapID) },
+            onFailure = { return BeatmapCountLite(beatmapID) }
+        )
 
-        var objectList: List<Int>
+        val grouping = getGrouping(times)
 
-        try {
-            objectList = getMapObjectList(file)
-        } catch (_: IndexOutOfBoundsException) {
-            refreshBeatmapFileFromDirectory(bid)
-            try {
-                objectList = getMapObjectList(file)
-            } catch (_: IndexOutOfBoundsException) {
-                result.timestamp = intArrayOf()
-                result.density = intArrayOf()
-                return result
-            }
+        val result = BeatmapCountLite(beatmapID).apply {
+            this.writeTimestamps(times)
+
+            this.density = grouping
+            this.hash = md5
         }
-
-        result.timestamp = objectList.toIntArray()
-        val grouping = getGrouping(objectList)
-        result.density = grouping.toIntArray()
 
         return result
     }
 
     override fun getBeatmapObjectGrouping26(beatmap: Beatmap): IntArray {
+
+        val md5 = beatmap.md5
+
         var result: IntArray? = null
-        if (!beatmap.md5.isNullOrBlank()) {
-            val r = beatmapObjectCountMapper.getDensityByBidAndCheck(
-                beatmap.beatmapID, beatmap.md5!!
+
+        if (!md5.isNullOrBlank()) {
+            result = beatmapCountMapper.getDensityByBeatmapIDAndHash(
+                beatmap.beatmapID, md5
             )
-            if (r.isNotEmpty()) result = r.first()
-        } else {
-            val r = beatmapObjectCountMapper.getDensityByBid(beatmap.beatmapID)
-            if (r.isNotEmpty()) result = r.first()
         }
 
         if (result == null) {
-            var dataObj = getCount(beatmap.beatmapID)
-            dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj!!)
+            result = beatmapCountMapper.getDensityByBeatmapID(beatmap.beatmapID)
+        }
 
-            result = dataObj.density
+
+        if (result == null) {
+            val entity = beatmapCountMapper.saveAndFlush(getBeatmapCountLite(beatmap.beatmapID) ?: return intArrayOf(0))
+
+            result = entity.density
         }
 
         return result ?: intArrayOf(0)
     }
 
-    override fun getFailTime(bid: Long, passObj: Int): Int {
-        if (passObj <= 0) return 0
-        val time = beatmapObjectCountMapper.getTimeStampByBidAndIndex(bid, passObj) ?: try {
-            var dataObj = getCount(bid) ?: return 0
-            if (dataObj.timestamp!!.size < passObj) return 0
+    override fun getFailTime(bid: Long, index: Int): Int {
+        if (index <= 0) return 0
+        val time = getTimeStampByBeatmapIDAndIndex(bid, index)
+            ?: runCatching {
+                val count = getBeatmapCountLite(bid) ?: return 0
 
-            dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj)
-            val start = dataObj.timestamp!![0]
-            return dataObj.timestamp!![passObj] - start
-        } catch (_: Exception) {
-            return 0
-        }
+                if ((count.readTimestamps()?.size ?: 0) < index) return 0
+
+                val timestamps = beatmapCountMapper.saveAndFlush(count).readTimestamps() ?: return 0
+                return timestamps[index] - timestamps[0]
+            }.getOrElse { return 0 }
+
         return (time / 1000)
     }
 
     override fun getAllFailTime(all: List<Pair<Long, Int>>): List<Int> {
         if (all.isEmpty()) return emptyList()
-        val bidList = all.map { it.first }
-        val timeMap: Map<Long, IntArray> = beatmapObjectCountMapper
-            .getTimeStampByBid(bidList).associate { it.bid to it.times }
 
-        val result = ArrayList<Int>(all.size)
+        val bids = all.map { it.first }.toSet()
 
-        for ((bid, passObj) in all) {
-            val time = timeMap[bid] ?: try {
-                val dataObj = getCount(bid)
-                if (dataObj?.timestamp == null || dataObj.timestamp!!.size < passObj) {
-                    result.add(0)
-                    continue
+        // 1. 初始化非空 Value 的可变 Map
+        val timeMap: MutableMap<Long, IntArray> = beatmapCountMapper
+            .getTimeStampByBeatmapIDs(bids)
+            .associateTo(HashMap()) { it.beatmapID to TimestampConverter.bytesToIntArray(it.delta) }
+
+        return all.map { (bid, index) ->
+            val time: IntArray = timeMap.computeIfAbsent(bid) { _ ->
+                try {
+                    // 如果找不到谱面，返回空数组，避免下次循环重复去数据库捞文件
+                    val count = getBeatmapCountLite(bid) ?: return@computeIfAbsent intArrayOf()
+                    val timestamps = count.readTimestamps() ?: return@computeIfAbsent intArrayOf()
+
+                    if (timestamps.size <= index) return@computeIfAbsent intArrayOf()
+
+                    beatmapCountMapper.saveAndFlush(count)
+                    timestamps
+                } catch (_: Exception) {
+                    intArrayOf()
                 }
-                beatmapObjectCountMapper.saveAndFlush(dataObj)
-                timeMap.plus(bid to dataObj.timestamp)
-                dataObj.timestamp!!
-            } catch (_: Exception) {
-                result.add(0)
-                continue
-            }
-            if (time.size <= passObj) {
-                result.add(0)
-                continue
             }
 
-            result.add((time[passObj] - time[0]) / 1000)
+            if (index !in time.indices) {
+                0
+            } else {
+                (time[index] - time[0]) / 1000
+            }
         }
-        return result
     }
 
     override fun getAllBeatmapHitLength(bid: Collection<Long>): List<Pair<Long, Int>> {
@@ -812,19 +921,14 @@ class BeatmapApiImpl(
      */
     override fun getPlayPercentage(score: LazerScore): Double {
         if (score.passed) return 1.0
-        val n = score.scoreHit
+        val index = score.scoreHit
+        val id = score.beatmap.beatmapID.takeIf { it > 0 } ?: return 1.0
 
-        var playPercentage = beatmapObjectCountMapper.getTimeStampPercentageByBidAndIndex(score.beatmap.beatmapID, n)
+        var playPercentage = getTimeStampPercentageByBeatmapIDAndIndex(id, index)
 
         if (playPercentage == null) {
-            try {
-                getBeatmapObjectGrouping26(score.beatmap)
-                playPercentage =
-                    beatmapObjectCountMapper.getTimeStampPercentageByBidAndIndex(score.beatmap.beatmapID, n)
-            } catch (e: Exception) {
-                log.error("计算或存储物件数据失败", e)
-                playPercentage = 1.0
-            }
+            val lite = getBeatmapCountLite(id) ?: return 1.0
+            playPercentage = getPercentageByEntity(lite.readTimestamps(), index)
         }
 
         // 仍然失败, 取消计算

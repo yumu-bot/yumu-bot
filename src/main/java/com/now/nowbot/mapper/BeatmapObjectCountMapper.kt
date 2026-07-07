@@ -1,6 +1,8 @@
 package com.now.nowbot.mapper
 
 import com.now.nowbot.entity.BeatmapObjectCountLite
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
@@ -33,4 +35,7 @@ interface BeatmapObjectCountMapper:JpaRepository<BeatmapObjectCountLite, Long> {
         oc.bid = :bid
     """, nativeQuery = true)
     fun getTimeStampPercentageByBidAndIndex(bid: Long, index:Int): Double?
+
+    @Query("select o from BeatmapObjectCountLite o")
+    fun findAllBySlice(pageable: Pageable): Slice<BeatmapObjectCountLite>
 }

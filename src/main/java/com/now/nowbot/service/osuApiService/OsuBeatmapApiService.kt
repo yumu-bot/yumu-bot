@@ -74,9 +74,9 @@ interface OsuBeatmapApiService {
 
     @Throws(Exception::class) fun getBeatmapObjectGrouping26(beatmap: Beatmap): IntArray
 
-    fun getFailTime(bid: Long, passObj: Int): Int
+    fun getFailTime(bid: Long, index: Int): Int
 
-    fun getAllFailTime(all:List<Pair<Long, Int>>): List<Int>
+    fun getAllFailTime(all: List<Pair<Long, Int>>): List<Int>
 
     fun getAllBeatmapHitLength(bid: Collection<Long>): List<Pair<Long, Int>>
 

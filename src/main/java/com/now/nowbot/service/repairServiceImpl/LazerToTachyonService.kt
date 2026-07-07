@@ -34,6 +34,7 @@ class LazerToTachyonService(
         messageText: String,
         data: MessageService.DataValue<Boolean>
     ): Boolean {
+        /*
         val fix = "!" + "lt"
 
         if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
@@ -47,6 +48,8 @@ class LazerToTachyonService(
             data.value = false
             return true
         }
+
+         */
 
         return false
     }
