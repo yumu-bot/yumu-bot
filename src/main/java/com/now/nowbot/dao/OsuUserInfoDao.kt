@@ -374,7 +374,7 @@ class OsuUserInfoDao(
                 this.date = today
             }
 
-            userRankPercentRepository.upsert(entity)
+            userRankPercentRepository.save(entity)
         }
     }
 
@@ -407,7 +407,7 @@ class OsuUserInfoDao(
                 this.date = today
             } ?: return
 
-            userRankPercentRepository.upsert(entity)
+            userRankPercentRepository.save(entity)
         }
     }
 
@@ -487,7 +487,7 @@ class OsuUserInfoDao(
                 this.updatedAt = today
             }
 
-            userInfoRepository.upsert(entity)
+            userInfoRepository.save(entity)
         }
     }
 
@@ -521,7 +521,7 @@ class OsuUserInfoDao(
                 this.updatedAt = today
             }
 
-            userStatisticsRepository.upsert(entity)
+            userStatisticsRepository.save(entity)
         }
     }
 
@@ -555,7 +555,7 @@ class OsuUserInfoDao(
                 this.updatedAt = today
             }
 
-            userStatisticsRepository.upsert(entity)
+            userStatisticsRepository.save(entity)
         }
     }
 
