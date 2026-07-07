@@ -221,7 +221,7 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
      replays_watched, max_combo, level_current, level_progress, 
      created_at, updated_at) 
     VALUES 
-    (:#{#entity.id}, :#{#entity.userID}, :#{#entity.mode}, :#{#entity.rankedScore}, :#{#entity.totalScore}, :#{#entity.totalHits}, :#{playTime}, :#{playCount}, :#{#entity.pp}, :#{#entity.accuracy}, 
+    (:#{#entity.id}, :#{#entity.userID}, :#{#entity.mode}, :#{#entity.rankedScore}, :#{#entity.totalScore}, :#{#entity.totalHits}, :#{#entity.playTime}, :#{#entity.playCount}, :#{#entity.pp}, :#{#entity.accuracy}, 
      :#{#entity.countSSH}, :#{#entity.countSS}, :#{#entity.countSH}, :#{#entity.countS}, :#{#entity.countA}, 
      :#{#entity.replaysWatched}, :#{#entity.maxCombo}, :#{#entity.levelCurrent}, :#{#entity.levelProgress}, 
      :#{#entity.createdAt}, :#{#entity.updatedAt}) 
@@ -254,10 +254,10 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     """, nativeQuery = true)
     fun update(@Param("entityID") entityID: Long, @Param("updatedAt") updatedAt: LocalDate): Int
 
-    @Query("FROM UserStatisticsLite WHERE userID IN :userIDs AND mode = :mode")
+    @Query("SELECT s FROM UserStatisticsLite s WHERE s.userID IN :userIDs AND s.mode = :mode")
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserStatisticsLite>
 
-    @Query("FROM UserStatisticsLite WHERE userID IN :userIDs AND :updatedAt BETWEEN :from AND :to")
+    @Query("SELECT s FROM UserStatisticsLite s WHERE s.userID IN :userIDs AND s.updatedAt BETWEEN :from AND :to")
     fun getLatestBatchBetween(userIDs: Collection<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite>
 
     // 2. 批量更新日期：用于 totalHits 没有变化，只需更新 updatedAt 的场景
@@ -382,7 +382,7 @@ interface UserRankPercentRepository: JpaRepository<UserRankPercentLite, UserRank
     WHERE r.user_id IN :userIDs AND r.mode = :mode
     AND (r.user_id, r.date) IN (
         SELECT user_id, MAX(date) 
-        FROM user_rank 
+        FROM user_rank_percent 
         WHERE user_id IN :userIDs AND mode = :mode 
         GROUP BY user_id
     )
@@ -408,7 +408,7 @@ interface UserRankPercentRepository: JpaRepository<UserRankPercentLite, UserRank
     )
     fun upsert(@Param("entity") entity: UserRankPercentLite): Int
 
-    @Query("FROM UserRankPercentLite WHERE userID IN :userIDs AND mode = :mode")
+    @Query("SELECT s FROM UserRankPercentLite s WHERE s.userID IN :userIDs AND s.mode = :mode")
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserRankPercentLite>
 
     @Query(
