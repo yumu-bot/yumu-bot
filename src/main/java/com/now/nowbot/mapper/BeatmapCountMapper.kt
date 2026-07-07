@@ -17,10 +17,10 @@ interface BeatmapCountMapper : JpaRepository<BeatmapCountLite, Long> {
     ): IntArray?
 
     @Query("select density from beatmap_count where id = :beatmapID limit 1", nativeQuery = true)
-    fun getDensityByBeatmapID(@Param("bid") bid: Long): IntArray?
+    fun getDensityByBeatmapID(@Param("beatmapID") beatmapID: Long): IntArray?
 
     @Query("""
-        select id as beatmapID, delta as delta from beatmap_count where id in (:bid)
+        select id as beatmapID, delta as delta from beatmap_count where id in (:beatmapIDs)
     """, nativeQuery = true)
-    fun getTimeStampByBeatmapIDs(@Param("bid") bid: Collection<Long>): List<BeatmapCountLite.TimeResult>
+    fun getTimeStampByBeatmapIDs(@Param("beatmapIDs") beatmapIDs: Collection<Long>): List<BeatmapCountLite.TimeResult>
 }

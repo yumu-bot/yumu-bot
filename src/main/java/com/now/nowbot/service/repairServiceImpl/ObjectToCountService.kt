@@ -26,12 +26,15 @@ class ObjectToCountService(
         messageText: String,
         data: MessageService.DataValue<Boolean>
     ): Boolean {
+        /*
         val fix = "!" + "co"
 
         if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
             data.value = true
             return true
         }
+
+         */
 
         return false
     }

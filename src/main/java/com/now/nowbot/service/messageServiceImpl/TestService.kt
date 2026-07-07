@@ -4,6 +4,8 @@ import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.cache.QQMessageCacheProvider
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.entity.TimestampConverter
+import com.now.nowbot.mapper.BeatmapCountMapper
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Service
 
 @Service("TEST")
 class TestService(
-    private val matchApiService: OsuMatchApiService
+    private val beatmapCountMapper: BeatmapCountMapper,
 ): MessageService<String> {
     override fun isHandle(
         event: MessageEvent,
@@ -32,30 +34,13 @@ class TestService(
     }
 
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
+        val bid = param.trim().toLongOrNull() ?: return null
 
-        val ids = param.replace("\\s*".toRegex(), "").split(",").map { it.toLongOrNull() ?: throw TipsException("转换 $it 失败") }
+        val delta = beatmapCountMapper.getTimeStampByBeatmapIDs(listOf(bid)).firstOrNull()?.delta ?: return null
 
-        val matches = ids.flatMap { i ->
-            val m = matchApiService.getMatch(i)
+        val result = TimestampConverter.bytesToIntArray(delta)
 
-            m.events.mapNotNull { e -> e.round }.flatMap { r ->
-                r.scores.map { s -> r.beatmap?.previewName to s }
-            }
-        }
-
-        var ok = 0
-
-        matches.forEach { (preview, score) ->
-
-            if (String.format("%.2f", score.accuracy * 100.0).replace(".", "").contains("727", ignoreCase = true)) {
-                ok ++
-                event.replyAsync("找到acc里有 727 的玩家：${score.userID}, ${preview}, ${score.accuracy}")
-            }
-        }
-
-        if (ok == 0) {
-            event.replyAsync("没找到符合条件的对象")
-        }
+        event.replyAsync("谱面 $bid 的结果：${result.take(20).joinToString(", ")}")
 
         return null
     }
