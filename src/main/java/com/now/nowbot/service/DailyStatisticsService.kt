@@ -12,9 +12,13 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.DataUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class DailyStatisticsService(
@@ -27,6 +31,9 @@ class DailyStatisticsService(
     private val isRunning = AtomicBoolean(false)
 
     private val lastRequestTime = AtomicLong(0L)  // 原子变量，记录最后请求时间
+
+    private val updateCoolingTime: Duration = 4.seconds
+    private val getRecentCoolingTime: Duration = 2.5.seconds
 
     // 简单的速率限制方法
     private fun waitForRateLimit(intervalMillis: Long = 1000) {
@@ -140,8 +147,19 @@ class DailyStatisticsService(
 
         val stats = userApiService.getMicroUsers(users = ids, isVariant = true, isBackground = true)
 
+        val today = LocalDate.now(ZoneOffset.UTC)
+        val from = today.minusYears(1)
+        val to = today.minusDays(1)
+
+        val allPlayCountsMap = userInfoDao.getLatestPlayCountsBatchBetween(ids, from, to)
+            .groupBy { it.userID }
+            .mapValues { (_, projections) -> projections.associate { it.mode to it.playCount } }
+
         val needUpdate = stats.flatMap { micro ->
-            val plays = userInfoDao.getPlayCountsFromUserIDBeforeToday(micro.userID)
+            val userId = micro.userID
+            val userPlayCounts = allPlayCountsMap[userId] ?: emptyMap()
+
+            val plays = List(4) { i -> userPlayCounts[i.toByte()] ?: 0L }
 
             val currents = listOf(
                 micro.rulesets?.osu?.playCount ?: 0L,
@@ -153,14 +171,12 @@ class DailyStatisticsService(
             plays.mapIndexed { index, pc ->
                 val current = currents[index]
                 val delta = current - pc
-
                 val mode = OsuMode.getMode(index)
-
                 Triple(micro, mode, delta)
-            }.filter {
-                it.third > 0
-            }
+            }.filter { it.third > 0 }
         }
+
+        if (needUpdate.isEmpty()) return Triple(0, 0, 0)
 
         val reallyNeedUpgrade = needUpdate.filter { (micro, mode, delta) ->
             val saved = scoreDao.getYesterdayCount(micro.userID, mode)
@@ -174,7 +190,7 @@ class DailyStatisticsService(
         val reallySize = reallyNeedUpgrade.map { it.first.userID }.toSet().size
 
         if (reallySize > 0) {
-            waitForRateLimit(4500)
+            waitForRateLimit(updateCoolingTime.inWholeMilliseconds)
         }
 
         return Triple(needSize, reallySize, scoreCount)
@@ -185,7 +201,7 @@ class DailyStatisticsService(
 
         needUpdate.forEach { (user, mode) ->
             try {
-                waitForRateLimit(2500)
+                waitForRateLimit(getRecentCoolingTime.inWholeMilliseconds)
                 val count = scoreApiService.getRecentScore(user.userID, mode, 0, 999, isBackground = true).size
                 log.info("正在刷新 ${user.username}：${mode.shortName} 模式的 $count 条成绩...")
                 scoreCount.addAndGet(count)

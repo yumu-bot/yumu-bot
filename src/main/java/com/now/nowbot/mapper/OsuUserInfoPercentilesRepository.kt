@@ -22,8 +22,8 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
         ON CONFLICT (mode, user_id)
         DO UPDATE SET
             updated_at = EXCLUDED.updated_at,
-            global_rank = EXCLUDED.global_rank,
-            country_rank = EXCLUDED.country_rank,
+            global_rank = COALESCE(EXCLUDED.global_rank, osu_user_info_percent.global_rank),
+            country_rank = COALESCE(EXCLUDED.country_rank, osu_user_info_percent.country_rank),
             level = EXCLUDED.level,
             rank_count_score = EXCLUDED.rank_count_score,
             play_count = EXCLUDED.play_count,
@@ -54,9 +54,4 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
         maximumCombo: Int,
         achievementsCount: Int
     ): Int
-
-    @Query(value = """
-        SELECT * FROM osu_user_info_percent WHERE mode = :mode
-    """, nativeQuery = true)
-    fun findAllByMode(mode: Byte): List<OsuUserInfoPercentilesLite>
 }

@@ -36,12 +36,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.HttpClientErrorException
-import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 import javax.annotation.Nullable
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Duration.Companion.days
 
 @RestController @ResponseBody
 // @CrossOrigin("*")
@@ -851,12 +851,7 @@ import kotlin.math.min
 
         val bests = scoreApiService.getBestScores(user, mode)
 
-        val historyUser =
-            infoDao.getLastFrom(
-                user.userID,
-                user.currentOsuMode,
-                LocalDate.now().minusDays(day ?: 1)
-            )?.let { OsuUserInfoDao.fromArchive(it) }
+        val historyUser = infoDao.getHistoryUser(user, (day ?: 1L).days)
 
         val param = InfoService.InfoParam(user, bests, mode, historyUser, false, 3)
 

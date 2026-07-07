@@ -506,10 +506,10 @@ open class OsuUser {
     val countryRank: Long
         get() = statistics?.countryRank ?: 0L
 
-    val levelCurrent: Int
+    val levelCurrent: Short
         get() = statistics?.levelCurrent ?: 0
 
-    val levelProgress: Int
+    val levelProgress: Short
         get() = statistics?.levelProgress ?: 0
 
     override fun toString(): String {

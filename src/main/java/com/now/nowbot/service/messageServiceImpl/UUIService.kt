@@ -21,12 +21,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.days
 
 @Service("UU_INFO")
 class UUIService(
@@ -57,12 +57,7 @@ class UUIService(
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
 
-        val historyUser =
-            infoDao.getLastFrom(
-                user.userID,
-                user.currentOsuMode,
-                LocalDate.now().minusDays(day)
-            )?.let { OsuUserInfoDao.fromArchive(it) }
+        val historyUser = infoDao.getHistoryUser(user, day.days)
 
         val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
 
@@ -136,7 +131,7 @@ class UUIService(
 
             val time = getTime(user.playTime)
 
-            val level: String = when(user.levelProgress) {
+            val level: String = when(user.levelProgress.toInt()) {
                 in 1..99 -> "${user.levelCurrent}.${user.levelProgress}"
                 100 -> (user.levelCurrent + 1).toString()
                 else -> user.levelCurrent.toString()

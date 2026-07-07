@@ -79,10 +79,10 @@ open class Statistics : Cloneable {
     var countryRank: Long? = null
 
     @get:JsonProperty("level_current")
-    var levelCurrent: Int = 0
+    var levelCurrent: Short = 0
 
     @get:JsonProperty("level_progress")
-    var levelProgress: Int = 0
+    var levelProgress: Short = 0
 
     @set:JsonIgnore
     @get:JsonProperty("count_ss")
@@ -104,9 +104,9 @@ open class Statistics : Cloneable {
     @get:JsonProperty("count_a")
     var countA: Int = 0
     
-    @JsonProperty("level") fun setLevel(map: Map<String, Int>) {
-        levelCurrent = map["current"] as Int
-        levelProgress = map["progress"] as Int
+    @JsonProperty("level") fun setLevel(map: Map<String, Short>) {
+        levelCurrent = map["current"] as Short
+        levelProgress = map["progress"] as Short
     }
 
     @JsonProperty("grade_counts") fun setGrade(map: Map<String, Int>) {

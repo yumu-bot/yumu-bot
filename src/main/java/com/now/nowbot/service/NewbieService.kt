@@ -81,10 +81,9 @@ class NewbieService(
     }
 
     fun getPPStatistic(userId: Long): Pair<String, Float> {
-        val yesterday = LocalDate.now().minusDays(1)
-        val yesterdayUserInfo = osuUserInfoDao.getLastFrom(userId, OsuMode.OSU, yesterday) ?: return "" to 0f
+        val pp = osuUserInfoDao.getPP(userId, OsuMode.OSU) ?: return "" to 0f
         val nowUserInfo = osuUserApiService.getOsuUser(userId, OsuMode.OSU)
-        return nowUserInfo.username to (nowUserInfo.pp - yesterdayUserInfo.pp).toFloat()
+        return nowUserInfo.username to (nowUserInfo.pp.toFloat() - pp)
     }
 
     fun getToday(userId: Long): ScoreDailyStatistic {
@@ -126,7 +125,7 @@ class NewbieService(
             for (userID in userIDs) {
                 log.info("统计 [$userID] 的数据")
                 val dailyStatistic = getDailyStatistic(userID, LocalDate.now().minusDays(1))
-                val pp = (osuUserInfoDao.getLast(userID, OsuMode.OSU)?.pp ?: 0.0).toFloat()
+                val pp = osuUserInfoDao.getPP(userID, OsuMode.OSU) ?: 0f
                 val saveData = NewbiePlayCount(
                     uid = userID.toInt(),
                     pp = pp,

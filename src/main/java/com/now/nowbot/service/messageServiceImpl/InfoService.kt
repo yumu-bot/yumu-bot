@@ -39,6 +39,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.math.absoluteValue
+import kotlin.time.Duration.Companion.days
 
 @Service("INFO")
 class InfoService(
@@ -227,7 +228,7 @@ class InfoService(
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
 
-        val historyUser = infoDao.getHistoryUser(user, day)
+        val historyUser = infoDao.getHistoryUser(user, day.days)
 
         val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
 
