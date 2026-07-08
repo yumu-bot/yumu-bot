@@ -3,7 +3,7 @@ package com.now.nowbot.service.MessageService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.Ymp;
+import com.now.nowbot.model.YumuPass;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuGetService;
 import com.now.nowbot.throwable.TipsException;
@@ -87,7 +87,7 @@ public class YmpService implements MessageService{
             throw new TipsException("24h内无记录");
         }
         JSONObject date = dates.getJSONObject(0);
-        var d = Ymp.getInstance(date);
+        var d = YumuPass.getInstance(date);
         HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
         var bytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
         Image img = from.uploadImage(ExternalResource.create(bytes));

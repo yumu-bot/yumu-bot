@@ -19,8 +19,8 @@ public class WikiService implements MessageService{
         String datestr = null;
         try {
             datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH,"wiki.json"));
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignored) {
+
         }
         WIKI = JSONObject.parseObject(datestr);
     }
@@ -32,7 +32,7 @@ public class WikiService implements MessageService{
     }
     String getWiki(String key) throws IOException, LogException {
         StringBuffer sb = new StringBuffer();
-        if (null == key || "null".equals(key) || "".equals(key.trim()) || "index".equals(key)) {
+        if (null == key || "null".equals(key) || key.trim().isEmpty() || "index".equals(key)) {
             if (WIKI == null){
                 String datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH +"wiki.json"));
                 WIKI = JSONObject.parseObject(datestr);

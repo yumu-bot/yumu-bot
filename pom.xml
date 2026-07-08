@@ -70,7 +70,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.skija</groupId>
-            <artifactId>skija-linux</artifactId>
+            <artifactId>skija-windows</artifactId>
             <version>0.93.1</version>
         </dependency>
         <dependency>
@@ -89,6 +89,11 @@
             <artifactId>sqlite-dialect</artifactId>
             <version>0.1.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
         <dependency>
             <groupId>com.kennycason</groupId>
@@ -99,6 +104,10 @@
             <groupId>com.kennycason</groupId>
             <artifactId>kumo-tokenizers</artifactId>
             <version>1.28</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
         </dependency>
     </dependencies>
     <build>

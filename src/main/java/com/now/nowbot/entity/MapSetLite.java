@@ -7,9 +7,8 @@ import javax.persistence.*;
         @Index(name = "raw",columnList = "map_id")
 })
 public class MapSetLite {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(name = "map_id")
     private Integer mapset_id;
 

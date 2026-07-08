@@ -20,6 +20,12 @@ public class BinUser {
         reTime();
     }
 
+    public BinUser(int osuID, String osuName) {
+        this.osuID = osuID;
+        this.osuName = osuName;
+        reTime();
+    }
+
     public BinUser(long qq, String refreshToken) {
         this.qq = qq;
         this.refreshToken = refreshToken;

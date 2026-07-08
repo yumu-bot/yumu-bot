@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 src/main/resources/*.yaml
 src/test/
+run/
 
 ### STS ###
 .apt_generated

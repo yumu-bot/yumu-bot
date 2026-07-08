@@ -1,71 +1,86 @@
 package com.now.nowbot.entity;
 
+import com.now.nowbot.model.enums.OsuMode;
 import javax.persistence.*;
 
 @Entity
 @Table(name = "osu_beatmap",indexes = {
-        @Index(name = "sid", columnList = "map_id,beatmap_id"),
-        @Index(name = "find", columnList = "beatmap_id"),
-        @Index(name = "map_find", columnList = "map_id")
+        @Index(name = "map_find", columnList = "map_id"),
+        @Index(name = "sid", columnList = "map_id, id"),
 })
 public class BeatmapLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "beatmap_id")
-    private Integer beatmap_id;
 
-    @Column(name = "map_id")
-    private Integer mapset_id;
+    @Column(name = "map_id", insertable = false, updatable = false)
+    private Integer beatmapsetId;
+
+    @Column(name = "mapper_id")
+    private Long userId;
 
     //是否为转谱
     @Column(name = "is_convert")
     private Boolean convert;
     //难度名
+    @Column(columnDefinition = "text")
     private String version;
+    @Column(columnDefinition = "text")
+    private String status;
 
-    int playcount;
-    int passcount;
+    Integer playcount;
+    Integer passcount;
 
     //四维
     //accuracy值
-    private Float od;
-    private Float cs;
-    private Float ar;
+    Float od;
+    Float cs;
+    Float ar;
     //drain值
-    private Float hp;
+    Float hp;
 
-    private Float difficulty_rating;
-    private Float bpm;
-    private Integer max_combo;
+    Float difficultyRating;
+    Float bpm;
+    Integer maxCombo;
 
     //物件数
-    private Integer count_circles;
-    private Integer count_sliders;
-    private Integer count_spinners;
+    Integer circles;
+    Integer sliders;
+    Integer spinners;
 
     //秒
-    private Integer total_length;
-    private Integer hit_length;
+    Integer totalLength;
+    Integer hitLength;
 
 
     //mode_init 0->osu ...
-    private Integer mode;
+    Integer modeInt;
+    Integer ranked;
 
-    public Integer getBeatmap_id() {
-        return beatmap_id;
+    //@JdbcTypeCode(Types.CHAR)
+    @Column(name = "check_str", columnDefinition = "char(32)")
+    String md5;
+
+    @ManyToOne()
+    @JoinColumn(name = "map_id")
+    BeatmapsetLite mapSet;
+
+    public BeatmapLite() {
     }
 
-    public void setBeatmap_id(Integer bitmapID) {
-        this.beatmap_id = bitmapID;
+    public Long getId() {
+        return id;
     }
 
-    public Integer getMapset_id() {
-        return mapset_id;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setMapset_id(Integer mapset_id) {
-        this.mapset_id = mapset_id;
+    public Integer getBeatmapsetId() {
+        return beatmapsetId;
+    }
+
+    public void setBeatmapsetId(Integer beatmapsetId) {
+        this.beatmapsetId = beatmapsetId;
     }
 
     public Boolean getConvert() {
@@ -100,44 +115,44 @@ public class BeatmapLite {
         this.passcount = passcount;
     }
 
-    public Float getOd() {
+    public Float getOD() {
         return od;
     }
 
-    public void setOd(Float od) {
+    public void setOD(Float od) {
         this.od = od;
     }
 
-    public Float getCs() {
+    public Float getCS() {
         return cs;
     }
 
-    public void setCs(Float cs) {
+    public void setCS(Float cs) {
         this.cs = cs;
     }
 
-    public Float getAr() {
+    public Float getAR() {
         return ar;
     }
 
-    public void setAr(Float ar) {
+    public void setAR(Float ar) {
         this.ar = ar;
     }
 
-    public Float getHp() {
+    public Float getHP() {
         return hp;
     }
 
-    public void setHp(Float hp) {
+    public void setHP(Float hp) {
         this.hp = hp;
     }
 
-    public Float getDifficulty_rating() {
-        return difficulty_rating;
+    public Float getDifficultyRating() {
+        return difficultyRating;
     }
 
-    public void setDifficulty_rating(Float difficulty_rating) {
-        this.difficulty_rating = difficulty_rating;
+    public void setDifficultyRating(Float difficultyRating) {
+        this.difficultyRating = difficultyRating;
     }
 
     public Float getBpm() {
@@ -148,59 +163,115 @@ public class BeatmapLite {
         this.bpm = bpm;
     }
 
-    public Integer getMax_combo() {
-        return max_combo;
+    public Integer getMaxCombo() {
+        return maxCombo;
     }
 
-    public void setMax_combo(Integer max_combo) {
-        this.max_combo = max_combo;
+    public void setMaxCombo(Integer maxCombo) {
+        this.maxCombo = maxCombo;
     }
 
-    public Integer getCount_circles() {
-        return count_circles;
+    public String getStatus() {
+        return status;
     }
 
-    public void setCount_circles(Integer count_circles) {
-        this.count_circles = count_circles;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
-    public Integer getCount_sliders() {
-        return count_sliders;
+    public Integer getCircles() {
+        return circles;
     }
 
-    public void setCount_sliders(Integer count_sliders) {
-        this.count_sliders = count_sliders;
+    public void setCircles(Integer circles) {
+        this.circles = circles;
     }
 
-    public Integer getCount_spinners() {
-        return count_spinners;
+    public Integer getSliders() {
+        return sliders;
     }
 
-    public void setCount_spinners(Integer count_spinners) {
-        this.count_spinners = count_spinners;
+    public void setSliders(Integer sliders) {
+        this.sliders = sliders;
     }
 
-    public Integer getTotal_length() {
-        return total_length;
+    public Integer getSpinners() {
+        return spinners;
     }
 
-    public void setTotal_length(Integer total_length) {
-        this.total_length = total_length;
+    public void setSpinners(Integer spinners) {
+        this.spinners = spinners;
     }
 
-    public Integer getHit_length() {
-        return hit_length;
+    public Integer getTotalLength() {
+        return totalLength;
     }
 
-    public void setHit_length(Integer hit_length) {
-        this.hit_length = hit_length;
+    public void setTotalLength(Integer totalLength) {
+        this.totalLength = totalLength;
     }
 
-    public Integer getMode() {
-        return mode;
+    public Integer getHitLength() {
+        return hitLength;
     }
 
-    public void setMode(Integer mode) {
-        this.mode = mode;
+    public void setHitLength(Integer hitLength) {
+        this.hitLength = hitLength;
+    }
+
+    public Integer getModeInt() {
+        return modeInt;
+    }
+    public OsuMode getMode() {
+        return OsuMode.getMode(modeInt);
+    }
+
+    public void setModeInt(Integer modeInt) {
+        this.modeInt = modeInt;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public void setPlaycount(Integer playcount) {
+        this.playcount = playcount;
+    }
+
+    public void setPasscount(Integer passcount) {
+        this.passcount = passcount;
+    }
+
+    public Integer getRanked() {
+        return ranked;
+    }
+
+    public void setRanked(Integer ranked) {
+        this.ranked = ranked;
+    }
+
+    public BeatmapsetLite getMapSet() {
+        return mapSet;
+    }
+
+    public void setMapSet(BeatmapsetLite mapSet) {
+        this.mapSet = mapSet;
+    }
+
+    public String getMd5() {
+        return md5;
+    }
+
+    public void setMd5(String md5) {
+        this.md5 = md5;
+    }
+
+    public interface BeatmapHitLengthResult {
+        long getId();
+        int getLength();
     }
 }

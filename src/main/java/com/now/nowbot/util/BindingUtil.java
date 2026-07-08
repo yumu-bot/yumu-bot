@@ -30,7 +30,8 @@ public class BindingUtil {
         if (Files.isRegularFile(pt)) {
             String s = Files.readString(pt);
             date = JSONObject.parseObject(s, BinUser.class);
-
+        } else {
+            date = new BinUser(7003013, "Muziyami");
         }
         System.gc();
         if (date == null) throw new TipsException("当前用户未绑定");

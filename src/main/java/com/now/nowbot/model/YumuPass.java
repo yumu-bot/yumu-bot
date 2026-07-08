@@ -1,12 +1,11 @@
 package com.now.nowbot.model;
 
-import ch.qos.logback.core.util.TimeUtil;
 import com.alibaba.fastjson.JSONObject;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 
-public class Ymp {
+public class YumuPass {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter SIZE_FORMATTER = DateTimeFormatter.ofPattern("m:ss");
 
@@ -40,7 +39,7 @@ public class Ymp {
     String play_time;
 
     public String getUrl(){return url;}
-    public Ymp(JSONObject date){
+    public YumuPass(JSONObject date){
         var user = date.getJSONObject("user");
         name = user.getString("username");
         mode = date.getString("mode");
@@ -93,8 +92,8 @@ public class Ymp {
         
         if (!passed) rank = "F";
     }
-    public static Ymp getInstance(JSONObject date){
-        return new Ymp(date);
+    public static YumuPass getInstance(JSONObject date){
+        return new YumuPass(date);
     }
     public String getOut(){
         StringBuilder sb = new StringBuilder();

@@ -1,116 +1,142 @@
 package com.now.nowbot.entity;
 
-import org.hibernate.annotations.ColumnDefault;
-import org.springframework.context.annotation.Primary;
-
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "osu_score" ,indexes = {
-        @Index(name = "uid", columnList = "osu_id")
-})
+@Table(name = "tachyon_score")
 public class ScoreLite {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Column(name = "score_id")
-    private Long scoreId;
-    @Column(name = "osu_id")
-    private Integer osuId;
-    @Column(name = "beatmap_id")
-    private Integer beatmapId;
+    @Column(name = "id", nullable = false)
+    private Long scoreID;
 
-    private Float accuracy;
-    //','分割的字符串
-    private String mods;
-    private Integer score;
-    private Integer maxCombo;
-    boolean passed;
-    boolean perfect;
+    @Column(name = "user_id", nullable = false)
+    private Long userID;
 
-    private Integer count50;
-    private Integer count100;
-    private Integer count300;
-    private Integer countgeki;
-    private Integer countkatu;
-    private Integer countmiss;
+    @Column(name = "beatmap_id", nullable = false)
+    private Long beatmapID;
 
-    @Column(name = "rank_list")
-    private Integer rank;
-    //created_at
-    private LocalDateTime date;
+    @Column(name = "build_id")
+    private Integer buildID;
 
-    public Long getId() {
-        return id;
+    // @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "mods", columnDefinition = "char(2)[]")
+    private List<String> mods = null;
+
+    // 注意：如果是较新版本的 Hibernate 6+，@Type 的用法可能需要微调，这里保留你原本的类名
+    // @Type(io.hypersistence.utils.hibernate.type.json.JsonBinaryType.class)
+    @Column(name = "data", columnDefinition = "jsonb")
+    private String modsData = null;
+
+    @Column(name = "pp", nullable = false)
+    private float pp = 0f;
+
+    @Column(name = "accuracy", nullable = false)
+    private float accuracy = 0f;
+
+    @Column(name = "combo", nullable = false)
+    private int maxCombo = 0;
+
+    @Column(name = "time", nullable = false)
+    private OffsetDateTime time = OffsetDateTime.now();
+
+    @Column(name = "fc", nullable = false)
+    private boolean perfect = false;
+
+    @Column(name = "pass", nullable = false)
+    private boolean passed = false;
+
+    @Column(name = "legacy")
+    private Integer legacy = null;
+
+    @Column(name = "score", nullable = false)
+    private int score = 0;
+
+    @Column(name = "mode", nullable = false)
+    private byte mode = (byte) -1;
+
+    @Column(name = "rank", nullable = false)
+    private byte rank = (byte) 0;
+
+    public Long getScoreID() {
+        return scoreID;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setScoreID(Long scoreID) {
+        this.scoreID = scoreID;
     }
 
-    public Long getScoreId() {
-        return scoreId;
+    public Long getUserID() {
+        return userID;
     }
 
-    public void setScoreId(Long scoreId) {
-        this.scoreId = scoreId;
+    public void setUserID(Long userID) {
+        this.userID = userID;
     }
 
-    public Integer getOsuId() {
-        return osuId;
+    public Long getBeatmapID() {
+        return beatmapID;
     }
 
-    public void setOsuId(Integer osuId) {
-        this.osuId = osuId;
+    public void setBeatmapID(Long beatmapID) {
+        this.beatmapID = beatmapID;
     }
 
-    public Integer getBeatmapId() {
-        return beatmapId;
+    public Integer getBuildID() {
+        return buildID;
     }
 
-    public void setBeatmapId(Integer beatmapId) {
-        this.beatmapId = beatmapId;
+    public void setBuildID(Integer buildID) {
+        this.buildID = buildID;
     }
 
-    public Float getAccuracy() {
-        return accuracy;
-    }
-
-    public void setAccuracy(Float accuracy) {
-        this.accuracy = accuracy;
-    }
-
-    public String getMods() {
+    public List<String> getMods() {
         return mods;
     }
 
-    public void setMods(String mods) {
+    public void setMods(List<String> mods) {
         this.mods = mods;
     }
 
-    public Integer getScore() {
-        return score;
+    public String getModsData() {
+        return modsData;
     }
 
-    public void setScore(Integer score) {
-        this.score = score;
+    public void setModsData(String modsData) {
+        this.modsData = modsData;
     }
 
-    public Integer getMaxCombo() {
+    public float getPp() {
+        return pp;
+    }
+
+    public void setPp(float pp) {
+        this.pp = pp;
+    }
+
+    public float getAccuracy() {
+        return accuracy;
+    }
+
+    public void setAccuracy(float accuracy) {
+        this.accuracy = accuracy;
+    }
+
+    public int getMaxCombo() {
         return maxCombo;
     }
 
-    public void setMaxCombo(Integer maxCombo) {
+    public void setMaxCombo(int maxCombo) {
         this.maxCombo = maxCombo;
     }
 
-    public boolean isPassed() {
-        return passed;
+    public OffsetDateTime getTime() {
+        return time;
     }
 
-    public void setPassed(boolean passed) {
-        this.passed = passed;
+    public void setTime(OffsetDateTime time) {
+        this.time = time;
     }
 
     public boolean isPerfect() {
@@ -121,67 +147,43 @@ public class ScoreLite {
         this.perfect = perfect;
     }
 
-    public Integer getCount50() {
-        return count50;
+    public boolean isPassed() {
+        return passed;
     }
 
-    public void setCount50(Integer count50) {
-        this.count50 = count50;
+    public void setPassed(boolean passed) {
+        this.passed = passed;
     }
 
-    public Integer getCount100() {
-        return count100;
+    public Integer getLegacy() {
+        return legacy;
     }
 
-    public void setCount100(Integer count100) {
-        this.count100 = count100;
+    public void setLegacy(Integer legacy) {
+        this.legacy = legacy;
     }
 
-    public Integer getCount300() {
-        return count300;
+    public int getScore() {
+        return score;
     }
 
-    public void setCount300(Integer count300) {
-        this.count300 = count300;
+    public void setScore(int score) {
+        this.score = score;
     }
 
-    public Integer getCountgeki() {
-        return countgeki;
+    public byte getMode() {
+        return mode;
     }
 
-    public void setCountgeki(Integer countgeki) {
-        this.countgeki = countgeki;
+    public void setMode(byte mode) {
+        this.mode = mode;
     }
 
-    public Integer getCountkatu() {
-        return countkatu;
-    }
-
-    public void setCountkatu(Integer countkatu) {
-        this.countkatu = countkatu;
-    }
-
-    public Integer getCountmiss() {
-        return countmiss;
-    }
-
-    public void setCountmiss(Integer countmiss) {
-        this.countmiss = countmiss;
-    }
-
-    public Integer getRank() {
+    public byte getRank() {
         return rank;
     }
 
-    public void setRank(Integer rank) {
+    public void setRank(byte rank) {
         this.rank = rank;
-    }
-
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDateTime date) {
-        this.date = date;
     }
 }

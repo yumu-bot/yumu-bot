@@ -18,10 +18,11 @@ public class PPPlusDao {
     OsuGetService osuGetService;
 
     public PPPlusObject getobject(String uid){
-        var p = ppPlusMapper.getFirstByUserIdOrderByDateDesc(Long.parseLong(uid));
+        // var p = ppPlusMapper.getFirstByUserIdOrderByDateDesc(Long.parseLong(uid));
+        PPPLite p = null;
         if (p == null){
             var node = osuGetService.ppPlus(uid);
-            ppPlusMapper.save(parse(node));
+            // ppPlusMapper.save(parse(node));
             return node;
         }
         return parse(p);

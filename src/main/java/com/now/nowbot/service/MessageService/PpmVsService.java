@@ -63,7 +63,7 @@ public class PpmVsService implements MessageService{
             userinfo2 = PPmObject.presOsu(userdate,bpdate);
         }else {
             String name = matcher.group("name");
-            if(name == null || name.trim().equals("")){
+            if(name == null || name.trim().isEmpty()){
 //                无明确对比对象
                 throw new TipsException("里个瓜娃子到底要vs那个哦");
             }
@@ -89,6 +89,7 @@ public class PpmVsService implements MessageService{
              Typeface Puhuiti = SkiaUtil.getPuhuitiMedium();
              Font torus_2 = new Font(Torus, 80);
              Font torus_1 = new Font(Torus, 64);
+             Font torus_0 = new Font(Torus, 24);
              Font puhui_1 = new Font(Puhuiti,64);
              Paint white = new Paint().setARGB(255,255,255,255);
         ){
@@ -152,6 +153,7 @@ public class PpmVsService implements MessageService{
             Image head2 = SkiaUtil.lodeNetWorkImage(userinfo2.getHeadURL());
             drawRhead(canvas, head2);
 
+            drawLegacyVersion(canvas, torus_0, white, "powered by YumuBot v0.2.0 Nostalgia // PPMinus v0.1");
             drawLname(canvas,torus_2,white,userinfo1.getName());
             drawRname(canvas,torus_2,white,userinfo2.getName());
 
@@ -187,7 +189,7 @@ public class PpmVsService implements MessageService{
     static void drawLhead(Canvas canvas, Image head){
         canvas.save();
         canvas.translate(130,80);
-        try(var ss = Surface.makeRasterN32Premul(300,300);) {
+        try(var ss = Surface.makeRasterN32Premul(300,300)) {
             ss.getCanvas()
                     .setMatrix(Matrix33.makeScale(300f / head.getWidth(), 300f / head.getHeight()))
                     .drawImage(head, 0, 0, PAINT_ANTIALIAS);
@@ -201,7 +203,7 @@ public class PpmVsService implements MessageService{
     static void drawRhead(Canvas canvas, Image head){
         canvas.save();
         canvas.translate(1490,80);
-        try(var ss = Surface.makeRasterN32Premul(300,300);) {
+        try(var ss = Surface.makeRasterN32Premul(300,300)) {
             ss.getCanvas()
                     .setMatrix(Matrix33.makeScale(300f / head.getWidth(), 300f / head.getHeight()))
                     .drawImage(head, 0, 0, PAINT_ANTIALIAS);
@@ -241,6 +243,15 @@ public class PpmVsService implements MessageService{
         TextLine text = TextLine.make(name, font);
         if (text.getWidth() > 500) text = TextLine.make(name.substring(0,8)+"...",font);
         canvas.drawTextLine(text, -0.5f*text.getWidth(),0.25f*text.getHeight(),white);
+        canvas.restore();
+    }
+
+    public static void drawLegacyVersion(Canvas canvas, Font font, Paint white, String vers){
+        canvas.save();
+        canvas.translate(40,40);
+        TextLine text = TextLine.make(vers, font);
+        // if (text.getWidth() > 500) text = TextLine.make(vers.substring(0,8)+"...",font);
+        canvas.drawTextLine(text, 0,0.25f*text.getHeight(),white);
         canvas.restore();
     }
 
@@ -414,41 +425,34 @@ F 108.11.11
         };
         TextLine t;
         Paint c;
-        for (int i = 0; i < date.length; i++) {
-            if (date[i]>0.95){
-                t = TextLine.make("SS",Torus);
-                c=paints[0];
+        for (double v : date) {
+            if (v > 0.95) {
+                t = TextLine.make("SS", Torus);
+                c = paints[0];
+            } else if (v > 0.90) {
+                t = TextLine.make("S", Torus);
+                c = paints[1];
+            } else if (v > 0.85) {
+                t = TextLine.make("A+", Torus);
+                c = paints[2];
+            } else if (v > 0.80) {
+                t = TextLine.make("A", Torus);
+                c = paints[2];
+            } else if (v > 0.70) {
+                t = TextLine.make("B", Torus);
+                c = paints[3];
+            } else if (v > 0.60) {
+                t = TextLine.make("C", Torus);
+                c = paints[4];
+            } else if (v > 0) {
+                t = TextLine.make("D", Torus);
+                c = paints[5];
+            } else {
+                t = TextLine.make("F", Torus);
+                c = paints[6];
             }
-            else if(date[i]>0.90){
-                t = TextLine.make("S",Torus);
-                c=paints[1];
-            }
-            else if(date[i]>0.85){
-                t = TextLine.make("A+",Torus);
-                c=paints[2];
-            }
-            else if(date[i]>0.80){
-                t = TextLine.make("A",Torus);
-                c=paints[2];
-            }
-            else if(date[i]>0.70){
-                t = TextLine.make("B",Torus);
-                c=paints[3];
-            }
-            else if(date[i]>0.60){
-                t = TextLine.make("C",Torus);
-                c=paints[4];
-            }
-            else if(date[i]>0){
-                t = TextLine.make("D",Torus);
-                c=paints[5];
-            }
-            else {
-                t = TextLine.make("F",Torus);
-                c=paints[6];
-            }
-            canvas.drawTextLine(t,0,t.getCapHeight(),c);
-            canvas.translate(0,90);
+            canvas.drawTextLine(t, 0, t.getCapHeight(), c);
+            canvas.translate(0, 90);
         }
         canvas.restore();
     }

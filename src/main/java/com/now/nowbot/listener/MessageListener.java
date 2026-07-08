@@ -1,14 +1,9 @@
 package com.now.nowbot.listener;
 
-import com.now.nowbot.entity.MsgLite;
-import com.now.nowbot.mapper.MessageMapper;
-import com.now.nowbot.service.MessageService.MessageService;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.RequestException;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
-import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.SendmsgUtil;
 import kotlin.coroutines.CoroutineContext;
 import net.mamoe.mirai.event.EventHandler;
@@ -28,15 +23,12 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.regex.Matcher;
 
 @Component
 public class MessageListener extends SimpleListenerHost {
 
     private static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
-    @Autowired
-    MessageMapper messageMapper;
     private ApplicationContext applicationContext;
     @Autowired
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -81,24 +73,6 @@ public class MessageListener extends SimpleListenerHost {
         }
     }
 
-    /***
-     * 监听消息分发
-     * @param event
-     * @throws Throwable
-     */
-    @Async
-    @EventHandler
-    public void msg(MessageEvent event) throws Throwable {
-        messageMapper.save(new MsgLite(event.getMessage()));
-        ASyncMessageUtil.put(event);
-        for(var ins : Instruction.values()){
-            Matcher matcher = ins.getRegex().matcher(event.getMessage().contentToString());
-            if (matcher.find() && applicationContext != null) {
-                var service = (MessageService) applicationContext.getBean(ins.getName());
-                service.HandleMessage(event, matcher);
-            }
-        }
-    }
 
     /***
      * 处理群邀请

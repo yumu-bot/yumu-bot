@@ -2,10 +2,7 @@ package com.now.nowbot.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.PPPlusObject;
 import com.now.nowbot.throwable.RequestException;
@@ -21,7 +18,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.DataInput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -32,13 +28,13 @@ import java.util.Collections;
 @Service
 public class OsuGetService {
     public static BinUser botUser = new BinUser();
-    @Value("${ppy.id}")
+    @Value("${ppy.id:null}")
     private int oauthId;
-    @Value("${ppy.callBackUrl}")
+    @Value("${ppy.callBackUrl:null}")
     private String redirectUrl;
-    @Value("${ppy.token}")
+    @Value("${ppy.token:null}")
     private String oauthToken;
-    @Value("${ppy.url}")
+    @Value("${ppy.url:null}")
     private String URL;
     @Value("${ppy.v1token:null}")
     private String tokenv1;
@@ -71,7 +67,7 @@ public class OsuGetService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
-        MultiValueMap body = new LinkedMultiValueMap();
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("client_id", oauthId);
         body.add("client_secret", oauthToken);
         body.add("code", binUser.getRefreshToken());
@@ -103,7 +99,7 @@ public class OsuGetService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
-        MultiValueMap body = new LinkedMultiValueMap();
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("client_id", oauthId);
         body.add("client_secret", oauthToken);
         body.add("grant_type", "client_credentials");
@@ -126,7 +122,7 @@ public class OsuGetService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
-        MultiValueMap body = new LinkedMultiValueMap();
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("client_id", oauthId);
         body.add("client_secret", oauthToken);
         body.add("refresh_token", binUser.getRefreshToken());
@@ -161,13 +157,13 @@ public class OsuGetService {
         return id;
     }
 
-    public JSONArray getFrendList(BinUser user) {
+    public JSONArray getFriendList(BinUser user) {
         String url = this.URL + "friends";
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = template.exchange(url, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
@@ -197,7 +193,7 @@ public class OsuGetService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> c = template.exchange(url, HttpMethod.GET, httpEntity, JSONObject.class);
         user.setOsuID(c.getBody().getIntValue("id"));
         user.setOsuName(c.getBody().getString("username"));
@@ -233,7 +229,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
         return c.getBody();
     }
@@ -257,7 +253,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
         return c.getBody();
     }
@@ -319,7 +315,7 @@ public class OsuGetService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
@@ -344,7 +340,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
@@ -361,7 +357,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
@@ -401,7 +397,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
@@ -427,7 +423,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
@@ -444,7 +440,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = null;
         try {
             c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
@@ -468,7 +464,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
     }
@@ -496,7 +492,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> c = null;
         try {
             c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
@@ -517,7 +513,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> c = null;
         try {
             c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
@@ -538,7 +534,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + user.getAccessToken(this));
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> c = null;
         try {
             c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
@@ -579,7 +575,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> c = null;
         try {
             c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
@@ -605,7 +601,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + uset.getAccessToken(this));
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONObject> c = null;
         try {
             c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONObject.class);
@@ -632,7 +628,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " + getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> c = null;
         try {
             System.out.println(uri);
@@ -655,7 +651,7 @@ public class OsuGetService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JsonNode> c = null;
 
         c = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class);
@@ -698,7 +694,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.set("Authorization", "Bearer " +getToken());
 
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         ResponseEntity<JSONArray> c = template.exchange(uri, HttpMethod.GET, httpEntity, JSONArray.class);
         return c.getBody();
 
@@ -717,7 +713,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
         headers.set("Authorization", "Bearer " + getToken());
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         JsonNode data = null;
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class).getBody();
@@ -737,7 +733,7 @@ public class OsuGetService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
         headers.set("Authorization", "Bearer " + getToken());
-        HttpEntity httpEntity = new HttpEntity(headers);
+        HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
         JsonNode data = null;
         try {
             data = template.exchange(uri, HttpMethod.GET, httpEntity, JsonNode.class).getBody();

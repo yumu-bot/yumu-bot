@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.text.NumberFormat;
 
-public class Ymi {
+public class YumuInfo {
 
     String name;
     String mode;
@@ -28,7 +28,7 @@ public class Ymi {
     int grade_count_a;
     int uid;
 
-    public Ymi(JSONObject date){
+    public YumuInfo(JSONObject date){
         var user = date.getJSONObject("user");
         name = user.getString("username");
         mode = date.getString("mode");
@@ -57,8 +57,8 @@ public class Ymi {
         uid = date.getIntValue("id");
 
     }
-    public static Ymi getInstance(JSONObject date){
-        return new Ymi(date);
+    public static YumuInfo getInstance(JSONObject date){
+        return new YumuInfo(date);
     }
     public String getOut(){
         StringBuilder sb = new StringBuilder();
