@@ -134,7 +134,7 @@ class DailyStatisticsService(
                 batch.incrementAndGet()
             }
 
-            waitForRateLimit(updateCoolingTime.inWholeMilliseconds)
+            waitForRateLimit(8000)
         }
 
         val endTime = System.currentTimeMillis()
