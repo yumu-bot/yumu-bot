@@ -1,6 +1,5 @@
 package com.now.nowbot.entity
 
-import com.now.nowbot.newbie.mapper.NewbieDao
 import jakarta.persistence.*
 import java.time.LocalDate
 
@@ -28,13 +27,6 @@ class NewbiePlayCount(
 
     var playHits: Int? = null,
 ) {
-    constructor(record: NewbieDao.UserCount) : this(
-        uid = record.id,
-        pp = record.pp,
-        playTime = record.playTime,
-        playCount = record.playCount,
-        playHits = record.tth,
-    )
 
     interface UserHistoryResult {
         val data: Int

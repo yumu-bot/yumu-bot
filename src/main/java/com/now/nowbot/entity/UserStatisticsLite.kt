@@ -19,9 +19,6 @@ import java.time.ZoneOffset
     name = "user_statistics", 
     indexes = [
         Index(name = "idx_user_statistics_updated_at", columnList = "user_id, mode, updated_at DESC"),
-    // CREATE INDEX idx_user_statistics_updated_at_brin
-        //ON user_statistics USING BRIN (updated_at)
-        //WITH (pages_per_range = 32);
     ]
 )
 class UserStatisticsLite(
