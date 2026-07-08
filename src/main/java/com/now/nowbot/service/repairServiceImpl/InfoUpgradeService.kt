@@ -69,7 +69,7 @@ class InfoUpgradeService(
 
     private fun migrateGradually() {
         // 根据数据库查询结果，物理 id 从 488971 开始，所以游标前移一位设为 488970L
-        var lastId = 488970L // 0L
+        var lastId = 0L
         var totalProcessed = 0
 
         log.info("🚀 渐进式同步启动！起始 ID 游标设为: $lastId")
@@ -109,17 +109,17 @@ class InfoUpgradeService(
                         this.date = fakeToday
                     } ?: return@runCatching
 
-                    userRankPercentRepository.upsert(entity)
+                    userRankPercentRepository.save(entity)
                 }?.onFailure { e ->
                     log.error("❌ RankPercent 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
                 }
 
                 runCatching {
                     // 新增
-                    val entity = UserStatisticsLite(id = internalNegativeID).updateFrom(user)!!.apply {
+                    val entity = UserStatisticsLite(id = internalNegativeID).updateFrom(user)?.apply {
                         this.createdAt = fakeToday
                         this.updatedAt = fakeToday
-                    }
+                    } ?: return@runCatching
 
                     userStatisticsRepository.upsert(entity)
                 }.onFailure { e ->
@@ -174,8 +174,9 @@ class InfoUpgradeService(
                 totalProcessed++
             }
 
-            // 放在这里打印，每处理完一个批次（1000条）触发一次日志，更优雅
-            log.info("📊 [进度通知] 已处理数据量: $totalProcessed 条 | 当前物理主键 ID 推进至: $lastId")
+            if (totalProcessed % 10000 == 0) {
+                log.info("📊 [进度通知] 已处理数据量: $totalProcessed 条 | 当前物理主键 ID 推进至: $lastId")
+            }
         }
 
         log.info("🎉 恭喜！全表数据同步清洗完毕，共计处理 $totalProcessed 条数据。")
