@@ -76,6 +76,8 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
     )
     fun upsert(@Param("entity") entity: UserInfoLite): Int
 
+    @Transactional
+    @Modifying
     @Query("""
         UPDATE user_info SET updated_at = :updatedAt WHERE id = :entityID
     """, nativeQuery = true)
@@ -248,7 +250,8 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     )
     fun upsert(@Param("entity") entity: UserStatisticsLite): Int
 
-
+    @Transactional
+    @Modifying
     @Query("""
         UPDATE user_statistics SET updated_at = :updatedAt WHERE id = :entityID
     """, nativeQuery = true)
