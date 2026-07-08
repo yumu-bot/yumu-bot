@@ -101,7 +101,7 @@ class InfoUpgradeService(
 
                     userInfoRepository.upsert(entity)
                 }?.onFailure { e ->
-                    log.error("❌ 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
+                    log.error("❌ Info 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
                 }
 
                 user.statistics?.countryRank?.runCatching {
@@ -111,7 +111,7 @@ class InfoUpgradeService(
 
                     userRankPercentRepository.upsert(entity)
                 }?.onFailure { e ->
-                    log.error("❌ 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
+                    log.error("❌ RankPercent 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
                 }
 
                 runCatching {
@@ -123,7 +123,7 @@ class InfoUpgradeService(
 
                     userStatisticsRepository.upsert(entity)
                 }.onFailure { e ->
-                    log.error("❌ 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
+                    log.error("❌ Statistics 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
                 }
 
                 user.rankHistory?.data?.runCatching {
@@ -166,7 +166,7 @@ class InfoUpgradeService(
                         userGlobalRankRepository.saveAll(entities)
                     }
                 }?.onFailure { e ->
-                    log.error("❌ 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
+                    log.error("❌ GlobalRank 转换失败跳过！旧表物理ID: ${archive.id}, Osu用户ID: ${archive.userID}. 原因: ${e.message}")
                 }
 
 
@@ -186,7 +186,8 @@ class InfoUpgradeService(
 
         fun fromArchive(archive: OsuUserInfoArchiveLite): OsuUser {
             val user = OsuUser()
-            user.mode = archive.mode.shortName
+            user.defaultOsuMode = archive.mode
+            user.currentOsuMode = archive.mode
             user.id = archive.userID
             user.userAchievementsCount = archive.achievementsCount
             user.beatmapPlaycount = archive.beatmapPlaycount
@@ -220,9 +221,13 @@ class InfoUpgradeService(
                 user.rankHistory = OsuUser.RankHistory(archive.mode.shortName,
                     JacksonUtil.parseObjectList(archive.rankHistory, Long::class.java)
                 )
+            } ?: run {
+                user.rankHistory = OsuUser.RankHistory(archive.mode.shortName,
+                    emptyList()
+                )
             }
 
-            return user
+                return user
         }
 
         private fun OsuUserInfoArchiveLite.updateFrom(user: OsuUser, mode: OsuMode): OsuUserInfoArchiveLite {
