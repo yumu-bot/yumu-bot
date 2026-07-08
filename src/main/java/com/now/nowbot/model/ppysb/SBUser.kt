@@ -3,6 +3,7 @@ package com.now.nowbot.model.ppysb
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
 import tools.jackson.databind.PropertyNamingStrategies
@@ -36,7 +37,7 @@ data class SBUser(
 
     @get:JsonProperty("mode")
     val mode: OsuMode
-        get() = OsuMode.getMode(preferredMode.toInt())
+        get() = preferredMode.toOsuMode()
 
     @get:JsonProperty("current_mode")
     var currentMode: OsuMode = mode

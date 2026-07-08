@@ -6,6 +6,7 @@ import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class BeatmapsetWithRankTime(
@@ -48,11 +49,11 @@ data class BeatmapsetWithRankTime(
 
         @set:JsonProperty("mode")
         @get:JsonIgnore
-        var modeInt: Int = 0,
+        var modeByte: Byte = (-1).toByte(),
     ) {
         @get:JsonProperty("mode")
         val mode: OsuMode
-            get() = OsuMode.getMode(modeInt)
+            get() = modeByte.toOsuMode()
     }
 
     override fun hashCode(): Int {

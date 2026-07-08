@@ -149,6 +149,10 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             return getMode(this)
         }
 
+        fun Number?.toOsuMode(): OsuMode {
+            return getMode(this?.toByte())
+        }
+
         @JvmStatic
         fun getMode(num: Byte?): OsuMode {
             val index = keysTable.binarySearch(num ?: return DEFAULT)
@@ -157,11 +161,6 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
 
         @JvmStatic
         fun getMode(num: Int?): OsuMode {
-            return getMode(num?.toByte())
-        }
-
-        @JvmStatic
-        fun getMode(num: Short?): OsuMode {
             return getMode(num?.toByte())
         }
 

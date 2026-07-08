@@ -1,6 +1,7 @@
 package com.now.nowbot.model.mappool.old
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.mappool.now.Pool
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -60,7 +61,7 @@ class MapPoolDto(
 
     constructor(pool: Pool, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService) : this(
         pool.name,
-        OsuMode.getMode(pool.mode),
+        pool.mode.toOsuMode(),
         getModMapFromPool(pool),
         beatmapApiService,
         calculateApiService

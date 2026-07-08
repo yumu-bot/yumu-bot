@@ -6,6 +6,7 @@ import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -156,8 +157,8 @@ class DailyStatisticsService(
             .mapValues { (_, projections) -> projections.associate { it.mode to it.playCount } }
 
         val needUpdate = stats.flatMap { micro ->
-            val userId = micro.userID
-            val userPlayCounts = allPlayCountsMap[userId] ?: emptyMap()
+            val userID = micro.userID
+            val userPlayCounts = allPlayCountsMap[userID] ?: emptyMap()
 
             val plays = List(4) { i -> userPlayCounts[i.toByte()] ?: 0L }
 
@@ -171,7 +172,7 @@ class DailyStatisticsService(
             plays.mapIndexed { index, pc ->
                 val current = currents[index]
                 val delta = current - pc
-                val mode = OsuMode.getMode(index)
+                val mode = index.toOsuMode()
                 Triple(micro, mode, delta)
             }.filter { it.third > 0 }
         }

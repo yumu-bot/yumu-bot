@@ -257,10 +257,25 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     """, nativeQuery = true)
     fun update(@Param("entityID") entityID: Long, @Param("updatedAt") updatedAt: LocalDate): Int
 
-    @Query("SELECT s FROM UserStatisticsLite s WHERE s.userID IN :userIDs AND s.mode = :mode")
+    @Query(value = """
+        SELECT * FROM (
+            SELECT s.*, 
+                   ROW_NUMBER() OVER(PARTITION BY s.user_id, s.mode ORDER BY s.updated_at DESC) as rn
+            FROM user_statistics s
+            WHERE s.user_id IN (:userIDs)
+        ) t WHERE t.rn = 1
+    """, nativeQuery = true)
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserStatisticsLite>
 
-    @Query("SELECT s FROM UserStatisticsLite s WHERE s.userID IN :userIDs AND s.updatedAt BETWEEN :from AND :to")
+    @Query(value = """
+        SELECT * FROM (
+            SELECT s.*, 
+                   ROW_NUMBER() OVER(PARTITION BY s.user_id, s.mode ORDER BY s.updated_at DESC) as rn
+            FROM user_statistics s
+            WHERE s.user_id IN (:userIDs) 
+              AND s.updated_at BETWEEN :from AND :to
+        ) t WHERE t.rn = 1
+    """, nativeQuery = true)
     fun getLatestBatchBetween(userIDs: Collection<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite>
 
     // 2. 批量更新日期：用于 totalHits 没有变化，只需更新 updatedAt 的场景
@@ -412,7 +427,15 @@ interface UserRankPercentRepository: JpaRepository<UserRankPercentLite, UserRank
     )
     fun upsert(@Param("entity") entity: UserRankPercentLite): Int
 
-    @Query("SELECT s FROM UserRankPercentLite s WHERE s.userID IN :userIDs AND s.mode = :mode")
+    @Query(value = """
+        SELECT t.* FROM (
+            SELECT s.*, 
+                   ROW_NUMBER() OVER(PARTITION BY s.user_id ORDER BY s.date DESC) as rn
+            FROM user_rank_percent s
+            WHERE s.user_id IN (:userIDs) 
+              AND s.mode = :mode
+        ) t WHERE t.rn = 1
+    """, nativeQuery = true)
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserRankPercentLite>
 
     @Query(

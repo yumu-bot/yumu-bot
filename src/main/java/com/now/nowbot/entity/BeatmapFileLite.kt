@@ -1,6 +1,7 @@
 package com.now.nowbot.entity
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import jakarta.persistence.*
 
 @Entity
@@ -22,5 +23,5 @@ class BeatmapFileLite {
 
     @get:Transient
     val mode: OsuMode
-        get() = OsuMode.getMode(modeInt)
+        get() = modeInt.toOsuMode()
 }

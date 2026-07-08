@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -191,7 +192,7 @@ class SBScorePRService(
             }
 
             val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
-                OsuMode.getMode(mode.data!!.modeValue + 4.toByte())
+                (mode.data!!.modeValue + 4.toByte()).toOsuMode()
             } else {
                 mode.data!!
             }

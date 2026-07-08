@@ -2,6 +2,7 @@ package com.now.nowbot.entity
 
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
@@ -31,7 +32,7 @@ data class OsuBindUserLite(
 
     @get:Transient
     val mode: OsuMode
-        get() = currentOsuMode ?: OsuMode.getMode(modeValue.toInt())
+        get() = currentOsuMode ?: modeValue.toOsuMode()
 
     //主模式
     @Column(name = "main_mode")
@@ -45,7 +46,7 @@ data class OsuBindUserLite(
         }
         set(value) {
             field = value
-            currentOsuMode = OsuMode.getMode(value.toInt())
+            currentOsuMode = value.toOsuMode()
         }
 
     constructor(data: BindUser) : this(

@@ -222,39 +222,6 @@ class TachyonScoreLite(
             val reader = mapper.readerForListOf(LazerMod::class.java)
             return reader.readValue(rootArrayNode)
         }
-
-        fun transfer(legacy: LazerScoreLite): TachyonScoreLite {
-            val lazerMods: List<LazerMod> = if (!legacy.mods.isNullOrBlank()) {
-                try {
-                    JacksonUtil.parseObjectList(legacy.mods, LazerMod::class.java)
-                } catch (_: Exception) {
-                    emptyList()
-                }
-            } else {
-                emptyList()
-            }
-
-            val (modsList, modsDataJson) = lazerMods.toEntity()
-
-            return TachyonScoreLite(
-                scoreID = legacy.id,
-                userID = legacy.userId,
-                beatmapID = legacy.beatmapId,
-                buildID = if (legacy.legacyScore == 0) 1 else null,
-                mods = modsList,
-                modsData = modsDataJson,
-                pp = legacy.pp,
-                accuracy = legacy.accuracy,
-                maxCombo = legacy.maxCombo,
-                time = legacy.time,
-                perfect = legacy.perfectCombo,
-                passed = legacy.passed,
-                legacy = legacy.legacyScore.takeIf { it > 0 },
-                score = legacy.lazerScore,
-                mode = legacy.mode.toByte(),
-                rank = legacy.rankByte
-            )
-        }
     }
 }
 
@@ -294,16 +261,6 @@ class TachyonStatisticsLite(
             mode = -1,
             statistics = score.statistics
         )
-
-        fun transfer(legacy: ScoreStatisticLite): TachyonStatisticsLite {
-            val statistics = JacksonUtil.parseObject<LazerStatistics>(legacy.data)!!
-
-            return TachyonStatisticsLite(
-                statisticsID = legacy.id,
-                mode = legacy.mode,
-                statistics = statistics
-            )
-        }
     }
 }
 

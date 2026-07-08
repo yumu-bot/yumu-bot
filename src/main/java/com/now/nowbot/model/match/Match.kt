@@ -4,6 +4,7 @@ package com.now.nowbot.model.match
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.MicroUser
@@ -85,7 +86,7 @@ data class Match(
         val scoringType: String,
     ) {
         val mode: OsuMode
-            get() = OsuMode.getMode(modeInt)
+            get() = modeInt.toOsuMode()
 
         @get:JsonProperty("is_team_vs")
         val isTeamVS: Boolean
