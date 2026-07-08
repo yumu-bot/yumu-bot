@@ -218,9 +218,9 @@ class OsuUserInfoDao(
     }
 
     fun saveUsersTodayAsync(users: List<MicroUser>) {
-        saveUsersToday(users)
         Thread.startVirtualThread {
             runCatching {
+                saveUsersToday(users)
             }.onFailure { e ->
                 log.info("玩家数据存储：批量存储失败：", e)
             }

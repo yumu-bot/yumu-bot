@@ -19,6 +19,7 @@ import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -153,24 +154,15 @@ class DailyStatisticsService(
         val from = TimeParser.BASE_DATE
         val to = today.minusDays(1)
 
-//        val allPlayCountsMap = userInfoDao.getLatestPlayCountsBatchBetween(ids, from, to)
-//            .groupBy { it.userID }
-//            .mapValues { (_, projections) -> projections.associate { it.mode to it.playCount } }
-
         val allPlayCountsMap: Map<Long, Map<Byte, Long>> = userInfoDao.getLatestPlayCountsBatchBetween(ids, from, to)
             .groupBy { it.userID }
-            .mapValues { (_, projections) ->
-                projections.associateBy(
-                    keySelector = { it.mode },
-                    valueTransform = { it.playCount }
-                )
-            }
+            .mapValues { (_, projections) -> projections.associate { it.mode to it.playCount } }
 
         val needUpdate = stats.flatMap { micro ->
             val userID = micro.userID
             val userPlayCounts = allPlayCountsMap[userID] ?: emptyMap()
 
-            val plays = List(4) { i -> userPlayCounts[i.toByte()] ?: 0L }
+            val plays = List(4) { i -> userPlayCounts[i.toByte()] ?: -1L }
 
             val currents = listOf(
                 micro.rulesets?.osu?.playCount ?: 0L,
@@ -179,12 +171,16 @@ class DailyStatisticsService(
                 micro.rulesets?.mania?.playCount ?: 0L,
             )
 
-            plays.mapIndexed { index, pc ->
+            plays.mapIndexedNotNull { index, recorded ->
                 val current = currents[index]
-                val delta = current - pc
+
+                if (recorded !in 0..< current) return@mapIndexedNotNull null
+
+                // 这里可能造成新玩家没法触发增量查询，但是我觉得可以接受
+                val delta = current - recorded
                 val mode = index.toOsuMode()
                 Triple(micro, mode, delta)
-            }.filter { it.third > 0 }
+            }
         }
 
         if (needUpdate.isEmpty()) return Triple(0, 0, 0)
