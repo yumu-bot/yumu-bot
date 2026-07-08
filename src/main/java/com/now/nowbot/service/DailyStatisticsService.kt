@@ -19,7 +19,6 @@ import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -80,6 +79,67 @@ class DailyStatisticsService(
             val endTime = System.currentTimeMillis()
             log.info("更新玩家百分比完成, 耗时: ${DataUtil.time2HMS(endTime - startTime)}")
         }
+    }
+
+    fun initializingBindUser() {
+        log.info("开始串行统计全部绑定用户（只更新游玩次数）")
+
+        val startTime = System.currentTimeMillis()
+
+        val offset = AtomicInteger(0)
+        val batch = AtomicInteger(1)
+        val count = AtomicInteger(0)
+        val bindCount = bindDao.getBindUserCount()
+
+        while (IocAllReadyRunner.APP_ALIVE && !Thread.currentThread().isInterrupted) {
+            // 获取一批用户
+            val users = bindDao.getBindUsersLimit50(offset.get())
+            if (users.isEmpty()) {
+                break
+            }
+
+            try {
+                val r = userApiService.getMicroUsers(users = users.map { it.userID }, isVariant = true, isBackground = true).size
+
+                val currentCount = count.addAndGet(r)
+                val currentOffset = offset.addAndGet(users.size)
+                val progress = "%.2f".format((currentOffset * 100.0 / bindCount).coerceIn(0.0, 100.0))
+
+                val now = System.currentTimeMillis()
+                val elapsed = now - startTime
+
+                val expect = if (currentCount > 0) {
+                    val remaining = bindCount - currentOffset
+                    val estimatedRemainingMillis = (elapsed.toDouble() / currentOffset * remaining).toLong()
+
+                    java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                        .format(java.util.Date(now + estimatedRemainingMillis))
+                } else {
+                    "计算中..."
+                }
+
+                if (currentOffset > bindCount * 1.2) {
+                    log.error("偏移量 ($currentOffset) 远超总数 ($bindCount)，疑似死循环，强制退出")
+                    break
+                }
+
+                log.info("""
+                    第 ${batch.get()} 批用户已更新完成：
+                    进度：$progress %
+                    预期完成时间：${expect}
+                    """.trimIndent())
+            } catch (e: Exception) {
+                log.error("第 ${batch.get()} 批次发生异常：", e)
+            } finally {
+                batch.incrementAndGet()
+            }
+
+            waitForRateLimit(updateCoolingTime.inWholeMilliseconds)
+        }
+
+        val endTime = System.currentTimeMillis()
+
+        log.info("统计已完成，耗时： ${DataUtil.time2HMS(endTime - startTime)}")
     }
 
     fun collectingBindUser() {

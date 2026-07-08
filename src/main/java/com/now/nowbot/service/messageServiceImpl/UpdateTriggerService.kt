@@ -32,7 +32,7 @@ class UpdateTriggerService(
 ) : MessageService<Pair<UpdateTriggerService.UpdateType, String?>> {
 
     enum class UpdateType {
-        DIVING_FISH, LXNS, OSU_PERCENT, OSU_DAILY, OSU_STAR_RATING;
+        DIVING_FISH, LXNS, OSU_PERCENT, OSU_DAILY, OSU_TTH_INIT, OSU_STAR_RATING;
 
         companion object {
             fun getType(string: String?): UpdateType {
@@ -42,10 +42,12 @@ class UpdateTriggerService(
                     "o", "p", "percent", "per" -> OSU_PERCENT
                     "d", "daily" -> OSU_DAILY
                     "s", "r", "star", "sr", "rating" -> OSU_STAR_RATING
+                    "i", "tth", "init" -> OSU_TTH_INIT
                     else -> throw UnsupportedOperationException("""
                         请输入需要更新的种类：
                         
                         m -> maimai
+                        i -> osu totalhits init
                         l -> lxns
                         p -> osu percent
                         d -> osu daily
@@ -183,6 +185,25 @@ class UpdateTriggerService(
                         }
 
                         event.replyAsync("已经清除 $modeStr 模式的星数。${c}")
+                    }
+                )
+            }
+
+            OSU_TTH_INIT -> {
+                if (!Permission.isSuperAdmin(event.sender.contactID)) {
+                    throw BelowSuperAdministrator()
+                }
+
+                ASyncMessageUtil.doubleCheck(
+                    event,
+                    onCheck = {
+                        event.replyAsync("高耗时操作：你确定要开始刷新所有玩家的数据 (user_statistics) 吗？回复 OK 确认。")
+                    },
+                    onSuccess = {
+                        event.replyAsync("已提交更新指令，系统正在后台处理...")
+                        Thread.startVirtualThread {
+                            dailyStatisticsService.initializingBindUser()
+                        }
                     }
                 )
             }
