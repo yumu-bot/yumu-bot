@@ -11,6 +11,7 @@ import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.TimeParser
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -149,12 +150,21 @@ class DailyStatisticsService(
         val stats = userApiService.getMicroUsers(users = ids, isVariant = true, isBackground = true)
 
         val today = LocalDate.now(ZoneOffset.UTC)
-        val from = today.minusYears(1)
+        val from = TimeParser.BASE_DATE
         val to = today.minusDays(1)
 
-        val allPlayCountsMap = userInfoDao.getLatestPlayCountsBatchBetween(ids, from, to)
+//        val allPlayCountsMap = userInfoDao.getLatestPlayCountsBatchBetween(ids, from, to)
+//            .groupBy { it.userID }
+//            .mapValues { (_, projections) -> projections.associate { it.mode to it.playCount } }
+
+        val allPlayCountsMap: Map<Long, Map<Byte, Long>> = userInfoDao.getLatestPlayCountsBatchBetween(ids, from, to)
             .groupBy { it.userID }
-            .mapValues { (_, projections) -> projections.associate { it.mode to it.playCount } }
+            .mapValues { (_, projections) ->
+                projections.associateBy(
+                    keySelector = { it.mode },
+                    valueTransform = { it.playCount }
+                )
+            }
 
         val needUpdate = stats.flatMap { micro ->
             val userID = micro.userID

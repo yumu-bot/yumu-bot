@@ -260,9 +260,9 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     @Query(value = """
         SELECT * FROM (
             SELECT s.*, 
-                   ROW_NUMBER() OVER(PARTITION BY s.user_id, s.mode ORDER BY s.updated_at DESC) as rn
+                   ROW_NUMBER() OVER(PARTITION BY s.user_id ORDER BY s.updated_at DESC) as rn
             FROM user_statistics s
-            WHERE s.user_id IN (:userIDs)
+            WHERE s.user_id IN (:userIDs) AND s.mode = :mode
         ) t WHERE t.rn = 1
     """, nativeQuery = true)
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserStatisticsLite>
@@ -270,7 +270,10 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     @Query(value = """
         SELECT * FROM (
             SELECT s.*, 
-                   ROW_NUMBER() OVER(PARTITION BY s.user_id, s.mode ORDER BY s.updated_at DESC) as rn
+                   ROW_NUMBER() OVER(
+                       PARTITION BY s.user_id, s.mode 
+                       ORDER BY s.updated_at DESC, s.id DESC
+                   ) as rn
             FROM user_statistics s
             WHERE s.user_id IN (:userIDs) 
               AND s.updated_at BETWEEN :from AND :to

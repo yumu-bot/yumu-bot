@@ -218,9 +218,9 @@ class OsuUserInfoDao(
     }
 
     fun saveUsersTodayAsync(users: List<MicroUser>) {
+        saveUsersToday(users)
         Thread.startVirtualThread {
             runCatching {
-                saveUsersToday(users)
             }.onFailure { e ->
                 log.info("玩家数据存储：批量存储失败：", e)
             }
@@ -298,6 +298,7 @@ class OsuUserInfoDao(
 
         return List(4) { i -> i.toByte() }.map { playCounts[it] ?: 0L }
     }
+
     fun getLatestPlayCountsBatchBetween(userIDs: List<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite> {
         return userStatisticsRepository.getLatestBatchBetween(userIDs, from, to)
     }
@@ -564,41 +565,32 @@ class OsuUserInfoDao(
         if (inputs.isEmpty()) return
 
         val today = LocalDate.now(ZoneOffset.UTC)
-        val userIDs = inputs.map { it.first }.toSet()
 
-        // 💡 优化核心 1：一次性查出这批用户在该模式下的最新记录，转成 Map 供内存对比
-        // 假设你的实体类里有 userID 属性
+        val distinctInputs = inputs.associateBy({ it.first }, { it.second })
+        val userIDs = distinctInputs.keys
+
         val latestMap = userStatisticsRepository.getLatestBatch(userIDs, mode.modeValue)
             .associateBy { it.userID }
 
-        // 用于存放需要执行完整更新或新增的实体
         val entitiesToUpsert = mutableListOf<UserStatisticsLite>()
-        // 用于存放仅需要更新 updatedAt 的主键 ID
-        val idsToUpdateDate = mutableListOf<Long>()
 
-        // 开始遍历处理
-        for (input in inputs) {
-            val userID = input.first
-            val statistics = input.second
-            val totalHits = statistics.totalHits ?: 0L
-
+        for ((userID, statistics) in distinctInputs) {
             val latest = latestMap[userID]
 
             if (latest != null) {
-                // 对应原逻辑：无需更新数据，只看要不要更新时间
-                if (latest.totalHits >= totalHits && totalHits >= 0L) {
-                    if (latest.updatedAt.isBefore(today)) {
-                        latest.id?.let { idsToUpdateDate.add(it) }
-                    }
+                val isDataIdentical = latest.totalHits == (statistics.totalHits ?: 0L)
+
+                if (isDataIdentical && !latest.updatedAt.isBefore(today)) {
                     continue
                 }
 
+                // 无论是数据变了，还是仅仅需要更新打卡时间，都统一走托管实体的属性赋值
                 val entity = latest.updateFrom(userID, mode, statistics).apply {
                     this.updatedAt = today
                 }
                 entitiesToUpsert.add(entity)
             } else {
-                // 对应原逻辑：新增
+                // 新增
                 val entity = UserStatisticsLite().updateFrom(userID, mode, statistics).apply {
                     this.createdAt = today
                     this.updatedAt = today
@@ -607,13 +599,8 @@ class OsuUserInfoDao(
             }
         }
 
-        // 💡 优化核心 2：批量写入数据库，将几百次 I/O 合并为最多 2 次
-        if (idsToUpdateDate.isNotEmpty()) {
-            userStatisticsRepository.batchUpdateTime(idsToUpdateDate, today)
-        }
-
         if (entitiesToUpsert.isNotEmpty()) {
-            userStatisticsRepository.saveAll(entitiesToUpsert) // 或者调用你原本的批量 upsert
+            userStatisticsRepository.saveAll(entitiesToUpsert)
         }
     }
 

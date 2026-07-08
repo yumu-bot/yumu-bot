@@ -4,10 +4,10 @@ import com.now.nowbot.throwable.TipsRuntimeException
 import java.time.*
 import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoField
+import java.time.temporal.ChronoUnit
 
 object TimeParser {
-    private val BASE_DATE = LocalDate.of(2007, 9, 1)
-        .atStartOfDay(ZoneId.systemDefault()).toInstant()
+    val BASE_DATE: LocalDate = LocalDate.of(2007, 9, 1)
 
     fun isRelativeTime(input: String): Boolean {
         val relativeRegex = ".*\\d+\\s*([a-zA-Z\\u4e00-\\u9fa5]+).*".toRegex()
@@ -17,7 +17,8 @@ object TimeParser {
 
     fun process(input: String): ZonedDateTime {
         val now = ZonedDateTime.now()
-        val thresholdMs = now.toInstant().toEpochMilli() - BASE_DATE.toEpochMilli()
+        val thresholdMs = now.toInstant().toEpochMilli() - BASE_DATE
+            .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
         return try {
             when {
@@ -41,7 +42,7 @@ object TimeParser {
                         // 跳转点逻辑：低位补0 (按天截断)
                         Instant.ofEpochMilli(approxMillis)
                             .atZone(ZoneId.systemDefault())
-                            .truncatedTo(java.time.temporal.ChronoUnit.DAYS)
+                            .truncatedTo(ChronoUnit.DAYS)
                     }
                 }
 
