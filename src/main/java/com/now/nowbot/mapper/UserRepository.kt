@@ -264,6 +264,7 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     fun getLatestBatchBetween(userIDs: Collection<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite>
 
     // 2. 批量更新日期：用于 totalHits 没有变化，只需更新 updatedAt 的场景
+    @Transactional
     @Modifying
     @Query("UPDATE UserStatisticsLite SET updatedAt = :today WHERE id IN :ids")
     fun batchUpdateTime(ids: Collection<Long>, today: LocalDate)
