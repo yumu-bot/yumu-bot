@@ -210,7 +210,7 @@ class OsuUserInfoDao(
         }
     }
 
-    fun upsertUserToday(user: OsuUser) {
+    private fun upsertUserToday(user: OsuUser) {
         upsertPercent(user)
         upsertGlobalRank(user)
         upsertUserInfo(user)
@@ -310,10 +310,6 @@ class OsuUserInfoDao(
         val mode = user.currentOsuMode.modeValue
         val today = LocalDate.now(ZoneOffset.UTC)
 
-        val delta = (history.filter { it > 0 }.size - 1)
-
-        if (delta < 0L) return
-
         val totalDays = history.size
         val incomingMap: Map<LocalDate, Long> = history.mapIndexed { index, rank ->
             val daysAgo = (totalDays - 1) - index
@@ -323,28 +319,34 @@ class OsuUserInfoDao(
 
         if (incomingMap.isEmpty()) return
 
-        // 2. 找出这批数据的实际日期边界
-        val target = incomingMap.keys
-        val startDate = target.minOrNull()!!
-        val endDate = target.maxOrNull()!!
+        val targetDates = incomingMap.keys
+        val startDate = targetDates.minOrNull()!!
+        val endDate = targetDates.maxOrNull()!!
 
-        // 3. 从数据库捞出这段时间内【已经存在】的日期集合
-        val exist = userGlobalRankRepository.getDateBetween(user.userID, mode, startDate, endDate).toSet()
+        val existingEntities = userGlobalRankRepository.getBetween(user.userID, mode, startDate, endDate)
+            .associateBy { it.date }
 
-        val insert = target.minus(exist)
+        val entitiesToSave = ArrayList<UserGlobalRankLite>(incomingMap.size)
 
-        if (insert.isNotEmpty()) {
-            // 无需更新数据
-            val entities = insert.map { date ->
-                UserGlobalRankLite(
-                    userID = user.userID,
-                    mode = mode,
-                    date = date,
-                    rank = incomingMap[date]!!
+        for ((date, rank) in incomingMap) {
+            val existing = existingEntities[date]
+            if (existing == null) {
+                entitiesToSave.add(
+                    UserGlobalRankLite(
+                        userID = user.userID,
+                        mode = mode,
+                        date = date,
+                        rank = rank
+                    )
                 )
+            } else if (existing.rank != rank) {
+                existing.rank = rank
+                entitiesToSave.add(existing)
             }
+        }
 
-            userGlobalRankRepository.saveAll(entities)
+        if (entitiesToSave.isNotEmpty()) {
+            userGlobalRankRepository.saveAll(entitiesToSave)
         }
     }
 
@@ -544,17 +546,17 @@ class OsuUserInfoDao(
                 return
             }
 
-            val entity = latest.updateFrom(user)!!.apply {
+            val entity = latest.updateFrom(user)?.apply {
                 this.updatedAt = today
-            }
+            } ?: return
 
             userStatisticsRepository.upsert(entity)
         } else {
             // 新增
-            val entity = UserStatisticsLite().updateFrom(user)!!.apply {
+            val entity = UserStatisticsLite().updateFrom(user)?.apply {
                 this.createdAt = today
                 this.updatedAt = today
-            }
+            } ?: return
 
             userStatisticsRepository.save(entity)
         }
