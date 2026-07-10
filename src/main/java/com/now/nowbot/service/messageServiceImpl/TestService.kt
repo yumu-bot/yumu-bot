@@ -1,15 +1,11 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.mikuac.shiro.core.BotContainer
-import com.now.nowbot.cache.QQMessageCacheProvider
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.entity.TimestampConverter
 import com.now.nowbot.mapper.BeatmapCountMapper
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.osuApiService.OsuMatchApiService
-import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.IntArrayCompressor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -38,7 +34,7 @@ class TestService(
 
         val delta = beatmapCountMapper.getTimeStampByBeatmapIDs(listOf(bid)).firstOrNull()?.delta ?: return null
 
-        val result = TimestampConverter.bytesToIntArray(delta)
+        val result = IntArrayCompressor.byteArrayToIntArray(delta)
 
         event.replyAsync("谱面 $bid 的结果：${result.take(20).joinToString(", ")}")
 

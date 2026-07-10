@@ -6,8 +6,6 @@ import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapCountLite
-import com.now.nowbot.entity.TimestampConverter
-import com.now.nowbot.entity.UUIDConverter
 import com.now.nowbot.mapper.BeatmapCountMapper
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.CosuRequest
@@ -28,7 +26,9 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
+import com.now.nowbot.util.IntArrayCompressor
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.UUIDConverter
 import com.now.nowbot.util.toBody
 import com.now.nowbot.util.toBodyList
 import io.ktor.util.collections.*
@@ -867,7 +867,7 @@ class BeatmapApiImpl(
         // 1. 初始化非空 Value 的可变 Map
         val timeMap: MutableMap<Long, IntArray> = beatmapCountMapper
             .getTimeStampByBeatmapIDs(bids)
-            .associateTo(HashMap()) { it.beatmapID to TimestampConverter.bytesToIntArray(it.delta) }
+            .associateTo(HashMap()) { it.beatmapID to IntArrayCompressor.byteArrayToIntArray(it.delta) }
 
         return all.map { (bid, index) ->
             val time: IntArray = timeMap.computeIfAbsent(bid) { _ ->
