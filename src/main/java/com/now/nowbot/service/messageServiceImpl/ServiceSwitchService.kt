@@ -14,7 +14,7 @@ import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService.SwitchPara
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
@@ -22,6 +22,8 @@ import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_SERVICE
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.regex.Matcher
 
 @Service("SWITCH")
@@ -79,7 +81,7 @@ class ServiceSwitchService(
         ;
 
         companion object {
-            val typeMap = ServiceType.entries.associateWith { it.typeAlias }
+            val typeMap = entries.associateWith { it.typeAlias }
 
             fun getTypeFromInput(input: String): ServiceType? {
                 val standard = input.lowercase()
@@ -143,6 +145,7 @@ class ServiceSwitchService(
         }
 
         val services = getServices(event, targetStr, matcher.group(FLAG_SERVICE), operate)
+            .get(60, TimeUnit.SECONDS)
 
         if (operate == LIST) {
             return SwitchParam(services, LIST, target?.first, target?.second)
@@ -205,34 +208,48 @@ class ServiceSwitchService(
                     // 这里必定是群聊管理员
                     // 群聊管理员可以控制群聊的开关，所以在模棱两可的时候，需要询问。
 
-                    val receipt = event.reply("""
-                        您需要操作群聊还是操作您自己呢？
-                        回复 1 操作群聊
-                        回复 2 操作自己
-                        """.trimIndent())
+                    val future = CompletableFuture<Pair<Target, Long>>()
 
-                    val lock = ASyncMessageUtil.getLock(event, 30 * 1000L)
+                    AsyncMessageUtil.doubleCheck(
+                        event = event,
+                        onCheck = {
+                            event.reply("""
+                                您需要操作群聊还是操作您自己呢？
+                                回复 1 操作群聊，回复 2 操作自己。
+                            """.trimIndent())
+                        },
 
-                    val ev = lock.get()
-                    receipt.recall()
+                        onWrong = {
+                            future.completeExceptionally(TipsException("操作已中止。"))
+                        },
 
-                    return if (ev != null && ev.rawMessage.contains("1", ignoreCase = true)) {
-                        Target.GROUP to event.subject.contactID
-                    } else if (ev != null && ev.rawMessage.contains("2", ignoreCase = true)) {
-                        Target.QQ to event.sender.contactID
-                    } else if (ev == null) {
-                        throw TipsException("确认超时。")
-                    } else {
-                        throw TipsException("操作已中止。")
-                    }
+                        onOverTime = {
+                            future.completeExceptionally(TipsException("确认超时。"))
+                        },
 
+                        onSuccess = { ev ->
+                            if (ev.rawMessage.contains("1", ignoreCase = true)) {
+                                future.complete(Target.GROUP to event.subject.contactID)
+                            } else if (ev.rawMessage.contains("2", ignoreCase = true)) {
+                                future.complete(Target.QQ to event.subject.contactID)
+                            } else {
+                                future.completeExceptionally(TipsException("操作已中止。"))
+                            }
+                        }
+                    )
+
+                    return future.get()
                 }
             }
         }
     }
 
-    private fun getServices(event: MessageEvent, target: String, input: String?, operate: Operate): List<String> {
-        if (operate == LIST) return listOf()
+    private fun getServices(event: MessageEvent, target: String, input: String?, operate: Operate): CompletableFuture<List<String>> {
+        if (operate == LIST) {
+            return CompletableFuture.completedFuture(emptyList())
+        }
+
+        val future = CompletableFuture<List<String>>()
 
         val ii = (input ?: "").trim().replace("\\s+".toRegex(), "_").uppercase()
 
@@ -247,26 +264,30 @@ class ServiceSwitchService(
         if (ii.isEmpty()) {
             // 全局操作模式
 
-            val receipt = event.reply("""
-                您确定要${does}所有服务吗？回复 OK 确认。
-                操作对象：${target}
-                操作服务：所有
-                
-                如果不想${does}所有服务，也可以尝试按类别来${does}。
-            """.trimIndent())
+            AsyncMessageUtil.doubleCheck(
+                event = event,
+                onCheck = {
+                    event.reply("""
+                        您确定要${does}所有服务吗？回复 OK 确认。
+                        操作对象：${target}
+                        操作服务：所有
+                        
+                        如果不想${does}所有服务，也可以尝试按类别来${does}。
+                        """.trimIndent())
+                },
 
-            val lock = ASyncMessageUtil.getLock(event, 30 * 1000L)
+                onWrong = {
+                    future.completeExceptionally( TipsException("${does}操作已中止。"))
+                },
 
-            val ev = lock.get()
-            receipt.recall()
+                onOverTime = {
+                    future.completeExceptionally(TipsException("确认超时。"))
+                },
 
-            if (ev != null && ev.rawMessage.contains("OK", ignoreCase = true)) {
-                return listOf()
-            } else if (ev == null) {
-                throw TipsException("确认超时。")
-            } else {
-                throw TipsException("${does}操作已中止。")
-            }
+                onSuccess = {
+                    future.complete(emptyList())
+                }
+            )
         }
 
         if (type == null) {
@@ -278,7 +299,7 @@ class ServiceSwitchService(
 
             if (service != null) {
                 // 单服务操作模式
-                return listOf(service.name)
+                return CompletableFuture.completedFuture(listOf(service.name))
             }
 
             // 重复确认模式
@@ -298,25 +319,30 @@ class ServiceSwitchService(
 
         } else {
             // 种类操作模式
-            val receipt = event.reply("""
-                您确定要${does} ${type.name} 类别下的所有服务吗？回复 OK 确认。
-                操作对象：${target}
-                操作服务：${type.services.joinToString(", ")}
-            """.trimIndent())
+            AsyncMessageUtil.doubleCheck(
+                event = event,
+                onCheck = { event.reply("""
+                    您确定要${does} ${type.name} 类别下的所有服务吗？回复 OK 确认。
+                    操作对象：${target}
+                    操作服务：${type.services.joinToString(", ")}
+                    """.trimIndent())
+                },
 
-            val lock = ASyncMessageUtil.getLock(event, 30 * 1000L)
+                onWrong = {
+                    future.completeExceptionally(TipsException("${does}操作已中止。"))
+                },
 
-            val ev = lock.get()
-            receipt.recall()
+                onOverTime = {
+                    future.completeExceptionally(TipsException("确认超时。"))
+                },
 
-            if (ev != null && ev.rawMessage.contains("OK", ignoreCase = true)) {
-                return type.services.map { it.uppercase() }
-            } else if (ev == null) {
-                throw TipsException("确认超时。")
-            } else {
-                throw TipsException("${does}操作已中止。")
-            }
+                onSuccess = {
+                    future.complete(type.services.map { it.uppercase() })
+                }
+            )
         }
+
+        return future
     }
 
     private fun SwitchParam.handleOn(): MessageChain {

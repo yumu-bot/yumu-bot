@@ -9,8 +9,8 @@ import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 
 interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
-    @Query("select u from OsuBindUserLite u where u.osuID = :osuID order by u.id limit 1")
-    fun getByOsuID(osuID: Long?): OsuBindUserLite?
+    @Query("select u from OsuBindUserLite u where u.userID = :userID order by u.id limit 1")
+    fun getByOsuID(userID: Long?): OsuBindUserLite?
 
     @Query("select u from OsuBindUserLite u where u.refreshToken = :refreshToken order by u.id limit 1")
     fun getByRefreshToken(refreshToken: String?): OsuBindUserLite?
@@ -18,19 +18,19 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     @Query(
         """
         select u from OsuBindUserLite u
-        where u.osuID = :osuID and u.refreshToken is not null
+        where u.userID = :userID and u.refreshToken is not null
         order by u.id desc limit 1
         """
     )
-    fun getFirstByOsuID(osuID: Long?): OsuBindUserLite?
+    fun getFirstByOsuID(userID: Long?): OsuBindUserLite?
 
-    @Query("select u from OsuBindUserLite u where u.osuName ILIKE CONCAT('%', :username, '%') order by u.osuName asc")
+    @Query("select u from OsuBindUserLite u where u.username ILIKE CONCAT('%', :username, '%') order by u.username asc")
     fun getByOsuNameLike(username: String?): List<OsuBindUserLite>
 
     @Modifying @Transactional @Query(
         value = """
             with del as (
-                select id, row_number() over (partition by osu_id=:osuID order by id desc ) as row_num
+                select id, row_number() over (partition by osu_id=:userID order by id desc ) as row_num
                 from osu_bind_user
                 where osu_id= :userID
             )
@@ -40,15 +40,15 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     fun deleteOutdatedByOsuID(userID: Long?)
 
     @Modifying @Transactional
-    @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.osuID=:userID")
+    @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.userID=:userID")
     fun updateToken(userID: Long?, accessToken: String?, refreshToken: String?, time: Long?)
 
     @Modifying
     @Transactional
     @Query(value = """
     UPDATE osu_bind_user
-    SET osu_id = :#{#user.osuID}, 
-        osu_name = :#{#user.osuName}, 
+    SET osu_id = :#{#user.userID}, 
+        osu_name = :#{#user.username}, 
         access_token = :#{#user.accessToken}, 
         refresh_token = :#{#user.refreshToken}, 
         time = :#{#user.time} 
@@ -56,14 +56,14 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
 """, nativeQuery = true)
     fun update(@Param("user") user: OsuBindUserLite)
 
-    @Modifying @Transactional @Query("update OsuBindUserLite o set o.modeValue = :modeValue where o.osuID = :osuID ")
-    fun updateMode(osuID: Long?, modeValue: Byte?)
+    @Modifying @Transactional @Query("update OsuBindUserLite o set o.modeValue = :modeValue where o.userID = :userID ")
+    fun updateMode(userID: Long?, modeValue: Byte?)
 
-    @Modifying @Transactional @Query("delete OsuBindUserLite o where o.osuID = :osuID ") fun deleteByOsuID(osuID: Long?)
+    @Modifying @Transactional @Query("delete OsuBindUserLite o where o.userID = :userID ") fun deleteByOsuID(userID: Long?)
 
     @Modifying @Transactional
-    @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null, o.updateCount = 0 where o.osuID = :osuID ")
-    fun downgradeBind(osuID: Long?)
+    @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null, o.updateCount = 0 where o.userID = :userID ")
+    fun downgradeBind(userID: Long?)
 
     @Modifying @Transactional
     @Query(value = "update osu_bind_user set update_count = update_count + 1 where id=:id", nativeQuery = true)
@@ -73,14 +73,14 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     @Query(value = "update osu_bind_user set update_count = 0 where id=:id", nativeQuery = true)
     fun clearUpdateCount(id: Long?)
 
-    @Query("select u from OsuBindUserLite u where u.osuID in (:osuID)")
-    fun getAllByOsuID(osuID: Collection<Long>): List<OsuBindUserLite>
+    @Query("select u from OsuBindUserLite u where u.userID in (:userID)")
+    fun getAllByOsuID(userID: Collection<Long>): List<OsuBindUserLite>
 
-    @Modifying @Transactional @Query("delete QQBindLite q where q.osuUser.osuID = :osuID ")
-    fun deleteQQByOsuID(osuID: Long?)
+    @Modifying @Transactional @Query("delete QQBindLite q where q.osuUser.userID = :userID ")
+    fun deleteQQByOsuID(userID: Long?)
 
-    @Modifying @Transactional @Query("delete DiscordBindLite d where d.osuUser.osuID = :osuID ") fun deleteDCByOsuID(
-        osuID: Long?
+    @Modifying @Transactional @Query("delete DiscordBindLite d where d.osuUser.userID = :userID ") fun deleteDCByOsuID(
+        userID: Long?
     )
 
     @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now and u.updateCount = 0 order by u.time limit 50")
@@ -96,14 +96,14 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     fun getEarliestSuspiciousBindUser(now: Long?): OsuBindUserLite?
 
     @Transactional
-    fun deleteAllByOsuID(osuID: Long?) {
-        deleteQQByOsuID(osuID)
-        deleteDCByOsuID(osuID)
-        deleteByOsuID(osuID)
+    fun deleteAllByUserID(userID: Long?) {
+        deleteQQByOsuID(userID)
+        deleteDCByOsuID(userID)
+        deleteByOsuID(userID)
     }
 
-    fun countAllByOsuID(osuID: Long): Int
+    fun countAllByUserID(userID: Long): Int
 
-    @Query("select u from OsuBindUserLite u order by u.osuID limit 50 offset :offset")
+    @Query("select u from OsuBindUserLite u order by u.userID limit 50 offset :offset")
     fun getAllBindUserLimit50(offset: Int): List<OsuBindUserLite>
 }

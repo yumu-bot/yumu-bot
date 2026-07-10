@@ -10,9 +10,9 @@ import java.time.LocalDateTime
 data class OsuBindUserLite(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null,
 
-    @Column(name = "osu_id") var osuID: Long = 0L,
+    @Column(name = "osu_id") var userID: Long = 0L,
 
-    @Column(name = "osu_name", columnDefinition = "TEXT") var osuName: String = "",
+    @Column(name = "osu_name", columnDefinition = "TEXT") var username: String = "",
 
     @Column(name = "access_token", columnDefinition = "TEXT") var accessToken: String? = null,
 

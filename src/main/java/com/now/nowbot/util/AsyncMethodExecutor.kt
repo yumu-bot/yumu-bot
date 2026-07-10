@@ -515,7 +515,7 @@ object AsyncMethodExecutor {
         val size = works.size
         val phaser = Phaser(1)
         val results: MutableMap<Int, T> = ConcurrentHashMap(size)
-        val taskThreads: MutableList<Thread> = CopyOnWriteArrayList()
+        val taskThreads = ConcurrentSkipListSet<Thread>()
         var exception: Exception? = null
 
         works.mapIndexed { i: Int, w: Supplier<T> ->
@@ -528,7 +528,7 @@ object AsyncMethodExecutor {
                     }
                 } catch (e: Exception) {
                     exception = e
-                    taskThreads.forEach {
+                    taskThreads .forEach {
                         try {
                             it.interrupt()
                         } catch (_: Exception) {}

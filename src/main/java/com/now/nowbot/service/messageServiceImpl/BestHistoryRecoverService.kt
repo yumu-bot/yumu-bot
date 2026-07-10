@@ -17,7 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.FastPower095
@@ -128,8 +128,8 @@ class BestHistoryRecoverService(
             current.replyAsync(sb.toString())
 
             // 3. 等待后续交互
-            val lock = ASyncMessageUtil.getLock(current, 30 * 1000)
-            val next = lock.get()
+            val lock = AsyncMessageUtil.getLock(current, 30 * 1000)
+            val next = lock.await()
 
             if (next != null) {
                 current = next

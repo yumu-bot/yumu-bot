@@ -14,7 +14,7 @@ import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.service.messageServiceImpl.UpdateTriggerService.UpdateType.*
 import com.now.nowbot.throwable.botRuntimeException.PermissionException.DeniedException.*
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_ANY
@@ -144,10 +144,10 @@ class UpdateTriggerService(
                     throw BelowSuperAdministrator()
                 }
 
-                ASyncMessageUtil.doubleCheck(
+                AsyncMessageUtil.doubleCheck(
                     event,
                     onCheck = {
-                        event.replyAsync("高耗时操作：你确定要开始统计所有玩家的今日数据吗？回复 OK 确认。")
+                        event.reply("高耗时操作：你确定要开始统计所有玩家的今日数据吗？回复 OK 确认。")
                     },
                     onSuccess = {
                         val startTime = System.currentTimeMillis()
@@ -167,13 +167,13 @@ class UpdateTriggerService(
                 val modeStr = if (mode == OsuMode.DEFAULT) {
                     "所有"
                 } else {
-                    mode.fullName
+                    " ${mode.fullName} "
                 }
 
-                ASyncMessageUtil.doubleCheck(
+                AsyncMessageUtil.doubleCheck(
                     event,
                     onCheck = {
-                        event.replyAsync("高危操作：你确定要删去 $modeStr 模式的星数吗？回复 OK 确认。")
+                        event.reply("高危操作：你确定要删去${modeStr}模式的星数吗？回复 OK 确认。")
                     },
                     onSuccess = {
                         val count = scoreDao.deleteByMode(mode)
@@ -194,10 +194,10 @@ class UpdateTriggerService(
                     throw BelowSuperAdministrator()
                 }
 
-                ASyncMessageUtil.doubleCheck(
+                AsyncMessageUtil.doubleCheck(
                     event,
                     onCheck = {
-                        event.replyAsync("高耗时操作：你确定要开始刷新所有玩家的数据 (user_statistics) 吗？回复 OK 确认。")
+                        event.reply("高耗时操作：你确定要开始刷新所有玩家的数据 (user_statistics) 吗？回复 OK 确认。")
                     },
                     onSuccess = {
                         event.replyAsync("已提交更新指令，系统正在后台处理...")

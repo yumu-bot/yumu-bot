@@ -122,7 +122,7 @@ class OsuUserInfoDao(
             else -> mode.modeValue
         }
 
-        val stats = percentileCacheProvider.cachedData[modeValue]
+        val stats = percentileCacheProvider.cachedData.get()[modeValue]
             ?: return emptyMap()
 
         val stat = user.statistics

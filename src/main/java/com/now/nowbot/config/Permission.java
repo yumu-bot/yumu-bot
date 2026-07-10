@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
@@ -52,7 +51,7 @@ public class Permission {
     private static final Map<String, PermissionParam> PERMISSIONS = new ConcurrentHashMap<>();
 
     private static ArrayList<String>           ALL_SERVICE = null;
-    private static CopyOnWriteArraySet<String> OFF_SERVICE = null;
+    private static ConcurrentHashMap.KeySetView<String, Boolean> OFF_SERVICE = null;
 
     public static void closeService(String name) {
         String service = getServiceName(name);
@@ -171,7 +170,7 @@ public class Permission {
         BLACKLIST = new PermissionParam(new HashSet<>(blackUserList), new HashSet<>(blackGroupList));
         BLACKLIST.setWhite(false);
 
-        OFF_SERVICE = new CopyOnWriteArraySet<>();
+        OFF_SERVICE = ConcurrentHashMap.newKeySet();
         //初始化功能关闭菜单
         serviceSwitchMapper = applicationContext.getBean(ServiceSwitchMapper.class);
 

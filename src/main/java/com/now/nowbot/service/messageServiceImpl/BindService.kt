@@ -14,7 +14,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
@@ -76,8 +76,8 @@ import java.util.function.Predicate
             // 提问
             val receipt = event.reply(BindException.BindConfirmException.NeedConfirm())
 
-            val lock = ASyncMessageUtil.getLock(event, 30L * 1000)
-            val ev = lock.get()
+            val lock = AsyncMessageUtil.getLock(event, 30L * 1000)
+            val ev = lock.await()
 
             if (ev == null || ev.rawMessage.uppercase().contains("OK").not()) {
                 return false
@@ -188,8 +188,8 @@ import java.util.function.Predicate
 
         event.replyAsync(BindException.BindReceiveException.ReceiveNoName())
 
-        val lock = ASyncMessageUtil.getLock(event)
-        var ev: MessageEvent = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
+        val lock = AsyncMessageUtil.getLock(event)
+        var ev: MessageEvent = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         val name = ev.rawMessage.trim()
 
@@ -206,7 +206,7 @@ import java.util.function.Predicate
 
         event.replyAsync(BindException.BindConfirmException.RecoverBind(ou.username, qb.bindUser!!.username, qq))
 
-        ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
+        ev = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
             bindDao.bindQQ(qq, BindUser(ou))
@@ -255,8 +255,8 @@ import java.util.function.Predicate
             }
 
             try {
-                val lock = ASyncMessageUtil.getLock(event)
-                val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
+                val lock = AsyncMessageUtil.getLock(event)
+                val ev = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
                 if (ev.rawMessage.uppercase().contains("OK").not()) {
                     event.replyAsync(BindException.BindReceiveException.ReceiveRefused())
                     return

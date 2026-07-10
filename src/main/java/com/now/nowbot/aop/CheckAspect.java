@@ -31,7 +31,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Aspect
 @Component
@@ -53,8 +52,6 @@ public class CheckAspect {
         this.userProfileRepository = userProfileRepository;
         serviceCall = serviceCallRepository;
     }
-
-    static final List<MessageEvent> workList = new CopyOnWriteArrayList<>();
 
     //所有实现 MessageService 的 HandMessage 方法切入点
     @Pointcut("within(com.now.nowbot.service.MessageService+) &&  execution(* handleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
@@ -86,8 +83,8 @@ public class CheckAspect {
     public Object userSaveLogger(JoinPoint point) {
         Object[] args = point.getArgs();
         if (args.length > 0 && args[0] instanceof OsuBindUserLite u) {
-            if (u.getOsuID() != 0) {
-                log.info("新增用户：{} ({})", u.getOsuID(), u.getOsuName());
+            if (u.getUserID() != 0) {
+                log.info("新增用户：{} ({})", u.getUserID(), u.getUsername());
             } else {
                 log.info("新增绑定关系 ({})", Objects.requireNonNullElse(u.getAccessToken(), "null").substring(0, 10));
             }

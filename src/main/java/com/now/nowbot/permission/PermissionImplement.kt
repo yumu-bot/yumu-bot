@@ -15,7 +15,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.command.REG_EXCLAMATION
 import com.now.nowbot.util.command.REG_IGNORE
@@ -39,7 +39,7 @@ class PermissionImplement(
 
         private const val LOCAL_GROUP_ID = -10086L
 
-        private val superService = CopyOnWriteArraySet<String>()
+        private val superService = ConcurrentHashMap.newKeySet<String>()
         private val permissionMap = LinkedHashMap<String, PermissionService>()
         private val serviceMap = LinkedHashMap<String, MessageService<Any>>()
         private val serviceMap4TX = LinkedHashMap<String, TencentMessageService<Any>>()
@@ -79,7 +79,7 @@ class PermissionImplement(
         }
 
         fun onMessage(event: MessageEvent, errorHandle: BiConsumer<MessageEvent, Throwable>) {
-            ASyncMessageUtil.put(event)
+            AsyncMessageUtil.put(event)
             val textMessage = event.textMessage
 
             if (!filterMessage(textMessage)) {

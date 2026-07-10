@@ -145,7 +145,7 @@ class NewbieService(
         pp.map { it.uid.toLong() }.forEach(users::add)
 
         val userData = bindDao.getAllBindUser(users)
-        val userMap = userData.associate { it.osuID to it.osuName }
+        val userMap = userData.associate { it.userID to it.username }
 
         val pcList = pc.mapIndexed { i, it ->
             val name = userMap[it.uid.toLong()] ?: "???"

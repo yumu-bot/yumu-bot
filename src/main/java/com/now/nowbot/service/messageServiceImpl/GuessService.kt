@@ -36,9 +36,11 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicIntegerArray
+import java.util.concurrent.atomic.AtomicReferenceArray
 import java.util.regex.Matcher
+import kotlin.math.E
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.random.Random
@@ -383,13 +385,27 @@ class GuessService(
         val artist: Boolean,
         val unicode: Boolean
     ) {
-        val revealedLetters: MutableSet<Char> = mutableSetOf()
-        val standardisedLetters: MutableSet<String> = mutableSetOf()
+        val revealedLetters: ConcurrentHashMap.KeySetView<Char, Boolean> = ConcurrentHashMap.newKeySet<Char>()
+        val standardisedLetters: ConcurrentHashMap.KeySetView<String, Boolean> = ConcurrentHashMap.newKeySet<String>()
 
-        val decrypted: MutableList<Int> = CopyOnWriteArrayList(MutableList(scores.size) { Hint.ALL_LOCKED })
-        val rewards: MutableList<Int> = CopyOnWriteArrayList(MutableList(scores.size) { 100 })
+        private val size = scores.size
 
-        val results: MutableList<Guesser?> = CopyOnWriteArrayList(MutableList(scores.size) { null })
+        // 使用 AtomicIntegerArray
+        val decrypted = AtomicIntegerArray(IntArray(size) { Hint.ALL_LOCKED })
+        val rewards = AtomicIntegerArray(IntArray(size) { 100 })
+        val results = AtomicReferenceArray<Guesser?>(size)
+
+        fun getAllResults(): List<Guesser?> {
+            return (0 until size).map { results.get(it) }
+        }
+
+        fun getAllDecrypted(): List<Int> {
+            return (0 until size).map { decrypted.get(it) }
+        }
+
+        fun setAllDecrypted(value: Int) {
+            return (0 until size).forEach { decrypted.set(it, value) }
+        }
 
         val startTime: LocalDateTime = LocalDateTime.now()
         var lastPlayedTime: LocalDateTime = startTime
@@ -438,7 +454,7 @@ class GuessService(
 
             if (currentMask < 0) return 0
 
-            val guessedHints = Hint.entries.size - Hint.getRemaining(currentMask).size
+            val guessedHints = entries.size - Hint.getRemaining(currentMask).size
             val baseScore = 100 shr guessedHints
 
             val score = scores[index]
@@ -702,7 +718,7 @@ class GuessService(
         private val isSettled = AtomicBoolean(false)
 
         val done: Boolean
-            get() = this.decrypted.all { it < 0 }
+            get() = getAllDecrypted().all { it < 0 }
 
         fun trySettle(): Boolean {
             return done && isSettled.compareAndSet(false, true)
@@ -711,7 +727,7 @@ class GuessService(
         fun decryptAll() {
             update()
 
-            decrypted.fill(-1)
+            setAllDecrypted(-1)
         }
 
         fun getHintForSpecialWords(input: String): String {
@@ -932,7 +948,7 @@ class GuessService(
                     // 先将 score 和它的固定随机权重绑定在一起
                     .map { score ->
                         val count = frequencyMap[score.beatmapset.beatmapsetID] ?: 0
-                        val penalty = ln(kotlin.math.E + count * 2)
+                        val penalty = ln(E + count * 2)
                         val weight = Random.nextDouble().pow(penalty)
                         score to weight
                     }
@@ -991,9 +1007,9 @@ class GuessService(
                 val receipt = event.reply(GuessReply.StopCheck)
                 receipt.recallIn(30 * 1000)
 
-                val lock = ASyncMessageUtil.getLock(event, 30 * 1000)
+                val lock = AsyncMessageUtil.getLock(event, 30 * 1000)
 
-                val ev = lock.get()
+                val ev = lock.await()
 
                 if (ev != null && ev.rawMessage.contains("OK", ignoreCase = true)) {
                     ev.saveAndReplyDone(game)
@@ -1075,9 +1091,11 @@ class GuessService(
                 bingo = true
             }
 
-            rewards += game.rewards[r]
+            rewards += game.rewards.get(r)
 
-            game.results[r] = Guesser(event.sender.contactID, event.subject.contactID, rewards, b.beatmapID)
+            val guesser = Guesser(event.sender.contactID, event.subject.contactID, rewards, b.beatmapID)
+
+            game.results.set(r, guesser)
         }
 
         if (bingo) {
@@ -1184,7 +1202,7 @@ class GuessService(
     ): ServiceCallStatistic? {
         guessDao.save(game)
 
-        val decryptedSetIDs = game.scores.zip(game.decrypted)
+        val decryptedSetIDs = game.scores.zip(game.getAllDecrypted())
             .filter { it.second < 0 }
             .map { it.first.beatmapset.beatmapsetID }
             .toSet()

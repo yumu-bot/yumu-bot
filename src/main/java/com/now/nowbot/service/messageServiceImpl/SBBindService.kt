@@ -13,7 +13,7 @@ import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
@@ -110,8 +110,8 @@ class SBBindService(
         // 已有绑定：覆盖绑定
         event.replyAsync(BindException.BindConfirmException.RecoverBind(user.username, qb.bindUser.username, param.qq))
 
-        val lock = ASyncMessageUtil.getLock(event)
-        val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
+        val lock = AsyncMessageUtil.getLock(event)
+        val ev = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
             bindDao.bindSBQQ(param.qq, SBBindUser(user))
@@ -154,8 +154,8 @@ class SBBindService(
         if (param.name.isNullOrEmpty() && param.id == null) {
             event.replyAsync(BindException.BindReceiveException.ReceiveNoName())
 
-            val lock = ASyncMessageUtil.getLock(event)
-            val ev: MessageEvent = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
+            val lock = AsyncMessageUtil.getLock(event)
+            val ev: MessageEvent = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
             val maybeID = ev.rawMessage.trim().toLongOrNull()
 

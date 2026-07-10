@@ -3,15 +3,12 @@ package com.now.nowbot.cache
 import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.mapper.OsuUserInfoPercentilesLiteRepository
 import org.springframework.stereotype.Component
-import org.springframework.stereotype.Service
 
 @Component
 class PercentileCacheProvider(
     private val percentileRepository: OsuUserInfoPercentilesLiteRepository,
 ) {
-    // 使用只读的 Map 存储各模式的统计数据，确保线程安全
-    @Volatile
-    final var cachedData: Map<Byte, ModeStats> = emptyMap()
+    val cachedData = java.util.concurrent.atomic.AtomicReference<Map<Byte, ModeStats>>(emptyMap())
 
     // 将统计数据封装到一个数据类中
     class ModeStats(
@@ -30,13 +27,14 @@ class PercentileCacheProvider(
         val achievementCounts: IntArray,
     )
 
-    // 每 30 分钟后台刷新一次数据
     @CanIgnoreReturnValue
     fun refreshCache(): Map<Byte, Int> {
         val all = percentileRepository.findAll()
 
         // 按模式分组处理
-        val newData = all.groupBy { it.mode }.mapValues { (_, records) ->
+        val newData = all.groupBy { it.mode }
+            .toSortedMap()
+            .mapValues { (_, records) ->
 
             // 使用 List 替代 TreeSet，保留所有数据
             val globalRankList = ArrayList<Long>(records.size)
@@ -92,9 +90,9 @@ class PercentileCacheProvider(
         }
 
         // 替换旧缓存（原子操作）
-        cachedData = newData
+        cachedData.set(newData)
 
-        return cachedData.mapValues { (_, stats) ->
+        return newData.mapValues { (_, stats) ->
             stats.globalRanks.size +
                     stats.countryRanks.size +
                     stats.levels.size +

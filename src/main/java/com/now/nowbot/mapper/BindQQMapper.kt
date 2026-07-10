@@ -11,21 +11,21 @@ interface BindQQMapper : JpaRepository<QQBindLite, Long>, JpaSpecificationExecut
     @Query("select qb from QQBindLite qb where qb.osuUser.id = :id")
     fun findByID(id: Long): QQBindLite?
 
-    @Query("select qb from QQBindLite qb where qb.osuUser.osuID in (:userIDs)")
-    fun findAllByOsuID(userIDs: Iterable<Long>): List<QQBindLite>
+    @Query("select qb from QQBindLite qb where qb.osuUser.userID in (:userIDs)")
+    fun findAllByUserID(userIDs: Iterable<Long>): List<QQBindLite>
 
-    @Query("select qb from QQBindLite qb where qb.osuUser.osuID = :userID")
-    fun findByOsuID(userID: Long): QQBindLite?
+    @Query("select qb from QQBindLite qb where qb.osuUser.userID = :userID")
+    fun findByUserID(userID: Long): QQBindLite?
 
-    @Query("select count(o) from OsuBindUserLite o where o.osuID = :userID")
+    @Query("select count(o) from OsuBindUserLite o where o.userID = :userID")
     fun countByUserID(userID: Long): Int
 
-    @Modifying @Transactional @Query("delete from QQBindLite qb where qb.osuUser.osuID = :userID and qb.qq != :qq")
+    @Modifying @Transactional @Query("delete from QQBindLite qb where qb.osuUser.userID = :userID and qb.qq != :qq")
     fun deleteOutdatedBind(userID: Long, qq: Long): Int
 
-    @Modifying @Transactional @Query("delete from QQBindLite qb where qb.osuUser.osuID = :userID")
+    @Modifying @Transactional @Query("delete from QQBindLite qb where qb.osuUser.userID = :userID")
     fun unBind(userID: Long)
 
-    @Query("select qb.qq as qid, qb.osuUser.osuID as uid, qb.osuUser.osuName as name from QQBindLite qb where qb.qq in (:qq)")
+    @Query("select qb.qq as qid, qb.osuUser.userID as uid, qb.osuUser.username as name from QQBindLite qb where qb.qq in (:qq)")
     fun findAllUserByQQ(qq: Iterable<Long>): List<QQBindLite.QQUser>
 }

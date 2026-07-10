@@ -56,7 +56,7 @@ class GuessLite {
 
     companion object {
         fun from(game: GuessService.GuessGame): GuessLite? {
-            val bs = game.decrypted.mapIndexed { index, decrypt ->
+            val bs = game.getAllDecrypted().mapIndexed { index, decrypt ->
                 if (decrypt < 0) {
                     game.scores[index].beatmapID
                 } else {
@@ -64,7 +64,7 @@ class GuessLite {
                 }
             }.filterNotNull()
 
-            val gs = game.results.mapNotNull { gr ->
+            val gs = game.getAllResults().mapNotNull { gr ->
                 gr?.let { r -> GuesserLite.from(r) }
             }.toMutableList()
 
@@ -76,7 +76,7 @@ class GuessLite {
                 unicode = game.unicode
                 startTime = game.startTime
                 lastPlayedTime = game.lastPlayedTime
-                decrypted = game.decrypted.foldIndexed(0) { index, acc, value ->
+                decrypted = game.getAllDecrypted().foldIndexed(0) { index, acc, value ->
                     if (value < 0) {
                         // 如果小于0，将 1 左移 index 位，然后与当前结果进行或运算
                         acc or (1 shl index)

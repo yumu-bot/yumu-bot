@@ -14,7 +14,7 @@ import com.now.nowbot.service.messageServiceImpl.MapPoolService.PoolParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.JacksonUtil
@@ -87,8 +87,8 @@ class MapPoolService(
                 val image2 = imageService.getPanelAlpha(sb)
                 event.replyAsync(image2)
 
-                val lock = ASyncMessageUtil.getLock(event)
-                val newEvent = lock.get()
+                val lock = AsyncMessageUtil.getLock(event)
+                val newEvent = lock.await()
 
                 val n: Int = (newEvent ?: throw TipsException("输入超时"))
                     .rawMessage.toIntOrNull() ?: throw TipsException("输入错误")

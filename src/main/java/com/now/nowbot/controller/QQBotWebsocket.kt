@@ -18,7 +18,7 @@ import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.RestController
-import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.ConcurrentHashMap
 
 @RestController
 @Suppress("unused")
@@ -34,6 +34,7 @@ class QQBotWebsocket {
     @OnOpen
     fun onOpen(session: Session) {
         val wsObject = WebsocketObject(session)
+        websockets.add(session)
         session.addMessageHandler(String::class.java) { message: String? ->
             val request = WebsocketPackage.toNodePackage(message!!)
             session.launch { listener ->
@@ -55,7 +56,7 @@ class QQBotWebsocket {
         /**
          * 所有的链接
          */
-        private val websockets = CopyOnWriteArraySet<Session>()
+        private val websockets = ConcurrentHashMap.newKeySet<Session>()
     }
 
     fun Session.launch(action: suspend (Listener) -> Unit) {

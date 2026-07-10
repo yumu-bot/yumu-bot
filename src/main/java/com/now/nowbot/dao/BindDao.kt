@@ -31,7 +31,6 @@ import org.springframework.util.ObjectUtils
 import org.springframework.web.client.HttpClientErrorException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.jvm.optionals.getOrNull
@@ -47,7 +46,7 @@ class BindDao(
     private val bindDiscordMapper: BindDiscordMapper,
     private val osuGroupConfigRepository: OsuGroupConfigRepository
 ) {
-    private val updateUserSet: MutableSet<Long?> = CopyOnWriteArraySet()
+    private val updateUserSet = ConcurrentHashMap.newKeySet<Long>()
     private val nowUpdate = AtomicBoolean(false)
 
     var log: Logger = LoggerFactory.getLogger(BindDao::class.java)
@@ -118,12 +117,12 @@ class BindDao(
     }
 
     fun getBindFromIDs(ids: Iterable<Long>): List<BindUser> {
-        val lites = bindQQMapper.findAllByOsuID(ids)
+        val lites = bindQQMapper.findAllByUserID(ids)
         return lites.map { fromLite(it.osuUser)!! }
     }
 
     fun getBindFromQQs(qqs: Iterable<Long>): List<BindUser> {
-        val lites = bindQQMapper.findAllByOsuID(bindQQMapper.findAllUserByQQ(qqs).map {it.uid})
+        val lites = bindQQMapper.findAllByUserID(bindQQMapper.findAllUserByQQ(qqs).map {it.uid})
         return lites.map { fromLite(it.osuUser)!! }
     }
 
@@ -169,7 +168,7 @@ class BindDao(
     }
 
     fun getQQLiteFromUserID(userID: Long): QQBindLite? {
-        return bindQQMapper.findByOsuID(userID)
+        return bindQQMapper.findByUserID(userID)
     }
 
     fun getQQLiteFromQQ(qq: Long): QQBindLite? {
@@ -187,25 +186,25 @@ class BindDao(
         val bindUserLite: OsuBindUserLite
 
         if (user.refreshToken != null) {
-            val count = bindQQMapper.countByUserID(user.osuID)
+            val count = bindQQMapper.countByUserID(user.userID)
             if (count > 1) {
-                bindUserMapper.deleteAllByOsuID(user.osuID)
+                bindUserMapper.deleteAllByUserID(user.userID)
             }
 
             // checkSave
-            if (user.id == null && bindUserMapper.countAllByOsuID(user.osuID) > 0) {
-                bindUserMapper.deleteOutdatedByOsuID(user.osuID)
+            if (user.id == null && bindUserMapper.countAllByUserID(user.userID) > 0) {
+                bindUserMapper.deleteOutdatedByOsuID(user.userID)
             }
 
             bindUserMapper.update(user)
             bindUserLite = user
         } else {
-            val userLite = bindUserMapper.getFirstByOsuID(user.osuID)
+            val userLite = bindUserMapper.getFirstByOsuID(user.userID)
 
             // checkSave
             if (userLite == null) {
-                if (user.id == null && bindUserMapper.countAllByOsuID(user.osuID) > 0) {
-                    bindUserMapper.deleteOutdatedByOsuID(user.osuID)
+                if (user.id == null && bindUserMapper.countAllByUserID(user.userID) > 0) {
+                    bindUserMapper.deleteOutdatedByOsuID(user.userID)
                 }
 
                 bindUserLite = bindUserMapper.save(user)
@@ -371,7 +370,7 @@ class BindDao(
             bindUserLite.accessToken = user.accessToken
             bindUserLite.refreshToken = user.refreshToken
             bindUserLite.time = user.time
-            bindUserLite.osuName = user.username
+            bindUserLite.username = user.username
             return bindQQ(qq, bindUserLite)
         }
     }
@@ -407,7 +406,7 @@ class BindDao(
     }
 
     fun getQQ(osuID: Long): Long {
-        val qqBind = bindQQMapper.findByOsuID(osuID)
+        val qqBind = bindQQMapper.findByUserID(osuID)
 
         return if (qqBind?.qq != null) {
             qqBind.qq!!
@@ -421,11 +420,11 @@ class BindDao(
     }
 
     fun getQQBindInfo(userID: Long): QQBindLite? {
-        return bindQQMapper.findByOsuID(userID)
+        return bindQQMapper.findByUserID(userID)
     }
 
     fun removeBind(uid: Long) {
-        bindUserMapper.deleteAllByOsuID(uid)
+        bindUserMapper.deleteAllByUserID(uid)
     }
 
     fun downgradeBind(uid: Long) {
@@ -533,7 +532,6 @@ class BindDao(
             if (e !is HttpClientErrorException.Unauthorized) {
                 log.error("更新用户出现异常", e)
             }
-            // 已经 log
         } finally {
             updateUserSet.clear()
             nowUpdate.set(false)
@@ -548,11 +546,11 @@ class BindDao(
             if (updateUserSet.remove(u.id)) return
 
             if (u.refreshToken.isNullOrBlank()) {
-                bindUserMapper.downgradeBind(u.osuID)
+                bindUserMapper.downgradeBind(u.userID)
                 return
             }
 
-            // log.info("更新用户: {}", u.getOsuName());
+            log.debug("更新用户: {}", u.username);
             refreshOldUserToken(u, userApiService)
             return
         }
@@ -563,7 +561,7 @@ class BindDao(
             if (updateUserSet.remove(u.id)) return
 
             if (u.refreshToken.isNullOrBlank()) {
-                bindUserMapper.downgradeBind(u.osuID)
+                bindUserMapper.downgradeBind(u.userID)
                 return
             }
             // 出错超 5 次默认无法再次更新了
@@ -620,7 +618,7 @@ class BindDao(
 
             if (updateUserSet.remove(u.id)) continue
             if (ObjectUtils.isEmpty(u.refreshToken)) {
-                bindUserMapper.downgradeBind(u.osuID)
+                bindUserMapper.downgradeBind(u.userID)
                 continue
             }
             // 出错超 5 次默认无法再次更新了
@@ -635,11 +633,11 @@ class BindDao(
                 errCount = 0
             } catch (_: HttpClientErrorException.Unauthorized) {
                 // 绑定被取消或者过期, 不再尝试
-                log.info("绑定 {} 失败：取消绑定", u.osuName)
+                log.info("绑定 {} 失败：取消绑定", u.username)
                 bindUserMapper.downgradeBind(u.id)
             } catch (e: Exception) {
                 bindUserMapper.addUpdateCount(u.id)
-                log.error("绑定 {} 第 {} 次失败：出现异常: ", u.osuName, errCount, e)
+                log.error("绑定 {} 第 {} 次失败：出现异常: ", u.username, errCount, e)
                 errCount++
             }
             if (errCount > 5) {
@@ -666,7 +664,7 @@ class BindDao(
                     }
 
                     is NetworkException.UserException.Forbidden -> {
-                        log.info("刷新用户令牌：更新 {} 令牌失败, 可能被识别为滥用 API 而禁止访问", u.osuName)
+                        log.info("刷新用户令牌：更新 {} 令牌失败, 可能被识别为滥用 API 而禁止访问", u.username)
                         return false
                     }
 
@@ -674,11 +672,11 @@ class BindDao(
                         badRequest++
 
                         if (badRequest < 3) {
-                            log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试", u.osuName, badRequest)
+                            log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试", u.username, badRequest)
                         } else {
                             log.error(
                                 "刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：",
-                                u.osuName,
+                                u.username,
                                 badRequest,
                                 ue
                             )
@@ -735,8 +733,8 @@ class BindDao(
 
             val bu = BindUser()
             bu.baseID = buLite.id
-            bu.userID = buLite.osuID
-            bu.username = buLite.osuName
+            bu.userID = buLite.userID
+            bu.username = buLite.username
             bu.accessToken = buLite.accessToken
             bu.refreshToken = buLite.refreshToken
             bu.time = buLite.time

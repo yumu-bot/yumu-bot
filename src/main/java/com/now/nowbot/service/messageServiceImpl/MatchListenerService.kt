@@ -19,7 +19,7 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.*
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import kotlinx.coroutines.coroutineScope
@@ -29,10 +29,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Service("MATCH_LISTENER")
 class MatchListenerService(
@@ -52,7 +52,7 @@ class MatchListenerService(
         private const val GROUP_MAX = 3
 
         private val listeners = ConcurrentHashMap<Long, MatchListener>()
-        private val listenerData = CopyOnWriteArraySet<ListenerData>()
+        private val listenerData = ConcurrentHashMap.newKeySet<ListenerData>()
 
         suspend fun stopAllListenerFromReboot() {
             val items = listeners.values
@@ -311,13 +311,20 @@ class MatchListenerService(
                 return true
             }
 
-            messageEvent.replyAsync(MatchException.NormalOperate.Continue(matchID, roundCounter))
+            return AsyncMessageUtil.doubleCheckSync(
+                event = messageEvent,
+                onCheck = {
+                    messageEvent.reply(MatchException.NormalOperate.Continue(matchID, roundCounter))
+                },
 
-            val lock = ASyncMessageUtil.getLock(messageEvent.subject.contactID, null, 60000) {
-                it?.rawMessage?.contains("OK", ignoreCase = true) == true
-            }
+                onSuccess = {
+                    true
+                },
 
-            return lock.get() != null
+                timeout = 60.seconds,
+                anyoneCanResponse = true,
+                defaultValue = false,
+            )
         }
 
         override fun onMatchEnd(type: MatchListener.StopType) {

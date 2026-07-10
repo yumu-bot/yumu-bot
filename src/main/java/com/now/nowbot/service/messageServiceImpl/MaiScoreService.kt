@@ -17,7 +17,7 @@ import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
@@ -367,9 +367,9 @@ import java.util.regex.Matcher
 
         val receipt = event.reply(sb)
 
-        val lock = ASyncMessageUtil.getLock(event, 30 * 1000L)
+        val lock = AsyncMessageUtil.getLock(event, 30 * 1000L)
 
-        val ev = lock.get()
+        val ev = lock.await()
         receipt.recall()
 
         if (ev != null) {

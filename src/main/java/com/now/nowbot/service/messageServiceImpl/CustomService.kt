@@ -17,7 +17,7 @@ import com.now.nowbot.service.messageServiceImpl.CustomService.CustomOperate.*
 import com.now.nowbot.service.messageServiceImpl.CustomService.CustomParam
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.toBody
 import org.slf4j.Logger
@@ -29,7 +29,9 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.regex.Matcher
+import kotlin.time.Duration.Companion.seconds
 
 @Service("CUSTOM")
 class CustomService(
@@ -60,70 +62,93 @@ class CustomService(
             return false
         }
 
-        data.value = getParam(event, matcher)
+        data.value = getParam(event, matcher).get()
 
         return true
     }
 
-    private fun getParam(event: MessageEvent, matcher: Matcher): CustomParam {
+    private fun getParam(event: MessageEvent, matcher: Matcher): CompletableFuture<CustomParam> {
         val operate = CustomOperate.getOperate(matcher.group("operate"))
         val type = UserProfile.UserProfileType.getType(matcher.group("type"))
-
-        val id = bindDao.getBindFromQQ(event.sender.contactID).userID
+        val userId = bindDao.getBindFromQQ(event.sender.contactID).userID
 
         return when (operate) {
-            ADD -> if (event.hasImage() && !event.image?.path.isNullOrEmpty()) {
-                val url = event.image!!.path!!
-
-                CustomParam(id, type, url)
-            } else {
-                waitImage(id, type, event)
+            ADD -> {
+                if (event.hasImage() && !event.image?.path.isNullOrEmpty()) {
+                    CompletableFuture.completedFuture(CustomParam(userId, type, event.image!!.path))
+                } else {
+                    waitImageAsync(userId, type, event)
+                }
             }
-
-            DELETE -> confirmDelete(id, type, event)
-            UNKNOWN -> waitImage(id, type, event)
+            DELETE -> {
+                confirmDeleteAsync(userId, type, event)
+            }
+            UNKNOWN -> {
+                waitImageAsync(userId, type, event)
+            }
         }
     }
 
-    private fun confirmDelete(id: Long, type: UserProfile.UserProfileType, event: MessageEvent): CustomParam {
-        val receipt =
-            event.reply("""
+    private fun confirmDeleteAsync(
+        userId: Long,
+        type: UserProfile.UserProfileType,
+        event: MessageEvent
+    ): CompletableFuture<CustomParam> {
+        val future = CompletableFuture<CustomParam>()
+
+        AsyncMessageUtil.doubleCheck(
+            event = event,
+            keyword = "OK",
+            onCheck = {
+                event.reply("""
                 您想要清除你的自定义 ${type.name} 吗？回复 OK 确认。
                 如果并不想，请无视。
-                """.trimIndent())
+            """.trimIndent())
+            },
+            onOverTime = {
+                future.completeExceptionally(TipsException("操作超时，请重试。"))
+            },
+            onWrong = {
+                future.completeExceptionally(TipsException("清除过程已中止。"))
+            },
+            onSuccess = { _ ->
+                future.complete(CustomParam(userId, type, null))
+            }
+        )
 
-        val lock = ASyncMessageUtil.getLock(event, 60 * 1000)
-        val ev = lock.get()
-
-        if (ev != null && ev.rawMessage.contains("OK", ignoreCase = true)) {
-
-            receipt.recall()
-            return CustomParam(id, type, null)
-        } else {
-            receipt.recall()
-            throw TipsException("清除过程已中止。")
-        }
+        return future
     }
 
-    private fun waitImage(id: Long, type: UserProfile.UserProfileType, event: MessageEvent): CustomParam {
-        // 消息为空，并且不是回复的图片。询问是否删除
-        val receipt =
-            event.reply("请发送您需要上传的图片 (${type.name})。")
+    private fun waitImageAsync(
+        userId: Long,
+        type: UserProfile.UserProfileType,
+        event: MessageEvent
+    ): CompletableFuture<CustomParam> {
+        val future = CompletableFuture<CustomParam>()
 
-        val lock = ASyncMessageUtil.getLock(event, 60 * 1000)
-        val ev = lock.get()
+        AsyncMessageUtil.doubleCheck(
+            event = event,
+            keyword = "",
+            onCheck = {
+                event.reply("请发送一张图片。")
+            },
+            onOverTime = {
+                future.completeExceptionally(TipsException("等待图片超时，请重试。"))
+            },
+            onWrong = {
+                future.completeExceptionally(TipsException("未收到图片，请重试。"))
+            },
+            timeout = 60.seconds,
+            onSuccess = { response ->
+                if (response.hasImage() && !response.image?.path.isNullOrEmpty()) {
+                    future.complete(CustomParam(userId, type, response.image!!.path))
+                } else {
+                    future.completeExceptionally(TipsException("没有获取到您发送的图片。请重试。"))
+                }
+            }
+        )
 
-        if (ev != null && ev.hasImage() && !ev.image?.path.isNullOrEmpty()) {
-            val url = ev.image!!.path!!
-
-
-            receipt.recall()
-            return CustomParam(id, type, url)
-        } else {
-
-            receipt.recall()
-            throw TipsException("没有获取到您发送的图片。请重试。")
-        }
+        return future
     }
 
     override fun handleMessage(event: MessageEvent, param: CustomParam): ServiceCallStatistic? {
@@ -224,7 +249,7 @@ class CustomService(
         ;
         companion object {
             fun getOperate(input: String?): CustomOperate {
-                return when (input) {
+                return when (input?.trim()) {
                     "s",
                     "save",
                     "a",
