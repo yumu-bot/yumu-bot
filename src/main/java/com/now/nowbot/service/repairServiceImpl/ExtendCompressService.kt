@@ -1,7 +1,6 @@
 package com.now.nowbot.service.repairServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -23,12 +22,15 @@ class ExtendCompressService(
         messageText: String,
         data: MessageService.DataValue<Boolean>
     ): Boolean {
+        /*
         val fix = "!" + "es"
 
         if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
             data.value = true
             return true
         }
+
+         */
 
         return false
     }

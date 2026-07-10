@@ -31,10 +31,6 @@ class BeatmapExtendLite(
     @Column(name = "lazer_only", nullable = false, updatable = true)
     var lazerOnly: Boolean = false,
 
-    @Type(JsonBinaryType::class)
-    @Column(name = "fail_times", columnDefinition = "JSONB", nullable = true, updatable = true)
-    var failTimes: String? = null,
-
     @JdbcTypeCode(SqlTypes.VARBINARY)
     @Column(name = "fails", nullable = true, updatable = true)
     var fails: ByteArray? = null,
