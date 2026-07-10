@@ -533,11 +533,8 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     NOMINATION(CommandPatternBuilder.create {
-        appendCommandsIgnore(REG_IGNORE_BS, "(nominat(e|ion)s?|nom|n)")
-
-        appendColonCaptureGroup(FLAG_MODE, REG_BID_SID, prefixLevel = MAYBE)
-        appendSpace()
-        appendSID()
+        appendCommandsIgnoreAll("(nominat(e|ion)s?|nom|n)", "(谱面)?(提名|上架(流程)?)")
+        appendBIDOrSID()
     }),
 
     PP_PLUS_MAP(CommandPatternBuilder.create {
@@ -651,14 +648,14 @@ enum class Instruction(val pattern: Pattern) {
 
     VIEW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("view", "v")
-        appendBID()
+        appendBIDOrSID()
         appendSpace()
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, contentLevel = MAYBE, prefixLevel = MAYBE)
     }),
 
     VIEW_VARIATION(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(var(iation)?|sv)\\s*view", "view\\s*(var(iation)?|sv)", "view\\s*(\\+|plus)", "v[\\s:：]*v")
-        appendBID()
+        appendBIDOrSID()
         appendSpace()
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, contentLevel = MAYBE, prefixLevel = MAYBE)
     }),

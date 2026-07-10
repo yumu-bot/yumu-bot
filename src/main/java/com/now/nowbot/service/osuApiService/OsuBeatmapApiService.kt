@@ -3,20 +3,20 @@ package com.now.nowbot.service.osuApiService
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.CosuResponse
 import com.now.nowbot.model.calculate.CosuScore
+import com.now.nowbot.model.enums.IDType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
+import com.now.nowbot.util.command.FLAG_ID
+import com.now.nowbot.util.command.FLAG_TYPE
 import tools.jackson.databind.JsonNode
 import java.io.IOException
+import java.util.regex.Matcher
 
 interface OsuBeatmapApiService {
     fun getVoice(beatmapsetID: Number): ByteArray?
 
     @OptIn(ExperimentalStdlibApi::class) fun getCover(covers: Covers, type: CoverType): ByteArray?
-
-    @OptIn(ExperimentalStdlibApi::class) fun asyncDownloadCoverFromSets(beatmapsets: List<Beatmapset>, type: CoverType) {
-        asyncDownloadCover(beatmapsets.map { it.covers }, type)
-    }
 
     @OptIn(ExperimentalStdlibApi::class) fun asyncDownloadCover(covers: List<Covers>, type: CoverType)
 
@@ -159,4 +159,20 @@ interface OsuBeatmapApiService {
     fun applyExtendFromAPI(beatmaps: Collection<Beatmap>)
 
     fun getBeatmapsetIDFromBeatmapIDByExtend(beatmapID: Long): Long?
+
+    fun getBeatmapFromAnyID(inputType: IDType, inputID: Long?, groupIDFn: () -> Long? = { null }): Beatmap
+
+    fun getBeatmapFromAnyID(matcher: Matcher, groupIDFn: () -> Long? = { null }): Beatmap {
+        val (inputType, inputID) = IDType.parse(matcher.group(FLAG_TYPE), matcher.group(FLAG_ID))
+
+        return getBeatmapFromAnyID(inputType, inputID, groupIDFn)
+    }
+
+    fun getBeatmapsetAndTopBeatmapFromAnyID(inputType: IDType, inputID: Long?, groupIDFn: () -> Long? = { null }): Pair<Beatmapset, Beatmap>
+
+    fun getBeatmapsetAndTopBeatmapFromAnyID(matcher: Matcher, groupIDFn: () -> Long? = { null }): Pair<Beatmapset, Beatmap> {
+        val (inputType, inputID) = IDType.parse(matcher.group(FLAG_TYPE), matcher.group(FLAG_ID))
+
+        return getBeatmapsetAndTopBeatmapFromAnyID(inputType, inputID, groupIDFn)
+    }
 }

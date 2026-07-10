@@ -13,8 +13,6 @@ import kotlin.math.roundToInt
 
 object BeatmapUtil {
 
-
-
     // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatmapExtend 和 applyStarAndPP 之前用。
     fun getDetailMap(beatmap: Beatmap): Map<String, Any> {
         if (beatmap.cs == null) return mapOf()

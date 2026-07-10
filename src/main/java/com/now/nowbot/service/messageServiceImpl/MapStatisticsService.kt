@@ -3,8 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.IDType
-import com.now.nowbot.model.enums.IDType.*
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
@@ -16,18 +14,14 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MapStatisticsService.MapFilter.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_ANY
-import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_MOD
 import com.now.nowbot.util.command.FLAG_MODE
-import com.now.nowbot.util.command.FLAG_TYPE
 import com.now.nowbot.util.command.REG_EQUAL
 import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
 import com.now.nowbot.util.command.REG_OPERATOR_WITH_SPACE
@@ -108,39 +102,24 @@ class MapStatisticsService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isLazer: Boolean = false): MapStatisticsParam {
-        val idStr: String? = matcher.group(FLAG_ID)
-        val (inputType, inputID) = IDType.parse(matcher.group(FLAG_TYPE), idStr)
-
         // val groupMode = bindDao.getGroupModeConfig(event)
 
-        val beatmapset: Beatmapset?
-        val beatmapID: Long
-
-        val (s, i) = fetchBeatmapsetAndBeatmapID(inputType, inputID)
-
-        if (s != null && i != null) {
-            beatmapset = s
-            beatmapID = i
-        } else {
-            val heritage = dao.getLastBeatmapID(event)
-                ?: throw IllegalArgumentException.WrongException.BeatmapID()
-            beatmapID = heritage
-
-            val setID = beatmapApiService.getBeatmapsetIDFromBeatmapIDByExtend(heritage)
-                ?: beatmapApiService.getBeatmap(heritage).beatmapsetID
-            beatmapset = beatmapApiService.getBeatmapset(setID)
-        }
+        val (beatmapset, beatmap) = beatmapApiService.getBeatmapsetAndTopBeatmapFromAnyID(matcher) { dao.getLastBeatmapID(event) }
 
         val any: String? = matcher.group(FLAG_ANY)
 
         val (accuracy, combo, misses) = parseAccuracyAndCombo(any)
 
-        val beatmap = beatmapset.beatmaps?.find { it.beatmapID == beatmapID } ?: throw NoSuchElementException.Beatmap(beatmapID)
+        val bc = beatmap.maxCombo ?: 0
 
         val c = if (combo in 0.0..1.0) {
-            (beatmap.maxCombo!! * combo).toInt()
+            (bc * combo).toInt()
         } else {
-            combo.toInt()
+            if (bc > 0) {
+                combo.toInt().coerceIn(0..bc)
+            } else {
+                combo.toInt()
+            }
         }
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
@@ -234,67 +213,6 @@ class MapStatisticsService(
         }
 
         return Triple(accuracy ?: 1.0, combo ?: 1.0, misses ?: 0)
-    }
-
-    /**
-     * 综合获取 Beatmap 的方法（高效率本地优先）
-     *
-     * @param anyID 可能是 beatmapID，也可能是 beatmapsetID
-     * @param idType
-     * @return 最终匹配到或兜底（topDiff）的 Beatmap 对象
-     */
-    fun fetchBeatmapsetAndBeatmapID(idType: IDType, anyID: Long?): Pair<Beatmapset?, Long?> {
-        if (anyID == null) {
-            return null to null
-        }
-
-        val beatmapset = when (idType) {
-            BeatmapID -> fetchByBeatmapID(anyID) ?: fetchByBeatmapsetID(anyID)
-            BeatmapsetID -> fetchByBeatmapsetID(anyID) ?: fetchByBeatmapID(anyID)
-        }
-
-        if (beatmapset == null) {
-            return null to null
-        }
-
-        return when (idType) {
-            BeatmapID -> beatmapset to anyID
-            BeatmapsetID -> beatmapset to beatmapset.getTopDiff()?.beatmapID
-        }
-    }
-
-// ----------------- 以下为内部高效率核心流转逻辑 -----------------
-
-    /**
-     * 核心逻辑 1：专门负责通过 BeatmapsetID 获取 Beatmapset（优先本地）
-     */
-    private fun fetchByBeatmapsetID(beatmapsetID: Long): Beatmapset? {
-        // 1. 优先查本地是否存在
-        // if (beatmapDao.existsBeatmapsetFromExtend(beatmapsetID)) {
-            // 从你的本地 Repository 中直接获取实体对象并返回
-            // return extendBeatmapSetRepository.findByBeatmapsetID(beatmapsetID)
-        //}
-
-        // 2. 本地没有，走网络请求
-        return runCatching { beatmapApiService.getBeatmapset(beatmapsetID) }.getOrNull()
-    }
-
-    /**
-     * 核心逻辑 2：专门负责通过 BeatmapID 获取 Beatmapset（优先本地）
-     */
-    private fun fetchByBeatmapID(beatmapID: Long): Beatmapset? {
-        // 1. 优先从本地寻找关联的 BeatmapsetID，效率最高
-        val localSetID = beatmapApiService.getBeatmapsetIDFromBeatmapIDByExtend(beatmapID)
-
-        if (localSetID != null) {
-            return fetchByBeatmapsetID(localSetID)
-        }
-
-        // 2. 本地没有线索，请求网络获取 Beatmap 详情
-        val netBeatmap = runCatching { beatmapApiService.getBeatmap(beatmapID) }.getOrNull() ?: return null
-
-        // 3. 拿到网络返回的 setID 后，继续走统一的获取流程
-        return fetchByBeatmapsetID(netBeatmap.beatmapsetID)
     }
 
     fun MapStatisticsParam.getPanelRParam(): PanelRParam {

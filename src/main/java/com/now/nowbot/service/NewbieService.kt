@@ -20,7 +20,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import kotlin.jvm.optionals.getOrNull
 
 @Service("NEWBIE_SERVICE")
 class NewbieService(
@@ -96,8 +95,7 @@ class NewbieService(
 
     fun getHistory(userId: Long): ScoreDailyStatistic? {
         val data = newbiePlayCountRepository
-            .getHistoryDate(userId)
-            .getOrNull() ?: return null
+            .getHistoryData(userId) ?: return null
         return ScoreDailyStatistic(
             userId = userId,
             date = LocalDate.now(),
@@ -108,14 +106,10 @@ class NewbieService(
     }
 
     fun getRank(userId: Long): IntArray {
-        val pcRank = newbiePlayCountRepository.getPlayCountRank(userId)
-        val tthRank = newbiePlayCountRepository.getTotalHitsRank(userId)
-        val ppRank = newbiePlayCountRepository.getPPAddRank(userId)
-        val result = IntArray(3)
-        result[0] = pcRank.getOrNull() ?: -1
-        result[1] = tthRank.getOrNull() ?: -1
-        result[2] = ppRank.getOrNull() ?: -1
-        return result
+        val pcRank = newbiePlayCountRepository.getPlayCountRank(userId, LocalDate.of(2025, 1, 15)) ?: -1
+        val tthRank = newbiePlayCountRepository.getTotalHitsRank(userId, LocalDate.of(2025, 1, 15)) ?: -1
+        val ppRank = newbiePlayCountRepository.getPPAddRank(userId, LocalDate.of(2025, 1, 14)) ?: -1
+        return intArrayOf(pcRank, tthRank, ppRank)
     }
 
     fun dailyTask(users: List<Long>) {

@@ -6,6 +6,7 @@ import com.now.nowbot.aop.DiscordParam
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.model.beatmapParse.OsuFile
+import com.now.nowbot.model.enums.IDType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.model.mappool.old.MapPoolDto
@@ -480,8 +481,6 @@ import kotlin.time.Duration.Companion.days
                     scoreApiService.getBestScores(osuUser.userID, mode).mapIndexed { i, it -> i + 1 to it }.toMap()
                         .filter { dayBefore.isBefore(it.value.endedTime) }
 
-                //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
-
                 val ranks = bests.keys
                 scores = bests.values
 
@@ -808,7 +807,7 @@ import kotlin.time.Duration.Companion.days
             val mode = getMode(modeStr, OsuMode.OSU)
             val beatmap = beatmapApiService.getBeatmap(bid)
             val beatmapset = beatmapApiService.getBeatmapset(beatmap.beatmapsetID)
-            val mods = LazerMod.getModsList(modStr ?: "")
+            val mods = LazerMod.getModsList(modStr)
 
             val expected = MapStatisticsService.Expected(
                 mode, accuracy ?: 1.0, combo ?: 0, miss ?: 0, mods, false
@@ -927,28 +926,40 @@ import kotlin.time.Duration.Companion.days
      */
     @GetMapping(value = ["map/nomination"]) @DiscordParam(name = "n", description = "获取提名信息")
     @Throws(RuntimeException::class) fun getNomination(
-        @DiscordParam(name = "sid", description = "谱面集编号") @RequestParam("sid") @Nullable sid: Int?,
-        @DiscordParam(name = "bid", description = "谱面编号") @RequestParam("bid") @Nullable bid: Int?
+        @DiscordParam(name = "sid", description = "谱面集编号") @RequestParam("sid") @Nullable sid: Long?,
+        @DiscordParam(name = "bid", description = "谱面编号") @RequestParam("bid") @Nullable bid: Long?
     ): ResponseEntity<ByteArray> {
-        val param: NominationService.NominationParam
 
-        try {
-            param = if (sid == null) {
+        val (beatmapset, discussion) = runCatching {
+            val beatmapset = if (sid == null) {
                 if (bid == null) {
                     throw IllegalArgumentException.WrongException.BeatmapID()
                 } else {
-                    NominationService.getParam(
-                        bid.toLong(), false, beatmapApiService, discussionApiService, userApiService
-                    )
+                    beatmapApiService.getBeatmapsetAndTopBeatmapFromAnyID(IDType.BeatmapID, bid).first
                 }
             } else {
-                NominationService.getParam(
-                    sid.toLong(), true, beatmapApiService, discussionApiService, userApiService
-                )
+                beatmapApiService.getBeatmapsetAndTopBeatmapFromAnyID(IDType.BeatmapID, bid).first
             }
-        } catch (e: Throwable) {
+            val discussion = discussionApiService.getBeatmapsetDiscussion(beatmapset.beatmapsetID)
+            beatmapset to discussion
+        }.onFailure { e ->
             throw RuntimeException(e.message)
+        }.getOrThrow()
+
+        beatmapset.creatorData?.let {
+            try {
+                beatmapset.creatorData = userApiService.getOsuUser(it.userID, it.currentOsuMode)
+            } catch (_: Exception) {
+
+            }
         }
+
+        beatmapset.beatmaps!!.forEach { beatmapApiService.extendBeatmapTag(it) }
+
+        val diffs = beatmapset.beatmaps!!.associate { it.beatmapID to it.difficultyName }
+        discussion.addDifficulty4DiscussionDetails(diffs)
+
+        val param = NominationService.getParam(beatmapset, discussion)
 
         try {
             val image = imageService.getPanel(param.toMap(), "N")
@@ -993,7 +1004,7 @@ import kotlin.time.Duration.Companion.days
 
             val data = sb.toString().toByteArray()
 
-            return ResponseEntity<ByteArray>(
+            return ResponseEntity(
                 data, getByteHeader(ids.first().toString() + "-csvrating.csv", data.size), HttpStatus.OK
             )
         } catch (e: Exception) {

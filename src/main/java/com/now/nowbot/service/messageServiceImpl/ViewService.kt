@@ -10,12 +10,10 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_PAGE
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
@@ -55,11 +53,8 @@ class ViewService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isOfficial: Boolean = false, isVariation: Boolean = false): ViewParam {
-        val beatmapID = matcher.group(FLAG_BID)?.toLongOrNull()
-            ?: dao.getLastBeatmapID(event)
-            ?: throw IllegalArgumentException.WrongException.BeatmapID()
-
-        val beatmap = beatmapApiService.getBeatmap(beatmapID)
+        val beatmap = beatmapApiService.getBeatmapFromAnyID(matcher) { dao.getLastBeatmapID(event) }
+        val beatmapID = beatmap.beatmapID
 
         if (beatmap.mode != OsuMode.MANIA && beatmap.mode != OsuMode.TAIKO) {
             throw UnsupportedOperationException.OnlyManiaAndTaiko()

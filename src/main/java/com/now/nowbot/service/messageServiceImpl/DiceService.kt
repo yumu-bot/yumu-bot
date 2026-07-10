@@ -103,7 +103,6 @@ import kotlin.time.Duration.Companion.seconds
     }
 
 
-
     data class DiceResponse(
         val text: String,
         val statistic: ServiceCallStatistic,

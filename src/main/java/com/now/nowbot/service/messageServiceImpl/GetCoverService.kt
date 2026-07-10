@@ -19,8 +19,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.net.URI
 import java.nio.file.Files
@@ -69,32 +67,19 @@ import java.nio.file.Files
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CoverParam): ServiceCallStatistic? {
-        var chain: MessageChain
-        var beatmaps: List<Beatmap>
+        val beatmaps: List<Beatmap> = beatmapApiService.getBeatmaps(param.bids)
 
-        if (param.type == FULL_SIZE) {
+        val chain: MessageChain = if (param.type == FULL_SIZE) {
             try {
-                beatmaps = beatmapApiService.getBeatmaps(param.bids)
-                chain = getRawBackground(param.bids)
-
-                event.replyMessageChain(chain)
+                getRawBackground(param.bids)
             } catch (_: Exception) {
-
-                //val receipt = event.reply(NoSuchElementException.LocalBG().message)
-
-                beatmaps = beatmapApiService.getBeatmaps(param.bids)
-                chain = getBackground(FULL_SIZE, beatmaps)
-
-                event.replyMessageChain(chain)
-
-                //receipt.recallIn(30 * 1000L)
+                getBackground(FULL_SIZE, beatmaps)
             }
         } else {
-            beatmaps = beatmapApiService.getBeatmaps(param.bids)
-            chain = getBackground(param.type, beatmaps)
-
-            event.replyMessageChain(chain)
+            getBackground(param.type, beatmaps)
         }
+
+        event.replyMessageChain(chain)
 
         return ServiceCallStatistic.builds(event, beatmapIDs = beatmaps.map { it.beatmapID }, beatmapsetIDs = beatmaps.map { it.beatmapsetID })
     }
@@ -187,6 +172,6 @@ import java.nio.file.Files
             return builder.build()
         }
 
-        private val log: Logger = LoggerFactory.getLogger(GetCoverService::class.java)
+        // private val log: Logger = LoggerFactory.getLogger(GetCoverService::class.java)
     }
 }

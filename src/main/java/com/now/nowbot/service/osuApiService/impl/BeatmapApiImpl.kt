@@ -13,6 +13,9 @@ import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.CosuRequest
 import com.now.nowbot.model.calculate.CosuResponse
 import com.now.nowbot.model.calculate.CosuScore
+import com.now.nowbot.model.enums.IDType
+import com.now.nowbot.model.enums.IDType.BeatmapID
+import com.now.nowbot.model.enums.IDType.BeatmapsetID
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
@@ -20,6 +23,7 @@ import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
@@ -1369,7 +1373,7 @@ class BeatmapApiImpl(
      */
     @Transactional
     override fun updateExtendedBeatmapFailTimes(): Int {
-        log.info("自动更新扩展谱面：正在启动")
+        // log.info("自动更新扩展谱面：正在启动")
 
         val ids = beatmapDao.findMapByUpdateAtAscend(LocalDateTime.now().minusDays(3)).map { it.beatmapID }
 
@@ -1425,6 +1429,86 @@ class BeatmapApiImpl(
 
     override fun getBeatmapsetIDFromBeatmapIDByExtend(beatmapID: Long): Long? {
         return beatmapDao.getBeatmapsetIDFromExtend(beatmapID)
+    }
+
+    override fun getBeatmapFromAnyID(inputType: IDType, inputID: Long?, groupIDFn: () -> Long?): Beatmap {
+
+        val beatmap: Beatmap = if (inputID != null) {
+            when (inputType) {
+                BeatmapID -> runCatching {
+                    getBeatmap(inputID)
+                }.recoverCatching {
+                    getBeatmapset(inputID).getTopDiff()!!
+                }.getOrThrow()
+
+                BeatmapsetID -> runCatching {
+                    getBeatmapset(inputID).getTopDiff()!!
+                }.recoverCatching {
+                    getBeatmap(inputID)
+                }.getOrThrow()
+            }
+        } else {
+            val beforeBeatmapID = groupIDFn()
+                ?: throw IllegalArgumentException.WrongException.BeatmapID()
+
+            getBeatmap(beforeBeatmapID)
+        }
+
+        return beatmap
+    }
+
+    override fun getBeatmapsetAndTopBeatmapFromAnyID(inputType: IDType, inputID: Long?, groupIDFn: () -> Long?): Pair<Beatmapset, Beatmap> {
+        val maybeID: Long
+        val maybeType: IDType
+
+        maybeID = if (inputID == null) {
+            val groupID = groupIDFn()
+                ?: throw IllegalArgumentException.WrongException.BeatmapID()
+            maybeType = BeatmapID
+
+            groupID
+        } else {
+            maybeType = inputType
+
+            inputID
+        }
+
+        val beatmapset = when (maybeType) {
+            BeatmapID -> fetchByBeatmapID(maybeID) ?: fetchByBeatmapsetID(maybeID)
+            BeatmapsetID -> fetchByBeatmapsetID(maybeID) ?: fetchByBeatmapID(maybeID)
+        }
+
+        if (beatmapset == null) {
+            throw IllegalArgumentException.WrongException.BeatmapID()
+        }
+
+        return when (maybeType) {
+            BeatmapID -> beatmapset to beatmapset.beatmaps?.find { it.beatmapID == maybeID }!!
+            BeatmapsetID -> beatmapset to (beatmapset.getTopDiff()!!)
+        }
+    }
+
+    private fun fetchByBeatmapsetID(beatmapsetID: Long): Beatmapset? {
+        // 1. 优先查本地是否存在
+        // if (beatmapDao.existsBeatmapsetFromExtend(beatmapsetID)) {
+        // 从你的本地 Repository 中直接获取实体对象并返回
+        // return extendBeatmapSetRepository.findByBeatmapsetID(beatmapsetID)
+        //}
+
+        // 2. 本地没有，走网络请求
+        return runCatching { getBeatmapset(beatmapsetID) }.getOrNull()
+    }
+
+    private fun fetchByBeatmapID(beatmapID: Long): Beatmapset? {
+        val localSetID = getBeatmapsetIDFromBeatmapIDByExtend(beatmapID)
+
+        if (localSetID != null) {
+            return fetchByBeatmapsetID(localSetID)
+        }
+
+        val netBeatmap = runCatching { getBeatmap(beatmapID) }.getOrNull() ?: return null
+
+        return fetchByBeatmapsetID(netBeatmap.beatmapsetID)
     }
 
     /**

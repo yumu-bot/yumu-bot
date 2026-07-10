@@ -6,7 +6,6 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.IDType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
@@ -29,9 +28,7 @@ import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.command.FLAG_ANY
-import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_PAGE
-import com.now.nowbot.util.command.FLAG_TYPE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -128,18 +125,7 @@ class GroupLeaderBoardService(
 
         val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event)).data
 
-        val (type, id) = IDType.parse(matcher.group(FLAG_TYPE), matcher.group(FLAG_ID))
-
-        val beatmap = if (id == null) {
-            val lastID = dao.getLastBeatmapID(event) ?: throw IllegalArgumentException.WrongException.BeatmapID()
-
-            beatmapApiService.getBeatmap(lastID)
-        } else {
-            when (type) {
-                IDType.BeatmapID -> beatmapApiService.getBeatmap(id)
-                IDType.BeatmapsetID -> beatmapApiService.getBeatmapset(id).getTopDiff()!!
-            }
-        }
+        val beatmap = beatmapApiService.getBeatmapFromAnyID(matcher) { dao.getLastBeatmapID(event) }
 
         val m = OsuMode.getConvertableMode(mode, beatmap.mode)
 

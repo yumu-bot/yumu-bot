@@ -175,10 +175,6 @@ val REG_QUOTATION : String = "[“”\"«»《》＂‟]"
 val REG_IGNORE: String = "[A-Za-z\\-_]"
 
 @Language("RegExp")
-// 用在有时候需要匹配 bid 和 sid 的指令里
-val REG_IGNORE_BS: String = "[^bs:：\\d\\s]"
-
-@Language("RegExp")
 val REG_NAME: String = "($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"
 
 @Language("RegExp")
@@ -195,9 +191,6 @@ val REG_MAI_RANGE = "(?!$REG_HASH)\\s*$REG_MAI_DIFFICULTY$REG_HYPHEN?$REG_MAI_DI
 
 @Language("RegExp")
 val RANGE_ONLY = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$"
-
-@Language("RegExp")
-val REG_BID_SID: String = "(bid|sid|b|s)"
 
 /**
  * 这个分隔符会分隔空格

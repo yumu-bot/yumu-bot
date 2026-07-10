@@ -6,8 +6,6 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.model.enums.IDType
-import com.now.nowbot.model.enums.IDType.*
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
@@ -142,8 +140,6 @@ class LeaderBoardService(
 
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isLegacy: Boolean): LeaderBoardParam {
-        val (inputType, inputID) = IDType.parse(matcher.group(FLAG_TYPE), matcher.group(FLAG_ID))
-
         val rangeStr: String = matcher.group(FLAG_PAGE) ?: ""
 
         val selected = rangeStr.trim()
@@ -164,26 +160,7 @@ class LeaderBoardService(
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
-        val beatmap: Beatmap = if (inputID != null) {
-            when (inputType) {
-                BeatmapID -> runCatching {
-                    beatmapApiService.getBeatmap(inputID)
-                }.recoverCatching {
-                    beatmapApiService.getBeatmapset(inputID).getTopDiff()!!
-                }.getOrThrow()
-
-                BeatmapsetID -> runCatching {
-                    beatmapApiService.getBeatmapset(inputID).getTopDiff()!!
-                }.recoverCatching {
-                    beatmapApiService.getBeatmap(inputID)
-                }.getOrThrow()
-            }
-        } else {
-            val beforeBeatmapID = dao.getLastBeatmapID(event)
-                ?: throw IllegalArgumentException.WrongException.BeatmapID()
-
-            beatmapApiService.getBeatmap(beforeBeatmapID)
-        }
+        val beatmap: Beatmap = beatmapApiService.getBeatmapFromAnyID(matcher) { dao.getLastBeatmapID(event) }
 
         val isSSPanel: Boolean
         

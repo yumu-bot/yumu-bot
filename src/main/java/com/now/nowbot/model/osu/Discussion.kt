@@ -110,17 +110,8 @@ data class Discussion(
         /**
          * 置顶未解决的讨论
          */
-        fun toppingUnsolvedDiscussionDetails(discussions: List<DiscussionDetails>): List<DiscussionDetails> {
-            val unsolved = discussions.filter {
-                val c = it.canBeResolved
-                val r = it.resolved
-
-                c && !r
-            }
-
-            val canBeResolved = discussions - unsolved.toSet()
-
-            return unsolved + canBeResolved
+        fun List<DiscussionDetails>.toppingUnsolvedDiscussionDetails(): List<DiscussionDetails> {
+            return this.sortedBy { !(it.canBeResolved && !it.resolved) }
         }
     }
 }

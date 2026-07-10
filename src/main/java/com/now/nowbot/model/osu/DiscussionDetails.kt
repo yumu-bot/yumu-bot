@@ -1,5 +1,6 @@
 package com.now.nowbot.model.osu
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -30,7 +31,37 @@ class DiscussionDetails {
      * hype, mapper_note, problem, suggestion, praise, review. Blank defaults to all types
      */
     @JsonProperty("message_type")
-    var messageType: String = ""
+    var messageTypeStr: String = ""
+
+    @get:JsonIgnore
+    val messageType: DiscussionType
+        get() = DiscussionType.getType(messageTypeStr)
+
+    enum class DiscussionType(val messageType: String) {
+        HYPE("hype"),
+        MAPPER_NOTE("mapper_note"),
+        PROBLEM("problem"),
+        SUGGESTION("suggestion"),
+        PRAISE("praise"),
+        REVIEW("review"),
+        ALL("");
+
+        fun isComment(): Boolean {
+            return this == PRAISE || this == HYPE
+        }
+
+        fun isCheck(): Boolean {
+            return this == SUGGESTION || this == PROBLEM
+        }
+
+        companion object {
+            fun getType(messageType: String?): DiscussionType {
+                if (messageType.isNullOrBlank()) return ALL
+
+                return entries.find { it.messageType == messageType } ?: ALL
+            }
+        }
+    }
 
     @JsonProperty("parent_id")
     var parentDiscussionID: Long? = 0
