@@ -27,7 +27,7 @@ class NewbieService(
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
-    private val osuUserApiService: OsuUserApiService,
+    private val userApiService: OsuUserApiService,
     private val newbiePlayCountRepository: NewbiePlayCountRepository,
     private val bindDao: BindDao,
 ) {
@@ -81,7 +81,7 @@ class NewbieService(
 
     fun getPPStatistic(userId: Long): Pair<String, Float> {
         val pp = osuUserInfoDao.getPP(userId, OsuMode.OSU) ?: return "" to 0f
-        val nowUserInfo = osuUserApiService.getOsuUser(userId, OsuMode.OSU)
+        val nowUserInfo = userApiService.getOsuUser(userId, OsuMode.OSU)
         return nowUserInfo.username to (nowUserInfo.pp.toFloat() - pp)
     }
 

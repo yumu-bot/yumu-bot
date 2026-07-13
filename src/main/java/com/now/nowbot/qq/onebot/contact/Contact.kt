@@ -83,16 +83,16 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
         if (messageID != null) {
             return OneBotMessageReceipt.create(bot, messageID, this)
         } else {
-            val status = try {
-                if (bot.canSendImage()?.status != null) "正常" else "无法获取"
-            } catch (_: Exception) {
-                "状态异常/掉线"
-            }
-
             if (msg.messageList.any { it is ImageMessage }) {
-                Contact.log.info("发送消息：账号 ${bot.selfId} 在 $id 发送图片时获取回执失败。发送图片状态：$status")
+                val status = try {
+                    if (bot.canSendImage()?.status != null) "正常" else "无法获取"
+                } catch (_: Exception) {
+                    "状态异常/掉线"
+                }
+
+                Contact.log.warn("发送消息：账号 ${bot.selfId} 在 $id 发送图片时获取回执失败。发送图片状态：$status")
             } else {
-                Contact.log.info("发送消息：账号 ${bot.selfId} 在 $id 发送此消息时获取回执失败：\n${getMsg4Chain(msg).take(100)}")
+                Contact.log.warn("发送消息：账号 ${bot.selfId} 在 $id 发送此消息时获取回执失败：\n${getMsg4Chain(msg).take(100)}")
             }
 
             return OneBotMessageReceipt.create()
