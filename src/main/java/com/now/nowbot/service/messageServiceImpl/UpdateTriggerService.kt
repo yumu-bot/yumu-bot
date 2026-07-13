@@ -12,6 +12,7 @@ import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.service.messageServiceImpl.UpdateTriggerService.UpdateType.*
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.PermissionException.DeniedException.*
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.AsyncMessageUtil
@@ -27,16 +28,18 @@ class UpdateTriggerService(
     private val lxMaiApiService: LxMaiApiService,
     private val chunithmApiService: ChunithmApiService,
     private val dailyStatisticsService: DailyStatisticsService,
+    private val beatmapApiService: OsuBeatmapApiService,
     private val infoDao: OsuUserInfoDao,
     private val scoreDao: ScoreDao,
 ) : MessageService<Pair<UpdateTriggerService.UpdateType, String?>> {
 
     enum class UpdateType {
-        DIVING_FISH, LXNS, OSU_PERCENT, OSU_DAILY, OSU_TTH_INIT, OSU_STAR_RATING;
+        DIVING_FISH, LXNS, OSU_PERCENT, OSU_DAILY, OSU_TTH_INIT, OSU_STAR_RATING, OSU_EXTEND;
 
         companion object {
             fun getType(string: String?): UpdateType {
                 return when(string?.trim()) {
+                    "e", "ex", "ext", "extend" -> OSU_EXTEND
                     "m", "mai", "maimai" -> DIVING_FISH
                     "l", "lx", "lxns", "luoxue", "lady" -> LXNS
                     "o", "p", "percent", "per" -> OSU_PERCENT
@@ -46,6 +49,7 @@ class UpdateTriggerService(
                     else -> throw UnsupportedOperationException("""
                         请输入需要更新的种类：
                         
+                        e -> osu extend beatmap update
                         m -> maimai
                         i -> osu totalhits init
                         l -> lxns
@@ -190,10 +194,6 @@ class UpdateTriggerService(
             }
 
             OSU_TTH_INIT -> {
-                if (!Permission.isSuperAdmin(event.sender.contactID)) {
-                    throw BelowSuperAdministrator()
-                }
-
                 AsyncMessageUtil.doubleCheck(
                     event,
                     onCheck = {
@@ -206,6 +206,16 @@ class UpdateTriggerService(
                         }
                     }
                 )
+            }
+
+            OSU_EXTEND -> {
+                event.replyAsync("正在尝试更新最旧 500 条扩展谱面数据！")
+                val (count, count2) = beatmapApiService.updateExtendedBeatmapFailTimes()
+                if (count < 0 || count2 < 0) {
+                    event.replyAsync("出现了错误。")
+                } else {
+                    event.replyAsync("已更新 $count($count2) 条扩展谱面数据。")
+                }
             }
         }
 

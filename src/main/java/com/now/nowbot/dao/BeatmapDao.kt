@@ -19,6 +19,7 @@ import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.Covers
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Tag
+import com.now.nowbot.util.IntArrayCompressor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -185,7 +186,8 @@ class BeatmapDao(
         return extendBeatmapRepository.updateFailTimeByBeatmapID(
             beatmapID = beatmap.beatmapID,
             lazerOnly = beatmap.lazerOnly,
-            fail = beatmap.failTimes?.toString(),
+            fails = IntArrayCompressor.intArrayToByteArray(beatmap.retries),
+            exits = IntArrayCompressor.intArrayToByteArray(beatmap.fails),
             owners = beatmap.owners?.map { o -> o.toNanoUserLite() }?.let { owners -> JacksonUtil.objectToJson(owners)})
     }
 
@@ -281,7 +283,7 @@ class BeatmapDao(
             createdAt = now,
             updatedAt = now
         ).apply {
-            this.writeFailTimesFromNode(beatmap.failTimes)
+            this.writeFailTimesFromData(beatmap.failTimes)
         }
 
         return lite
@@ -421,7 +423,7 @@ class BeatmapDao(
         score.beatmap.apply {
             beatmapsetID = x.beatmapsetID
             lazerOnly = b.lazerOnly
-            failTimes = b.readFailTimesAsNode()
+            failTimes = b.readFailTimesAsData()
             owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
             maxCombo = b.maxCombo
         }
@@ -473,7 +475,7 @@ class BeatmapDao(
         }
 
         lazerOnly = b.lazerOnly
-        failTimes = b.readFailTimesAsNode()
+        failTimes = b.readFailTimesAsData()
         maxCombo = b.maxCombo
         owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
 

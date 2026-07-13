@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import java.io.IOException
@@ -716,15 +717,31 @@ class OsuApiBaseService(
 
     @EventListener(ApplicationReadyEvent::class)
     fun onApplicationReady() {
-        Thread.ofVirtual().start {
+        val scheduler = Executors.newSingleThreadScheduledExecutor(
+            Thread.ofVirtual().factory()
+        )
+        val maxAttempts = 30
+        var attempts = 0
+
+        scheduler.scheduleAtFixedRate({
             try {
                 val t = getBotToken()
                 log.info("成功获取到 osu! 提供给机器人的令牌：${t.take(10)}...")
-            } catch (e: HttpClientErrorException) {
-                log.error("获取令牌失败：${e.statusCode.value()}\n可能是您没有填写正确的客户端编号和信息！")
+                scheduler.shutdown() // 成功后停止调度
             } catch (e: Exception) {
-                log.error("获取令牌失败：", e)
+                attempts++
+
+                if (e is HttpClientErrorException || e is HttpServerErrorException) {
+                    log.warn("获取令牌失败（第${attempts}次）：${e.statusCode.value()}\n可能是您没有填写正确的客户端编号和信息，或是网络错误。")
+                } else {
+                    log.warn("获取令牌失败（第${attempts}次）：", e)
+                }
+
+                if (attempts >= maxAttempts) {
+                    log.error("获取令牌失败：已重试${maxAttempts}次（30分钟），停止尝试")
+                    scheduler.shutdown()
+                }
             }
-        }
+        }, 0, 60, TimeUnit.SECONDS)
     }
 }

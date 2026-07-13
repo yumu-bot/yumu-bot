@@ -1372,21 +1372,21 @@ class BeatmapApiImpl(
      * 定时任务，更新谱面的数据
      */
     @Transactional
-    override fun updateExtendedBeatmapFailTimes(): Int {
+    override fun updateExtendedBeatmapFailTimes(): Pair<Int, Int> {
         // log.info("自动更新扩展谱面：正在启动")
 
         val ids = beatmapDao.findMapByUpdateAtAscend(LocalDateTime.now().minusDays(3)).map { it.beatmapID }
 
         if (ids.isEmpty()) {
             log.info("自动更新扩展谱面：没有可更新的谱面。")
-            return 0
+            return 0 to 0
         }
 
         val news = try {
             getBeatmaps(ids)
         } catch (e: Exception) {
             log.error("自动更新扩展谱面：出现了问题", e)
-            return -1
+            return -1 to -1
         }
 
         // 有图被 nuke 了
@@ -1409,7 +1409,7 @@ class BeatmapApiImpl(
 
         log.info("自动更新扩展谱面：已更新 $result($result2) 张谱面。")
 
-        return result + result2
+        return result to result2
     }
 
     private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {

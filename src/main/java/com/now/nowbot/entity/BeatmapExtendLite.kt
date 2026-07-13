@@ -1,13 +1,12 @@
 package com.now.nowbot.entity
 
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.util.IntArrayCompressor
-import com.now.nowbot.util.JacksonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.Type
 import org.hibernate.type.SqlTypes
-import tools.jackson.databind.JsonNode
 import java.time.LocalDateTime
 
 /**
@@ -69,35 +68,20 @@ class BeatmapExtendLite(
         this.exits = ints?.let { IntArrayCompressor.intArrayToByteArray(it) }
     }
 
-    fun readFailTimesAsNode(): JsonNode? {
+    fun readFailTimesAsData(): Beatmap.FailTimesData? {
         val fail = readFails()
         val exit = readExits()
 
-        if (fail == null && exit == null) return null
+        if (fail == null || exit == null) return null
 
-        val objectMapper = JacksonUtil.mapper
-        val objectNode = objectMapper.createObjectNode()
-
-        fail?.let { objectNode.set("fail", objectMapper.valueToTree(it)) }
-        exit?.let { objectNode.set("exit", objectMapper.valueToTree(it)) }
-
-        return objectNode
+        return Beatmap.FailTimesData(fail, exit)
     }
 
-    fun writeFailTimesFromNode(node: JsonNode?) {
-        node?.get("fail")?.let { failNode ->
-            if (failNode.isArray) {
-                val failArray = IntArray(failNode.size()) { failNode[it].asInt() }
-                writeFails(failArray)  // 只有合法时才写入
-            }
-        }
+    fun writeFailTimesFromData(data: Beatmap.FailTimesData?) {
+        if (data == null) return
 
-        node?.get("exit")?.let { exitNode ->
-            if (exitNode.isArray) {
-                val exitArray = IntArray(exitNode.size()) { exitNode[it].asInt() }
-                writeExits(exitArray)  // 只有合法时才写入
-            }
-        }
+        writeFails(data.retries)
+        writeExits(data.fails)
     }
 }
 

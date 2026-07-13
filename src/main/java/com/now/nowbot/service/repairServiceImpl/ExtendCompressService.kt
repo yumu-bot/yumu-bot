@@ -1,5 +1,6 @@
 package com.now.nowbot.service.repairServiceImpl
 
+/*
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
@@ -100,3 +101,5 @@ class ExtendCompressService(
         }
     }
 }
+
+ */

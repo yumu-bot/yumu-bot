@@ -147,7 +147,7 @@ interface OsuBeatmapApiService {
 
     fun extendBeatmapTag(beatmap: Beatmap)
 
-    fun updateExtendedBeatmapFailTimes(): Int
+    fun updateExtendedBeatmapFailTimes(): Pair<Int, Int>
 
     // 给 lazerscorelite 用的
     fun applyVersion(scores: Collection<LazerScore>)

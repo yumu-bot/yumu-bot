@@ -8,7 +8,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.CATCH
 import com.now.nowbot.model.enums.OsuMode.CATCH_RELAX
 import jakarta.persistence.Column
-import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
@@ -53,9 +52,13 @@ data class Beatmap(
     @field:JsonProperty("checksum")
     var md5: String? = null,
 
+    // @field:JsonProperty("failtimes")
+    // var failTimes: JsonNode? = null,
+
     //retry == fail, fail == exit
-    @field:JsonProperty("failtimes")
-    var failTimes: JsonNode? = null,
+    @set:JsonProperty("failtimes")
+    @get:JsonIgnore
+    var failTimes: FailTimesData? = null,
 
     @field:JsonProperty("max_combo")
     var maxCombo: Int? = 0,
@@ -147,31 +150,46 @@ data class Beatmap(
         modeStr = value.shortName
     }
 
-    @get:JsonProperty("retries")
-    val retries: List<Int>
-    get() {
-        return getList(failTimes, "fail")
+    data class FailTimesData(
+        @field:JsonProperty("retries")
+        val retries: IntArray = intArrayOf(),
+        @field:JsonProperty("fails")
+        val fails: IntArray = intArrayOf(),
+    ) {
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+            other as FailTimesData
+            if (!retries.contentEquals(other.retries)) return false
+            if (!fails.contentEquals(other.fails)) return false
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = fails.contentHashCode()
+            result = 31 * result + retries.contentHashCode()
+            return result
+        }
     }
 
+    @get:JsonProperty("retries")
+    val retries: IntArray
+        get() = failTimes?.retries ?: intArrayOf()
+
     @get:JsonProperty("fails")
-    val fails: List<Int>
-    get() {
-        return getList(failTimes, "exit")
-    }
+    val fails: IntArray
+        get() = failTimes?.fails ?: intArrayOf()
 
     //自己算
     @get:JsonProperty("retry")
     val retry: Int
-        get() {
-            return retries.sum()
-        }
+        get() = failTimes?.retries?.sum() ?: 0
 
     //自己算
     @get:JsonProperty("fail")
     val fail: Int
-        get() {
-            return fails.sum()
-        }
+        get() = failTimes?.fails?.sum() ?: 0
 
     //自己算
     @get:JsonProperty("has_leader_board")
@@ -266,17 +284,5 @@ data class Beatmap(
 
     override fun hashCode(): Int {
         return 31 * beatmapID.hashCode() + mode.hashCode()
-    }
-
-    companion object {
-        private fun getList(data: JsonNode?, fieldName: String): List<Int> {
-            if (data == null) return emptyList()
-
-            return if (data.hasNonNull(fieldName) && data[fieldName].isArray) {
-                (data[fieldName] as Iterable<JsonNode>).map { it.asInt(0) }
-            } else emptyList()
-        }
-
-
     }
 }

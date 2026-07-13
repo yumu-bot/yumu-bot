@@ -30,8 +30,8 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     // 批量更新字段
     @Modifying
     @Transactional
-    @Query("UPDATE osu_extend_beatmap SET lazer_only = :lazerOnly, fail_times = CAST(:fail AS jsonb), owners = CAST(:owners AS jsonb), updated_at = CURRENT_TIMESTAMP WHERE beatmap_id = :beatmapID", nativeQuery = true)
-    fun updateFailTimeByBeatmapID(@Param("beatmapID") beatmapID: Long, @Param("lazerOnly") lazerOnly: Boolean, @Param("fail") fail: String?, @Param("owners") owners: String?): Int
+    @Query("UPDATE osu_extend_beatmap SET lazer_only = :lazerOnly, fails = :fails, exits = :exits, owners = CAST(:owners AS jsonb), updated_at = CURRENT_TIMESTAMP WHERE beatmap_id = :beatmapID", nativeQuery = true)
+    fun updateFailTimeByBeatmapID(@Param("beatmapID") beatmapID: Long, @Param("lazerOnly") lazerOnly: Boolean, @Param("fails") fails: ByteArray, @Param("exits") exits: ByteArray, @Param("owners") owners: String?): Int
 
     @Modifying
     @Transactional
@@ -42,12 +42,13 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     @Transactional
     @Query(
         value = """
-        INSERT INTO osu_extend_beatmap (beatmap_id, beatmapset_id, lazer_only, fail_times, owners, max_combo, created_at, updated_at) 
+        INSERT INTO osu_extend_beatmap (beatmap_id, beatmapset_id, lazer_only, fails, exits, owners, max_combo, created_at, updated_at) 
         VALUES (:#{#lite.beatmapID}, :#{#lite.beatmapset.beatmapsetID}, :#{#lite.lazerOnly}, CAST(:#{#lite.failTimes} AS jsonb), CAST(:#{#lite.owners} AS jsonb), :#{#lite.maxCombo}, :#{#lite.createdAt}, :#{#lite.updatedAt}) 
         ON CONFLICT (beatmap_id) DO UPDATE SET 
             beatmapset_id = EXCLUDED.beatmapset_id,
             lazer_only = EXCLUDED.lazer_only,
-            fail_times = EXCLUDED.fail_times,
+            fails = EXCLUDED.fails,
+            exits = EXCLUDED.exits,
             owners = EXCLUDED.owners,
             max_combo = EXCLUDED.max_combo,
             updated_at = EXCLUDED.updated_at
