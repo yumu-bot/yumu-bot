@@ -498,7 +498,7 @@ class GuessService(
             }
 
             val hint = remaining.random()
-            decrypted[index] = Hint.unlock(currentMask, hint)
+            decrypted.set(index, Hint.unlock(currentMask, hint))
 
             return buildHintMessage(index, hint, beatmapApiService)
         }
@@ -586,8 +586,8 @@ class GuessService(
                     val unicodeRevealed = unicode && isFullyRevealed(s.titleUnicode)
 
                     if (titleRevealed || unicodeRevealed) {
-                        rewards[i] = reward(i)
-                        decrypted[i] = -1
+                        rewards.set(i, reward(i))
+                        decrypted.set(i, -1)
                         autoDecryptedIndices.add(i)
                     }
                 }
@@ -670,8 +670,8 @@ class GuessService(
             // 2. 结算逻辑：只有触发 DECRYPTED (或你设定的其他标准) 才算真正解开
             matchResults.forEach { (index, status) ->
                 if (status == GuessResultStatus.DECRYPTED) {
-                    rewards[index] = reward(index)
-                    decrypted[index] = -1
+                    rewards.set(index, reward(index))
+                    decrypted.set(index, -1)
                 }
             }
 

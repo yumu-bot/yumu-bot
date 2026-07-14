@@ -97,7 +97,7 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
 
                 } else if (status == "error") {
                     val errorMessage = response.get("error")?.asString() ?: "Node.js 端发生未知异常"
-                    log.warn("渲染服务器：收到 JS 进程错误响应 [ID: {}]: {}", messageId, errorMessage)
+                    log.error("渲染服务器：收到 JS 进程错误响应 [ID: {}]: {}", messageId, errorMessage)
 
                     pendingRequests.remove(messageId)?.completeExceptionally(NetworkException.RenderModuleException.InternalServerError())
                 }
