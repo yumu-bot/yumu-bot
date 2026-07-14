@@ -184,9 +184,9 @@ class TodayBPService(
             if (!user.isActive) {
                 throw NoSuchElementException.PlayerInactive(user.username)
             } else if (isToday) {
-                throw NoSuchElementException.TodayBestScore(user.username)
+                throw NoSuchElementException.TodayBestScore(user.username, user.currentOsuMode)
             } else {
-                throw NoSuchElementException.PeriodBestScore(user.username)
+                throw NoSuchElementException.PeriodBestScore(user.username, user.currentOsuMode)
             }
         }
 

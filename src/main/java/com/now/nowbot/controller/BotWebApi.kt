@@ -326,6 +326,8 @@ import kotlin.time.Duration.Companion.days
         when (type) {
             ScoreType.BP -> {
                 scores = scoreApiService.getBestScores(user.userID, mode, offset, limit)
+                    .takeIf { it.isNotEmpty() }
+                    ?: throw RuntimeException(NoSuchElementException.BestScoreWithMode(user.username, user.currentOsuMode))
 
                 val ranks = ArrayList<Int>()
                 for (i in offset..(offset + limit)) ranks.add(i + 1)
@@ -361,6 +363,8 @@ import kotlin.time.Duration.Companion.days
 
             ScoreType.Pass -> {
                 scores = scoreApiService.getPassedScore(user.userID, mode, offset, limit)
+                    .takeIf { it.isNotEmpty() }
+                    ?: throw RuntimeException(NoSuchElementException.PassedScore(user.username, user.currentOsuMode))
 
                 BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
@@ -395,6 +399,8 @@ import kotlin.time.Duration.Companion.days
 
             ScoreType.Recent -> {
                 scores = scoreApiService.getPassedScore(user.userID, mode, offset, limit)
+                    .takeIf { it.isNotEmpty() }
+                    ?: throw RuntimeException(NoSuchElementException.RecentScore(user.username, user.currentOsuMode))
 
                 BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
@@ -429,6 +435,8 @@ import kotlin.time.Duration.Companion.days
 
             ScoreType.PassCard -> {
                 scores = scoreApiService.getScore(user.userID, mode, offset, 1, true)
+                    .takeIf { it.isNotEmpty() }
+                    ?: throw RuntimeException(NoSuchElementException.PassedScore(user.username, user.currentOsuMode))
                 val score: LazerScore = scores.first()
 
                 BeatmapUtil.applyBeatmapChanges(scores)
@@ -442,6 +450,8 @@ import kotlin.time.Duration.Companion.days
 
             ScoreType.RecentCard -> {
                 scores = scoreApiService.getScore(user.userID, mode, offset, 1, false)
+                    .takeIf { it.isNotEmpty() }
+                    ?: throw RuntimeException(NoSuchElementException.RecentScore(user.username, user.currentOsuMode))
                 val score: LazerScore = scores.first()
 
                 BeatmapUtil.applyBeatmapChanges(scores)
@@ -460,6 +470,8 @@ import kotlin.time.Duration.Companion.days
                 val bests =
                     scoreApiService.getBestScores(user.userID, mode).mapIndexed { i, it -> i + 1 to it }.toMap()
                         .filter { dayBefore.isBefore(it.value.endedTime) }
+                        .takeIf { it.isNotEmpty() }
+                        ?: throw RuntimeException(NoSuchElementException.TodayBestScore(user.username, user.currentOsuMode))
 
                 val ranks = bests.keys
                 scores = bests.values
@@ -798,6 +810,10 @@ import kotlin.time.Duration.Companion.days
     ): ResponseEntity<ByteArray> {
         return getImageOrThrow(bid, "leaderboard", "谱面榜单") {
             val beatmap = beatmapApiService.getBeatmapFromAnyID(IDType.BeatmapID, bid)
+
+            if (! beatmap.hasLeaderBoard) {
+                throw RuntimeException(NoSuchElementException.Leaderboard())
+            }
 
             val mode = OsuMode.getConvertableMode(getMode(modeStr, OsuMode.OSU), beatmap.mode)
 

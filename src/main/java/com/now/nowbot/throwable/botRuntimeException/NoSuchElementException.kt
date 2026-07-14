@@ -13,9 +13,6 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             自己去官网听算了。
             """.trimIndent())
 
-    class Avatar:
-        NoSuchElementException("没有找到玩家的头像。")
-
     class Beatmap(name: Any):
         NoSuchElementException("没有找到谱面 $name。")
 
@@ -145,9 +142,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class PassedScoreFiltered(name: String, mode: OsuMode):
         NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内符合条件的最近通过成绩...")
 
-    class PeriodBestScore(name: String):
+    class PeriodBestScore(name: String, mode: OsuMode):
         NoSuchElementException("""
-            玩家 $name 这段时间之内没有新增的 BP 呢...
+            玩家 $name 这段时间之内，在 ${mode.fullName} 内没有新增的 BP 呢...
             尝试修改范围，或尝试扩大搜索天数吧。
         """.trimIndent())
 
@@ -285,9 +282,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class TeamID(id: Number):
         NoSuchElementException("没有找到编号为 $id 的战队。")
 
-    class TodayBestScore(name: String):
+    class TodayBestScore(name: String, mode: OsuMode):
         NoSuchElementException("""
-            玩家 $name 今天之内没有新增的 BP 呢...
+            玩家 $name 今天在 ${mode.shortName} 内没有新增的 BP 呢...
             尝试修改范围，或尝试扩大搜索天数吧。
         """.trimIndent())
 
@@ -299,10 +296,4 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
 
     class UnrankedBeatmapScore(name: String):
         NoSuchElementException("谱面 $name 没有榜，无法获取成绩。")
-
-    class VersionScore(name: String):
-        NoSuchElementException("没有找到您在版本 $name 内的成绩。")
-
-
-
 }
