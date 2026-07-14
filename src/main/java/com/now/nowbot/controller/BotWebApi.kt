@@ -73,28 +73,24 @@ import kotlin.time.Duration.Companion.days
         ) @RequestParam(value = "name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
     ): ResponseEntity<ByteArray> {
-        val mode = getMode(playMode)
+        return getImageOrThrow(name.trim(), "sn", "查询玩家的 SAN") {
 
-        val me: OsuUser
-        val myBests: List<LazerScore>
+            val mode = getMode(playMode)
 
-        try {
-            me = userApiService.getOsuUser(name.trim(), mode)
-            myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
-        } catch (e: Exception) {
-            throw RuntimeException(e.message)
+            val me: OsuUser
+            val myBests: List<LazerScore>
+
+            try {
+                me = userApiService.getOsuUser(name.trim(), mode)
+                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
+            } catch (e: Exception) {
+                throw RuntimeException(e.message)
+            }
+
+            val param = PPMinusService.PPMinusParam(false, me, myBests, null, null, mode, -1)
+
+            return@getImageOrThrow imageService.getPanel(param.toMap(ppMinusDao), "Gamma")
         }
-
-        val param = PPMinusService.PPMinusParam(false, me, myBests, null, null, mode, -1)
-
-        val data = imageService.getPanel(param.toMap(ppMinusDao), "Gamma")
-        val extension = data.getImageExtension()
-
-        return ResponseEntity(
-            data, getImageHeader(
-                "${name.trim()}-sn$extension", data.size
-            ), HttpStatus.OK
-        )
     }
 
     /**
@@ -116,27 +112,20 @@ import kotlin.time.Duration.Companion.days
         if (!name2.isNullOrBlank()) {
             return getPPMinusVS(name, name2, playMode)
         }
+
         if (!u1.isNullOrBlank()) {
-            return getPPMinus(u1, playMode = playMode)
+            return getPPMinus(name = u1, playMode = playMode)
         }
 
-        val mode = getMode(playMode)
+        return getImageOrThrow(name.trim(), "pm", "查询玩家的 PPM") {
+            val mode = getMode(playMode)
 
-        val me = userApiService.getOsuUser(name.trim(), mode)
-        val myBest = scoreApiService.getBestScores(me, mode, 0, 100)
+            val me = userApiService.getOsuUser(name.trim(), mode)
+            val myBest = scoreApiService.getBestScores(me, mode, 0, 100)
 
-        val param = PPMinusService.PPMinusParam(false, me, myBest, null, null, mode, 4)
-
-        try {
-            val data = imageService.getPanel(param.toMap(ppMinusDao), "B1")
-            val extension = data.getImageExtension()
-            return ResponseEntity(
-                data, getImageHeader(
-                    "${name.trim()}-pm$extension", data.size
-                ), HttpStatus.OK
-            )
-        } catch (_: Exception) {
-            throw RuntimeException(IllegalStateException.Fetch("PPM4").message)
+            val param = PPMinusService.PPMinusParam(false, me, myBest, null, null, mode, 4)
+            
+            return@getImageOrThrow imageService.getPanel(param.toMap(ppMinusDao), "B1")
         }
     }
 
@@ -153,28 +142,19 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "name2", description = "第二个玩家的名称", required = true) @RequestParam("name2") name2: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
     ): ResponseEntity<ByteArray> {
-        val mode = getMode(playMode)
+        return getImageOrThrow("${name.trim()} vs ${name2.trim()}", "pv", "比较玩家的 PPM") {
 
-        val me = userApiService.getOsuUser(name.trim(), mode)
-        val myBest = scoreApiService.getBestScores(me, mode, 0, 100)
+            val mode = getMode(playMode)
 
-        val other = if (name2.isBlank()) null else userApiService.getOsuUser(name2.trim(), mode)
-        val othersBest = if (other == null) null else scoreApiService.getBestScores(other, mode, 0, 100)
+            val me = userApiService.getOsuUser(name.trim(), mode)
+            val myBest = scoreApiService.getBestScores(me, mode, 0, 100)
 
-        val param = PPMinusService.PPMinusParam(other != null, me, myBest, other, othersBest, mode, 4)
+            val other = if (name2.isBlank()) null else userApiService.getOsuUser(name2.trim(), mode)
+            val othersBest = if (other == null) null else scoreApiService.getBestScores(other, mode, 0, 100)
 
-        try {
-            val data = imageService.getPanel(param.toMap(ppMinusDao), "B1")
+            val param = PPMinusService.PPMinusParam(other != null, me, myBest, other, othersBest, mode, 4)
 
-            val extension = data.getImageExtension()
-            
-            return ResponseEntity(
-                data, getImageHeader(
-                    "${name.trim()} vs ${name2.trim()}-pv$extension", data.size
-                ), HttpStatus.OK
-            )
-        } catch (_: Exception) {
-            throw RuntimeException(IllegalStateException.Fetch("PPM4").message)
+            return@getImageOrThrow imageService.getPanel(param.toMap(ppMinusDao), "B1")
         }
     }
 
@@ -197,37 +177,35 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "delete-low", description = "删除低分成绩") @Nullable f: Boolean?,
         @DiscordParam(name = "keep-rematch", description = "保留重复对局") @Nullable r: Boolean?
     ): ResponseEntity<ByteArray> {
-        val image: ByteArray
-        val match: Match
 
-        try {
-            match = matchApiService.getMatch(matchID.toLong(), 10)
-        } catch (_: NetworkException) {
-            throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
+        return getImageOrThrow(matchID, "match", "查询比赛结果") {
+            val image: ByteArray
+            val match: Match
+
+            try {
+                match = matchApiService.getMatch(matchID.toLong(), 10)
+            } catch (_: NetworkException) {
+                throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
+            }
+
+            try {
+                val data = MatchNowService.calculate(
+                    MuRatingService.MuRatingPanelParam(
+                        match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
+                    ), beatmapApiService, calculateApiService
+                )
+                image = imageService.getPanel(mapOf(
+                    "match" to data,
+                    "panel" to "MN"
+                ), "F")
+            } catch (err: Exception) {
+                log.error("比赛结果：API 异常", err)
+                throw RuntimeException("比赛结果：API 异常")
+            }
+
+            return@getImageOrThrow image
+
         }
-
-        try {
-            val data = MatchNowService.calculate(
-                MuRatingService.MuRatingPanelParam(
-                    match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
-                ), beatmapApiService, calculateApiService
-            )
-            image = imageService.getPanel(mapOf(
-                "match" to data,
-                "panel" to "MN"
-            ), "F")
-        } catch (err: Exception) {
-            log.error("比赛结果：API 异常", err)
-            throw RuntimeException("比赛结果：API 异常")
-        }
-        
-        val extension = image.getImageExtension()
-
-        return ResponseEntity(
-            image, getImageHeader(
-                "${matchID}-match$extension", image.size
-            ), HttpStatus.OK
-        )
     }
 
     /**
@@ -248,34 +226,31 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "delete-low", description = "删除低分成绩") @Nullable f: Boolean?,
         @DiscordParam(name = "keep-rematch", description = "保留重复对局") @Nullable r: Boolean?
     ): ResponseEntity<ByteArray> {
-        val image: ByteArray
-        val match: Match
 
-        try {
-            match = matchApiService.getMatch(matchID.toLong(), 10)
-        } catch (_: HttpClientErrorException) {
-            throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
+        return getImageOrThrow(matchID, "rating", "查询比赛评分") {
+            val image: ByteArray
+            val match: Match
+
+            try {
+                match = matchApiService.getMatch(matchID.toLong(), 10)
+            } catch (_: HttpClientErrorException) {
+                throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
+            }
+
+            try {
+                val c = MuRatingService.calculate(
+                    MuRatingService.MuRatingPanelParam(
+                        match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
+                    ), beatmapApiService, calculateApiService
+                )
+                image = imageService.getPanel(c, "C")
+            } catch (err: Exception) {
+                log.error("比赛评分：API 异常", err)
+                throw RuntimeException(MRAException.Type.RATING_Send_MRAFailed.message)
+            }
+
+            return@getImageOrThrow image
         }
-
-        try {
-            val c = MuRatingService.calculate(
-                MuRatingService.MuRatingPanelParam(
-                    match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
-                ), beatmapApiService, calculateApiService
-            )
-            image = imageService.getPanel(c, "C")
-        } catch (err: Exception) {
-            log.error("比赛评分：API 异常", err)
-            throw RuntimeException(MRAException.Type.RATING_Send_MRAFailed.message)
-        }
-
-        val extension = image.getImageExtension()
-
-        return ResponseEntity(
-            image, getImageHeader(
-                "${matchID}-mra$extension", image.size
-            ), HttpStatus.OK
-        )
     }
 
     /**
@@ -316,26 +291,31 @@ import kotlin.time.Duration.Companion.days
      * 多组成绩接口（当然单成绩也行，我把接口改了）
      *
      * @param name     玩家名称
-     * @param playMode 模式,可为空
+     * @param modeStr 模式,可为空
      * @param type     scoreType
      * @param start    !bp 45-55 或 !bp 45 里的 45
      * @param end      !bp 45-55 里的 55
      * @return image 成绩图片
      */
     fun getScore(
-        @RequestParam("name") name: String,
-        @Nullable @RequestParam("mode") playMode: String?,
-        @Nullable @RequestParam("type") type: ScoreType?,
-        @Nullable @RequestParam("start") start: Int?,
-        @Nullable @RequestParam("end") end: Int?
+        name: String,
+        modeStr: String?,
+        type: ScoreType?,
+        start: Int?,
+        end: Int?,
+        isMultiple: Boolean = false,
     ): ResponseEntity<ByteArray> {
-        val mode = getMode(playMode)
+        val mode = getMode(modeStr)
 
-        val osuUser = userApiService.getOsuUser(name.trim(), mode)
+        val user = userApiService.getOsuUser(name.trim(), mode)
         val scores: Collection<LazerScore>
 
         val offset = parseRange2Offset(start, end)
-        val limit = parseRange2Limit(start, end)
+        var limit = parseRange2Limit(start, end)
+
+        if (isMultiple && offset == 0 && limit == 1) {
+            limit = 20
+        }
 
         val isMultipleScore = (limit > 1)
 
@@ -345,7 +325,7 @@ import kotlin.time.Duration.Companion.days
 
         when (type) {
             ScoreType.BP -> {
-                scores = scoreApiService.getBestScores(osuUser.userID, mode, offset, limit)
+                scores = scoreApiService.getBestScores(user.userID, mode, offset, limit)
 
                 val ranks = ArrayList<Int>()
                 for (i in offset..(offset + limit)) ranks.add(i + 1)
@@ -356,7 +336,7 @@ import kotlin.time.Duration.Companion.days
 
                     data = imageService.getPanel(
                         mapOf(
-                            "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "BS"
+                            "user" to user, "scores" to scores, "rank" to ranks, "panel" to "BS"
                         ), "A4"
                     )
 
@@ -365,7 +345,7 @@ import kotlin.time.Duration.Companion.days
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
-                            osuUser, null, scores.first(), "B", beatmapApiService, calculateApiService
+                            user, null, scores.first(), "B", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (_: Exception) {
@@ -380,7 +360,7 @@ import kotlin.time.Duration.Companion.days
             }
 
             ScoreType.Pass -> {
-                scores = scoreApiService.getPassedScore(osuUser.userID, mode, offset, limit)
+                scores = scoreApiService.getPassedScore(user.userID, mode, offset, limit)
 
                 BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
@@ -390,7 +370,7 @@ import kotlin.time.Duration.Companion.days
                 if (isMultipleScore) {
                     data = imageService.getPanel(
                         mapOf(
-                            "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "PS"
+                            "user" to user, "scores" to scores, "rank" to ranks, "panel" to "PS"
                         ), "A5"
                     )
 
@@ -400,7 +380,7 @@ import kotlin.time.Duration.Companion.days
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
-                            osuUser, null, scores.first(), "P", beatmapApiService, calculateApiService
+                            user, null, scores.first(), "P", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (_: Exception) {
@@ -414,7 +394,7 @@ import kotlin.time.Duration.Companion.days
             }
 
             ScoreType.Recent -> {
-                scores = scoreApiService.getPassedScore(osuUser.userID, mode, offset, limit)
+                scores = scoreApiService.getPassedScore(user.userID, mode, offset, limit)
 
                 BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
@@ -424,7 +404,7 @@ import kotlin.time.Duration.Companion.days
 
                     data = imageService.getPanel(
                         mapOf(
-                            "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "RS"
+                            "user" to user, "scores" to scores, "rank" to ranks, "panel" to "RS"
                         ), "A5"
                     )
 
@@ -434,7 +414,7 @@ import kotlin.time.Duration.Companion.days
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
-                            osuUser, null, scores.first(), "R", beatmapApiService, calculateApiService
+                            user, null, scores.first(), "R", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (_: Exception) {
@@ -448,7 +428,7 @@ import kotlin.time.Duration.Companion.days
             }
 
             ScoreType.PassCard -> {
-                scores = scoreApiService.getScore(osuUser.userID, mode, offset, 1, true)
+                scores = scoreApiService.getScore(user.userID, mode, offset, 1, true)
                 val score: LazerScore = scores.first()
 
                 BeatmapUtil.applyBeatmapChanges(scores)
@@ -461,7 +441,7 @@ import kotlin.time.Duration.Companion.days
             }
 
             ScoreType.RecentCard -> {
-                scores = scoreApiService.getScore(osuUser.userID, mode, offset, 1, false)
+                scores = scoreApiService.getScore(user.userID, mode, offset, 1, false)
                 val score: LazerScore = scores.first()
 
                 BeatmapUtil.applyBeatmapChanges(scores)
@@ -478,7 +458,7 @@ import kotlin.time.Duration.Companion.days
                 val dayBefore = OffsetDateTime.now().minusDays(day.toLong())
 
                 val bests =
-                    scoreApiService.getBestScores(osuUser.userID, mode).mapIndexed { i, it -> i + 1 to it }.toMap()
+                    scoreApiService.getBestScores(user.userID, mode).mapIndexed { i, it -> i + 1 to it }.toMap()
                         .filter { dayBefore.isBefore(it.value.endedTime) }
 
                 val ranks = bests.keys
@@ -489,7 +469,7 @@ import kotlin.time.Duration.Companion.days
 
                 data = imageService.getPanel(
                     mapOf(
-                        "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "T"
+                        "user" to user, "scores" to scores, "rank" to ranks, "panel" to "T"
                     ), "A4"
                 )
 
@@ -505,25 +485,25 @@ import kotlin.time.Duration.Companion.days
      * 今日最好成绩接口 (T)
      *
      * @param name     玩家名称
-     * @param playMode 模式，可为空
+     * @param mode 模式，可为空
      * @param day      天数，不传默认一天内
      * @return image 今日最好成绩图片
      */
     @GetMapping(value = ["bp/today"]) @DiscordParam(name = "t", description = "查询今日最好成绩") fun getTodayBP(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
-        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") mode: String?,
         @DiscordParam(name = "day", description = "天数") @Nullable @RequestParam("day") day: Int?
     ): ResponseEntity<ByteArray> {
-        return getScore(name, playMode, ScoreType.TodayBP, day, null)
+        return getScore(name, mode, ScoreType.TodayBP, day, null)
     }
 
     @GetMapping(value = ["bp/scores"]) @DiscordParam(name = "bs", description = "查询多个最好成绩") fun getBPScores(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
-        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") mode: String?,
         @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
         @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
     ): ResponseEntity<ByteArray> {
-        return getScore(name, playMode, ScoreType.BP, start, end)
+        return getScore(name, mode, ScoreType.BP, start, end, isMultiple = true)
     }
 
     /**
@@ -541,7 +521,7 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
         @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
     ): ResponseEntity<ByteArray> {
-        return getScore(name, playMode, ScoreType.Pass, start, end)
+        return getScore(name, playMode, ScoreType.Pass, start, end, isMultiple = true)
     }
 
     /**
@@ -559,7 +539,7 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
         @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
     ): ResponseEntity<ByteArray> {
-        return getScore(name, playMode, ScoreType.Recent, start, end)
+        return getScore(name, playMode, ScoreType.Recent, start, end, isMultiple = true)
     }
 
     /**
@@ -611,7 +591,7 @@ import kotlin.time.Duration.Companion.days
     }
 
     /**
-     * 谱面成绩接口 (S)
+     * 玩家成绩接口 (S)
      *
      * @param name     玩家名称
      * @param bid      谱面编号
@@ -619,111 +599,93 @@ import kotlin.time.Duration.Companion.days
      * @param mods     模组字符串，可为空
      * @return image 谱面成绩图片
      */
-    @GetMapping(value = ["score"]) @DiscordParam(name = "s", description = "查询玩家谱面成绩") fun getBeatmapScore(
+    @GetMapping(value = ["score"]) @DiscordParam(name = "s", description = "查询玩家成绩") fun getBeatmapScore(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "bid", description = "谱面编号", required = true) @RequestParam("bid") bid: Long,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
         @DiscordParam(name = "mods", description = "模组") @Nullable @RequestParam("mods") mods: String?
     ): ResponseEntity<ByteArray> {
-        val osuUser: OsuUser
+        return getImageOrThrow(bid, "score", "查询玩家成绩") {
+            val user: OsuUser
 
-        val mode = getMode(playMode)
-        val uid: Long
-        val modInt = if (mods.isNullOrBlank()) {
-            LazerMod.getModsValue(mods)
-        } else {
-            0
-        }
-
-        val scoreList: List<LazerScore>
-        var score: LazerScore? = null
-
-        try {
-            osuUser = userApiService.getOsuUser(name)
-            uid = osuUser.userID
-        } catch (_: HttpClientErrorException.NotFound) {
-            throw RuntimeException(NoSuchElementException.Player(name))
-        }
-
-        if (mods.isNullOrBlank()) {
-            score = scoreApiService.getBeatmapScore(bid, uid, mode)!!.score
-        } else {
-            try {
-                scoreList = scoreApiService.getBeatmapScores(bid, uid, mode)
-                for (s in scoreList) {
-                    if (LazerMod.getModsValue(s.mods) == modInt) {
-                        score = s
-                        break
-                    }
-                }
-            } catch (_: HttpClientErrorException.NotFound) {
-                throw RuntimeException(IllegalStateException.Fetch("成绩列表"))
+            val mode = getMode(playMode)
+            val uid: Long
+            val modInt = if (mods.isNullOrBlank()) {
+                LazerMod.getModsValue(mods)
+            } else {
+                0
             }
+
+            val scoreList: List<LazerScore>
+            var score: LazerScore? = null
+
+            try {
+                user = userApiService.getOsuUser(name)
+                uid = user.userID
+            } catch (_: HttpClientErrorException.NotFound) {
+                throw RuntimeException(NoSuchElementException.Player(name))
+            }
+
+            if (mods.isNullOrBlank()) {
+                score = scoreApiService.getBeatmapScore(bid, uid, mode)!!.score
+            } else {
+                try {
+                    scoreList = scoreApiService.getBeatmapScores(bid, uid, mode)
+                    for (s in scoreList) {
+                        if (LazerMod.getModsValue(s.mods) == modInt) {
+                            score = s
+                            break
+                        }
+                    }
+                } catch (_: HttpClientErrorException.NotFound) {
+                    throw RuntimeException(IllegalStateException.Fetch("成绩列表"))
+                }
+            }
+
+            if (score == null) {
+                throw RuntimeException(NoSuchElementException.BeatmapScore(bid))
+            }
+
+            val image: ByteArray
+
+            try {
+                val e5Param = ScorePRService.getE5Param(
+                    user, null, score, "S", beatmapApiService, calculateApiService
+                )
+                image = imageService.getPanel(e5Param.toMap(), "E5")
+            } catch (_: Exception) {
+                throw RuntimeException(IllegalStateException.Render("成绩列表"))
+            }
+
+            return@getImageOrThrow image
         }
-
-        if (score == null) {
-            throw RuntimeException(NoSuchElementException.BeatmapScore(bid))
-        }
-
-        val image: ByteArray
-
-        try {
-            val e5Param = ScorePRService.getE5Param(
-                osuUser, null, score, "S", beatmapApiService, calculateApiService
-            )
-            image = imageService.getPanel(e5Param.toMap(), "E5")
-        } catch (_: Exception) {
-            throw RuntimeException(IllegalStateException.Render("成绩列表"))
-        }
-
-        val extension = image.getImageExtension()
-        return ResponseEntity(
-            image, getImageHeader(
-                "${name}@${bid}-score$extension", image.size
-            ), HttpStatus.OK
-        )
     }
 
     /**
      * 最好成绩分析接口 (BA)
      *
      * @param name     玩家名称
-     * @param playMode 模式，可为空
+     * @param modeStr 模式，可为空
      * @return image 最好成绩分析图片
      */
     @GetMapping(value = ["bp/analysis"]) @DiscordParam(name = "ba", description = "最好成绩分析")
     @Throws(RuntimeException::class) fun getBPAnalysis(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
-        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") modeStr: String?
     ): ResponseEntity<ByteArray> {
-        val bests: List<LazerScore>
-        val user: OsuUser
-        val mappers: List<MicroUser>
-
-        try {
-            val mode = getMode(playMode)
-            val uid = userApiService.getOsuID(name.trim())
-            user = userApiService.getOsuUser(uid, mode)
-            if (mode != OsuMode.DEFAULT) user.currentOsuMode = mode
-            bests = scoreApiService.getBestScores(uid, mode)
-            mappers = userApiService.getMicroUsers(bests.flatMap { it.beatmap.mapperIDs }.toSet())
+        return getImageOrThrow(name, "ba", "最好成绩分析") {
+            val mode = getMode(modeStr)
+            val user: OsuUser = userApiService.getOsuUser(name.trim(), mode)
+            val bests: List<LazerScore> = scoreApiService.getBestScores(user.userID, mode)
+            val mappers: List<MicroUser> = userApiService.getMicroUsers(bests.flatMap { it.beatmap.mapperIDs }.toSet())
 
             BeatmapUtil.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
-        } catch (_: Exception) {
-            throw RuntimeException(IllegalStateException.Fetch("最好成绩分析"))
+
+            val param = BPAnalysisService.BAParam(user, bests, true, mappers, 2)
+
+            imageService.getPanel(param.toMap(), "J2")
         }
-
-        val param = BPAnalysisService.BAParam(user, bests, true, mappers, 2)
-
-        val image = imageService.getPanel(param.toMap(), "J2")
-
-        val extension = image.getImageExtension()
-        return ResponseEntity(
-            image, getImageHeader(
-                "${name}-ba$extension", image.size
-            ), HttpStatus.OK
-        )
     }
 
     /**
@@ -778,10 +740,10 @@ import kotlin.time.Duration.Companion.days
         }
     }
 
-    /***
+    /**
      * 获取谱面信息 (M)
      * @param bid 谱面编号
-     * @param modeStr 谱面模式
+     * @param modeStr 游戏模式
      * @param accuracy acc, 0-1的浮点数，或1-100，或101-10000
      * @param combo 最大连击
      * @param miss 失误数量
@@ -789,8 +751,7 @@ import kotlin.time.Duration.Companion.days
      * @return 谱面信息图片
      * @throws RuntimeException API 出错
      */
-    @GetMapping(value = ["map"]) @DiscordParam(name = "m", description = "获取谱面信息") @Throws(RuntimeException::class)
-    fun getMapInfo(
+    @GetMapping(value = ["map"]) @DiscordParam(name = "m", description = "获取谱面信息") @Throws(RuntimeException::class) fun getMapInfo(
         @DiscordParam(name = "bid", description = "谱面编号") @RequestParam("bid") bid: Long,
         @DiscordParam(name = "mode", description = "游戏模式") @RequestParam("mode") @Nullable modeStr: String?,
         @DiscordParam(
@@ -802,8 +763,9 @@ import kotlin.time.Duration.Companion.days
             name = "mods", description = "模组，允许按成对的双字母输入"
         ) @RequestParam("mods") @Nullable modStr: String?
     ): ResponseEntity<ByteArray> {
-
-        try {
+        return getImageOrThrow(
+            bid, "map", "谱面信息"
+        ) {
             val mode = getMode(modeStr, OsuMode.OSU)
             val beatmap = beatmapApiService.getBeatmap(bid)
             val beatmapset = beatmapApiService.getBeatmapset(beatmap.beatmapsetID)
@@ -816,21 +778,60 @@ import kotlin.time.Duration.Companion.days
             val ppList = MapStatisticsService.getPPList(beatmap, expected, calculateApiService)
             val panel = PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails.toMap())
 
-            val image = imageService.getPanel(panel, "R")
-
-            val extension = image.getImageExtension()
-
-            return ResponseEntity(
-                image, getImageHeader(
-                    "${bid}-mapinfo$extension", image.size
-                ), HttpStatus.OK
-            )
-        } catch (e: Exception) {
-            log.error("谱面信息：API 异常", e)
-            throw RuntimeException("谱面信息：API 异常")
+            imageService.getPanel(panel, "R")
         }
     }
 
+    /**
+     * 获取排行榜 (L)
+     * @param bid 谱面编号
+     * @param modeStr 游戏模式
+     * @param modStr 模组的字符串, 比如 HDHR 等
+     * @return 谱面信息图片
+     * @throws RuntimeException API 出错
+     */
+    @GetMapping(value = ["map/leaderboard"]) @DiscordParam(name = "l", description = "获取排行榜") @Throws(RuntimeException::class) fun getLeaderboard(
+        @DiscordParam(name = "bid", description = "谱面编号", required = true) @RequestParam("bid") bid: Long,
+        @DiscordParam(name = "mode", description = "游戏模式") @RequestParam("mode") @Nullable modeStr: String?,
+        @DiscordParam(name = "mods", description = "模组，允许按成对的双字母输入") @RequestParam("mods") @Nullable modStr: String?,
+        @DiscordParam(name = "stable", description = "看稳定版榜单") @RequestParam("stable") @Nullable stable: Boolean?
+    ): ResponseEntity<ByteArray> {
+        return getImageOrThrow(bid, "leaderboard", "谱面榜单") {
+            val beatmap = beatmapApiService.getBeatmapFromAnyID(IDType.BeatmapID, bid)
+
+            val mode = OsuMode.getConvertableMode(getMode(modeStr, OsuMode.OSU), beatmap.mode)
+
+            val mods = LazerMod.getModsList(modStr)
+
+            val legacy = stable == true
+
+            calculateApiService.applyStarToBeatmap(beatmap, mode, mods)
+
+            val scores = scoreApiService.getLeaderBoardScore(
+                bindUser = null,
+                bid = bid,
+                mode = mode,
+                mods = mods,
+                type = "global",
+                legacy = legacy
+            )
+
+            beatmapApiService.applyBeatmapExtendForSameScore(scores, beatmap)
+            calculateApiService.applyPPToScoresWithSameBeatmap(scores)
+
+            scores.forEachIndexed { i, score ->
+                score.ranking = i + 1
+            }
+            val body = mapOf(
+                "beatmap" to beatmap,
+                "scores" to scores,
+                "start" to (scores.firstOrNull()?.ranking ?: 1),
+                "is_legacy" to legacy
+            )
+
+            imageService.getPanel(body, "A3")
+        }
+    }
     /**
      * 获取玩家信息 (I)
      *
@@ -876,60 +877,54 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "uid", description = "玩家编号") @RequestParam("uid") @Nullable id: Long?,
         @DiscordParam(name = "name", description = "玩家名称") @RequestParam("name") @Nullable name: String?
     ): ResponseEntity<ByteArray> {
-        val userID = id ?: userApiService.getOsuUser(name ?: throw NoSuchElementException.Player()).userID
+        val userID = id ?: userApiService.getOsuUser(name ?: throw RuntimeException(NoSuchElementException.Player())).userID
 
-        val query = mapOf(
-            "q" to "creator=${userID}", "sort" to "ranked_desc", "s" to "any", "page" to 1
-        )
+        return getImageOrThrow(userID, "mapper", "获取谱师信息") {
 
-        // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-        val query2 = mapOf(
-            "q" to userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
-        )
+            val query = mapOf(
+                "q" to "creator=${userID}", "sort" to "ranked_desc", "s" to "any", "page" to 1
+            )
 
-        val async = AsyncMethodExecutor.awaitQuad(
-            { beatmapApiService.searchBeatmapsetParallel(query) },
-            { beatmapApiService.searchBeatmapsetParallel(query2) },
-            { userApiService.getUserRecentActivity(userID).filterIsMapping().squash() },
-            { userApiService.getOsuUser(userID) },
-        )
+            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
+            val query2 = mapOf(
+                "q" to userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
+            )
 
-        val relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
-            it.beatmapsetID != userID && (it.beatmaps?.all { that -> that.beatmapID != userID } ?: true)
-        }.toHashSet()).asSequence()
+            val async = AsyncMethodExecutor.awaitQuad(
+                { beatmapApiService.searchBeatmapsetParallel(query) },
+                { beatmapApiService.searchBeatmapsetParallel(query2) },
+                { userApiService.getUserRecentActivity(userID).filterIsMapping().squash() },
+                { userApiService.getOsuUser(userID) },
+            )
 
-        val activity = async.second.first
+            val relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
+                it.beatmapsetID != userID && (it.beatmaps?.all { that -> that.beatmapID != userID } ?: true)
+            }.toHashSet()).asSequence()
 
-        val user = async.second.second
+            val activity = async.second.first
 
-        val param = IMapperService.IMapperParam(
-            user, relatedSets, activity
-        )
+            val user = async.second.second
 
-        val image = imageService.getPanel(IMapperService.getIMapperV2(param), "M2")
+            val param = IMapperService.IMapperParam(
+                user, relatedSets, activity
+            )
 
-        val extension = image.getImageExtension()
-
-        return ResponseEntity(
-            image, getImageHeader(
-                "${user.userID}-mapper$extension", image.size
-            ), HttpStatus.OK
-        )
+            return@getImageOrThrow imageService.getPanel(IMapperService.getIMapperV2(param), "M2")
+        }
     }
 
     /**
-     * 获取提名信息 (N)
+     * 查询提名信息 (N)
      *
      * @param sid 谱面集编号
      * @param bid 谱面编号
      * @return 提名信息图片
      */
-    @GetMapping(value = ["map/nomination"]) @DiscordParam(name = "n", description = "获取提名信息")
+    @GetMapping(value = ["map/nomination"]) @DiscordParam(name = "n", description = "查询提名信息")
     @Throws(RuntimeException::class) fun getNomination(
         @DiscordParam(name = "sid", description = "谱面集编号") @RequestParam("sid") @Nullable sid: Long?,
         @DiscordParam(name = "bid", description = "谱面编号") @RequestParam("bid") @Nullable bid: Long?
     ): ResponseEntity<ByteArray> {
-
         val (beatmapset, discussion) = runCatching {
             val beatmapset = if (sid == null) {
                 if (bid == null) {
@@ -946,34 +941,22 @@ import kotlin.time.Duration.Companion.days
             throw RuntimeException(e.message)
         }.getOrThrow()
 
-        beatmapset.creatorData?.let {
-            try {
-                beatmapset.creatorData = userApiService.getOsuUser(it.userID, it.currentOsuMode)
-            } catch (_: Exception) {
+        return getImageOrThrow(beatmapset.beatmapsetID, "nomination", "查询提名信息") {
+            beatmapset.creatorData?.let {
+                try {
+                    beatmapset.creatorData = userApiService.getOsuUser(it.userID, it.currentOsuMode)
+                } catch (_: Exception) {
 
+                }
             }
-        }
 
-        beatmapset.beatmaps!!.forEach { beatmapApiService.extendBeatmapTag(it) }
+            beatmapset.beatmaps!!.forEach { beatmapApiService.extendBeatmapTag(it) }
 
-        val diffs = beatmapset.beatmaps!!.associate { it.beatmapID to it.difficultyName }
-        discussion.addDifficulty4DiscussionDetails(diffs)
+            val diffs = beatmapset.beatmaps!!.associate { it.beatmapID to it.difficultyName }
+            discussion.addDifficulty4DiscussionDetails(diffs)
 
-        val param = NominationService.getParam(beatmapset, discussion)
-
-        try {
-            val image = imageService.getPanel(param.toMap(), "N")
-
-            val extension = image.getImageExtension()
-
-            return ResponseEntity(
-                image, getImageHeader(
-                    "${sid ?: bid ?: 0}-nomination$extension", image.size
-                ), HttpStatus.OK
-            )
-        } catch (e: Exception) {
-            log.error("提名信息：API 异常", e)
-            throw RuntimeException("提名信息：API 异常")
+            val param = NominationService.getParam(beatmapset, discussion)
+            return@getImageOrThrow imageService.getPanel(param.toMap(), "N")
         }
     }
 
@@ -1242,23 +1225,33 @@ import kotlin.time.Duration.Companion.days
             headers.contentLength = length
             headers.contentType = MediaType.APPLICATION_OCTET_STREAM
             return headers
-        } /*
-
-    @Resource
-    Over6KUserService over6KUserService;
-
-    @GetMapping("alumni")
-    public Object getAlumni(@RequestParam(name = "start", defaultValue = "0") int start,
-                            @RequestParam(name = "size", defaultValue = "30") int size) {
-        try {
-            return over6KUserService.getResultJson(start, size);
-        } catch (IOException e) {
-            log.error("alumni 文件异常", e);
-            return "[]";
         }
-    }
 
-     */
+        /**
+         * 包装错误
+         */
+        fun getImageOrThrow(
+            identifier: Any = "id",
+            name: String = "name",
+            chinese: String = "功能",
+            getImageFn: () -> ByteArray = {
+                byteArrayOf()
+            },
+        ): ResponseEntity<ByteArray> {
+            try {
+                val image = getImageFn()
+
+                val extension = image.getImageExtension()
+
+                return ResponseEntity(
+                    image, getImageHeader("${identifier}-${name}$extension", image.size), HttpStatus.OK
+                )
+            } catch (e: Exception) {
+                log.error("${chinese}：API 异常", e)
+                throw RuntimeException("${chinese}：API 异常\n${e.message}")
+            }
+        }
+
     }
 }
 

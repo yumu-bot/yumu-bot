@@ -192,20 +192,20 @@ data class Beatmapset(
 
     // https://osu.ppy.sh/home/changelog/web/2024.603.0 改了
     data class NominationsSummary(
-            @field:JsonProperty("current")
+        @field:JsonProperty("current")
         val current: Byte,
 
         // 只有一个元素的列表，存储模式信息
 
-            @field:JsonProperty("eligible_main_rulesets")
+        @field:JsonProperty("eligible_main_rulesets")
         val mode: List<String>?,
 
-            @field:JsonProperty("required_meta")
+        @field:JsonProperty("required_meta")
         val required: RequiredMeta
 
     )
 
-        @field:JsonProperty("nominations_summary")
+    @field:JsonProperty("nominations_summary")
     var nominationsSummary: NominationsSummary? = null
         get() {
             val s = field ?: return null
@@ -213,8 +213,9 @@ data class Beatmapset(
             val r = s.required
 
             val secondary: Byte
+            val bs = beatmaps
 
-            if (beatmaps.isNullOrEmpty()) {
+            if (bs.isNullOrEmpty()) {
                 secondary = 0
             } else {
                 val formatter = DateTimeFormatterBuilder()
@@ -227,10 +228,10 @@ data class Beatmapset(
 
                 // 没榜，或者最后更新时间晚于这一天的谱面才应用这次更改
                 secondary = if (lastUpdated.toLocalDateTime().isAfter(changedTime) || !this.hasLeaderBoard) {
-                    max(beatmaps!!.map { it.modeInt }.toSet().size - 1, 0).toByte()
+                    max(bs.map { it.modeInt }.toSet().size - 1, 0).toByte()
                 } else {
                     // 之前的，其他模式要 x2
-                    max((beatmaps!!.map { it.modeInt }.toSet().size - 1) * 2, 0).toByte()
+                    max((bs.map { it.modeInt }.toSet().size - 1) * 2, 0).toByte()
                 }
             }
 
@@ -240,8 +241,9 @@ data class Beatmapset(
         @field:JsonProperty("beatmaps")
         var beatmaps: List<Beatmap>? = null
             get() {
-                if (!field.isNullOrEmpty()) {
+                val bs = field
 
+                if (!bs.isNullOrEmpty()) {
                     val s = Beatmapset()
 
                     s.availability = this.availability
@@ -275,10 +277,10 @@ data class Beatmapset(
 
                     s.currentNominations = this.currentNominations
 
-                    field!!.forEach { it.beatmapset = s }
+                    bs.forEach { it.beatmapset = s }
                 }
 
-                return field
+                return bs
             }
 
     //自己算
