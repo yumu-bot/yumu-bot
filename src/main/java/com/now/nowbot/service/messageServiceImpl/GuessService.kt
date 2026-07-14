@@ -809,6 +809,7 @@ class GuessService(
                     if (decrypted[i] >= 0) {
                         mapOf(
                             "beatmapset" to mapOf(
+                                "id" to s.beatmapsetID,
                                 "title" to encrypt(s.title),
                                 "title_unicode" to encrypt(s.titleUnicode),
                                 "artist" to encrypt(s.artist),
@@ -832,8 +833,8 @@ class GuessService(
                         score
                     }
                 },
-                "letters" to revealedLetters,
-                "decrypted" to decrypted,
+                "letters" to revealedLetters.toSet(),
+                "decrypted" to getAllDecrypted(),
 
                 "artist" to artist,
                 "unicode" to unicode,
