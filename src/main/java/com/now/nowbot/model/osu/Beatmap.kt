@@ -2,8 +2,8 @@ package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSetter
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.CATCH
 import com.now.nowbot.model.enums.OsuMode.CATCH_RELAX
@@ -68,7 +68,7 @@ data class Beatmap(
     var tagIDs: List<TagData>? = null,
 
     // 自己设
-    @set:JsonIgnoreProperties
+    @set:JsonIgnore
     @get:JsonProperty("tags")
     var tags: List<Tag>? = null,
 
@@ -151,9 +151,12 @@ data class Beatmap(
     }
 
     data class FailTimesData(
-        @field:JsonProperty("retries")
+        @param:JsonSetter("fail")
+        @get:JsonIgnore
         val retries: IntArray = intArrayOf(),
-        @field:JsonProperty("fails")
+
+        @param:JsonSetter("exit")
+        @get:JsonIgnore
         val fails: IntArray = intArrayOf(),
     ) {
 

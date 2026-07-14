@@ -1482,10 +1482,12 @@ class BeatmapApiImpl(
             throw IllegalArgumentException.WrongException.BeatmapID()
         }
 
-        return when (maybeType) {
-            BeatmapID -> beatmapset to beatmapset.beatmaps?.find { it.beatmapID == maybeID }!!
-            BeatmapsetID -> beatmapset to (beatmapset.getTopDiff()!!)
+        val beatmap = when (maybeType) {
+            BeatmapID -> beatmapset.beatmaps?.find { it.beatmapID == maybeID }!!
+            BeatmapsetID -> (beatmapset.getTopDiff()!!)
         }
+
+        return beatmapset to beatmap
     }
 
     private fun fetchByBeatmapsetID(beatmapsetID: Long): Beatmapset? {
