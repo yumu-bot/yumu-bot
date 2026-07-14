@@ -2,6 +2,8 @@ package com.now.nowbot.listener
 
 import com.now.nowbot.aop.DiscordParam
 import com.now.nowbot.controller.BotWebApi
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.TipsRuntimeException
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.events.ExceptionEvent
@@ -79,10 +81,15 @@ class DiscordListener(private val botWebApi: BotWebApi) : ListenerAdapter() {
 
                 val invoke = first.invoke(botWebApi, *objects)
                 handleInvokeResult(event, invoke)
-
+            } catch (e: TipsException) {
+                event.hook.sendMessage(e.message ?: "发生错误").queue()
+            } catch (e: TipsRuntimeException) {
+                event.hook.sendMessage(e.message ?: "发生错误").queue()
+            } catch (e: RuntimeException) {
+                event.hook.sendMessage(e.message ?: "发生错误").queue()
             } catch (e: Exception) {
-                log.error("处理命令时发生了异常", e)
-                val errorMessage = "❌ 处理命令时发生了异常: ${e.cause?.message ?: e.message}"
+                log.error("❌ 处理命令时发生了异常", e)
+                val errorMessage = "处理命令时，发生了预料之外的异常。"
                 event.hook.sendMessage(errorMessage).queue()
             }
         } else {
@@ -161,7 +168,7 @@ class GatewayMonitor : ListenerAdapter() {
     }
 
     override fun onStatusChange(event: StatusChangeEvent) {
-        log.debug("🔄 状态变更: ${event.oldStatus} -> ${event.newStatus}")
+        log.debug("🔄 状态变更: {} -> {}", event.oldStatus, event.newStatus)
     }
 
     override fun onException(event: ExceptionEvent) {
