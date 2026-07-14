@@ -45,6 +45,7 @@ jobs:
       - name: Build project
         run: |
           cd ~/nowbot
+          
           # 别急吧每次都 clean 了，编译一次一小时
           # mvnd clean
           
@@ -53,8 +54,9 @@ jobs:
             echo "分支切换，清理缓存"
             rm -rf target/classes/
           fi
+          
           echo "$CURRENT_BRANCH" > .last_branch
-          mvnd package
+          mvnd package -Dkotlin.compiler.incremental=true
   update:
     runs-on: self-hosted
     needs: [build, check-time]
