@@ -222,7 +222,7 @@ class GetItemsService(
                 try {
                     val s = beatmapApiService.getBeatmapset(beatmapID)
 
-                    s.getTopDiff()!!
+                    s.getTopDiff()
                 } catch (_: NetworkException.BeatmapException) {
                     throw NetworkException.BeatmapException("找不到谱面 $beatmapID")
                 }
@@ -283,7 +283,7 @@ class GetItemsService(
             try {
                 val s = beatmapApiService.getBeatmapset(beatmapID)
 
-                s.getTopDiff()!!
+                s.getTopDiff()
             } catch (e: NetworkException.BeatmapException) {
                 throw e
             }

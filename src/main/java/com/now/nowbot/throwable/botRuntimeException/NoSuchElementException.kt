@@ -16,6 +16,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class Beatmap(name: Any):
         NoSuchElementException("没有找到谱面 $name。")
 
+    class BeatmapTopDiff(name: Any):
+        NoSuchElementException("没有找到谱面集 $name 里的最高难度。")
+
     class BeatmapCache(name: Any):
         NoSuchElementException("没有找到谱面 $name 的缓存文件。")
 
@@ -100,11 +103,11 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class LeaderboardScoreFiltered(name: Any):
         NoSuchElementException("没有找到谱面 $name 内符合条件的成绩。")
 
-    class LocalBG:
-        NoSuchElementException("""
-            获取本地镜像站的单一难度背景失败，正在为您获取谱面背景。
-            （如果不同难度用的不同背景，则只能获取到预览图、官网可见的那个背景）
-        """.trimIndent())
+//    class LocalBG:
+//        NoSuchElementException("""
+//            获取本地镜像站的单一难度背景失败，正在为您获取谱面背景。
+//            （如果不同难度用的不同背景，则只能获取到预览图、官网可见的那个背景）
+//        """.trimIndent())
 
     class MaiCollection:
         NoSuchElementException("数据库里没有找到这个收藏品。")
@@ -276,8 +279,8 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
                 " $name"
             }}。你也许可以尝试使用这个名字，但它也可能是违禁词。")
 
-    class Team(name: String):
-        NoSuchElementException("没有找到战队 $name。")
+//    class Team(name: String):
+//        NoSuchElementException("没有找到战队 $name。")
 
     class TeamID(id: Number):
         NoSuchElementException("没有找到编号为 $id 的战队。")

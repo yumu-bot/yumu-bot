@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.yumu.core.extensions.isNotNull
 import jakarta.persistence.Column
 import java.time.LocalDateTime
@@ -387,7 +388,7 @@ data class Beatmapset(
 
     //获取最高难度
     @JsonIgnore
-    fun getTopDiff(last: Int = 1): Beatmap? {
-        return beatmaps?.sortedByDescending { it.starRating }?.getOrNull(last - 1)
+    fun getTopDiff(last: Int = 1): Beatmap {
+        return beatmaps?.sortedByDescending { it.starRating }?.getOrNull(last - 1) ?: throw NoSuchElementException.BeatmapTopDiff(beatmapsetID)
     }
 }

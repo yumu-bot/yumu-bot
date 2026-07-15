@@ -1438,11 +1438,11 @@ class BeatmapApiImpl(
                 BeatmapID -> runCatching {
                     getBeatmap(inputID)
                 }.recoverCatching {
-                    getBeatmapset(inputID).getTopDiff()!!
+                    getBeatmapset(inputID).getTopDiff()
                 }.getOrThrow()
 
                 BeatmapsetID -> runCatching {
-                    getBeatmapset(inputID).getTopDiff()!!
+                    getBeatmapset(inputID).getTopDiff()
                 }.recoverCatching {
                     getBeatmap(inputID)
                 }.getOrThrow()
@@ -1483,8 +1483,8 @@ class BeatmapApiImpl(
         }
 
         val beatmap = when (maybeType) {
-            BeatmapID -> beatmapset.beatmaps?.find { it.beatmapID == maybeID }!!
-            BeatmapsetID -> (beatmapset.getTopDiff()!!)
+            BeatmapID -> beatmapset.beatmaps?.find { it.beatmapID == maybeID } ?: beatmapset.getTopDiff()
+            BeatmapsetID -> beatmapset.getTopDiff()
         }
 
         return beatmapset to beatmap
