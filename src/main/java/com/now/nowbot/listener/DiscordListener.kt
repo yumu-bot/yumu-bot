@@ -71,12 +71,23 @@ class DiscordListener(private val botWebApi: BotWebApi) : ListenerAdapter() {
                     val parameterAnnotation =
                         parameter.getAnnotation(DiscordParam::class.java) ?: continue
                     val option = event.getOption(parameterAnnotation.name.lowercase(Locale.getDefault())) ?: continue
-                    val type = parameter.type
 
-                    objects[i] = when (type) {
-                        Int::class.javaPrimitiveType, Int::class.java -> option.asInt
-                        Long::class.javaPrimitiveType, Long::class.java -> option.asLong
-                        Boolean::class.javaPrimitiveType, Boolean::class.java -> option.asBoolean
+                    val typeName = parameter.type.name
+
+                    objects[i] = when {
+                        // 1. 如果方法期望的是 Int、Integer 或者带有包含 int 关键字的代理类型
+                        typeName.contains("int", ignoreCase = true) || typeName.contains("integer", ignoreCase = true) -> {
+                            option.asLong.toInt() // 强制转为标准的 java.lang.Integer
+                        }
+                        // 2. 如果方法期望的是 Long 或者是带有 long 关键字的类型
+                        typeName.contains("long", ignoreCase = true) -> {
+                            option.asLong // 保持为标准的 java.lang.Long
+                        }
+                        // 3. 如果方法期望的是布尔值
+                        typeName.contains("boolean", ignoreCase = true) -> {
+                            option.asBoolean
+                        }
+                        // 4. 其余一律作为 String 传递
                         else -> option.asString
                     }
                 }
