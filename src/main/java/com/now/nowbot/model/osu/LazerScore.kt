@@ -330,13 +330,6 @@ data class LazerScore(
                 return "F"
             }
 
-            /*
-            if (score.isLazer) {
-                return score.lazerRank
-            }
-
-             */
-
             val s = score.statistics
 
             val mode = score.mode.toSafeModeValue().toInt()

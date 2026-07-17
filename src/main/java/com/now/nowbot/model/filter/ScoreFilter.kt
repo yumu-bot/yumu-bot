@@ -46,6 +46,10 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     STAR("(stars?|rating|sr|r|星数?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
 
+    SCORE("(scores?|sc|ss|e|分数?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
+
+    REPLAY("(replay|rep|rp|回放|录像|记录)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
+
     AR("(ar|approach\\s*(rate)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     CS("(cs|circle\\s*(size)?|keys?|键)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
@@ -86,7 +90,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     MOD("((m(od)?s?)|模组?)(?<n>($REG_OPERATOR_WITH_SPACE|$REG_PLUS)$REG_MOD$LEVEL_MORE)".toRegex()),
 
-    RATE("(rate|彩[率比]|黄彩比?|e|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    RATE("(rate|彩[率比]|黄彩比?|q|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc|圆圈?|米)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -328,6 +332,10 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 DIFFICULTY -> fit(operator, it.beatmap.difficultyName, str)
 
                 STAR -> fit(operator, it.beatmap.starRating, double, digit = 2, isRound = false, isInteger = true)
+
+                SCORE -> fit(operator, it.score, long)
+
+                REPLAY -> fit(operator, it.replay, !(str == "false" || str == "f") || long > 0)
 
                 AR -> fit(operator, it.beatmap.ar?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 CS -> fit(operator, it.beatmap.cs?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
