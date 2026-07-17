@@ -558,7 +558,6 @@ class OsuUserInfoDao(
         }
     }
 
-
     private fun batchUpsertUserStatistics(mode: OsuMode, inputs: List<Pair<Long, Statistics>>) {
         if (inputs.isEmpty()) return
 
@@ -573,10 +572,16 @@ class OsuUserInfoDao(
         val entitiesToUpsert = mutableListOf<UserStatisticsLite>()
 
         for ((userID, statistics) in distinctInputs) {
+            // 过滤 playCount = 0 的数据
+            if ((statistics.playCount ?: 0L) == 0L) {
+                continue
+            }
+
             val latest = latestMap[userID]
 
             if (latest != null) {
-                val isDataIdentical = latest.totalHits == (statistics.totalHits ?: 0L)
+                val isDataIdentical =
+                    latest.playCount == (statistics.playCount ?: 0L)
 
                 if (isDataIdentical && !latest.updatedAt.isBefore(today)) {
                     continue

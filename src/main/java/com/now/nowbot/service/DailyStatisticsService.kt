@@ -202,7 +202,7 @@ class DailyStatisticsService(
 
         val endTime = System.currentTimeMillis()
 
-        log.info("统计已完成，耗时： ${DataUtil.time2HMS(endTime - startTime)}")
+        log.info("统计已完成，耗时：${DataUtil.time2HMS(endTime - startTime)}")
     }
 
     private fun collectingUsers(users: List<BindUser>): Triple<Int, Int, Int> {
