@@ -5,6 +5,8 @@ open class TipsRuntimeException : RuntimeException, BotException {
 
     constructor(msg: String?) : super(msg)
 
+    constructor(e: Throwable?) : super(e?.message)
+
     constructor(image: ByteArray?) {
         this.image = image
     }

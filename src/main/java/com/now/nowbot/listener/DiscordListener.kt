@@ -18,6 +18,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
+import java.lang.reflect.Method
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -31,9 +32,10 @@ class DiscordListener(private val botWebApi: BotWebApi) : ListenerAdapter() {
     private val annotatedMethods by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         botWebApi.javaClass.declaredMethods
             .mapNotNull { method ->
-                method.getAnnotation(DiscordParam::class.java)?.let { annotation ->
-                    annotation.name to method.apply { isAccessible = true }
-                }
+                val annotation = method.getAnnotation(DiscordParam::class.java) ?: return@mapNotNull null
+
+                val namedMethod: Pair<String, Method> = annotation.name to method.apply { isAccessible = true }
+                namedMethod
             }
             .toMap()
     }
@@ -86,6 +88,7 @@ class DiscordListener(private val botWebApi: BotWebApi) : ListenerAdapter() {
             } catch (e: TipsRuntimeException) {
                 event.hook.sendMessage(e.message ?: "发生错误").queue()
             } catch (e: RuntimeException) {
+                log.error(e.message, e)
                 event.hook.sendMessage(e.message ?: "发生错误").queue()
             } catch (e: Exception) {
                 log.error("❌ 处理命令时发生了异常", e)
