@@ -19,15 +19,8 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "tachyon_score",
     indexes = [
-        //Index(name = "idx_tachyon_user_query", columnList = "user_id, mode, time DESC"),
-        //Index(name = "idx_tachyon_score_beatmap_user_best", columnList = "beatmap_id, mode, user_id, pp DESC, accuracy DESC")
-
-        // CREATE INDEX idx_tachyon_mods_gin ON public.tachyon_score USING GIN (mods);
-        /*
-        CREATE INDEX idx_tachyon_score_leaderboard ON tachyon_score (beatmap_id, mode, pp DESC, accuracy DESC) INCLUDE (user_id);
-
-        CREATE INDEX idx_tachyon_score_user_time_mode ON tachyon_score (user_id, mode, time DESC) WHERE pp > 0;
-         */
+        Index(name = "idx_tachyon_user_time", columnList = "user_id, mode, time DESC"),
+        Index(name = "idx_tachyon_score_beatmap_user_best", columnList = "beatmap_id, mode, user_id, pp DESC, accuracy DESC")
     ],
 )
 class TachyonScoreLite(
