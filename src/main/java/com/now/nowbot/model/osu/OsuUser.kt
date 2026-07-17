@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.util.DataUtil
@@ -18,7 +19,7 @@ import java.util.*
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-open class OsuUser {
+open class OsuUser: IDUser {
     @JsonProperty("avatar_url")
     var avatarUrl: String = ""
 
@@ -32,7 +33,7 @@ open class OsuUser {
     var id: Long = 0L
 
     @get:JsonProperty("user_id")
-    val userID: Long
+    override val userID: Long
         get() = id
 
     //最近有活跃？
@@ -63,7 +64,8 @@ open class OsuUser {
     @JsonProperty("profile_colour")
     var profileColor: String? = null
 
-    var username: String = ""
+    @JsonProperty("username")
+    override var username: String = ""
 
     // Optional attributes
     @JsonProperty("cover_url")

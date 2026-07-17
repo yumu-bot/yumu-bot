@@ -11,19 +11,21 @@ import kotlinx.serialization.Serializable
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 
-sealed interface CalculatePerformance
+sealed interface CalculatePerformance {
+    val pp: Double
+        get() = 0.0
+}
 
 sealed interface FullCalculatePerformance: CalculatePerformance {
-    val fullPP: Double?
-    val perfectPP: Double?
+    val fullPP: Double
+        get() = 0.0
+    val perfectPP: Double
+        get() = 0.0
 }
 
 object EmptyPerformance: CalculatePerformance
 
-object EmptyFullPerformance: FullCalculatePerformance {
-    override val fullPP: Double? = null
-    override val perfectPP: Double? = null
-}
+object EmptyFullPerformance: FullCalculatePerformance
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
@@ -110,7 +112,7 @@ open class CosuPerformance(
     val speedEstimatedSliderBreaks: Double,
 
     @field:JsonProperty("pp")
-    val pp: Double
+    override val pp: Double
 ) : CalculatePerformance
 
 data class CosuRequest(
@@ -269,10 +271,10 @@ class FullCosuPerformance(
     base: CosuPerformance,
 
     @field:JsonProperty("full_pp")
-    override val fullPP: Double? = null,
+    override val fullPP: Double = 0.0,
 
     @field:JsonProperty("perfect_pp")
-    override val perfectPP: Double? = null,
+    override val perfectPP: Double = 0.0,
 ) : CosuPerformance(
     // 将 base 的属性手动展开传给父类
     base.aim,

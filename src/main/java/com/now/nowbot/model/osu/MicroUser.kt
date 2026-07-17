@@ -1,6 +1,7 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.*
+import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.osu.OsuUser.Team
 import com.now.nowbot.model.osu.OsuUser.UserGroup
 import tools.jackson.databind.PropertyNamingStrategies
@@ -14,7 +15,7 @@ import java.time.format.DateTimeFormatterBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY) //扫描非public的值并注入
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-class MicroUser : Comparable<MicroUser> {
+class MicroUser: Comparable<MicroUser>, IDUser {
     @JsonProperty("avatar_url")
     var avatarUrl: String? = null
 
@@ -25,7 +26,7 @@ class MicroUser : Comparable<MicroUser> {
     var defaultGroup: String? = null
 
     @JsonProperty("id")
-    var userID: Long = 0L
+    override var userID: Long = 0L
 
     @JsonProperty("is_active")
     var isActive: Boolean = false
@@ -59,8 +60,9 @@ class MicroUser : Comparable<MicroUser> {
     var profileColor: String? = null
 
     @JsonProperty("username")
-    var username: String = ""
+    override var username: String = ""
 
+    @JsonProperty("cover")
     var cover: Cover? = null
 
     @set:JsonProperty("country_code") @get:JsonIgnore

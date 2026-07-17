@@ -1,15 +1,16 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.entity.IDUser
 
 // BeatmapOwner
 class NanoUser(
     @field:JsonProperty("id")
-    var userID: Long = 0L,
+    override var userID: Long = 0L,
 
     @field:JsonProperty("username")
-    var username: String = "",
-) {
+    override var username: String = "",
+): IDUser {
     override fun hashCode(): Int {
         return userID.hashCode()
     }

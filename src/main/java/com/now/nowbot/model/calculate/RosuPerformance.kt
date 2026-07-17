@@ -15,7 +15,7 @@ import kotlin.reflect.full.memberProperties
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 open class RosuPerformance(result: JniPerformanceAttributes? = null) : CalculatePerformance {
     @JsonProperty("pp")
-    var pp: Double = 0.0
+    override var pp: Double = 0.0
 
     @JsonProperty("pp_aim")
     var ppAim: Double? = null
@@ -91,9 +91,9 @@ open class RosuPerformance(result: JniPerformanceAttributes? = null) : Calculate
 
     class FullRosuPerformance(result: JniPerformanceAttributes): RosuPerformance(result), FullCalculatePerformance {
         @JsonProperty("full_pp")
-        override var fullPP: Double? = null
+        override var fullPP: Double = 0.0
 
         @JsonProperty("perfect_pp")
-        override var perfectPP: Double? = null
+        override var perfectPP: Double = 0.0
     }
 }

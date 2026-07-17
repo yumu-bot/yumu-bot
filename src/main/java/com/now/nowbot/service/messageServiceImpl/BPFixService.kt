@@ -1,8 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.calculate.CosuPerformance
-import com.now.nowbot.model.calculate.RosuPerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerScoreWithFcPP
@@ -236,12 +234,7 @@ class BPFixService(
 
     private fun initFixScore(score: LazerScore, index: Int): LazerScoreWithFcPP {
         val fcPP = try {
-            when(val pp = calculateApiService.getScoreFullComboPP(score)) {
-                is RosuPerformance -> pp.pp
-                is CosuPerformance -> pp.pp
-
-                else -> 0.0
-            }
+            calculateApiService.getScoreFullComboPP(score).pp
         } catch (e: Exception) {
             log.error("修补成绩：获取第 $index 成绩 (${score.previewName}) 全连 PP 出错：", e)
             0.0

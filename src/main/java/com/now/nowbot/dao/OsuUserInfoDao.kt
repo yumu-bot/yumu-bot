@@ -244,18 +244,18 @@ class OsuUserInfoDao(
             }
         }.groupBy { it.second }.forEach { (mode, triples) ->
             // 组装 Statistics 批量数据
-            val statInputs = triples.map { (userID, _, stat) -> Pair(userID, stat) }
+            val stats = triples.map { (userID, _, stat) -> Pair(userID, stat) }
 
-            batchUpsertUserStatistics(mode, statInputs)
+            batchUpsertUserStatistics(mode, stats)
 
             // 组装 Percent 批量数据
-            val percentInputs = triples.map { (userID, _, stat) ->
+            val percents = triples.map { (userID, _, stat) ->
                 val country = countryRanks[userID to mode.modeValue] ?: 0L
 
                 Triple(userID, stat, country)
             }
 
-            batchUpsertPercent(mode, percentInputs)
+            batchUpsertPercent(mode, percents)
         }
     }
 
@@ -425,11 +425,7 @@ class OsuUserInfoDao(
 
         val entitiesToUpsert = mutableListOf<UserRankPercentLite>()
 
-        for (input in inputs) {
-            val userID = input.first
-            val statistics = input.second
-            val countryRank = input.third
-
+        for ((userID, statistics, countryRank) in inputs) {
             val latest = latestMap[userID]
 
             if (latest != null) {

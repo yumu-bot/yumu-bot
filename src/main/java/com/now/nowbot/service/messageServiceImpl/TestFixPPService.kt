@@ -2,8 +2,6 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.calculate.CosuPerformance
-import com.now.nowbot.model.calculate.RosuPerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -142,7 +140,7 @@ import kotlin.math.roundToInt
         log.info("TP：玩家最好成绩添加谱面成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
         time = System.currentTimeMillis()
 
-        ids.map { id ->
+        ids.forEach { id ->
             val d = data[id]!!
 
             if (d.user == null) {
@@ -166,14 +164,7 @@ import kotlin.math.roundToInt
 
                     // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
                     if (isChoke || has1pMiss) {
-                        val fc = calculateApiService.getScoreFullComboPP(s)
-
-                        s.pp = when(fc) {
-                            is RosuPerformance -> fc.pp
-                            is CosuPerformance -> fc.pp
-
-                            else -> 0.0
-                        }
+                        s.pp = calculateApiService.getScoreFullComboPP(s).pp
                     }
                 }
 

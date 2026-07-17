@@ -249,6 +249,10 @@ import java.util.concurrent.CancellationException
         }
     }
 
+    data class BatchUsers(
+        val users: List<MicroUser>
+    )
+
     /**
      * 批量获取用户信息
      *
@@ -263,14 +267,14 @@ import java.util.concurrent.CancellationException
                         .queryParam("ids[]", *ids.toTypedArray())
                         .queryParam("include_variant_statistics", isVariant)
                         .build()
-            }.headers(base::insertHeader).toBody<JsonNode>()
+            }.headers(base::insertHeader).toBody<BatchUsers>()
         }
 
-        val userList = JacksonUtil.parseObjectList(
-            data["users"], MicroUser::class.java
-        )
-        userInfoDao.saveUsersTodayAsync(userList)
-        return userList
+        val users = data.users
+
+        userInfoDao.saveUsersTodayAsync(users)
+
+        return users
     }
 
     override fun getFriendList(user: BindUser): List<LazerFriend> {
