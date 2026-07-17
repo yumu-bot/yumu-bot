@@ -234,6 +234,11 @@ class DailyStatisticsService(
             plays.mapIndexedNotNull { index, recorded ->
                 val current = currents[index]
 
+                if (recorded == 0L && current in 0..2) {
+                    log.debug("{} {} 疑似脏数据: recorded=0, current={}", micro.username, index.toOsuMode(), current)
+                    return@mapIndexedNotNull null
+                }
+
                 if (recorded !in 0..< current) return@mapIndexedNotNull null
 
                 // 这里可能造成新玩家没法触发增量查询，但是我觉得可以接受
