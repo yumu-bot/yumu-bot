@@ -236,13 +236,17 @@ class OsuUserInfoDao(
 
         users.flatMap { user ->
             val rulesets = user.rulesets ?: return@flatMap emptyList()
+
             buildList {
                 rulesets.osu?.let { add(Triple(user.userID, OsuMode.OSU, it)) }
                 rulesets.taiko?.let { add(Triple(user.userID, OsuMode.TAIKO, it)) }
                 rulesets.fruits?.let { add(Triple(user.userID, OsuMode.CATCH, it)) }
                 rulesets.mania?.let { add(Triple(user.userID, OsuMode.MANIA, it)) }
+            }}
+            .filter { (_, _, stat) ->
+                (stat.playCount ?: 0L) > 0L && (stat.playTime ?: 0L) > 0L
             }
-        }.groupBy { it.second }.forEach { (mode, triples) ->
+            .groupBy { it.second }.forEach { (mode, triples) ->
             // 组装 Statistics 批量数据
             val stats = triples.map { (userID, _, stat) -> Pair(userID, stat) }
 
@@ -572,11 +576,6 @@ class OsuUserInfoDao(
         val entitiesToUpsert = mutableListOf<UserStatisticsLite>()
 
         for ((userID, statistics) in distinctInputs) {
-            // 过滤 playCount = 0 的数据
-            if ((statistics.playCount ?: 0L) == 0L) {
-                continue
-            }
-
             val latest = latestMap[userID]
 
             if (latest != null) {
