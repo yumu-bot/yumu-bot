@@ -563,7 +563,7 @@ class OsuUserInfoDao(
     }
 
     private fun batchUpsertUserStatistics(mode: OsuMode, inputs: List<Pair<Long, Statistics>>) {
-        if (inputs.isEmpty()) return
+        if (inputs.isEmpty() || mode.modeValue !in 0..3) return
 
         val today = LocalDate.now(ZoneOffset.UTC)
 

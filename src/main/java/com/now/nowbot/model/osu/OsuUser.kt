@@ -108,7 +108,7 @@ open class OsuUser: IDUser {
         get() = if (rankHistory != null) {
             getMode(rankHistory!!.mode, defaultOsuMode)
         } else {
-            getMode(mode, field)
+            getMode(getMode(mode, defaultOsuMode), field)
         }
         
         set(mode) {

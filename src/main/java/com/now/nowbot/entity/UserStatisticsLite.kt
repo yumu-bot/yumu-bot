@@ -115,6 +115,8 @@ class UserStatisticsLite(
 
             if ((statistics.totalHits ?: 0L) == 0L) return null
 
+            if (user.currentOsuMode.isDefault()) return null
+
             return this.updateFrom(user.userID, user.currentOsuMode, statistics)
         }
     }
