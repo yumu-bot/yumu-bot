@@ -230,7 +230,7 @@ class OsuUserInfoDao(
     /**
      * 这里的 users 必须是 isVariant = true 后获取的
      */
-    private fun saveUsersToday(users: List<MicroUser>) {
+    fun saveUsersToday(users: List<MicroUser>) {
         val countryRanks = userRankPercentRepository.getLatestCountryRanks(users.map { it.userID }.toSet())
             .associate { (it.userID to it.mode) to it.countryRank }
 
@@ -303,7 +303,7 @@ class OsuUserInfoDao(
         return List(4) { i -> i.toByte() }.map { playCounts[it] ?: 0L }
     }
 
-    fun getLatestPlayCountsBatchBetween(userIDs: List<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite> {
+    fun getLatestBatchBetween(userIDs: List<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite> {
         return userStatisticsRepository.getLatestBatchBetween(userIDs, from, to)
     }
 

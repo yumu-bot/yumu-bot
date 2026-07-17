@@ -206,23 +206,23 @@ class DailyStatisticsService(
     }
 
     private fun collectingUsers(users: List<BindUser>): Triple<Int, Int, Int> {
-        val ids = users.map { it.userID }
+        val userIDs = users.map { it.userID }
 
-        val stats = userApiService.getMicroUsers(users = ids, isVariant = true, isBackground = true)
+        val micros = userApiService.getMicroUsers(users = userIDs, isVariant = true, isBackground = true, isAsyncSave = false)
 
         val today = LocalDate.now(ZoneOffset.UTC)
         val from = TimeParser.BASE_DATE
         val to = today.minusDays(1)
 
-        val allPlayCountsMap: Map<Long, Map<Byte, Long>> = userInfoDao.getLatestPlayCountsBatchBetween(ids, from, to)
+        val recordedUserMap: Map<Long, Map<Byte, Long>> = userInfoDao.getLatestBatchBetween(userIDs, from, to)
             .groupBy { it.userID }
             .mapValues { (_, projections) -> projections.associate { it.mode to it.playCount } }
 
-        val needUpdate = stats.flatMap { micro ->
+        val needUpdate = micros.flatMap { micro ->
             val userID = micro.userID
-            val userPlayCounts = allPlayCountsMap[userID] ?: emptyMap()
+            val userPCMap = recordedUserMap[userID] ?: emptyMap()
 
-            val plays = List(4) { i -> userPlayCounts[i.toByte()] ?: -1L }
+            val userPCList = List(4) { i -> userPCMap[i.toByte()] ?: -1L }
 
             val currents = listOf(
                 micro.rulesets?.osu?.playCount ?: 0L,
@@ -231,18 +231,18 @@ class DailyStatisticsService(
                 micro.rulesets?.mania?.playCount ?: 0L,
             )
 
-            plays.mapIndexedNotNull { index, recorded ->
+            userPCList.mapIndexedNotNull { index, record ->
                 val current = currents[index]
 
-                if (recorded == 0L && current in 0..2) {
+                if (record == 0L && current in 0..2) {
                     log.debug("{} {} 疑似脏数据: recorded=0, current={}", micro.username, index.toOsuMode(), current)
                     return@mapIndexedNotNull null
                 }
 
-                if (recorded !in 0..< current) return@mapIndexedNotNull null
+                if (record !in 0..< current) return@mapIndexedNotNull null
 
                 // 这里可能造成新玩家没法触发增量查询，但是我觉得可以接受
-                val delta = current - recorded
+                val delta = current - record
                 val mode = index.toOsuMode()
                 Triple(micro, mode, delta)
             }

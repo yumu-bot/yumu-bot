@@ -73,7 +73,8 @@ interface OsuUserApiService {
     fun <T : Number> getMicroUsers(
         users: Collection<T>,
         isVariant: Boolean = false,
-        isBackground: Boolean = false
+        isBackground: Boolean = false,
+        isAsyncSave: Boolean = true
     ): List<MicroUser>
 
     fun getFriendList(user: BindUser): List<LazerFriend>

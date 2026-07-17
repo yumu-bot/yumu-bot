@@ -233,15 +233,15 @@ import java.util.concurrent.CancellationException
      * @param users 注意, 单次请求数量无限制
      * @param isVariant 是否获取玩家的多模式信息
      */
-    override fun <T : Number> getMicroUsers(users: Collection<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
+    override fun <T : Number> getMicroUsers(users: Collection<T>, isVariant: Boolean, isBackground: Boolean, isAsyncSave: Boolean): List<MicroUser> {
         if (users.size <= 50) {
-            return getMicroUsersPrivate(users = users, isVariant = isVariant, isBackground = isBackground)
+            return getMicroUsersPrivate(users = users, isVariant = isVariant, isBackground = isBackground, isAsyncSave = isAsyncSave)
         } else {
             val idChunk = users.chunked(50)
 
             val callables = idChunk.map {
                 Callable {
-                    getMicroUsersPrivate(it, isVariant = isVariant, isBackground = isBackground)
+                    getMicroUsersPrivate(it, isVariant = isVariant, isBackground = isBackground, isAsyncSave = isAsyncSave)
                 }
             }
 
@@ -259,7 +259,7 @@ import java.util.concurrent.CancellationException
      * @param users 注意, 单次请求数量必须小于50
      * @param isVariant 是否获取玩家的多模式信息
      */
-    private fun <T : Number> getMicroUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
+    private fun <T : Number> getMicroUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean, isAsyncSave: Boolean = true): List<MicroUser> {
         val data = request(isBackground) { client ->
             client.get().uri {
                 val ids = users.map { u -> u.toLong() }.toList()
@@ -272,7 +272,11 @@ import java.util.concurrent.CancellationException
 
         val users = data.users
 
-        userInfoDao.saveUsersTodayAsync(users)
+        if (isAsyncSave) {
+            userInfoDao.saveUsersTodayAsync(users)
+        } else {
+            userInfoDao.saveUsersToday(users)
+        }
 
         return users
     }
