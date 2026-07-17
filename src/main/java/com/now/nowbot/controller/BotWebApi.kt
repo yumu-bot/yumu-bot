@@ -170,10 +170,10 @@ import kotlin.time.Duration.Companion.days
      */
     @GetMapping(value = ["match/now"]) @DiscordParam(name = "mn", description = "查询比赛结果")
     @Throws(RuntimeException::class) fun getMatchNow(
-        @DiscordParam(name = "matchid", description = "比赛编号", required = true) @RequestParam("id") matchID: Int,
+        @DiscordParam(name = "matchid", description = "比赛编号", required = true) @RequestParam("id") matchID: Long,
         @DiscordParam(name = "easy-multiplier", description = "Easy 模组倍率") @Nullable e: Double?,
-        @DiscordParam(name = "skip", description = "跳过开头") @Nullable k: Int?,
-        @DiscordParam(name = "ignore", description = "忽略结尾") @Nullable d: Int?,
+        @DiscordParam(name = "skip", description = "跳过开头") @Nullable k: Long?,
+        @DiscordParam(name = "ignore", description = "忽略结尾") @Nullable d: Long?,
         @DiscordParam(name = "delete-low", description = "删除低分成绩") @Nullable f: Boolean?,
         @DiscordParam(name = "keep-rematch", description = "保留重复对局") @Nullable r: Boolean?
     ): ResponseEntity<ByteArray> {
@@ -183,15 +183,17 @@ import kotlin.time.Duration.Companion.days
             val match: Match
 
             try {
-                match = matchApiService.getMatch(matchID.toLong(), 10)
+                match = matchApiService.getMatch(matchID, 10)
             } catch (_: NetworkException) {
                 throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
             }
 
             try {
+                val param = MatchRating.RatingParam((k ?: 0L).toInt(), (d ?: 0L).toInt(), null, e ?: 1.0, f ?: true, r ?: true)
+
                 val data = MatchNowService.calculate(
                     MuRatingService.MuRatingPanelParam(
-                        match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
+                        match, param, false
                     ), beatmapApiService, calculateApiService
                 )
                 image = imageService.getPanel(mapOf(
@@ -219,10 +221,10 @@ import kotlin.time.Duration.Companion.days
      * @return image 评分图片
      */
     @GetMapping(value = ["match/rating"]) @DiscordParam(name = "ra", description = "查询比赛评分") fun getRating(
-        @DiscordParam(name = "matchid", description = "比赛编号", required = true) @RequestParam("id") matchID: Int,
+        @DiscordParam(name = "matchid", description = "比赛编号", required = true) @RequestParam("id") matchID: Long,
         @DiscordParam(name = "easy-multiplier", description = "Easy 模组倍率") @Nullable e: Double?,
-        @DiscordParam(name = "skip", description = "跳过开头") @Nullable k: Int?,
-        @DiscordParam(name = "ignore", description = "忽略结尾") @Nullable d: Int?,
+        @DiscordParam(name = "skip", description = "跳过开头") @Nullable k: Long?,
+        @DiscordParam(name = "ignore", description = "忽略结尾") @Nullable d: Long?,
         @DiscordParam(name = "delete-low", description = "删除低分成绩") @Nullable f: Boolean?,
         @DiscordParam(name = "keep-rematch", description = "保留重复对局") @Nullable r: Boolean?
     ): ResponseEntity<ByteArray> {
@@ -232,15 +234,17 @@ import kotlin.time.Duration.Companion.days
             val match: Match
 
             try {
-                match = matchApiService.getMatch(matchID.toLong(), 10)
+                match = matchApiService.getMatch(matchID, 10)
             } catch (_: HttpClientErrorException) {
                 throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
             }
 
             try {
+                val param = MatchRating.RatingParam((k ?: 0L).toInt(), (d ?: 0L).toInt(), null, e ?: 1.0, f ?: true, r ?: true)
+
                 val c = MuRatingService.calculate(
                     MuRatingService.MuRatingPanelParam(
-                        match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
+                        match, param, false
                     ), beatmapApiService, calculateApiService
                 )
                 image = imageService.getPanel(c, "C")
@@ -301,8 +305,8 @@ import kotlin.time.Duration.Companion.days
         name: String,
         modeStr: String?,
         type: ScoreType?,
-        start: Int?,
-        end: Int?,
+        start: Long?,
+        end: Long?,
         isMultiple: Boolean = false,
     ): ResponseEntity<ByteArray> {
         val mode = getMode(modeStr)
@@ -310,8 +314,8 @@ import kotlin.time.Duration.Companion.days
         val user = userApiService.getOsuUser(name.trim(), mode)
         val scores: Collection<LazerScore>
 
-        val offset = parseRange2Offset(start, end)
-        var limit = parseRange2Limit(start, end)
+        val offset = parseRange2Offset(start?.toInt(), end?.toInt())
+        var limit = parseRange2Limit(start?.toInt(), end?.toInt())
 
         if (isMultiple && offset == 0 && limit == 1) {
             limit = 20
@@ -465,7 +469,7 @@ import kotlin.time.Duration.Companion.days
 
             else -> { // 时间计算
                 val day = max(min((start ?: 1), 999), 1)
-                val dayBefore = OffsetDateTime.now().minusDays(day.toLong())
+                val dayBefore = OffsetDateTime.now().minusDays(day)
 
                 val bests =
                     scoreApiService.getBestScores(user.userID, mode).mapIndexed { i, it -> i + 1 to it }.toMap()
@@ -504,7 +508,7 @@ import kotlin.time.Duration.Companion.days
     @GetMapping(value = ["bp/today"]) @DiscordParam(name = "t", description = "查询今日最好成绩") fun getTodayBP(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") mode: String?,
-        @DiscordParam(name = "day", description = "天数") @Nullable @RequestParam("day") day: Int?
+        @DiscordParam(name = "day", description = "天数") @Nullable @RequestParam("day") day: Long?
     ): ResponseEntity<ByteArray> {
         return getScore(name, mode, ScoreType.TodayBP, day, null)
     }
@@ -512,8 +516,8 @@ import kotlin.time.Duration.Companion.days
     @GetMapping(value = ["bp/scores"]) @DiscordParam(name = "bs", description = "查询多个最好成绩") fun getBPScores(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") mode: String?,
-        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
-        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
+        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Long?,
+        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Long?
     ): ResponseEntity<ByteArray> {
         return getScore(name, mode, ScoreType.BP, start, end, isMultiple = true)
     }
@@ -530,8 +534,8 @@ import kotlin.time.Duration.Companion.days
     @GetMapping(value = ["score/passes"]) @DiscordParam(name = "ps", description = "查询多个最近通过成绩") fun getPassedScores(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
-        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
+        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Long?,
+        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Long?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.Pass, start, end, isMultiple = true)
     }
@@ -548,8 +552,8 @@ import kotlin.time.Duration.Companion.days
     @GetMapping(value = ["score/recents"]) @DiscordParam(name = "rs", description = "查询多个最近成绩") fun getRecentScores(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
-        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
+        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Long?,
+        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Long?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.Recent, start, end, isMultiple = true)
     }
@@ -565,7 +569,7 @@ import kotlin.time.Duration.Companion.days
     @GetMapping(value = ["bp"]) @DiscordParam(name = "b", description = "查询最好成绩") fun getBPScore(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Int?
+        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Long?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.BP, start, null)
     }
@@ -581,7 +585,7 @@ import kotlin.time.Duration.Companion.days
     @GetMapping(value = ["score/pass"]) @DiscordParam(name = "p", description = "查询最近通过成绩") fun getPassedScore(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Int?
+        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Long?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.Pass, start, null)
     }
@@ -597,7 +601,7 @@ import kotlin.time.Duration.Companion.days
     @GetMapping(value = ["score/recent"]) @DiscordParam(name = "r", description = "查询最近成绩") fun getRecentScore(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Int?
+        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Long?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.Recent, start, null)
     }
@@ -709,7 +713,7 @@ import kotlin.time.Duration.Companion.days
      */
     @GetMapping(value = ["dice"]) @DiscordParam(name = "d", description = "扔骰子") @Throws(RuntimeException::class)
     fun getDice(
-        @DiscordParam(name = "range", description = "范围") @RequestParam("range") @Nullable range: Int?,
+        @DiscordParam(name = "range", description = "范围") @RequestParam("range") @Nullable range: Long?,
         @DiscordParam(name = "compare", description = "需要比较的文本") @RequestParam("compare") @Nullable compare: String?
     ): String {
         var message: String
@@ -769,8 +773,8 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(
             name = "accuracy", description = "准确率，允许输入 0-10000"
         ) @RequestParam("accuracy") @Nullable accuracy: Double?,
-        @DiscordParam(name = "combo", description = "连击数") @RequestParam("combo") @Nullable combo: Int?,
-        @DiscordParam(name = "miss", description = "失误数") @RequestParam("miss") @Nullable miss: Int?,
+        @DiscordParam(name = "combo", description = "连击数") @RequestParam("combo") @Nullable combo: Long?,
+        @DiscordParam(name = "miss", description = "失误数") @RequestParam("miss") @Nullable miss: Long?,
         @DiscordParam(
             name = "mods", description = "模组，允许按成对的双字母输入"
         ) @RequestParam("mods") @Nullable modStr: String?
@@ -784,7 +788,7 @@ import kotlin.time.Duration.Companion.days
             val mods = LazerMod.getModsList(modStr)
 
             val expected = MapStatisticsService.Expected(
-                mode, accuracy ?: 1.0, combo ?: 0, miss ?: 0, mods, false
+                mode, accuracy ?: 1.0, combo?.toInt() ?: 0, miss?.toInt() ?: 0, mods, false
             )
 
             val ppList = MapStatisticsService.getPPList(beatmap, expected, calculateApiService)
@@ -1089,13 +1093,13 @@ import kotlin.time.Duration.Companion.days
         @RequestParam("uid") @Nullable uid: Long?,
         @RequestParam("name") @Nullable name: String?,
         @RequestParam("mode") @Nullable modeStr: String?,
-        @RequestParam("start") @Nullable start: Int?,
-        @RequestParam("end") @Nullable end: Int?
+        @RequestParam("start") @Nullable start: Long?,
+        @RequestParam("end") @Nullable end: Long?
     ): List<LazerScore> {
         val mode = getMode(modeStr)
 
-        val offset = parseRange2Offset(start, end)
-        val limit = parseRange2Limit(start, end)
+        val offset = parseRange2Offset(start?.toInt(), end?.toInt())
+        val limit = parseRange2Limit(start?.toInt(), end?.toInt())
 
         if (uid != null) {
             return scoreApiService.getBestScores(uid, mode, offset, limit)
@@ -1122,14 +1126,14 @@ import kotlin.time.Duration.Companion.days
         @RequestParam("uid") @Nullable uid: Long?,
         @RequestParam("name") @Nullable name: String?,
         @RequestParam("mode") @Nullable modeStr: String?,
-        @RequestParam("start") @Nullable start: Int?,
-        @RequestParam("end") @Nullable end: Int?,
+        @RequestParam("start") @Nullable start: Long?,
+        @RequestParam("end") @Nullable end: Long?,
         @RequestParam("isPassed") @Nullable isPass: Boolean? = true
     ): List<LazerScore> {
         val mode = getMode(modeStr)
 
-        val offset = parseRange2Offset(start, end)
-        val limit = parseRange2Limit(start, end)
+        val offset = parseRange2Offset(start?.toInt(), end?.toInt())
+        val limit = parseRange2Limit(start?.toInt(), end?.toInt())
 
         if (uid != null) {
             return scoreApiService.getScore(uid, mode, offset, limit, isPass)
@@ -1156,7 +1160,7 @@ import kotlin.time.Duration.Companion.days
     }
 
     /**
-     * 用于使用 go-cqhttp 发送文件的下载接口
+     * 用于使用 go-cq http 发送文件的下载接口
      *
      * @param key file key
      * @return file
