@@ -268,18 +268,50 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserStatisticsLite>
 
     @Query(value = """
-        SELECT * FROM (
-            SELECT s.*, 
-                   ROW_NUMBER() OVER(
-                       PARTITION BY s.user_id, s.mode 
-                       ORDER BY s.updated_at DESC, s.id DESC
-                   ) as rn
-            FROM user_statistics s
-            WHERE s.user_id IN (:userIDs) 
-              AND s.updated_at BETWEEN :from AND :to
-        ) t WHERE t.rn = 1
-    """, nativeQuery = true)
+    SELECT s.* 
+    FROM user_statistics s
+    JOIN (
+        SELECT id,
+               ROW_NUMBER() OVER(
+                   PARTITION BY user_id, mode 
+                   ORDER BY updated_at DESC, id DESC
+               ) as rn
+        FROM user_statistics
+        WHERE user_id IN (:userIDs) 
+          AND updated_at >= :from
+    ) t ON s.id = t.id
+    WHERE t.rn = 1 
+      AND s.updated_at <= :to
+""", nativeQuery = true)
     fun getLatestBatchBetween(userIDs: Collection<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite>
+
+
+    /**
+     * 这里的逻辑是，如果有早于 from 的数据，就不返回
+     * 如果没有，就返回位于最新的那一条
+     */
+    @Query(value = """
+    SELECT s.* 
+    FROM user_statistics s
+    JOIN (
+        SELECT id,
+               ROW_NUMBER() OVER(
+                   PARTITION BY user_id, mode 
+                   ORDER BY 
+                       -- 规则 1：符合 >= from 的未来数据权重最高（0），过去的数据权重低（1）
+                       CASE WHEN updated_at >= :from THEN 0 ELSE 1 END ,
+                       -- 规则 2：如果是未来数据（权重0），按时间从小到大（ASC）排，谁离 from 近谁在前面
+                       --        如果是过去数据（权重1），按时间从大到小（DESC）排，谁离 from 近谁在前面
+                       CASE WHEN updated_at >= :from THEN updated_at END,
+                       CASE WHEN updated_at < :from THEN updated_at END DESC,
+                       id DESC
+               ) as rn
+        FROM user_statistics
+        WHERE user_id IN (:userIDs)
+    ) t ON s.id = t.id
+    WHERE t.rn = 1
+""", nativeQuery = true)
+    fun getLatestBatchFrom(userIDs: Collection<Long>, from: LocalDate): List<UserStatisticsLite>
 
     // 2. 批量更新日期：用于 totalHits 没有变化，只需更新 updatedAt 的场景
     @Transactional

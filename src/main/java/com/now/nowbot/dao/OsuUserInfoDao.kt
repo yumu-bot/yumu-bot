@@ -307,6 +307,10 @@ class OsuUserInfoDao(
         return userStatisticsRepository.getLatestBatchBetween(userIDs, from, to)
     }
 
+    fun getLatestBatchFrom(userIDs: List<Long>, from: LocalDate): List<UserStatisticsLite> {
+        return userStatisticsRepository.getLatestBatchFrom(userIDs, from)
+    }
+
     // Yumu 0.8.2 玩家信息优化
 
     private fun upsertGlobalRank(user: OsuUser) {

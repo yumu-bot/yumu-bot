@@ -23,7 +23,7 @@ class QQMessageCacheProvider(
         .expireAfterWrite(2, TimeUnit.MINUTES)
         //.recordStats() // 为了性能，请注释
         .evictionListener<MessageKey, GroupMessageEvent> { key, _, cause ->
-            log.debug("普通消息 Key: {}, 原因: {}", key, cause.name)
+            // log.debug("普通消息 Key: {}, 原因: {}", key, cause.name)
             key?.let { removeIndex(it) }
         }
         .build()
@@ -32,7 +32,7 @@ class QQMessageCacheProvider(
         .expireAfterWrite(24, TimeUnit.HOURS)
         //.recordStats() // 为了性能，请注释
         .evictionListener<MessageKey, GroupMessageEvent> { key, _, cause ->
-            log.debug("机器消息 Key: {}, 原因: {}", key, cause.name)
+            // log.debug("机器消息 Key: {}, 原因: {}", key, cause.name)
             key?.let { removeIndex(it) }
         }
         .build()
@@ -49,7 +49,7 @@ class QQMessageCacheProvider(
 
         val key = MessageKey(messageID, groupID, senderID)
 
-        log.debug("g: {} m: {} s: {}", groupID, messageID, senderID)
+        // log.debug("g: {} m: {} s: {}", groupID, messageID, senderID)
 
         if (senderID in botContainer.robots.keys) {
             botSelfCache.put(key, message)
