@@ -33,8 +33,8 @@ class DailyStatisticsService(
 
     private val lastRequestTime = AtomicLong(0L)  // 原子变量，记录最后请求时间
 
-    private val updateCoolingTime: Duration = 4.seconds
-    private val getRecentCoolingTime: Duration = 2.5.seconds
+    private val updateCoolingTime: Duration = 6.seconds
+    private val getRecentCoolingTime: Duration = 4.seconds
 
     // 简单的速率限制方法
     private fun waitForRateLimit(intervalMillis: Long = 1000) {
