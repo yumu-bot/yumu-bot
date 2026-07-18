@@ -142,16 +142,6 @@ class PPPlusService(
 
         return plusDao.getUserPerformancePlusMax(bests)
             ?: throw IllegalStateException.Fetch("表现分加")
-
-//        val performance = performancePlusAPIService.getUserPerformancePlusStats(bests)
-//        val stats = calculateUserAdvancedStats(performance)
-//
-//        val plus = PPPlus().apply {
-//            this.performance = performance
-//            this.advancedStats = stats
-//        }
-//
-//        return plus
     }
 
     private fun setUser(
@@ -221,10 +211,8 @@ class PPPlusService(
 
             // 常规指数和进阶指数，进阶指数是以上情况的第二大的值，达标情况的目标是以上第二大值 * 6 - 4，
             val generalIndex =
-                (sqrt(
-                    (getPiCent(performance.jumpAim, 1300, 1700) + 8.0)
-                            * (getPiCent(performance.flowAim, 200, 450) + 3.0)
-                ) * 10.0
+                (sqrt((getPiCent(performance.jumpAim, 1300, 1700) + 8.0)
+                        * (getPiCent(performance.flowAim, 200, 450) + 3.0)) * 10.0
                         + getPiCent(performance.precision, 200, 450)
                         + getPiCent(performance.speed, 950, 1250) * 7.0
                         + getPiCent(performance.stamina, 600, 1000) * 3.0
@@ -233,17 +221,12 @@ class PPPlusService(
 
 
             advancedIndex = mutableListOf(
-                getDetail(
-                    performance.jumpAim, jumpAim, JUMP_ARRAY[1], JUMP_ARRAY.last()
-                ), getDetail(
-                    performance.flowAim, flowAim, FLOW_ARRAY[1], FLOW_ARRAY.last()
-                ), getDetail(
-                    performance.precision, precision, PRECISION_ARRAY[1], PRECISION_ARRAY.last()
-                ), getDetail(performance.speed, speed, SPEED_ARRAY[1], SPEED_ARRAY.last()), getDetail(
-                    performance.stamina, stamina, STAMINA_ARRAY[1], STAMINA_ARRAY.last()
-                ), getDetail(
-                    performance.accuracy, accuracy, ACCURACY_ARRAY[1], ACCURACY_ARRAY.last()
-                )
+                getDetail(performance.jumpAim, jumpAim, JUMP_ARRAY[1], JUMP_ARRAY.last()),
+                getDetail(performance.flowAim, flowAim, FLOW_ARRAY[1], FLOW_ARRAY.last()),
+                getDetail(performance.precision, precision, PRECISION_ARRAY[1], PRECISION_ARRAY.last()),
+                getDetail(performance.speed, speed, SPEED_ARRAY[1], SPEED_ARRAY.last()),
+                getDetail(performance.stamina, stamina, STAMINA_ARRAY[1], STAMINA_ARRAY.last()),
+                getDetail(performance.accuracy, accuracy, ACCURACY_ARRAY[1], ACCURACY_ARRAY.last())
             ).sortedDescending()[1] // 第二大
 
             val index = listOf(jumpAim, flowAim, accuracy, stamina, speed, precision, aim)
@@ -267,34 +250,17 @@ class PPPlusService(
                 level
             }
         }
+
         private fun calculateLevel(value: Double, array: IntArray?): Double {
             if (array == null || array.size < 13) return 0.0
 
-            var lv = 11
+            val index = (0..12).firstOrNull { value < array[it] } ?: return 11.0
 
-            for (i in 0..12) {
-                if (value < array[i]) {
-                    lv = i - 2
-                    break
-                }
-            }
-
-            when (lv) {
-                -2 -> { // 0 - 25
-                    return 0.25 * value / array[0]
-                }
-
-                -1 -> { // 25 - 75
-                    return 0.25 + 0.5 * (value - array[0]) / (array[1] - array[0])
-                }
-
-                0 -> { // 75 - 100
-                    return 0.75 + 0.25 * (value - array[1]) / (array[2] - array[1])
-                }
-
-                else -> {
-                    return lv.toDouble()
-                }
+            return when (index) {
+                0 -> 0.25 * value / array[0]  // 0-25
+                1 -> 0.25 + 0.5 * (value - array[0]) / (array[1] - array[0])  // 25-75
+                2 -> 0.75 + 0.25 * (value - array[1]) / (array[2] - array[1])  // 75-100
+                else -> (index - 2).toDouble()  // 100+
             }
         }
 

@@ -235,13 +235,16 @@ class DailyStatisticsService(
                 val current = currents[index]
 
                 if (record == 0L && current in 0..2) {
-                    log.debug("{} {} 疑似脏数据: recorded=0, current={}", micro.username, index.toOsuMode(), current)
                     return@mapIndexedNotNull null
                 }
 
-                if (record !in 0..< current) return@mapIndexedNotNull null
+                if (record !in 0..< current) {
+                    return@mapIndexedNotNull null
+                }
 
                 // 这里可能造成新玩家没法触发增量查询，但是我觉得可以接受
+                log.debug("当前玩家：{}：{}，当前 pc：{}，记录 pc：{}", micro.username, index, current, record)
+
                 val delta = current - record
                 val mode = index.toOsuMode()
                 Triple(micro, mode, delta)
@@ -252,6 +255,8 @@ class DailyStatisticsService(
 
         val reallyNeedUpgrade = needUpdate.filter { (micro, mode, delta) ->
             val saved = scoreDao.getYesterdayCount(micro.userID, mode)
+
+            log.debug("当前玩家：{}：{}，当前差值：{}，记录昨日成绩数：{}", micro.username, mode.modeValue, delta, saved)
 
             delta > saved
         }.map { it.first to it.second }
