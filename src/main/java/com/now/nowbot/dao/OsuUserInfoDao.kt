@@ -583,18 +583,18 @@ class OsuUserInfoDao(
             val latest = latestMap[userID]
 
             if (latest != null) {
-                val isDataIdentical =
-                    latest.playCount == (statistics.playCount ?: 0L)
+                val isDataIdentical = latest.playCount == (statistics.playCount ?: 0L)
 
-                if (isDataIdentical && !latest.updatedAt.isBefore(today)) {
-                    continue
+                if (isDataIdentical) {
+                    val entity = latest.apply { this.updatedAt = today }
+                    entitiesToUpsert.add(entity)
+                } else {
+                    val newEntity = UserStatisticsLite().updateFrom(userID, mode, statistics).apply {
+                        this.createdAt = today
+                        this.updatedAt = today
+                    }
+                    entitiesToUpsert.add(newEntity)
                 }
-
-                // 无论是数据变了，还是仅仅需要更新打卡时间，都统一走托管实体的属性赋值
-                val entity = latest.updateFrom(userID, mode, statistics).apply {
-                    this.updatedAt = today
-                }
-                entitiesToUpsert.add(entity)
             } else {
                 // 新增
                 val entity = UserStatisticsLite().updateFrom(userID, mode, statistics).apply {
