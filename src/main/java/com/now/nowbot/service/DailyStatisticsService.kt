@@ -260,9 +260,7 @@ class DailyStatisticsService(
         val needSize = needUpdate.map { it.first.userID }.toSet().size
         val reallySize = reallyNeedUpgrade.map { it.first.userID }.toSet().size
 
-        if (reallySize > 0) {
-            waitForRateLimit(updateCoolingTime.inWholeMilliseconds)
-        }
+        waitForRateLimit(updateCoolingTime.inWholeMilliseconds)
 
         return Triple(needSize, reallySize, scoreCount)
     }

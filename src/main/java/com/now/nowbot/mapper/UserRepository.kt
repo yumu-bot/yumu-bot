@@ -302,8 +302,8 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
                        CASE WHEN updated_at >= :from THEN 0 ELSE 1 END ,
                        -- 规则 2：如果是未来数据（权重0），按时间从小到大（ASC）排，谁离 from 近谁在前面
                        --        如果是过去数据（权重1），按时间从大到小（DESC）排，谁离 from 近谁在前面
-                       CASE WHEN updated_at >= :from THEN updated_at END,
-                       CASE WHEN updated_at < :from THEN updated_at END DESC,
+                       CASE WHEN updated_at >= :from THEN updated_at END NULLS LAST,
+                       CASE WHEN updated_at < :from THEN updated_at END DESC NULLS LAST,
                        id DESC
                ) as rn
         FROM user_statistics
