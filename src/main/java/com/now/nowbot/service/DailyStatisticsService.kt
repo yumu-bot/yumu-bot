@@ -214,15 +214,15 @@ class DailyStatisticsService(
         val from = TimeParser.BASE_DATE
         val to = today.minusDays(1)
 
-        val recordedUserMap: Map<Long, Map<Byte, Long>> = userInfoDao.getLatestBatchBetween(userIDs, from, to)
+        val recordedUserMap: Map<Long, Map<Byte, Pair<Long, Long>>> = userInfoDao.getLatestBatchBetween(userIDs, from, to)
             .groupBy { it.userID }
-            .mapValues { (_, projections) -> projections.associate { it.mode to it.playCount } }
+            .mapValues { (_, projections) -> projections.associate { it.mode to (it.id!! to it.playCount) } }
 
         val needUpdate = micros.flatMap { micro ->
             val userID = micro.userID
             val userPCMap = recordedUserMap[userID] ?: emptyMap()
 
-            val userPCList = List(4) { i -> userPCMap[i.toByte()] ?: -1L }
+            val userPCList = List(4) { i -> userPCMap[i.toByte()] ?: (-1L to -1L) }
 
             val currents = listOf(
                 micro.rulesets?.osu?.playCount ?: 0L,
@@ -231,7 +231,7 @@ class DailyStatisticsService(
                 micro.rulesets?.mania?.playCount ?: 0L,
             )
 
-            userPCList.mapIndexedNotNull { index, record ->
+            userPCList.mapIndexedNotNull { index, (id, record) ->
                 val current = currents[index]
 
                 if (record == 0L && current in 0..2) {
@@ -243,7 +243,7 @@ class DailyStatisticsService(
                 }
 
                 // 这里可能造成新玩家没法触发增量查询，但是我觉得可以接受
-                log.debug("当前玩家：{}：{}，当前 pc：{}，记录 pc：{}", micro.username, index, current, record)
+                log.debug("当前玩家：{}：{}，当前 pc：{}，记录 pc：{}，记录 id：{}", micro.username, index, current, record, id)
 
                 val delta = current - record
                 val mode = index.toOsuMode()
