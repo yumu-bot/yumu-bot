@@ -25,13 +25,14 @@ jobs:
           else
             echo "should_update=true" >> $GITHUB_OUTPUT
           fi
+          
   build:
     needs: check-time
     runs-on: self-hosted
     if: |
       needs.check-time.outputs.should_update == 'true' &&
       !contains(github.event.head_commit.message, '[skip-build]') &&
-      !contains(github.event.head_commit.message, '[ci-skip]')
+      !contains(github.event.head_commit.message, '[skip]')
     env:
       MAVEN_OPTS: --enable-preview
     steps:
@@ -42,21 +43,29 @@ jobs:
           git reset --hard origin/master
           git pull
           git lfs pull
+          
       - name: Build project
         run: |
           cd ~/nowbot
           
-          # 别急吧每次都 clean 了，编译一次一小时
-          # mvnd clean
+          # 提取 GitHub 传入的最新提交信息
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
           
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          if [ -f .last_branch ] && [ "$(cat .last_branch)" != "$CURRENT_BRANCH" ]; then
-            echo "分支切换，清理缓存"
-            rm -rf target/classes/
+          if [[ "$COMMIT_MSG" == *"[clean]"* ]]; then
+            echo "检测到 [clean] 标记，触发彻底清理干净编译！"
+            mvnd clean package
+          else
+            echo "常规提交，走极速增量编译..."
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            if [ -f .last_branch ] && [ "$(cat .last_branch)" != "$CURRENT_BRANCH" ]; then
+              echo "分支切换，清理缓存"
+              rm -rf target/classes/
+            fi
+            echo "$CURRENT_BRANCH" > .last_branch
+            
+            mvnd package -Dkotlin.compiler.incremental=true
           fi
-          
-          echo "$CURRENT_BRANCH" > .last_branch
-          mvnd package -Dkotlin.compiler.incremental=true
+
   update:
     runs-on: self-hosted
     needs: [build, check-time]
