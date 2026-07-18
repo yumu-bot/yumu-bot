@@ -570,38 +570,41 @@ class OsuUserInfoDao(
         if (inputs.isEmpty() || mode.modeValue !in 0..3) return
 
         val today = LocalDate.now(ZoneOffset.UTC)
-
         val distinctInputs = inputs.associateBy({ it.first }, { it.second })
         val userIDs = distinctInputs.keys
 
         val latestMap = userStatisticsRepository.getLatestBatch(userIDs, mode.modeValue)
             .associateBy { it.userID }
 
-        val entitiesToUpsert = mutableListOf<UserStatisticsLite>()
-
-        for ((userID, statistics) in distinctInputs) {
+        val entitiesToUpsert = distinctInputs.mapNotNull { (userID, statistics) ->
             val latest = latestMap[userID]
 
-            if (latest != null) {
-                val isDataIdentical = latest.playCount == (statistics.playCount ?: 0L)
+            when {
+                // 没有记录：新增
+                latest == null -> UserStatisticsLite().apply {
+                    updateFrom(userID, mode, statistics)
+                    createdAt = today
+                    updatedAt = today
+                }
 
-                if (isDataIdentical) {
-                    val entity = latest.apply { this.updatedAt = today }
-                    entitiesToUpsert.add(entity)
-                } else {
-                    val newEntity = UserStatisticsLite().updateFrom(userID, mode, statistics).apply {
-                        this.createdAt = today
-                        this.updatedAt = today
+                // 有记录但今天是新的一天
+                latest.updatedAt.isBefore(today) -> {
+                    if (latest.totalHits != (statistics.totalHits ?: 0L)) {
+                        latest.updateFrom(userID, mode, statistics)
                     }
-                    entitiesToUpsert.add(newEntity)
+                    latest.updatedAt = today
+                    latest
                 }
-            } else {
-                // 新增
-                val entity = UserStatisticsLite().updateFrom(userID, mode, statistics).apply {
-                    this.createdAt = today
-                    this.updatedAt = today
+
+                // 今天已有记录且数据有变化
+                latest.totalHits != (statistics.totalHits ?: 0L) -> {
+                    latest.updateFrom(userID, mode, statistics)
+                    latest.updatedAt = today
+                    latest
                 }
-                entitiesToUpsert.add(entity)
+
+                // 今天已有记录且数据无变化：不操作
+                else -> null
             }
         }
 
