@@ -1,12 +1,14 @@
 package com.now.nowbot.util
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -327,11 +329,24 @@ object AsyncMethodExecutor {
         work: Callable<out T>,
         work2: Callable<out U>,
         timeout: Duration = 30.seconds
-    ): Pair<T, U> = withTimeout(timeout) {
-        val r1 = async(vDispatcher) { work.call() }
-        val r2 = async(vDispatcher) { work2.call() }
+    ): Pair<T, U> {
+        return runCatching {
+            withTimeout(timeout) {
+                supervisorScope {
+                    val r1 = async(vDispatcher) {
+                        runCatching { work.call() }.onFailure { it.throwIfCancel() }
+                    }
 
-        r1.await() to r2.await()
+                    val r2 = async(vDispatcher) {
+                        runCatching { work2.call() }.onFailure { it.throwIfCancel() }
+                    }
+
+                    r1.await().getOrThrow() to r2.await().getOrThrow()
+                }
+            }
+        }.onFailure {
+            throw it.wrapTimeout()
+        }.getOrThrow()
     }
 
     fun <T, U, V> awaitTriple(
@@ -350,15 +365,29 @@ object AsyncMethodExecutor {
         work2: Callable<out U>,
         work3: Callable<out V>,
         timeout: Duration = 30.seconds
-    ): Triple<T, U, V> = withTimeout(timeout) {
-        val r1 = async(vDispatcher) { work.call() }
-        val r2 = async(vDispatcher) { work2.call() }
-        val r3 = async(vDispatcher) { work3.call() }
+    ): Triple<T, U, V> {
+        return runCatching {
+            withTimeout(timeout) {
+                supervisorScope {
+                    val r1 = async(vDispatcher) {
+                        runCatching { work.call() }.onFailure { it.throwIfCancel() }
+                    }
 
-        Triple(r1.await(), r2.await(), r3.await())
+                    val r2 = async(vDispatcher) {
+                        runCatching { work2.call() }.onFailure { it.throwIfCancel() }
+                    }
+
+                    val r3 = async(vDispatcher) {
+                        runCatching { work3.call() }.onFailure { it.throwIfCancel() }
+                    }
+
+                    Triple(r1.await().getOrThrow(), r2.await().getOrThrow(), r3.await().getOrThrow())
+                }
+            }
+        }.onFailure {
+            throw it.wrapTimeout()
+        }.getOrThrow()
     }
-
-
 
     fun <T, U, V, W> awaitQuad(
         work: Callable<out T>,
@@ -378,13 +407,29 @@ object AsyncMethodExecutor {
         work3: Callable<out V>,
         work4: Callable<out W>,
         timeout: Duration = 30.seconds
-    ): Pair<Pair<T, U>, Pair<V, W>> = withTimeout(timeout) {
-        val r1 = async(vDispatcher) { work.call() }
-        val r2 = async(vDispatcher) { work2.call() }
-        val r3 = async(vDispatcher) { work3.call() }
-        val r4 = async(vDispatcher) { work4.call() }
+    ): Pair<Pair<T, U>, Pair<V, W>> {
+        return runCatching {
+            withTimeout(timeout) {
+                supervisorScope {
+                    val r1 = async(vDispatcher) {
+                        runCatching { work.call() }.onFailure { it.throwIfCancel() }
+                    }
+                    val r2 = async(vDispatcher) {
+                        runCatching { work2.call() }.onFailure { it.throwIfCancel() }
+                    }
+                    val r3 = async(vDispatcher) {
+                        runCatching { work3.call() }.onFailure { it.throwIfCancel() }
+                    }
+                    val r4 = async(vDispatcher) {
+                        runCatching { work4.call() }.onFailure { it.throwIfCancel() }
+                    }
 
-        (r1.await() to r2.await()) to (r3.await() to r4.await())
+                    (r1.await().getOrThrow() to r2.await().getOrThrow()) to (r3.await().getOrThrow() to r4.await().getOrThrow())
+                }
+            }
+        }.onFailure {
+            throw it.wrapTimeout()
+        }.getOrThrow()
     }
 
     @CanIgnoreReturnValue
@@ -398,8 +443,24 @@ object AsyncMethodExecutor {
     suspend fun <T> suspendList(
         works: List<Callable<out T>>,
         timeout: Duration = 30.seconds
-    ): List<T> = withTimeout(timeout) {
-        works.map { async(vDispatcher) { it.call() } }.awaitAll()
+    ): List<T> {
+        return runCatching {
+            withTimeout(timeout) {
+                supervisorScope {
+                    works.map { work ->
+                        async(vDispatcher) {
+                            runCatching {
+                                work.call()
+                            }.onFailure {
+                                it.throwIfCancel()
+                            }
+                        }
+                    }.awaitAll().map { it.getOrThrow() }
+                }
+            }
+        }.onFailure {
+            it.wrapTimeout()
+        }.getOrThrow()
     }
 
     fun <T> awaitBatch(
@@ -411,30 +472,37 @@ object AsyncMethodExecutor {
         suspendBatch(works, batchSize, latency, timeout)
     }
 
-    /**
-     * 协程原生版：处理分批异步逻辑
-     */
     suspend fun <T> suspendBatch(
         works: List<Callable<out T>>,
         batchSize: Int = 60,
         latency: Duration = 60.seconds,
         timeout: Duration = 30.seconds
-    ): List<T> = coroutineScope {
-        val batches = works.chunked(batchSize)
+    ): List<T> {
+        return supervisorScope {
+            val batches = works.chunked(batchSize)
 
-        // 将每一批次映射为一个异步 Job
-        val batchDeferred = batches.mapIndexed { index, batch ->
-            async(vDispatcher) {
-                // 批次间延迟：使用非阻塞的 delay 替代 Thread.sleep
-                if (index > 0) {
-                    delay(latency)
+            val batchDeferred = batches.mapIndexed { index, batch ->
+                async(vDispatcher) {
+                    runCatching {
+                        // 批次间延迟
+                        if (index > 0) {
+                            delay(latency)
+                        }
+                        suspendList(batch, timeout)
+                    }.onFailure {
+                        it.throwIfCancel()
+                    }
                 }
-
-                suspendList(batch, timeout)
             }
-        }
 
-        batchDeferred.awaitAll().flatten()
+            val batchResults = batchDeferred.awaitAll()
+
+            runCatching {
+                batchResults.flatMap { it.getOrThrow() }
+            }.onFailure {
+                it.wrapTimeout()
+            }.getOrThrow()
+        }
     }
 
     /* 以下是 java 原生的 ShutdownOnFailure */
@@ -599,6 +667,20 @@ object AsyncMethodExecutor {
 
         fun getAndRemove(lock: Condition): Int {
             return conditionCount.remove(lock) ?: 0
+        }
+    }
+
+    private fun Throwable.wrapTimeout(): Throwable {
+        throw if (this is TimeoutCancellationException) {
+            NetworkException.OverTime()
+        } else {
+            this
+        }
+    }
+
+    private fun Throwable.throwIfCancel() {
+        if (this is CancellationException && this !is TimeoutCancellationException) {
+            throw this
         }
     }
 }

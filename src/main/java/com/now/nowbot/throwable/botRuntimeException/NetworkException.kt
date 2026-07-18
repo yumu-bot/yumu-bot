@@ -8,6 +8,7 @@ open class NetworkException(message: String?
 
     open val code: Int = 0
 
+    class OverTime: NetworkException("超时了。")
 
     open class ComponentException(message: String?): NetworkException(message) {
         override val code: Int = 0

@@ -17,6 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -74,6 +75,8 @@ class PPPlusService(
                 }
             }
         } catch (e: BindException) {
+            throw e
+        } catch (e: NetworkException) {
             throw e
         } catch (e: Exception) {
             log.error("pp+ 请求异常", e)
