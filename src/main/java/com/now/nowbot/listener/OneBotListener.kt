@@ -83,7 +83,7 @@ class OneBotListener(
             return
         }
 
-        log.debug("收到消息 {}", messageID)
+        // log.debug("收到消息 {}", messageID)
 
         var nowTime = System.currentTimeMillis()
         if (groupEvent.time < 1e10) {

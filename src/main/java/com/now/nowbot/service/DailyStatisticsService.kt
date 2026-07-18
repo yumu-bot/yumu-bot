@@ -217,6 +217,8 @@ class DailyStatisticsService(
             .groupBy { it.userID }
             .mapValues { (_, projections) -> projections.associate { it.mode to (it.id!! to it.playCount) } }
 
+        log.debug("收到数据库的可用数据：{}", recordedUserMap.size)
+
         val needUpdate = micros.flatMap { micro ->
             val userID = micro.userID
             val userPCMap = recordedUserMap[userID] ?: emptyMap()
@@ -234,6 +236,7 @@ class DailyStatisticsService(
                 val current = currents[index]
 
                 if (record !in 0..< current) {
+                    log.debug("跳过玩家：{}：{}，当前 ：{}，记录 pc：{}，记录 id：{}", micro.username, index, current, record, id)
                     return@mapIndexedNotNull null
                 }
 

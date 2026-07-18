@@ -293,23 +293,23 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     @Query(value = """
     SELECT s.* 
     FROM user_statistics s
-    JOIN (
-        SELECT id,
-               ROW_NUMBER() OVER(
-                   PARTITION BY user_id, mode 
-                   ORDER BY 
-                       -- 规则 1：符合 >= from 的未来数据权重最高（0），过去的数据权重低（1）
-                       CASE WHEN updated_at >= :from THEN 0 ELSE 1 END ,
-                       -- 规则 2：如果是未来数据（权重0），按时间从小到大（ASC）排，谁离 from 近谁在前面
-                       --        如果是过去数据（权重1），按时间从大到小（DESC）排，谁离 from 近谁在前面
-                       CASE WHEN updated_at >= :from THEN updated_at END NULLS LAST,
-                       CASE WHEN updated_at < :from THEN updated_at END DESC NULLS LAST,
-                       id DESC
-               ) as rn
-        FROM user_statistics
-        WHERE user_id IN (:userIDs)
-    ) t ON s.id = t.id
-    WHERE t.rn = 1
+    WHERE s.id IN (
+        SELECT id
+        FROM (
+            SELECT id,
+                   ROW_NUMBER() OVER(
+                       PARTITION BY user_id, mode 
+                       ORDER BY 
+                           CASE WHEN updated_at >= :from THEN 0 ELSE 1 END ASC,
+                           CASE WHEN updated_at >= :from THEN updated_at END ASC NULLS LAST,
+                           CASE WHEN updated_at < :from THEN updated_at END DESC NULLS LAST,
+                           id DESC
+                   ) as rn
+            FROM user_statistics
+            WHERE user_id IN (:userIDs)
+        ) t 
+        WHERE t.rn = 1
+    )
 """, nativeQuery = true)
     fun getLatestBatchFrom(userIDs: Collection<Long>, from: LocalDate): List<UserStatisticsLite>
 
