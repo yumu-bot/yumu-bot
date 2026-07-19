@@ -8,7 +8,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.IdClass
 import jakarta.persistence.Table
-import org.springframework.beans.factory.annotation.Value
 import java.io.Serializable
 import java.time.LocalDate
 
@@ -67,12 +66,7 @@ data class UserRankPercentKey(
 }
 
 interface UserRankModeProjection {
-    @get:Value("#{target.user_id}")
     val userID: Long
-
-    @get:Value("#{target.mode}")
     val mode: Byte
-
-    @get:Value("#{target.country_rank}")
     val countryRank: Long
 }

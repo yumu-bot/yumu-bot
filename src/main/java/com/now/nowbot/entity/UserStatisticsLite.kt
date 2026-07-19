@@ -10,7 +10,6 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
-import org.springframework.beans.factory.annotation.Value
 import java.time.LocalDate
 import java.time.ZoneOffset
 
@@ -123,24 +122,15 @@ class UserStatisticsLite(
 }
 
 interface UserStatisticsProjection {
-    @get:Value("#{target.id}")
     val id: Long
-    @get:Value("#{target.user_id}")
     val userID: Long
-    @get:Value("#{target.mode}")
     val mode: Byte
-    @get:Value("#{target.updated_at}")
     val updatedAt: LocalDate
 }
 
 
 interface UserPlayCountProjection {
-    @get:Value("#{target.user_id}")
     val userID: Long
-
-    @get:Value("#{target.play_count}")
     val playCount: Long
-
-    @get:Value("#{target.mode}")
     val mode: Byte
 }

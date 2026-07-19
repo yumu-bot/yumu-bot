@@ -288,17 +288,20 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserStatisticsLite>
 
     @Query(value = """
-        SELECT t.id, t.user_id as userID, t.mode, t.updated_at as updatedAt
-        FROM (
-            SELECT id, user_id, mode, updated_at,
-                   ROW_NUMBER() OVER(
-                       PARTITION BY user_id, mode 
-                       ORDER BY updated_at DESC, id DESC
-                   ) as rn
-            FROM user_statistics
-            WHERE user_id IN (:userIDs)
-        ) t
-        WHERE t.rn = 1
+        SELECT t.id as id, 
+           t.user_id as userID, 
+           t.mode as mode, 
+           t.updated_at as updatedAt
+    FROM (
+        SELECT id, user_id, mode, updated_at,
+               ROW_NUMBER() OVER(
+                   PARTITION BY user_id, mode 
+                   ORDER BY updated_at DESC, id DESC
+               ) as rn
+        FROM user_statistics
+        WHERE user_id IN (:userIDs)
+    ) t
+    WHERE t.rn = 1
     """, nativeQuery = true)
     fun getMaxTimeBatch(userIDs: Collection<Long>): List<UserStatisticsProjection>
 
@@ -457,10 +460,13 @@ interface UserGlobalRankRepository: JpaRepository<UserGlobalRankLite, UserGlobal
 
 interface UserRankPercentRepository: JpaRepository<UserRankPercentLite, UserRankPercentKey> {
     @Query("""
-        SELECT DISTINCT ON (user_id, mode) user_id, mode, country_rank 
+        SELECT DISTINCT ON (user_id, mode) 
+           user_id AS userID, 
+           mode, 
+           country_rank AS countryRank
         FROM user_rank_percent 
-        WHERE user_id IN :userIDs
-        ORDER BY user_id, mode, date DESC;
+        WHERE user_id IN (:userIDs)
+        ORDER BY user_id, mode, date DESC
     """,
         nativeQuery = true
     )
