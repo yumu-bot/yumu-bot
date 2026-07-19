@@ -8,6 +8,7 @@ import com.now.nowbot.entity.UserRankModeProjection
 import com.now.nowbot.entity.UserRankPercentKey
 import com.now.nowbot.entity.UserRankPercentLite
 import com.now.nowbot.entity.UserStatisticsLite
+import com.now.nowbot.entity.UserStatisticsProjection
 import jakarta.persistence.QueryHint
 import org.hibernate.jpa.HibernateHints.HINT_FETCH_SIZE
 import org.springframework.data.jpa.repository.JpaRepository
@@ -111,21 +112,18 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
         WHERE user_id = :userID AND mode = :mode
         ORDER BY 
             CASE 
-                -- 情况 1: targetDate 在区间内，距离为 0
-                WHEN CAST(:targetDate AS DATE) BETWEEN created_at AND updated_at THEN 0
-                -- 情况 2: targetDate 在区间左侧，计算到 created_at 的距离
-                WHEN CAST(:targetDate AS DATE) < created_at THEN ABS(created_at - CAST(:targetDate AS DATE))
-                -- 情况 3: targetDate 在区间右侧，计算到 updated_at 的距离
-                ELSE ABS(updated_at - CAST(:targetDate AS DATE))
+                WHEN :target BETWEEN created_at AND updated_at THEN 0
+                WHEN :target < created_at THEN ABS(created_at - :target)
+                ELSE ABS(updated_at - :target)
             END
         LIMIT 1
         """,
         nativeQuery = true
     )
-    fun getClosestFromDateRange(
+    fun getClosestFromDate(
         userID: Long,
         mode: Byte,
-        targetDate: LocalDate
+        target: LocalDate
     ): UserInfoLite?
 }
 
@@ -288,6 +286,21 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
         ) t WHERE t.rn = 1
     """, nativeQuery = true)
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserStatisticsLite>
+
+    @Query(value = """
+        SELECT t.id, t.user_id as userID, t.mode, t.updated_at as updatedAt
+        FROM (
+            SELECT id, user_id, mode, updated_at,
+                   ROW_NUMBER() OVER(
+                       PARTITION BY user_id, mode 
+                       ORDER BY updated_at DESC, id DESC
+                   ) as rn
+            FROM user_statistics
+            WHERE user_id IN (:userIDs)
+        ) t
+        WHERE t.rn = 1
+    """, nativeQuery = true)
+    fun getMaxTimeBatch(userIDs: Collection<Long>): List<UserStatisticsProjection>
 
     @Query(value = """
     SELECT s.* 
@@ -528,19 +541,19 @@ interface UserRankPercentRepository: JpaRepository<UserRankPercentLite, UserRank
         SELECT * FROM (
             (
                 SELECT * FROM user_rank_percent 
-                WHERE user_id = :userID AND mode = :mode AND date >= :targetDate
+                WHERE user_id = :userID AND mode = :mode AND date >= :target
                 ORDER BY date
                 LIMIT 1
             )
             UNION ALL
             (
                 SELECT * FROM user_rank_percent 
-                WHERE user_id = :userID AND mode = :mode AND date <= :targetDate
+                WHERE user_id = :userID AND mode = :mode AND date <= :target
                 ORDER BY date DESC
                 LIMIT 1
             )
         ) AS subquery
-        ORDER BY ABS(subquery.date - CAST(:targetDate AS DATE))
+        ORDER BY ABS(subquery.date - :target)
         LIMIT 1
         """,
         nativeQuery = true
@@ -548,6 +561,6 @@ interface UserRankPercentRepository: JpaRepository<UserRankPercentLite, UserRank
     fun getClosestFromDate(
         userID: Long,
         mode: Byte,
-        targetDate: LocalDate
+        target: LocalDate
     ): UserRankPercentLite?
 }

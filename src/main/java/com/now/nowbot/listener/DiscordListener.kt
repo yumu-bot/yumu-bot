@@ -149,8 +149,8 @@ class BotInviteHelper {
             val inviteUrl = "https://discord.com/oauth2/authorize" +
                     "?client_id=${jda.selfUser.applicationId}" +
                     "&permissions=$permissionValue" +
-                    "&scope=bot%20applications.commands" +
-                    "&response_type=code"
+                    "&scope=bot%20applications.commands"
+                    // + "&response_type=code"
             return inviteUrl
         }
 

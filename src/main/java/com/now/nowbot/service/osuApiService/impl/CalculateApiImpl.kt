@@ -29,7 +29,6 @@ import me.aloic.rosupp.PerformanceRequest
 import me.aloic.rosupp.PerformanceResult
 import me.aloic.rosupp.RosuPp
 import me.aloic.rosupp.ScoreMode
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
@@ -671,7 +670,7 @@ class CalculateApiImpl(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
+        // private val log = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
 
         fun DifficultyRequest.customPerformanceRequest(
             accuracy: Double? = 1.0,
@@ -736,6 +735,8 @@ class CalculateApiImpl(
                     .n300(t.great + t.miss)
                     .n100(t.ok)
                     .n50(t.meh)
+
+                    this.legacyScore?.takeIf { it > 0 }?.let { builder.legacyTotalScore(it.toInt()) }
                 }
 
                 1.toByte() -> { builder
@@ -767,10 +768,6 @@ class CalculateApiImpl(
                 }
             }
 
-            if (!this.isLazer) {
-                this.legacyScore?.let { builder.legacyTotalScore(it.toInt()) }
-            }
-
             if (!this.passed) {
                 builder.n300(0)
             }
@@ -797,11 +794,15 @@ class CalculateApiImpl(
                     .largeTickHits(m.largeTickHit)
                     .smallTickHits(m.smallTickHit)
                     .sliderEndHits(m.sliderTailHit)
+
+                    this.legacyScore?.takeIf { it > 0 }?.let { builder.legacyTotalScore(it.toInt()) }
                 } else { builder
                     .n300(t.great + t.ok + t.meh + t.miss)
                     .n100(0)
                     .n50(0)
                     .misses(0)
+
+                    this.legacyScore?.takeIf { it > 0 }?.let { builder.legacyTotalScore(it.toInt()) }
                 }
 
                 1.toByte() -> {
@@ -845,10 +846,6 @@ class CalculateApiImpl(
                     .n50(0)
                     .misses(0)
                 }
-            }
-
-            if (!this.isLazer) {
-                this.legacyScore?.let { builder.legacyTotalScore(it.toInt()) }
             }
 
             return builder.build()

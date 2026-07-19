@@ -305,13 +305,12 @@ class OsuUserInfoDao(
 
         val targetDate = stats.updatedAt
 
-        val info = userInfoRepository.getClosestFromDateRange(userID, mode.modeValue, targetDate)
+        val info = userInfoRepository.getClosestFromDate(userID, mode.modeValue, targetDate)
         val rank = userGlobalRankRepository.getBetween(userID, mode.modeValue, targetDate.minusDays(90), targetDate)
         val percent = userRankPercentRepository.getClosestFromDate(userID, mode.modeValue, targetDate)
 
         return fromArchive(info, stats, rank, percent)
     }
-
 
     fun getPP(userID: Long, mode: OsuMode): Float? {
         return userStatisticsRepository.getLatest(userID, mode.modeValue)?.pp
@@ -327,12 +326,27 @@ class OsuUserInfoDao(
         return List(4) { i -> i.toByte() }.map { playCounts[it] ?: 0L }
     }
 
-    fun getLatestBatchBetween(userIDs: List<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite> {
-        return userStatisticsRepository.getLatestBatchBetween(userIDs, from, to)
-    }
+//    fun getLatestBatchBetween(userIDs: List<Long>, from: LocalDate, to: LocalDate): List<UserStatisticsLite> {
+//        return userStatisticsRepository.getLatestBatchBetween(userIDs, from, to)
+//    }
+//
+//    fun getLatestBatchFrom(userIDs: List<Long>, from: LocalDate): List<UserStatisticsLite> {
+//        return userStatisticsRepository.getLatestBatchFrom(userIDs, from)
+//    }
 
-    fun getLatestBatchFrom(userIDs: List<Long>, from: LocalDate): List<UserStatisticsLite> {
-        return userStatisticsRepository.getLatestBatchFrom(userIDs, from)
+    /**
+     * 只取目标天之后没有数据，但是之前或者目标天当天有数据的条目
+     */
+    fun getLatestBatchFromWithoutEarliest(userIDs: Collection<Long>, from: LocalDate): List<UserStatisticsLite> {
+        val maxBatches = userStatisticsRepository.getMaxTimeBatch(userIDs)
+
+        val targetIDs = maxBatches
+            .filter { it.updatedAt <= from }
+            .map { it.id }
+
+        if (targetIDs.isEmpty()) return emptyList()
+
+        return userStatisticsRepository.findAllById(targetIDs)
     }
 
     // Yumu 0.8.2 玩家信息优化
@@ -352,8 +366,8 @@ class OsuUserInfoDao(
         if (incomingMap.isEmpty()) return
 
         val targetDates = incomingMap.keys
-        val startDate = targetDates.minOrNull()!!
-        val endDate = targetDates.maxOrNull()!!
+        val startDate = targetDates.min()
+        val endDate = targetDates.max()
 
         val existingEntities = userGlobalRankRepository.getBetween(user.userID, mode, startDate, endDate)
             .associateBy { it.date }

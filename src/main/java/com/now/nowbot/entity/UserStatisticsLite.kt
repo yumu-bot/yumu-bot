@@ -122,6 +122,17 @@ class UserStatisticsLite(
     }
 }
 
+interface UserStatisticsProjection {
+    @get:Value("#{target.id}")
+    val id: Long
+    @get:Value("#{target.user_id}")
+    val userID: Long
+    @get:Value("#{target.mode}")
+    val mode: Byte
+    @get:Value("#{target.updated_at}")
+    val updatedAt: LocalDate
+}
+
 
 interface UserPlayCountProjection {
     @get:Value("#{target.user_id}")

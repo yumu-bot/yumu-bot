@@ -33,7 +33,7 @@ class DailyStatisticsService(
 
     private val lastRequestTime = AtomicLong(0L)  // 原子变量，记录最后请求时间
 
-    private val updateCoolingTime: Duration = 6.seconds
+    private val updateCoolingTime: Duration = 8.seconds
     private val getRecentCoolingTime: Duration = 3.seconds
 
     // 简单的速率限制方法
@@ -213,7 +213,7 @@ class DailyStatisticsService(
         val today = LocalDate.now(ZoneOffset.UTC)
         val from = today.minusDays(1)
 
-        val recordedUserMap: Map<Long, Map<Byte, Pair<Long, Long>>> = userInfoDao.getLatestBatchFrom(userIDs, from)
+        val recordedUserMap: Map<Long, Map<Byte, Pair<Long, Long>>> = userInfoDao.getLatestBatchFromWithoutEarliest(userIDs, from)
             .groupBy { it.userID }
             .mapValues { (_, projections) -> projections.associate { it.mode to (it.id!! to it.playCount) } }
 
