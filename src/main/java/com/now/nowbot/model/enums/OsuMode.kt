@@ -26,25 +26,14 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
     @JsonValue
     fun value() = this.shortName
 
-    fun toRosuMode(): org.spring.osu.OsuMode {
-        return when (this) {
-            OSU, OSU_RELAX, OSU_AUTOPILOT -> org.spring.osu.OsuMode.Osu
-            TAIKO, TAIKO_RELAX -> org.spring.osu.OsuMode.Taiko
-            CATCH, CATCH_RELAX -> org.spring.osu.OsuMode.Catch
-            MANIA -> org.spring.osu.OsuMode.Mania
-            else -> org.spring.osu.OsuMode.Default
-        }
-    }
-
-    fun toSafeModeValue(): Byte {
-        return when (this) {
+    val safeModeValue: Byte 
+        get() = when (this) {
             OSU, OSU_RELAX, OSU_AUTOPILOT -> 0
             TAIKO, TAIKO_RELAX -> 1
             CATCH, CATCH_RELAX -> 2
             MANIA, MANIA_7K -> 3
             DEFAULT -> 0
         }
-    }
 
     fun isDefault(): Boolean {
         return isDefaultOrNull(this)
@@ -58,7 +47,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
      * 当且仅当这是转谱组合时（主模式搭配输入的其他模式）
      */
     fun isConvertAble(mode: OsuMode?): Boolean {
-        return this.toSafeModeValue() == 0.toByte() && (mode?.toSafeModeValue() != 0.toByte())
+        return this.safeModeValue == 0.toByte() && (mode?.safeModeValue != 0.toByte())
     }
 
     /**
@@ -66,7 +55,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
      * 它位于 ConvertAble 和 NotConvertAble 之间
      */
     fun isEqualOrDefault(mode: OsuMode?): Boolean {
-        return mode == DEFAULT || this.toSafeModeValue() == mode?.toSafeModeValue()
+        return mode == DEFAULT || this.safeModeValue == mode?.safeModeValue
     }
 
     /**
@@ -81,11 +70,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
          * 当 mode 为 Default 或者 mode == mode2 时，返回 true
          */
         fun equalOrDefault(mode: OsuMode, mode2: Any?) : Boolean {
-            if (mode2 is OsuMode) {
-                return mode == mode2 || mode == DEFAULT
-            }
-
-            return false
+            return mode2 is OsuMode && (mode == mode2 || mode == DEFAULT)
         }
 
         fun getMode(str: String?, default: String?): OsuMode {

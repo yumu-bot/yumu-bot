@@ -6,7 +6,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.calculate.RosuPerformance
 
 interface OsuCalculateApiService {
     fun getScorePerfectPP(score: LazerScore): CalculatePerformance
@@ -34,22 +33,24 @@ interface OsuCalculateApiService {
     fun getAccPPList(
         beatmapID: Long,
         mode: OsuMode,
-        mods: List<LazerMod>?,
-        maxCombo: Int?,
+        mods: List<LazerMod>,
+        combo: Int?,
         misses: Int?,
         isLazer: Boolean,
-        accuracy: DoubleArray
+        accuracy: DoubleArray,
+        clockRate: Double? = null,
     ): List<Double>
 
     fun getAccPP(
         beatmapID: Long,
         mode: OsuMode,
-        mods: List<LazerMod>?,
-        maxCombo: Int?,
+        mods: List<LazerMod>,
+        combo: Int?,
         misses: Int?,
         isLazer: Boolean,
-        accuracy: Double
-    ): RosuPerformance
+        accuracy: Double,
+        clockRate: Double? = null,
+    ): Double
 
     fun getBeatmapStar(
         beatmapID: Long,

@@ -197,7 +197,11 @@ data class LazerScore(
     var rank: String = ""
         get() = field.ifBlank { getStandardisedRank(this) }
 
-    // 傻逼 Lazer
+    /**
+     * 傻逼 Lazer
+     *
+     * 范围：0-1
+     */
     @get:JsonProperty("legacy_accuracy")
     val accuracy: Double
         get() = getStableAccuracy(this)
@@ -332,7 +336,7 @@ data class LazerScore(
 
             val s = score.statistics
 
-            val mode = score.mode.toSafeModeValue().toInt()
+            val mode = score.mode.safeModeValue.toInt()
 
             val total = when(mode) {
                 1 -> s.great + s.ok + s.miss

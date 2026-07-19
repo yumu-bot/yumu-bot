@@ -7,6 +7,7 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod.Companion.getFinalRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.skill.Skill6
 import com.now.nowbot.qq.event.MessageEvent
@@ -127,7 +128,7 @@ import kotlin.math.absoluteValue
         }
 
         val clockRate = if (isChangedRating) {
-            LazerMod.getModSpeedForStarCalculate(param.mods).toDouble()
+            param.mods.getFinalRate().toDouble()
         } else {
             param.rate
         }

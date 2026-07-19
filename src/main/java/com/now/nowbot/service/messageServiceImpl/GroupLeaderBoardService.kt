@@ -192,8 +192,8 @@ class GroupLeaderBoardService(
                         aIsF != bIsF -> if (aIsF) 1 else -1
 
                         aIsF -> {
-                            val aStats = if (a.mode.toSafeModeValue() == 3.toByte()) a.statistics.perfect else a.statistics.great
-                            val bStats = if (b.mode.toSafeModeValue() == 3.toByte()) b.statistics.perfect else b.statistics.great
+                            val aStats = if (a.mode.safeModeValue == 3.toByte()) a.statistics.perfect else a.statistics.great
+                            val bStats = if (b.mode.safeModeValue == 3.toByte()) b.statistics.perfect else b.statistics.great
                             bStats.compareTo(aStats)
                         }
 

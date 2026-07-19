@@ -30,6 +30,28 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
         mode: Byte
     ): UserInfoLite?
 
+    @Query(
+        value = """
+        SELECT s.* FROM user_info s 
+        WHERE s.user_id = :userID AND s.mode = :mode AND s.updated_at >= :from 
+        ORDER BY s.updated_at , s.id DESC 
+        LIMIT 1
+    """,
+        nativeQuery = true
+    )
+    fun getEarliest(userID: Long, mode: Byte, from: LocalDate): UserInfoLite?
+
+    @Query(
+        value = """
+        SELECT s.* FROM user_info s 
+        WHERE s.user_id = :userID AND s.mode = :mode AND s.updated_at < :from 
+        ORDER BY s.updated_at DESC, s.id DESC 
+        LIMIT 1
+    """,
+        nativeQuery = true
+    )
+    fun getLatestBefore(userID: Long, mode: Byte, from: LocalDate): UserInfoLite?
+
     @Query("""
         select * from user_info
         where user_id = :userID and mode = :mode and updated_at between :from and :to
@@ -300,8 +322,8 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
                    ROW_NUMBER() OVER(
                        PARTITION BY user_id, mode 
                        ORDER BY 
-                           CASE WHEN updated_at >= :from THEN 0 ELSE 1 END ASC,
-                           CASE WHEN updated_at >= :from THEN updated_at END ASC NULLS LAST,
+                           CASE WHEN updated_at >= :from THEN 0 ELSE 1 END,
+                           CASE WHEN updated_at >= :from THEN updated_at END NULLS LAST,
                            CASE WHEN updated_at < :from THEN updated_at END DESC NULLS LAST,
                            id DESC
                    ) as rn
@@ -312,6 +334,28 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     )
 """, nativeQuery = true)
     fun getLatestBatchFrom(userIDs: Collection<Long>, from: LocalDate): List<UserStatisticsLite>
+
+    @Query(
+        value = """
+        SELECT s.* FROM user_statistics s 
+        WHERE s.user_id = :userID AND s.mode = :mode AND s.updated_at >= :from 
+        ORDER BY s.updated_at, s.id DESC 
+        LIMIT 1
+    """,
+        nativeQuery = true
+    )
+    fun getEarliest(userID: Long, mode: Byte, from: LocalDate): UserStatisticsLite?
+
+    @Query(
+        value = """
+        SELECT s.* FROM user_statistics s 
+        WHERE s.user_id = :userID AND s.mode = :mode AND s.updated_at < :from 
+        ORDER BY s.updated_at DESC, s.id DESC 
+        LIMIT 1
+    """,
+        nativeQuery = true
+    )
+    fun getLatestBefore(userID: Long, mode: Byte, from: LocalDate): UserStatisticsLite?
 
     // 2. 批量更新日期：用于 totalHits 没有变化，只需更新 updatedAt 的场景
     @Transactional
@@ -418,6 +462,12 @@ interface UserRankPercentRepository: JpaRepository<UserRankPercentLite, UserRank
         userID: Long,
         mode: Byte
     ): UserRankPercentLite?
+
+    @Query("SELECT s.* FROM user_rank_percent s WHERE s.user_id = :userID AND s.mode = :mode AND s.date >= :from ORDER BY s.date LIMIT 1", nativeQuery = true)
+    fun getEarliest(userID: Long, mode: Byte, from: LocalDate): UserRankPercentLite?
+
+    @Query("SELECT s.* FROM user_rank_percent s WHERE s.user_id = :userID AND s.mode = :mode AND s.date < :from ORDER BY s.date DESC LIMIT 1", nativeQuery = true)
+    fun getLatestBefore(userID: Long, mode: Byte, from: LocalDate): UserRankPercentLite?
 
     @Query("""
         select * from user_rank_percent

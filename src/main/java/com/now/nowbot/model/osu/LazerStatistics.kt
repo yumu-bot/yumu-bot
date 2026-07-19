@@ -43,7 +43,7 @@ data class LazerStatistics(
     @Column(name = "miss", nullable = false)
     var miss: Int = 0,
 
-    // ?
+    // T Spinner
     @field:JsonProperty("ignore_hit")
     @Column(name = "ignore_hit", nullable = false)
     var ignoreHit: Int = 0,
@@ -74,12 +74,12 @@ data class LazerStatistics(
     @Column(name = "slider_tail_hit", nullable = false)
     var sliderTailHit: Int = 0,
 
-    // O Spinner Bonus、T Spinner Drumroll、C Banana
+    // O Spinner Bonus、T Big Hit、C Banana
     @field:JsonProperty("large_bonus")
     @Column(name = "large_bonus", nullable = false)
     var largeBonus: Int = 0,
 
-    // O Spinner Base
+    // O Spinner Base、T Drumroll
     @field:JsonProperty("small_bonus")
     @Column(name = "small_bonus", nullable = false)
     var smallBonus: Int = 0,

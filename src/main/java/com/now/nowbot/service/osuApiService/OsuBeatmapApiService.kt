@@ -20,65 +20,65 @@ interface OsuBeatmapApiService {
 
     @OptIn(ExperimentalStdlibApi::class) fun asyncDownloadCover(covers: List<Covers>, type: CoverType)
 
-    fun getBeatmapFileString(bid: Long): String?
+    fun getBeatmapFileString(beatmapID: Long): String?
 
-    fun getBeatmapFileFromDirectory(bid: Long): String?
+    fun getBeatmapFileFromDirectory(beatmapID: Long): String?
 
-    fun getBeatmapFileByte(bid: Long): ByteArray?
+    fun getBeatmapFileByte(beatmapID: Long): ByteArray?
 
-    fun getBeatmapFilePath(bid: Long): String
+    fun getBeatmapFilePath(beatmapID: Long): String
 
     /**
      * 返回已经下好的谱面，没法下载的就不存在在这个list里了
      */
-    fun downloadBeatmapFile(bids: Collection<Long>): List<Long>
+    fun downloadBeatmapFile(beatmapIDs: Collection<Long>): List<Long>
 
-    fun deleteBeatmapFileFromDirectory(bid: Long): Boolean
+    fun deleteBeatmapFileFromDirectory(beatmapID: Long): Boolean
 
-    fun hasBeatmapFileFromDirectory(bid: Long): Boolean
+    fun hasBeatmapFileFromDirectory(beatmapID: Long): Boolean
 
-    fun refreshBeatmapFileFromDirectory(bid: Long): Boolean
+    fun refreshBeatmapFileFromDirectory(beatmapID: Long): Boolean
 
     // 查一下文件是否跟 checksum 是否对得上
     @Throws(IOException::class) fun checkBeatmap(beatmap: Beatmap?): Boolean
 
-    @Throws(IOException::class) fun checkBeatmap(bid: Long, checkStr: String?): Boolean
+    @Throws(IOException::class) fun checkBeatmap(beatmapID: Long, checkStr: String?): Boolean
 
     @Throws(IOException::class) fun checkBeatmap(beatmap: Beatmap, fileStr: String): Boolean
 
-    fun getBeatmap(bid: Long): Beatmap
+    fun getBeatmap(beatmapID: Long): Beatmap
 
-    fun getBeatmaps(ids: Iterable<Long>): List<Beatmap>
+    fun getBeatmaps(beatmapIDs: Iterable<Long>): List<Beatmap>
 
     /**
      * @param type favourite, graveyard, guest, loved, nominated, pending, ranked
      * 注意，是英式英文的 favourite，有个 u
      */
-    fun getUserBeatmapset(id: Long, type: String = "favourite", offset: Int = 0, limit: Int = 100): List<Beatmapset>
+    fun getUserBeatmapset(userID: Long, type: String = "favourite", offset: Int = 0, limit: Int = 100): List<Beatmapset>
 
-    fun getUserMostPlayedBeatmaps(id: Long, offset: Int = 0, limit: Int = 100): List<Beatmap>
+    fun getUserMostPlayedBeatmaps(userID: Long, offset: Int = 0, limit: Int = 100): List<Beatmap>
 
-    fun getBeatmapset(sid: Long): Beatmapset
+    fun getBeatmapset(beatmapsetID: Long): Beatmapset
 
-    fun getBeatmapset(sids: Iterable<Long>): List<Beatmapset>
+    fun getBeatmapset(beatmapsetIDs: Iterable<Long>): List<Beatmapset>
 
     fun extendBeatmapInSetFromAPI(sets: Iterable<Beatmapset>): List<Beatmapset>
 
     fun extendBeatmapInScoreFromAPI(scores: Iterable<LazerScore>): List<LazerScore>
 
-    fun getBeatmapFromDatabase(bid: Long): Beatmap
+    fun getBeatmapFromDatabase(beatmapID: Long): Beatmap
 
-    fun getBeatmapsetFromDatabase(sid: Long): Beatmapset
+    fun getBeatmapsetFromDatabase(beatmapsetID: Long): Beatmapset
 
-    fun isNotOverRating(bid: Long): Boolean
+    fun isNotOverRating(beatmapID: Long): Boolean
 
     @Throws(Exception::class) fun getBeatmapObjectGrouping26(beatmap: Beatmap): IntArray
 
-    fun getFailTime(bid: Long, index: Int): Int
+    fun getFailTime(beatmapID: Long, index: Int): Int
 
-    fun getAllFailTime(all: List<Pair<Long, Int>>): List<Int>
+    fun getAllFailTime(all: Collection<Pair<Long, Int>>): List<Int>
 
-    fun getAllBeatmapHitLength(bid: Collection<Long>): List<Pair<Long, Int>>
+    fun getAllBeatmapHitLength(beatmapIDs: Collection<Long>): List<Pair<Long, Int>>
 
     fun getPlayPercentage(score: LazerScore): Double
 

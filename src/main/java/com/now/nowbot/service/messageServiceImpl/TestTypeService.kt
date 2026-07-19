@@ -6,6 +6,7 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod.Companion.getFinalRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.skill.SkillType
 import com.now.nowbot.model.skill.Skill
@@ -85,7 +86,7 @@ import org.springframework.stereotype.Service
             file,
             param.mode,
             if (isChangedRating) {
-                LazerMod.getModSpeedForStarCalculate(param.mods).toDouble()
+                param.mods.getFinalRate().toDouble()
             } else {
                 param.rate
             },

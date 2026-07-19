@@ -3,6 +3,7 @@ package com.now.nowbot.util
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.getClockRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Mod
@@ -100,7 +101,7 @@ object BeatmapUtil {
             a = (a / 2f).coerceIn(0f, 10f)
         }
 
-        val speed = LazerMod.getModSpeed(mods)
+        val speed = mods.getClockRate()
 
         if (speed != 1f) {
             var ms = getMillisFromAR(a)
@@ -152,7 +153,7 @@ object BeatmapUtil {
         val speed = if (mode == OsuMode.MANIA) {
             1f
         } else {
-            LazerMod.getModSpeed(mods)
+            mods.getClockRate()
         }
 
         if (speed != 1f) {
@@ -201,11 +202,11 @@ object BeatmapUtil {
     }
 
     fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
-        return ((bpm ?: 0f) * LazerMod.getModSpeed(mods)).roundToDigits2()
+        return ((bpm ?: 0f) * mods.getClockRate()).roundToDigits2()
     }
 
     fun applyLength(length: Int?, mods: List<LazerMod>): Int {
-        return ((length ?: 0).toDouble() / LazerMod.getModSpeed(mods)).roundToInt()
+        return ((length ?: 0).toDouble() / mods.getClockRate().coerceAtLeast(0.01f)).roundToInt()
     }
 
     private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()

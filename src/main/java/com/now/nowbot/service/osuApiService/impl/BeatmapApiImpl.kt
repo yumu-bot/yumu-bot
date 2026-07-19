@@ -86,7 +86,6 @@ class BeatmapApiImpl(
         }.getOrNull()
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun asyncDownloadCover(
         covers: List<Covers>,
         type: CoverType
@@ -150,25 +149,23 @@ class BeatmapApiImpl(
     }
 
 
-    override fun deleteBeatmapFileFromDirectory(bid: Long): Boolean  {
-        val path = osuDir.resolve("$bid.osu")
+    override fun deleteBeatmapFileFromDirectory(beatmapID: Long): Boolean  {
+        val path = osuDir.resolve("$beatmapID.osu")
 
         return runCatching {
             Files.deleteIfExists(path)
         }.onFailure {
-            log.warn("谱面实现：无法删除谱面 $bid，原因：${it.message}")
+            log.warn("谱面实现：无法删除谱面 $beatmapID，原因：${it.message}")
         }.isSuccess
     }
 
-    override fun hasBeatmapFileFromDirectory(bid: Long): Boolean {
-        val path = osuDir.resolve("$bid.osu")
+    override fun hasBeatmapFileFromDirectory(beatmapID: Long): Boolean {
+        val path = osuDir.resolve("$beatmapID.osu")
 
-        if (!Files.isRegularFile(path)) return false
-
-        return try {
+        return Files.isRegularFile(path) && try {
             if (Files.size(path) < 100) {
-                log.info("谱面实现：检查到僵尸文件 $bid.osu，删除中...")
-                deleteBeatmapFileFromDirectory(bid)
+                log.info("谱面实现：检查到僵尸文件 $beatmapID.osu，删除中...")
+                deleteBeatmapFileFromDirectory(beatmapID)
                 false
             } else {
                 true
@@ -178,10 +175,10 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun getBeatmapFileFromDirectory(bid: Long): String? {
-        if (hasBeatmapFileFromDirectory(bid)) {
+    override fun getBeatmapFileFromDirectory(beatmapID: Long): String? {
+        if (hasBeatmapFileFromDirectory(beatmapID)) {
             try {
-                val path = osuDir.resolve("$bid.osu")
+                val path = osuDir.resolve("$beatmapID.osu")
                 return Files.readString(path, StandardCharsets.UTF_8)
             } catch (e: IOException) {
                 log.error("osu 谱面 API：读取本地谱面文件失败: ", e)
@@ -210,10 +207,10 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun refreshBeatmapFileFromDirectory(bid: Long): Boolean {
-        val path = osuDir.resolve("$bid.osu")
+    override fun refreshBeatmapFileFromDirectory(beatmapID: Long): Boolean {
+        val path = osuDir.resolve("$beatmapID.osu")
 
-        if (hasBeatmapFileFromDirectory(bid)) {
+        if (hasBeatmapFileFromDirectory(beatmapID)) {
             try {
                 Files.delete(path)
             } catch (e: IOException) {
@@ -221,7 +218,7 @@ class BeatmapApiImpl(
                 return false
             }
 
-            val str = getBeatmapFileString(bid)
+            val str = getBeatmapFileString(beatmapID)
 
             return !str.isNullOrBlank()
         }
@@ -245,31 +242,31 @@ class BeatmapApiImpl(
         }
     }
 
-    @Cacheable(value = ["beatmap file"], key = "#bid")
-    override fun getBeatmapFileByte(bid: Long): ByteArray? {
-        return getBeatmapFileString(bid)?.toByteArray(StandardCharsets.UTF_8)
+    //@Cacheable(value = ["beatmap file"], key = "#bid")
+    override fun getBeatmapFileByte(beatmapID: Long): ByteArray? {
+        return getBeatmapFileString(beatmapID)?.toByteArray(StandardCharsets.UTF_8)
     }
 
     @Cacheable(value = ["beatmap file_path"], key = "#bid")
     override fun getBeatmapFilePath(bid: Long): String {
         var str: String? = null
 
-        if (hasBeatmapFileFromDirectory(bid)) {
-            str = osuDir.resolve("$bid.osu").absolutePathString()
+        if (hasBeatmapFileFromDirectory(beatmapID)) {
+            str = osuDir.resolve("$beatmapID.osu").absolutePathString()
         }
 
         if (!str.isNullOrBlank()) {
-            writeBeatmapFileToDirectory(getBeatmapFileStringFromOutside(bid), bid)
+            writeBeatmapFileToDirectory(getBeatmapFileStringFromOutside(beatmapID), beatmapID)
         }
 
-        return str ?: osuDir.resolve("$bid.osu").absolutePathString()
+        return str ?: osuDir.resolve("$beatmapID.osu").absolutePathString()
     }
 
 
-    override fun downloadBeatmapFile(bids: Collection<Long>): List<Long> {
+    override fun downloadBeatmapFile(beatmapIDs: Collection<Long>): List<Long> {
         // 1. 区分本地和在线
-        val exists = bids.filter { hasBeatmapFileFromDirectory(it) }.toSet()
-        val notExists = bids.minus(exists)
+        val exists = beatmapIDs.filter { hasBeatmapFileFromDirectory(it) }.toSet()
+        val notExists = beatmapIDs.minus(exists)
 
         val downloaded = ConcurrentSet<Long>()
 
@@ -303,7 +300,7 @@ class BeatmapApiImpl(
 
         val all = exists + downloaded
 
-        return bids.filter {
+        return beatmapIDs.filter {
             it in all
         }
     }
@@ -329,21 +326,21 @@ class BeatmapApiImpl(
     }
 
     // 获取谱面：先获取本地，再获取 bs api，最后获取网页
-    override fun getBeatmapFileString(bid: Long): String? {
+    override fun getBeatmapFileString(beatmapID: Long): String? {
         var str: String? = null
 
-        if (hasBeatmapFileFromDirectory(bid)) {
-            str = getBeatmapFileFromDirectory(bid)
+        if (hasBeatmapFileFromDirectory(beatmapID)) {
+            str = getBeatmapFileFromDirectory(beatmapID)
         }
 
         if (!str.isNullOrBlank()) {
             return str
         } else {
-            str = getBeatmapFileStringFromOutside(bid)
+            str = getBeatmapFileStringFromOutside(beatmapID)
         }
 
         if (!str.isNullOrBlank()) {
-            writeBeatmapFileToDirectory(str, bid)
+            writeBeatmapFileToDirectory(str, beatmapID)
         }
 
         return str
@@ -352,19 +349,15 @@ class BeatmapApiImpl(
     // 查一下文件是否跟 checksum 是否对得上
     @Throws(IOException::class)
     override fun checkBeatmap(beatmap: Beatmap?): Boolean {
-        if (beatmap == null) return false
-        return checkBeatmap(beatmap.beatmapID, beatmap.md5 ?: return false)
+        return beatmap != null && checkBeatmap(beatmap.beatmapID, beatmap.md5 ?: return false)
     }
 
     @Throws(IOException::class)
-    override fun checkBeatmap(bid: Long, checkStr: String?): Boolean {
+    override fun checkBeatmap(beatmapID: Long, checkStr: String?): Boolean {
         if (checkStr == null) return false
 
-        val path = osuDir.resolve("$bid.osu")
-        if (Files.isRegularFile(path) && checkStr.isNotBlank()) {
-            return getBeatmapMD5(Files.readString(path)) == checkStr
-        }
-        return false
+        val path = osuDir.resolve("$beatmapID.osu")
+        return Files.isRegularFile(path) && checkStr.isNotBlank() && getBeatmapMD5(Files.readString(path)) == checkStr
     }
 
     override fun checkBeatmap(beatmap: Beatmap, fileStr: String): Boolean {
@@ -375,10 +368,10 @@ class BeatmapApiImpl(
         return DigestUtils.md5DigestAsHex(fileStr.toByteArray(StandardCharsets.UTF_8))
     }
 
-    override fun getBeatmap(bid: Long): Beatmap {
+    override fun getBeatmap(beatmapID: Long): Beatmap {
         val beatmap = request { client ->
             client.get()
-                .uri("beatmaps/{bid}", bid)
+                .uri("beatmaps/{bid}", beatmapID)
                 .headers(base::insertHeader)
                 .toBody<Beatmap>()
         }
@@ -388,8 +381,8 @@ class BeatmapApiImpl(
         return beatmap
     }
 
-    override fun getBeatmaps(ids: Iterable<Long>): List<Beatmap> {
-        val idChunk = ids.chunked(50)
+    override fun getBeatmaps(beatmapIDs: Iterable<Long>): List<Beatmap> {
+        val idChunk = beatmapIDs.chunked(50)
 
         val callables = idChunk.map { chunk ->
             Callable {
@@ -423,10 +416,10 @@ class BeatmapApiImpl(
         return JacksonUtil.parseObjectList(json["beatmaps"], Beatmap::class.java)
     }
 
-    override fun getUserBeatmapset(id: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
+    override fun getUserBeatmapset(userID: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
 
         if (limit <= 100) {
-            return getUserBeatmapsetPrivate(id, type, offset, limit)
+            return getUserBeatmapsetPrivate(userID, type, offset, limit)
         } else {
             val times = (limit / 100).coerceAtLeast(1)
 
@@ -435,7 +428,7 @@ class BeatmapApiImpl(
                 val li = min(100, limit - (i * 100))
 
                 Callable {
-                    getUserBeatmapsetPrivate(id, type, of, li)
+                    getUserBeatmapsetPrivate(userID, type, of, li)
                 }
             }
 
@@ -465,9 +458,9 @@ class BeatmapApiImpl(
         return sets
     }
 
-    override fun getUserMostPlayedBeatmaps(id: Long, offset: Int, limit: Int): List<Beatmap> {
+    override fun getUserMostPlayedBeatmaps(userID: Long, offset: Int, limit: Int): List<Beatmap> {
         if (limit <= 100) {
-            return getUserMostPlayedBeatmapsPrivate(id, offset, limit)
+            return getUserMostPlayedBeatmapsPrivate(userID, offset, limit)
         } else {
             val times = (limit / 100).coerceAtLeast(1)
 
@@ -476,7 +469,7 @@ class BeatmapApiImpl(
                 val li = min(100, limit - (i * 100))
 
                 Callable {
-                    getUserMostPlayedBeatmapsPrivate(id, of, li)
+                    getUserMostPlayedBeatmapsPrivate(userID, of, li)
                 }
             }
 
@@ -523,8 +516,8 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun getBeatmapset(sids: Iterable<Long>): List<Beatmapset> {
-        val callables = sids.map { sid ->
+    override fun getBeatmapset(beatmapsetIDs: Iterable<Long>): List<Beatmapset> {
+        val callables = beatmapsetIDs.map { sid ->
             Callable {
                 getBeatmapset(sid)
             }
@@ -564,10 +557,10 @@ class BeatmapApiImpl(
         return scores.toList()
     }
 
-    override fun getBeatmapset(sid: Long): Beatmapset {
+    override fun getBeatmapset(beatmapsetID: Long): Beatmapset {
         val beatmapset = request { client ->
             client.get()
-                .uri("beatmapsets/{sid}", sid)
+                .uri("beatmapsets/{sid}", beatmapsetID)
                 .headers(base::insertHeader)
                 .toBody<Beatmapset>()
         }
@@ -577,21 +570,21 @@ class BeatmapApiImpl(
         return beatmapset
     }
 
-    override fun getBeatmapFromDatabase(bid: Long): Beatmap {
+    override fun getBeatmapFromDatabase(beatmapID: Long): Beatmap {
         try {
-            val lite = beatmapDao.getBeatmapLite(bid)
+            val lite = beatmapDao.getBeatmapLite(beatmapID)
             return BeatmapDao.fromBeatmapLite(lite!!)
         } catch (_: Exception) {
-            return getBeatmap(bid)
+            return getBeatmap(beatmapID)
         }
     }
 
-    override fun getBeatmapsetFromDatabase(sid: Long): Beatmapset {
+    override fun getBeatmapsetFromDatabase(beatmapsetID: Long): Beatmapset {
         try {
-            val lite = beatmapDao.getBeatmapsetLite(sid)
+            val lite = beatmapDao.getBeatmapsetLite(beatmapsetID)
             return BeatmapDao.fromBeatmapsetLite(lite!!)
         } catch (_: Exception) {
-            return getBeatmapset(sid)
+            return getBeatmapset(beatmapsetID)
         }
     }
 
@@ -616,15 +609,15 @@ class BeatmapApiImpl(
     }
 
 
-    override fun isNotOverRating(bid: Long): Boolean {
+    override fun isNotOverRating(beatmapID: Long): Boolean {
         try {
-            val map = beatmapDao.getBeatmapLite(bid)!!
+            val map = beatmapDao.getBeatmapLite(beatmapID)!!
             return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating <= STAR_BOUNDARY
         } catch (_: Exception) {
         }
 
         try {
-            val map = getBeatmap(bid)
+            val map = getBeatmap(beatmapID)
             return map.status.equals("ranked", ignoreCase = true) && map.starRating <= STAR_BOUNDARY
         } catch (_: NetworkException.BeatmapException.NotFound) {
             return false
@@ -844,11 +837,11 @@ class BeatmapApiImpl(
         return result ?: intArrayOf(0)
     }
 
-    override fun getFailTime(bid: Long, index: Int): Int {
+    override fun getFailTime(beatmapID: Long, index: Int): Int {
         if (index <= 0) return 0
-        val time = getTimeStampByBeatmapIDAndIndex(bid, index)
+        val time = getTimeStampByBeatmapIDAndIndex(beatmapID, index)
             ?: runCatching {
-                val count = getBeatmapCountLite(bid) ?: return 0
+                val count = getBeatmapCountLite(beatmapID) ?: return 0
 
                 if ((count.readTimestamps()?.size ?: 0) < index) return 0
 
@@ -859,7 +852,7 @@ class BeatmapApiImpl(
         return (time / 1000)
     }
 
-    override fun getAllFailTime(all: List<Pair<Long, Int>>): List<Int> {
+    override fun getAllFailTime(all: Collection<Pair<Long, Int>>): List<Int> {
         if (all.isEmpty()) return emptyList()
 
         val bids = all.map { it.first }.toSet()
@@ -893,13 +886,13 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun getAllBeatmapHitLength(bid: Collection<Long>): List<Pair<Long, Int>> {
-        if (bid.isEmpty()) return emptyList()
-        val timeMap = beatmapDao.getBeatmapHitLength(bid).associate { it.id to it.length }
+    override fun getAllBeatmapHitLength(beatmapIDs: Collection<Long>): List<Pair<Long, Int>> {
+        if (beatmapIDs.isEmpty()) return emptyList()
+        val timeMap = beatmapDao.getBeatmapHitLength(beatmapIDs).associate { it.id to it.length }
 
-        val result = ArrayList<Pair<Long, Int>>(bid.size)
+        val result = ArrayList<Pair<Long, Int>>(beatmapIDs.size)
 
-        for (id in bid) {
+        for (id in beatmapIDs) {
             val time = timeMap[id]
             if (time != null) {
                 result.add(id to time)
@@ -946,7 +939,7 @@ class BeatmapApiImpl(
         val body: MutableMap<String, Any> = HashMap()
 
         if (OsuMode.isNotDefaultOrNull(mode)) {
-            body["ruleset_id"] = mode.toSafeModeValue()
+            body["ruleset_id"] = mode.safeModeValue
         }
 
         val modsInt = LazerMod.getModsValue(mods)

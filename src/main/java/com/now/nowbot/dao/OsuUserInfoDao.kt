@@ -263,15 +263,39 @@ class OsuUserInfoDao(
         }
     }
 
+    /**
+     * 优先取相比目标天更新或相同的数据，没有才取前面的数据
+     */
+    fun getPercentFrom(userID: Long, mode: Byte, from: LocalDate): UserRankPercentLite? {
+        return userRankPercentRepository.getEarliest(userID, mode, from)
+            ?: userRankPercentRepository.getLatestBefore(userID, mode, from)
+    }
+
+    /**
+     * 优先取相比目标天更新或相同的数据，没有才取前面的数据
+     */
+    fun getStatisticsFrom(userID: Long, mode: Byte, from: LocalDate): UserStatisticsLite? {
+        return userStatisticsRepository.getEarliest(userID, mode, from)
+            ?: userStatisticsRepository.getLatestBefore(userID, mode, from)
+    }
+
+    /**
+     * 优先取相比目标天更新或相同的数据，没有才取前面的数据
+     */
+    fun getInformationFrom(userID: Long, mode: Byte, from: LocalDate): UserInfoLite? {
+        return userInfoRepository.getEarliest(userID, mode, from)
+            ?: userInfoRepository.getLatestBefore(userID, mode, from)
+    }
+
     fun getHistoryUser(user: OsuUser, duration: Duration = 1.days): OsuUser? {
         val today = LocalDate.now(ZoneOffset.UTC)
-        val to = today.minusDays(duration.inWholeDays)
-        val from = today.minusYears(1)
+        val from = today.minusDays(duration.inWholeDays)
+        val mode = user.currentOsuMode.modeValue
 
-        val info = userInfoRepository.getLatestBetween(user.userID, user.currentOsuMode.modeValue, from, to)
-        val stats = userStatisticsRepository.getLatestBetween(user.userID, user.currentOsuMode.modeValue, from, to)
-        val rank = userGlobalRankRepository.getBetween(user.userID, user.currentOsuMode.modeValue, to.minusDays(90), to)
-        val percent = userRankPercentRepository.getLatestBetween(user.userID, user.currentOsuMode.modeValue, from, to)
+        val info = getInformationFrom(user.userID, mode, from)
+        val stats = getStatisticsFrom(user.userID, mode, from)
+        val rank = userGlobalRankRepository.getBetween(user.userID, mode, from.minusDays(90), from)
+        val percent = getPercentFrom(user.userID, mode, from)
 
         return fromArchive(info, stats, rank, percent)
     }

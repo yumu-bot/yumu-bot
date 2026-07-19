@@ -2,18 +2,13 @@ package com.now.nowbot.model.calculate
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.spring.osu.extended.rosu.CatchPerformanceAttributes
-import org.spring.osu.extended.rosu.JniPerformanceAttributes
-import org.spring.osu.extended.rosu.ManiaPerformanceAttributes
-import org.spring.osu.extended.rosu.OsuPerformanceAttributes
-import org.spring.osu.extended.rosu.TaikoPerformanceAttributes
+import com.now.nowbot.model.enums.OsuMode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
-import kotlin.reflect.full.memberProperties
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-open class RosuPerformance(result: JniPerformanceAttributes? = null) : CalculatePerformance {
+open class RosuPerformance(result: me.aloic.rosupp.PerformanceResult? = null) : CalculatePerformance {
     @JsonProperty("pp")
     override var pp: Double = 0.0
 
@@ -39,32 +34,32 @@ open class RosuPerformance(result: JniPerformanceAttributes? = null) : Calculate
     var stars: Double? = null
 
     init {
-        when (result) {
-            is OsuPerformanceAttributes -> {
+        when (result?.mode?.toOsuMode()) {
+            OsuMode.OSU -> {
                 ppAim = result.ppAim
                 ppSpeed = result.ppSpeed
-                ppAcc = result.ppAcc
+                ppAcc = result.ppAccuracy
                 ppFlashlight = result.ppFlashlight
                 effectiveMissCount = result.effectiveMissCount
                 stars = result.difficulty.stars
                 pp = result.pp
             }
 
-            is TaikoPerformanceAttributes -> {
-                ppAcc = result.ppAcc
+            OsuMode.TAIKO -> {
+                ppAcc = result.ppAccuracy
                 ppDifficulty = result.ppDifficulty
                 effectiveMissCount = result.effectiveMissCount
                 stars = result.difficulty.stars
                 pp = result.pp
             }
 
-            is ManiaPerformanceAttributes -> {
+            OsuMode.MANIA -> {
                 ppDifficulty = result.ppDifficulty
                 stars = result.difficulty.stars
                 pp = result.pp
             }
 
-            is CatchPerformanceAttributes -> {
+            OsuMode.CATCH -> {
                 stars = result.difficulty.stars
                 pp = result.pp
             }
@@ -74,22 +69,17 @@ open class RosuPerformance(result: JniPerformanceAttributes? = null) : Calculate
     }
 
     companion object {
-        inline fun <reified T : Any> T.asMap() : Map<String, Double> {
-            val props = T::class.memberProperties.associateBy { it.name }
-
-            return props.keys
-                .associateWith { props[it]?.get(this) }
-                .filterNot { it.value == null }
-                .mapKeys { it.key.toUnderline() }
-                .mapValues { it.value.toString().toDouble() }
-        }
-
-        fun String.toUnderline(): String {
-            return this.replace("([a-z])([A-Z])".toRegex(), "$1_$2").lowercase()
+        fun me.aloic.rosupp.GameMode.toOsuMode(): OsuMode {
+            return when (this) {
+                me.aloic.rosupp.GameMode.OSU -> OsuMode.OSU
+                me.aloic.rosupp.GameMode.TAIKO -> OsuMode.TAIKO
+                me.aloic.rosupp.GameMode.CATCH -> OsuMode.CATCH
+                me.aloic.rosupp.GameMode.MANIA -> OsuMode.MANIA
+            }
         }
     }
 
-    class FullRosuPerformance(result: JniPerformanceAttributes): RosuPerformance(result), FullCalculatePerformance {
+    class FullRosuPerformance(result: me.aloic.rosupp.PerformanceResult): RosuPerformance(result), FullCalculatePerformance {
         @JsonProperty("full_pp")
         override var fullPP: Double = 0.0
 

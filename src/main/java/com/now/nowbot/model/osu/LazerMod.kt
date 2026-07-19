@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.*
 import tools.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.botRuntimeException.ModsException
+import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.JacksonUtil.json
 import com.now.nowbot.util.command.LEVEL_MORE
 import com.now.nowbot.util.command.REG_SPACE
@@ -2743,6 +2744,10 @@ sealed class LazerMod {
             return this.any { hiddenSet.contains(it::class) }
         }
 
+        fun List<LazerMod>.toJson(): String {
+            return JacksonUtil.objectToJson(this)
+        }
+
         fun getModsListFromModInt(modInt: Int): List<LazerMod> {
             val list = List(31) { it }
 
@@ -2895,7 +2900,7 @@ sealed class LazerMod {
         /**
          * 原 speed 方法
          */
-        fun getSpeedChange(mod: LazerMod): Float? {
+        fun getInitialRate(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
                 is Daycore -> mod.speedChange ?: 0.7f
@@ -2911,41 +2916,32 @@ sealed class LazerMod {
         /**
          * 原 speed final 方法
          */
-        fun getFinalSpeed(mod: LazerMod): Float? {
+        fun getFinalRate(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
                 is Daycore -> mod.speedChange ?: 0.7f
                 is DoubleTime -> mod.speedChange ?: 1.5f
                 is Nightcore -> mod.speedChange ?: 1.5f
-                is WindUp -> mod.initialRate ?: 1.5f
-                is WindDown -> mod.initialRate ?: 0.75f
-                is AdaptiveSpeed -> mod.initialRate ?: 1f // ?
+                is WindUp -> mod.finalRate ?: 1.5f
+                is WindDown -> mod.finalRate ?: 0.75f
+                is AdaptiveSpeed -> mod.initialRate ?: 1f
                 else -> null
             }
         }
 
-        fun getModSpeedForStarCalculate(mods: List<LazerMod>?): Float {
-            if (mods.isNullOrEmpty()) return 1f
-            var f: Float?
-            for (mod in mods) {
-                f = getFinalSpeed(mod)
-                if (f != null) {
-                    return f
-                }
-            }
-            return 1f
+        /**
+         * 一般用于算星数
+         */
+        fun List<LazerMod>?.getFinalRate(): Float {
+            return this?.firstNotNullOfOrNull { getFinalRate(it) } ?: 1f
         }
 
-        fun getModSpeed(mods: List<LazerMod>?): Float {
-            if (mods.isNullOrEmpty()) return 1f
-            var f: Float?
-            for (mod in mods) {
-                f = getSpeedChange(mod)
-                if (f != null) {
-                    return f
-                }
-            }
-            return 1f
+        /**
+         * 不能用于算星数，会偏低
+         * 只用于算 pp
+         */
+        fun List<LazerMod>?.getClockRate(): Float {
+            return this?.firstNotNullOfOrNull { getInitialRate(it) } ?: 1f
         }
 
         /**

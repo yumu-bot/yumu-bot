@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.getFinalRate
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.skill.Skill6
@@ -229,7 +229,7 @@ import kotlin.math.sqrt
                     Skill6(
                         OsuFile(fileString),
                         OsuMode.MANIA,
-                        LazerMod.getModSpeedForStarCalculate(score.mods).toDouble()
+                        score.mods.getFinalRate().toDouble()
                     )
                 } catch (e: Exception) {
                     log.error("解析谱面 ${score.beatmapID} 异常", e)

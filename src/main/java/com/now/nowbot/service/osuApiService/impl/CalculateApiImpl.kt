@@ -13,27 +13,35 @@ import com.now.nowbot.model.calculate.FullCosuPerformance
 import com.now.nowbot.model.calculate.RosuPerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.osu.LazerMod.Companion.getClockRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.osu.LazerMod.Companion.isOfficialCalculateAbleMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toJson
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.JacksonUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import org.spring.osu.extended.rosu.JniBeatmap
-import org.spring.osu.extended.rosu.JniScoreState
+import me.aloic.rosupp.DifficultyRequest
+import me.aloic.rosupp.PerformanceRequest
+import me.aloic.rosupp.PerformanceResult
+import me.aloic.rosupp.RosuPp
+import me.aloic.rosupp.ScoreMode
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
+import kotlin.use
 
 @Service
 class CalculateApiImpl(
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
+    private val rosu: RosuPp?,
+
     config: OsuLocalCalculateConfig,
 ) : OsuCalculateApiService {
 
@@ -80,28 +88,19 @@ class CalculateApiImpl(
     }
 
     private fun getScorePerfectPPFromRosu(score: LazerScore): RosuPerformance? {
-        if (!enableRosu) return null
+        if (rosu == null) return null
 
-        val mode = score.mode.toRosuMode()
-        val mods = score.mods
-        val beatmapID = score.beatmapID
-        val lazer = score.isLazer
+        val bytes = beatmapApiService.getBeatmapFileByte(score.beatmapID) ?: return null
 
-        val closable = ArrayList<AutoCloseable>(1)
-        return try {
-            val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) }
-                ?: return null
-            val objects = beatmap.objects
-            val performance = beatmap.createPerformance().apply {
-                isLazer(lazer)
-                setPassedObjects(objects)
-                if (change) this.setGameMode(mode)
-                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+        return rosu.let { r ->
+            r.loadBeatmap(bytes).use { beatmap ->
+                val difficulty = score.buildDifficultyRequest()
+                val performance = score.buildPerfectRequest(difficulty)
+                val result = r.calculatePerformance(beatmap, performance)
+
+                RosuPerformance(result)
             }
-            performance.calculate()
-        } finally {
-            closable.forEach { it.close() }
-        }.let { RosuPerformance(it) }
+        }
     }
 
     override fun getScoreFullComboPP(score: LazerScore): CalculatePerformance {
@@ -126,40 +125,19 @@ class CalculateApiImpl(
     }
 
     private fun getScoreFullComboPPFromRosu(score: LazerScore): RosuPerformance? {
-        if (!enableRosu) return null
+        if (rosu == null) return null
 
-        val mode = score.mode.toRosuMode()
-        val mods = score.mods
-        val state = with(score.statistics) {
-            val state = toScoreStatistics(score.mode)
-            JniScoreState.create(
-                maxCombo = 2147483647 / 2,
-                largeTickHits = largeTickHit,
-                smallTickHits = smallTickHit,
-                sliderEndHits = sliderTailHit,
-                geki = state.countGeki!!,
-                katu = state.countKatu!!,
-                n300 = state.count300!! + state.countMiss!!,
-                n100 = state.count100!!,
-                n50 = state.count50!!,
-            )
+        val bytes = beatmapApiService.getBeatmapFileByte(score.beatmapID) ?: return null
+
+        return rosu.let { r ->
+            r.loadBeatmap(bytes).use { beatmap ->
+                val difficulty = score.buildDifficultyRequest()
+                val performance = score.buildFullComboRequest(difficulty)
+                val result = r.calculatePerformance(beatmap, performance)
+
+                RosuPerformance(result)
+            }
         }
-
-        val beatmapID = score.beatmapID
-        val lazer = score.isLazer
-
-        val closable = ArrayList<AutoCloseable>(1)
-        return try {
-            val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) }
-                ?: return null
-            beatmap.createPerformance(state).apply {
-                setLazer(lazer)
-                if (change) this.setGameMode(mode)
-                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-            }.calculate()
-        } finally {
-            closable.forEach { it.close() }
-        }.let { RosuPerformance(it) }
     }
 
     private fun getScoreFullComboPPFromCosu(score: LazerScore): CosuPerformance? {
@@ -218,9 +196,7 @@ class CalculateApiImpl(
 
 
     private fun getScoreStatisticsWithFullAndPerfectPPFromRosu(score: LazerScore): RosuPerformance.FullRosuPerformance? {
-        if (!enableRosu) return null
-
-        val mode = score.mode.toRosuMode()
+        if (rosu == null) return null
 
         /**
          * 如果是 sb_score，则过滤掉 RX 的 mod，确保最大 pp 符合预期
@@ -230,75 +206,26 @@ class CalculateApiImpl(
         } else {
             score.mods
         }
-        val isNotPass = score.passed.not()
-        val fcState: JniScoreState
-        val state: JniScoreState
-        with(score.statistics) {
-            val statistics = toScoreStatistics(score.mode)
-            fcState = JniScoreState.create(
-                maxCombo = 2147483647 / 2,
-                largeTickHits = largeTickHit,
-                smallTickHits = smallTickHit,
-                sliderEndHits = sliderTailHit,
-                geki = statistics.countGeki!!,
-                katu = statistics.countKatu!!,
-                n300 = statistics.count300!! + statistics.countMiss!!,
-                n100 = statistics.count100!!,
-                n50 = statistics.count50!!,
-                misses = 0
-            )
-            state = JniScoreState.create(
-                maxCombo = score.maxCombo,
-                largeTickHits = largeTickHit,
-                smallTickHits = smallTickHit,
-                sliderEndHits = sliderTailHit,
-                geki = statistics.countGeki!!,
-                katu = statistics.countKatu!!,
-                n300 = statistics.count300!!,
-                n100 = statistics.count100!!,
-                n50 = statistics.count50!!,
-                misses = statistics.countMiss!!,
-            )
+
+        val bytes = beatmapApiService.getBeatmapFileByte(score.beatmapID) ?: return null
+
+        val result: PerformanceResult
+        val fullPP: Double
+        val perfectPP: Double
+
+        rosu.let { r ->
+            r.loadBeatmap(bytes).use { beatmap ->
+                val difficulty = customDifficultyRequest(mods, score.isLazer)
+                val performance = score.buildPerformanceRequest(difficulty)
+                result = r.calculatePerformance(beatmap, performance)
+                fullPP = r.calculatePerformance(beatmap, score.buildFullComboRequest(difficulty)).pp
+                perfectPP = r.calculatePerformance(beatmap, score.buildPerfectRequest(difficulty)).pp
+            }
         }
 
-        if (isNotPass) {
-            state.n300 = 0
-        }
-
-        val beatmapID = if (score.beatmapID > 0L) score.beatmapID else score.beatmap.beatmapID
-        val lazer = score.isLazer
-
-        val closable = ArrayList<AutoCloseable>(1)
-
-        return try {
-            val (beatmap, isConvert) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) } ?: return null
-            val notFC = beatmap.createPerformance(state).apply {
-                setLazer(lazer)
-                setPassedObjects(beatmap.objects)
-                if (isNotPass) setHitResultPriority(true)
-                if (isConvert) this.setGameMode(mode)
-                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-            }.calculate()
-            val result = RosuPerformance.FullRosuPerformance(notFC)
-            val fc = beatmap.createPerformance(fcState).apply {
-                setLazer(lazer)
-                // setPassedObjects(beatmap.objects)
-                if (isConvert) setGameMode(mode)
-                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-
-            }.calculate().getPP()
-            val pf = beatmap.createPerformance().apply {
-                setLazer(lazer)
-                // setPassedObjects(beatmap.objects)
-                if (isConvert) setGameMode(mode)
-                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-
-            }.calculate().getPP()
-            result.fullPP = fc
-            result.perfectPP = pf
-            result
-        } finally {
-            closable.forEach { it.close() }
+        return RosuPerformance.FullRosuPerformance(result).apply {
+            this.fullPP = fullPP
+            this.perfectPP = perfectPP
         }
     }
 
@@ -377,13 +304,13 @@ class CalculateApiImpl(
     }
 
     private fun applyPPToScoreFromRosu(score: LazerScore): Double {
-        if (score.pp > 1e-4 || !enableRosu) {
-            return -1.0
-        } else {
-            val pp = getScoreRosuPerformance(score).pp
-            score.pp = pp
-            return pp
-        }
+        if (rosu == null || score.pp > 1e-4) return -1.0
+
+        val performance = getScoreRosuPerformance(score) ?: return -1.0
+
+        val pp = performance.pp
+        score.pp = pp
+        return pp
     }
 
     private fun applyPPToScoreFromCosu(score: LazerScore): Double {
@@ -443,118 +370,76 @@ class CalculateApiImpl(
     }
 
     private fun getScoresPPWithSameBeatmapFromRosu(scores: Collection<LazerScore>): Map<Long, RosuPerformance> {
-        if (scores.isEmpty() || !enableRosu) return emptyMap()
+        if (scores.isEmpty() || rosu == null) return emptyMap()
 
         val beatmapID = scores.first().beatmapID
-        val mode = scores.first().mode.toRosuMode()
 
-        val closable = ArrayList<AutoCloseable>(scores.size + 1)
-        return try {
-            val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) } ?: return mapOf()
+        val bytes = beatmapApiService.getBeatmapFileByte(beatmapID) ?: return emptyMap()
 
-            scores.map { score ->
-                val mods = score.mods
+        return scores.associate { score ->
+            val result = rosu.let { r ->
+                r.loadBeatmap(bytes).use { beatmap ->
+                    val difficulty = score.buildDifficultyRequest()
+                    val performance = score.buildPerformanceRequest(difficulty)
+                    val result = r.calculatePerformance(beatmap, performance)
 
-                val state = with(score.statistics) {
-                    val state = toScoreStatistics(score.mode)
-                    JniScoreState.create(
-                        maxCombo = score.maxCombo,
-                        largeTickHits = largeTickHit,
-                        smallTickHits = smallTickHit,
-                        sliderEndHits = sliderTailHit,
-                        geki = state.countGeki!!,
-                        katu = state.countKatu!!,
-                        n300 = state.count300!!,
-                        n100 = state.count100!!,
-                        n50 = state.count50!!,
-                        misses = state.countMiss!!,
-                    )
+                    RosuPerformance(result)
                 }
-
-                val isNotPass = !score.passed
-                val lazer = score.isLazer
-
-                score.scoreID to beatmap.createPerformance(state).apply {
-                    setLazer(lazer)
-                    if (isNotPass) setHitResultPriority(true)
-                    if (change) this.setGameMode(mode)
-                    if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-                }.calculate()
             }
-        } finally {
-            closable.forEach { it.close() }
-        }.associate { (id, attr) ->
-            id to RosuPerformance(attr)
+
+            score.scoreID to result
         }
     }
 
     override fun getAccPPList(
         beatmapID: Long,
         mode: OsuMode,
-        mods: List<LazerMod>?,
-        maxCombo: Int?,
+        mods: List<LazerMod>,
+        combo: Int?,
         misses: Int?,
         isLazer: Boolean,
-        accuracy: DoubleArray
+        accuracy: DoubleArray,
+        clockRate: Double?,
     ): List<Double> {
-        if (!enableRosu) return emptyList()
+        if (rosu == null) return emptyList()
 
-        val gameMode = mode.toRosuMode()
-        val cache = ArrayList<AutoCloseable>(1)
-        val modsStr = if (mods.isNullOrEmpty().not()) {
-            JacksonUtil.toJson(mods)
-        } else {
-            null
-        }
-        val (beatmap, change) = getJniBeatmapAndIsConvert(beatmapID, gameMode) { cache.add(it) } ?: return emptyList()
-        return try {
-            accuracy.map { acc ->
-                val performance = beatmap.createPerformance().apply {
-                    setLazer(isLazer)
-                    if (change) setGameMode(gameMode)
-                    maxCombo?.let { setCombo(it) }
-                    modsStr?.let { setMods(it) }
-                    misses?.let { setMisses(it) }
-                    setAcc(acc)
+        val bytes = beatmapApiService.getBeatmapFileByte(beatmapID) ?: return emptyList()
+
+        return accuracy.map { acc ->
+            rosu.let { r ->
+                r.loadBeatmap(bytes).use { beatmap ->
+                    val difficulty = customDifficultyRequest(mods, isLazer, clockRate)
+                    val performance = difficulty.customPerformanceRequest(acc, combo, misses)
+                    val result = r.calculatePerformance(beatmap, performance)
+
+                    RosuPerformance(result).pp
                 }
-                performance.calculate().getPP()
             }
-        } finally {
-            cache.forEach { it.close() }
         }
     }
 
     override fun getAccPP(
         beatmapID: Long,
         mode: OsuMode,
-        mods: List<LazerMod>?,
-        maxCombo: Int?,
+        mods: List<LazerMod>,
+        combo: Int?,
         misses: Int?,
         isLazer: Boolean,
-        accuracy: Double
-    ): RosuPerformance {
-        if (!enableRosu) return RosuPerformance()
+        accuracy: Double,
+        clockRate: Double?
+    ): Double {
+        if (rosu == null) return 0.0
 
-        val gameMode = mode.toRosuMode()
-        val modsStr = if (mods.isNullOrEmpty().not()) {
-            JacksonUtil.toJson(mods)
-        } else {
-            null
-        }
-        val cache = ArrayList<AutoCloseable>(1)
-        val (beatmap, isConvert) = getJniBeatmapAndIsConvert(beatmapID, gameMode) { cache.add(it) }
-            ?: return RosuPerformance()
-        return try {
-            val performance = beatmap.createPerformance().apply {
-                setLazer(isLazer)
-                if (isConvert) setGameMode(gameMode)
-                maxCombo?.let { setCombo(it) }
-                modsStr?.let { setMods(it) }
-                setAcc(accuracy)
+        val bytes = beatmapApiService.getBeatmapFileByte(beatmapID) ?: return 0.0
+
+        return rosu.let { r ->
+            r.loadBeatmap(bytes).use { beatmap ->
+                val difficulty = customDifficultyRequest(mods, isLazer, clockRate)
+                val performance = difficulty.customPerformanceRequest(accuracy, combo, misses)
+                val result = r.calculatePerformance(beatmap, performance)
+
+                RosuPerformance(result).pp
             }
-            RosuPerformance(performance.calculate())
-        } finally {
-            cache.forEach { it.close() }
         }
     }
 
@@ -657,37 +542,33 @@ class CalculateApiImpl(
 
 
     private fun getBeatmapStarFromLocal(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
+        if (rosu == null) return emptyMap()
+
         val starMap = mutableMapOf<BeatmapDetails, Double>()
 
-        val closeable = ArrayList<AutoCloseable>(details.size * 2)
-
         details.forEach { nd ->
-            try {
-                val (beatmap, _) = getJniBeatmapAndIsConvert(nd.beatmapID, nd.mode.toRosuMode()) {
-                    closeable.add(it)
-                } ?: (null to false)
+            val bytes = beatmapApiService.getBeatmapFileByte(nd.beatmapID)
 
-                if (beatmap != null) {
-                    val difficulty = beatmap.createDifficulty().apply {
-                        closeable.add(this)
-                        if (nd.mods.isNotEmpty()) setMods(JacksonUtil.toJson(nd.mods))
-                    }
+            if (bytes != null) {
+                rosu.let { r ->
+                    r.loadBeatmap(bytes).use { beatmap ->
+                        val difficulty = customDifficultyRequest(nd.mods)
+                        val result = r.calculateDifficulty(beatmap, difficulty)
 
-                    val star = difficulty.calculate(beatmap).getStarRating()
+                        val star = result.stars
 
-                    if (star > 1e-4) {
-                        scoreDao.saveStarRatingCacheAsync(
-                            nd.beatmapID,
-                            nd.mode,
-                            nd.mods,
-                            star.toFloat(),
-                            nd.hasLeaderBoard
-                        )
-                        starMap[nd] = star
+                        if (star > 1e-4) {
+                            scoreDao.saveStarRatingCacheAsync(
+                                nd.beatmapID,
+                                nd.mode,
+                                nd.mods,
+                                star.toFloat(),
+                                nd.hasLeaderBoard
+                            )
+                            starMap[nd] = star
+                        }
                     }
                 }
-            } finally {
-                closeable.forEach { it.close() }
             }
         }
 
@@ -773,66 +654,260 @@ class CalculateApiImpl(
         return sortedStarMap
     }
 
+    private fun getScoreRosuPerformance(score: LazerScore): RosuPerformance? {
+        if (rosu == null) return RosuPerformance()
 
-    private fun getScoreRosuPerformance(score: LazerScore): RosuPerformance {
-        if (!enableRosu) return RosuPerformance()
+        val bytes = beatmapApiService.getBeatmapFileByte(score.beatmapID) ?: return null
 
-        val mode = score.mode.toRosuMode()
-        val mods = score.mods
-        val isNotPass = !score.passed
-        val state = with(score.statistics) {
-            val state = toScoreStatistics(score.mode)
-            JniScoreState.create(
-                maxCombo = score.maxCombo,
-                largeTickHits = largeTickHit,
-                smallTickHits = smallTickHit,
-                sliderEndHits = sliderTailHit,
-                geki = state.countGeki!!,
-                katu = state.countKatu!!,
-                n300 = state.count300!!,
-                n100 = state.count100!!,
-                n50 = state.count50!!,
-                misses = state.countMiss!!,
-            )
+        return rosu.let { r ->
+            r.loadBeatmap(bytes).use { beatmap ->
+                val difficulty = score.buildDifficultyRequest()
+                val performance = score.buildPerformanceRequest(difficulty)
+                val result = r.calculatePerformance(beatmap, performance)
+
+                RosuPerformance(result)
+            }
         }
-        if (isNotPass) {
-            state.n300 = 0
-        }
-
-        val beatmapID = score.beatmapID
-        val lazer = score.isLazer
-
-        val closable = ArrayList<AutoCloseable>(1)
-        return try {
-            val (beatmap, isConvert) = getJniBeatmapAndIsConvert(beatmapID, mode) { closable.add(it) }
-                ?: return RosuPerformance()
-            beatmap.createPerformance(state).apply {
-                setLazer(lazer)
-                if (isNotPass) setHitResultPriority(true)
-                if (isConvert) this.setGameMode(mode)
-                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-            }.calculate()
-        } finally {
-            closable.forEach { it.close() }
-        }.let { RosuPerformance(it) }
-    }
-
-    private fun getJniBeatmapAndIsConvert(
-        beatmapID: Long, mode: org.spring.osu.OsuMode, set: (JniBeatmap) -> Unit
-    ): Pair<JniBeatmap, Boolean>? {
-        val map = beatmapApiService.getBeatmapFileByte(beatmapID) ?: return null
-        val beatmap = JniBeatmap(map)
-        set(beatmap)
-        val isConvert = if (beatmap.mode != mode && beatmap.mode == org.spring.osu.OsuMode.Osu) {
-            beatmap.convertInPlace(mode)
-            true
-        } else {
-            false
-        }
-        return beatmap to isConvert
     }
 
     companion object {
-        // private val log: Logger = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
+        private val log = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
+
+        fun DifficultyRequest.customPerformanceRequest(
+            accuracy: Double? = 1.0,
+            combo: Int?,
+            misses: Int? = 0,
+        ): PerformanceRequest {
+            val builder = PerformanceRequest.builder(this)
+
+            accuracy?.let { builder.accuracy(it * 100.0) }
+            combo?.let { builder.combo(it) }
+            misses?.let { builder.misses(it) }
+
+            return builder.build()
+        }
+
+        fun customDifficultyRequest(mods: List<LazerMod>, isLazer: Boolean? = null, clockRate: Double? = null): DifficultyRequest {
+            val client = when(isLazer) {
+                true -> ScoreMode.LAZER
+                false -> ScoreMode.STABLE
+                null -> ScoreMode.DEFAULT
+            }
+
+            return DifficultyRequest.builder()
+                .modsJson(mods.toJson())
+                .clockRate(clockRate ?: mods.getClockRate().toDouble())
+                .scoreMode(client)
+                .build()
+        }
+
+        fun LazerScore.buildDifficultyRequest(): DifficultyRequest {
+            val client = when(isLazer) {
+                true -> ScoreMode.LAZER
+                false -> ScoreMode.STABLE
+            }
+
+            return DifficultyRequest.builder()
+                .modsJson(this.mods.toJson())
+                .clockRate(this.mods.getClockRate().toDouble())
+                .scoreMode(client)
+                .build()
+        }
+
+        fun LazerScore.buildFullComboRequest(
+            difficulty: DifficultyRequest,
+        ): PerformanceRequest {
+            val builder = PerformanceRequest.builder(difficulty)
+                .accuracy(this.accuracy * 100.0)
+                .combo(this.beatmap.maxCombo ?: (Int.MAX_VALUE / 2))
+
+            val t = this.statistics
+
+            when(this.mode.safeModeValue) {
+                0.toByte() -> if (this.isLazer) { builder
+                    .n300(t.great + t.miss)
+                    .n100(t.ok)
+                    .n50(t.meh)
+                    .misses(0)
+                    .largeTickHits(t.largeTickHit)
+                    .smallTickHits(t.smallTickHit)
+                    .sliderEndHits(t.sliderTailHit)
+                } else { builder
+                    .n300(t.great + t.miss)
+                    .n100(t.ok)
+                    .n50(t.meh)
+                }
+
+                1.toByte() -> { builder
+                    .n300(t.great + t.miss)
+                    .n100(t.ok)
+                    .misses(0)
+
+                    t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                }
+
+                2.toByte() -> builder
+                    .n300(t.great + t.miss)
+                    .n100(t.largeTickHit + t.largeTickMiss)
+                    .n50(t.smallTickHit)
+                    .misses(0)
+
+                3.toByte() -> {
+                    val rate = t.perfect / (t.perfect + t.great).coerceAtLeast(1)
+                    val perfect = (t.miss * rate).coerceAtMost(t.miss)
+                    val great = (t.miss - perfect).coerceAtLeast(0)
+
+                    builder
+                        .nGeki(t.perfect + perfect)
+                        .n300(t.great + great)
+                        .nKatu(t.good)
+                        .n100(t.ok)
+                        .n50(t.meh)
+                        .misses(0)
+                }
+            }
+
+            if (!this.isLazer) {
+                this.legacyScore?.let { builder.legacyTotalScore(it.toInt()) }
+            }
+
+            if (!this.passed) {
+                builder.n300(0)
+            }
+
+            return builder.build()
+        }
+
+        fun LazerScore.buildPerfectRequest(
+            difficulty: DifficultyRequest,
+        ): PerformanceRequest {
+            val builder = PerformanceRequest.builder(difficulty)
+                .accuracy(100.0)
+                .combo(this.beatmap.maxCombo ?: (Int.MAX_VALUE / 2))
+
+            val t = this.statistics
+            val m = this.maximumStatistics
+
+            when(this.mode.safeModeValue) {
+                0.toByte() -> if (this.isLazer || m.great > 0) { builder
+                    .n300(m.great)
+                    .n100(0)
+                    .n50(0)
+                    .misses(0)
+                    .largeTickHits(m.largeTickHit)
+                    .smallTickHits(m.smallTickHit)
+                    .sliderEndHits(m.sliderTailHit)
+                } else { builder
+                    .n300(t.great + t.ok + t.meh + t.miss)
+                    .n100(0)
+                    .n50(0)
+                    .misses(0)
+                }
+
+                1.toByte() -> {
+                    if (m.great > 0) {builder
+                        .n300(m.great)
+                        .n100(0)
+                        .misses(0)
+                    } else { builder
+                        .n300(t.great + t.ok + t.miss)
+                        .n100(0)
+                        .misses(0)
+                    }
+
+                    m.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                }
+
+                2.toByte() -> if (m.great > 0) { builder
+                    .n300(m.great)
+                    .n100(m.largeTickHit)
+                    .n50(m.smallTickHit)
+                    .misses(0)
+                } else { builder
+                    .n300(t.great + t.miss)
+                    .n100(t.largeTickHit + t.largeTickMiss)
+                    .n50(t.smallTickHit + t.smallTickMiss)
+                    .misses(0)
+                }
+
+                3.toByte() -> if (m.perfect > 0) { builder
+                    .nGeki(m.perfect)
+                    .n300(0)
+                    .nKatu(0)
+                    .n100(0)
+                    .n50(0)
+                    .misses(0)
+                } else { builder
+                    .nGeki(t.perfect + t.great + t.good + t.ok + t.meh + t.miss)
+                    .n300(0)
+                    .nKatu(0)
+                    .n100(0)
+                    .n50(0)
+                    .misses(0)
+                }
+            }
+
+            if (!this.isLazer) {
+                this.legacyScore?.let { builder.legacyTotalScore(it.toInt()) }
+            }
+
+            return builder.build()
+        }
+
+        fun LazerScore.buildPerformanceRequest(
+            difficulty: DifficultyRequest,
+        ): PerformanceRequest {
+            val builder = PerformanceRequest.builder(difficulty)
+                .accuracy(this.accuracy * 100.0)
+                .combo(this.maxCombo)
+
+            val t = this.statistics
+
+            when(this.mode.safeModeValue) {
+                0.toByte() -> if (this.isLazer) { builder
+                    .n300(t.great)
+                    .n100(t.ok)
+                    .n50(t.meh)
+                    .misses(t.miss)
+                    .largeTickHits(t.largeTickHit)
+                    .smallTickHits(t.smallTickHit)
+                    .sliderEndHits(t.sliderTailHit)
+                } else { builder
+                    .n300(t.great)
+                    .n100(t.ok)
+                    .n50(t.meh)
+                    .misses(t.miss)
+                }
+
+                1.toByte() -> { builder
+                    .n300(t.great)
+                    .n100(t.ok)
+                    .misses(t.miss)
+
+                    t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                }
+
+                2.toByte() -> builder
+                    .n300(t.great)
+                    .n100(t.largeTickHit)
+                    .n50(t.smallTickHit)
+                    .misses(t.miss + t.largeTickMiss)
+
+                3.toByte() -> builder
+                    .nGeki(t.perfect)
+                    .n300(t.great)
+                    .nKatu(t.good)
+                    .n100(t.ok)
+                    .n50(t.meh)
+                    .misses(t.miss)
+
+            }
+
+            if (!this.isLazer) {
+                this.legacyScore?.let { builder.legacyTotalScore(it.toInt()) }
+            }
+
+            return builder.build()
+        }
     }
 }
