@@ -898,7 +898,15 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "uid", description = "玩家编号") @RequestParam("uid") @Nullable id: Long?,
         @DiscordParam(name = "name", description = "玩家名称") @RequestParam("name") @Nullable name: String?
     ): ResponseEntity<ByteArray> {
-        val userID = id ?: userApiService.getOsuUser(name ?: throw TipsRuntimeException(NoSuchElementException.Player())).userID
+        val user = if (id == null && name.isNullOrBlank()) {
+            throw TipsRuntimeException(NoSuchElementException.Player())
+        } else if (id != null) {
+            userApiService.getOsuUser(id)
+        } else {
+            userApiService.getOsuUser(name ?: throw TipsRuntimeException(NoSuchElementException.Player()))
+        }
+
+        val userID = user.userID
 
         return getImageOrThrow(userID, "mapper", "获取谱师信息") {
 
@@ -906,25 +914,18 @@ import kotlin.time.Duration.Companion.days
                 "q" to "creator=${userID}", "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
 
-            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-            val query2 = mapOf(
-                "q" to userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
-            )
-
-            val async = AsyncMethodExecutor.awaitQuad(
+            val async = AsyncMethodExecutor.awaitPair(
                 { beatmapApiService.searchBeatmapsetParallel(query) },
-                { beatmapApiService.searchBeatmapsetParallel(query2) },
                 { userApiService.getUserRecentActivity(userID).filterIsMapping().squash() },
-                { userApiService.getOsuUser(userID) },
             )
 
-            val relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
-                it.beatmapsetID != userID && (it.beatmaps?.all { that -> that.beatmapID != userID } ?: true)
-            }.toHashSet()).asSequence()
+            val sets = async.first.beatmapsets
 
-            val activity = async.second.first
+            beatmapApiService.applyBeatmapsetExtend(sets)
 
-            val user = async.second.second
+            val relatedSets = sets.asSequence()
+
+            val activity = async.second
 
             val param = IMapperService.IMapperParam(
                 user, relatedSets, activity
