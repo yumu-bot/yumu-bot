@@ -618,11 +618,20 @@ class OsuUserInfoDao(
 
                 // 有记录但今天是新的一天
                 latest.updatedAt.isBefore(today) -> {
-                    if (latest.totalHits != (statistics.totalHits ?: 0L)) {
-                        latest.updateFrom(userID, mode, statistics)
+                    val currentTotalHits = statistics.totalHits ?: 0L
+
+                    if (latest.totalHits != currentTotalHits) {
+                        // 有数据变更，必须新增
+                        UserStatisticsLite().apply {
+                            updateFrom(userID, mode, statistics)
+                            createdAt = today  // 新记录的创建日期是今天
+                            updatedAt = today
+                        }
+                    } else {
+                        // 只需要更新即可
+                        latest.updatedAt = today
+                        latest
                     }
-                    latest.updatedAt = today
-                    latest
                 }
 
                 // 今天已有记录且数据有变化
