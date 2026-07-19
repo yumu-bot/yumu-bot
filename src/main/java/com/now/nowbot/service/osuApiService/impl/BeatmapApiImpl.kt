@@ -242,13 +242,13 @@ class BeatmapApiImpl(
         }
     }
 
-    //@Cacheable(value = ["beatmap file"], key = "#bid")
+    @Cacheable(value = ["beatmap file"], key = "#bid")
     override fun getBeatmapFileByte(beatmapID: Long): ByteArray? {
         return getBeatmapFileString(beatmapID)?.toByteArray(StandardCharsets.UTF_8)
     }
 
     @Cacheable(value = ["beatmap file_path"], key = "#bid")
-    override fun getBeatmapFilePath(bid: Long): String {
+    override fun getBeatmapFilePath(beatmapID: Long): String {
         var str: String? = null
 
         if (hasBeatmapFileFromDirectory(beatmapID)) {
