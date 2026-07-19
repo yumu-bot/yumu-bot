@@ -874,6 +874,8 @@ class CalculateApiImpl(
                     .n100(t.ok)
                     .n50(t.meh)
                     .misses(t.miss)
+
+                    this.legacyScore?.takeIf { it > 0 }?.let { builder.legacyTotalScore(it.toInt()) }
                 }
 
                 1.toByte() -> { builder
@@ -898,10 +900,6 @@ class CalculateApiImpl(
                     .n50(t.meh)
                     .misses(t.miss)
 
-            }
-
-            if (!this.isLazer) {
-                this.legacyScore?.let { builder.legacyTotalScore(it.toInt()) }
             }
 
             return builder.build()
