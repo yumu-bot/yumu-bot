@@ -8,7 +8,6 @@ import com.now.nowbot.entity.UserRankModeProjection
 import com.now.nowbot.entity.UserRankPercentKey
 import com.now.nowbot.entity.UserRankPercentLite
 import com.now.nowbot.entity.UserStatisticsLite
-import com.now.nowbot.entity.UserStatisticsProjection
 import jakarta.persistence.QueryHint
 import org.hibernate.jpa.HibernateHints.HINT_FETCH_SIZE
 import org.springframework.data.jpa.repository.JpaRepository
@@ -288,22 +287,28 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     fun getLatestBatch(userIDs: Collection<Long>, mode: Byte): List<UserStatisticsLite>
 
     @Query(value = """
-        SELECT t.id as id, 
-           t.user_id as userID, 
-           t.mode as mode, 
-           t.updated_at as updatedAt
-    FROM (
-        SELECT id, user_id, mode, updated_at,
-               ROW_NUMBER() OVER(
-                   PARTITION BY user_id, mode 
-                   ORDER BY updated_at DESC, id DESC
-               ) as rn
-        FROM user_statistics
-        WHERE user_id IN (:userIDs)
-    ) t
-    WHERE t.rn = 1
-    """, nativeQuery = true)
-    fun getMaxTimeBatch(userIDs: Collection<Long>): List<UserStatisticsProjection>
+    SELECT s.* 
+    FROM user_statistics s
+    WHERE s.id IN (
+        SELECT id
+        FROM (
+            SELECT id,
+                   ROW_NUMBER() OVER(
+                       PARTITION BY user_id, mode 
+                       ORDER BY 
+                           -- 1. 绝对优先：如果是等于 from 的数据，权重最高排在最前
+                           CASE WHEN updated_at = :target THEN 0 ELSE 1 END,
+                           -- 2. 次要优先：其余情况全表按时间从新到老（降序）排
+                           updated_at DESC, 
+                           id DESC
+                   ) as rn
+            FROM user_statistics
+            WHERE user_id IN (:userIDs)
+        ) t
+        WHERE t.rn = 1
+    )
+""", nativeQuery = true)
+    fun getTargetOrLatestBatch(userIDs: Collection<Long>, target: LocalDate): List<UserStatisticsLite>
 
     @Query(value = """
     SELECT s.* 

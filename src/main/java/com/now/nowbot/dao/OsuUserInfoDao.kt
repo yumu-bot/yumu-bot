@@ -335,20 +335,11 @@ class OsuUserInfoDao(
 //    }
 
     /**
-     * 只取目标天之后没有数据，但是之前或者目标天当天有数据的条目
+     * 优先获取等于目标天的数据，其次，获取从新到老的第一条数据
      */
-    fun getLatestBatchFromWithoutEarliest(userIDs: Collection<Long>, from: LocalDate): List<UserStatisticsLite> {
-        val maxBatches = userStatisticsRepository.getMaxTimeBatch(userIDs)
-
-        val targetIDs = maxBatches
-            .filter { it.updatedAt <= from }
-            .map { it.id }
-
-        if (targetIDs.isEmpty()) return emptyList()
-
-        return userStatisticsRepository.findAllById(targetIDs)
+    fun getTargetOrLatestBatch(userIDs: Collection<Long>, target: LocalDate): List<UserStatisticsLite> {
+        return userStatisticsRepository.getTargetOrLatestBatch(userIDs, target)
     }
-
     // Yumu 0.8.2 玩家信息优化
 
     private fun upsertGlobalRank(user: OsuUser) {

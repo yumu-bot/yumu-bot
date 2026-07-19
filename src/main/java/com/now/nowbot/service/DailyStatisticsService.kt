@@ -213,7 +213,7 @@ class DailyStatisticsService(
         val today = LocalDate.now(ZoneOffset.UTC)
         val from = today.minusDays(1)
 
-        val recordedUserMap: Map<Long, Map<Byte, Pair<Long, Long>>> = userInfoDao.getLatestBatchFromWithoutEarliest(userIDs, from)
+        val recordedUserMap: Map<Long, Map<Byte, Pair<Long, Long>>> = userInfoDao.getTargetOrLatestBatch(userIDs, from)
             .groupBy { it.userID }
             .mapValues { (_, projections) -> projections.associate { it.mode to (it.id!! to it.playCount) } }
 
