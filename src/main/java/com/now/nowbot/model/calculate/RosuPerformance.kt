@@ -19,14 +19,17 @@ open class RosuPerformance(result: me.aloic.rosupp.PerformanceResult? = null) : 
     @JsonProperty("pp_speed")
     var ppSpeed: Double? = null
 
-    @JsonProperty("pp_acc")
-    var ppAcc: Double? = null
+    @JsonProperty("pp_accuracy")
+    var ppAccuracy: Double? = null
 
     @JsonProperty("pp_flashlight")
     var ppFlashlight: Double? = null
 
     @JsonProperty("pp_difficulty")
     var ppDifficulty: Double? = null
+
+    @JsonProperty("pp_reading")
+    var ppReading: Double? = null
 
     @JsonProperty("effective_miss_count")
     var effectiveMissCount: Double? = null
@@ -39,7 +42,8 @@ open class RosuPerformance(result: me.aloic.rosupp.PerformanceResult? = null) : 
             OsuMode.OSU -> {
                 ppAim = result.ppAim
                 ppSpeed = result.ppSpeed
-                ppAcc = result.ppAccuracy
+                ppAccuracy = result.ppAccuracy
+                ppReading = result.ppReading
                 ppFlashlight = result.ppFlashlight
                 effectiveMissCount = result.effectiveMissCount
                 stars = result.difficulty.stars
@@ -47,7 +51,7 @@ open class RosuPerformance(result: me.aloic.rosupp.PerformanceResult? = null) : 
             }
 
             OsuMode.TAIKO -> {
-                ppAcc = result.ppAccuracy
+                ppAccuracy = result.ppAccuracy
                 ppDifficulty = result.ppDifficulty
                 effectiveMissCount = result.effectiveMissCount
                 stars = result.difficulty.stars
