@@ -793,7 +793,7 @@ class CalculateApiImpl(
                         .misses(0)
                     }
 
-                    t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                    // t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
                 }
 
                 2.toByte() -> {
@@ -885,7 +885,7 @@ class CalculateApiImpl(
                         .misses(0)
                     }
 
-                    m.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                    // m.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
                 }
 
                 2.toByte() -> if (m.great > 0) { builder
