@@ -53,13 +53,10 @@ object BeatmapUtil {
 
         val mode = beatmap.mode
 
-        // 【核心改动】在这里触发 lazy 初始化
-        // 如果是第一次运行，它会拍下当前的原始快照
-        // 如果已经拍过了（lazy 已初始化），这一行什么都不会做
-        beatmap.originalDetails
+        // 在修改之前锁定原始数据
+        beatmap.captureOriginalDetails()
 
         if (mods.isAffectStarRating()) {
-
             beatmap.bpm = applyBPM(beatmap.bpm, mods)
             beatmap.ar = applyAR(beatmap.ar ?: 0f, mods)
             beatmap.cs = applyCS(beatmap.cs ?: 0f, mods)

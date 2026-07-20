@@ -256,7 +256,7 @@ class MapStatisticsService(
 
         // BeatmapUtil.applyBeatmapChanges(beatmap, expected.mods)
 
-        return PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails.toMap())
+        return PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails?.toMap() ?: emptyMap())
     }
 
     data class MapStatisticsParam(val beatmapset: Beatmapset, val beatmap: Beatmap, val expected: Expected)

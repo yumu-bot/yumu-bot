@@ -793,7 +793,7 @@ import kotlin.time.Duration.Companion.days
             )
 
             val ppList = MapStatisticsService.getPPList(beatmap, expected, calculateApiService)
-            val panel = PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails.toMap())
+            val panel = PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails?.toMap() ?: emptyMap())
 
             imageService.getPanel(panel, "R")
         }

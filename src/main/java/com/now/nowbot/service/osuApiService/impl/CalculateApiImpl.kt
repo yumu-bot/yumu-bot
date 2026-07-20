@@ -744,55 +744,102 @@ class CalculateApiImpl(
                 .combo(this.beatmap.maxCombo ?: (Int.MAX_VALUE / 2))
 
             val t = this.statistics
+            val m = this.maximumStatistics
 
             when(this.mode.safeModeValue) {
-                0.toByte() -> if (this.isLazer) { builder
-                    .n300(t.great + t.miss)
-                    .n100(t.ok)
-                    .n50(t.meh)
-                    .misses(0)
-                    .largeTickHits(t.largeTickHit)
-                    .smallTickHits(t.smallTickHit)
-                    .sliderEndHits(t.sliderTailHit)
-                } else { builder
-                    .n300(t.great + t.miss)
-                    .n100(t.ok)
-                    .n50(t.meh)
-
-                    this.legacyScore?.takeIf { it > 0 }?.let { builder.legacyTotalScore(it.toInt()) }
-                }
-
-                1.toByte() -> { builder
-                    .n300(t.great + t.miss)
-                    .n100(t.ok)
-                    .misses(0)
-
-                    // t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
-                }
-
-                2.toByte() -> builder
-                    .n300(t.great + t.miss)
-                    .n100(t.largeTickHit + t.largeTickMiss)
-                    .n50(t.smallTickHit)
-                    .misses(0)
-
-                3.toByte() -> {
-                    val rate = t.perfect / (t.perfect + t.great).coerceAtLeast(1)
-                    val perfect = (t.miss * rate).coerceAtMost(t.miss)
-                    val great = (t.miss - perfect).coerceAtLeast(0)
-
-                    builder
-                        .nGeki(t.perfect + perfect)
-                        .n300(t.great + great)
-                        .nKatu(t.good)
+                0.toByte() -> if (m.great > 0) {
+                    if (this.isLazer) { builder
+                        .n300(m.great - t.ok - t.meh)
                         .n100(t.ok)
                         .n50(t.meh)
                         .misses(0)
-                }
+                        .largeTickHits(t.largeTickHit)
+                        .smallTickHits(t.smallTickHit)
+                        .sliderEndHits(t.sliderTailHit)
+                    } else { builder
+                        .n300(t.great + t.miss)
+                        .n100(t.ok)
+                        .n50(t.meh)
+
+                        this.legacyScore?.takeIf { it > 0 }?.let { builder.legacyTotalScore(it.toInt()) }
+                    }
+                } else {
+                    if (this.isLazer) { builder
+                        .n300(t.great + t.miss)
+                        .n100(t.ok)
+                        .n50(t.meh)
+                        .misses(0)
+                        .largeTickHits(t.largeTickHit)
+                        .smallTickHits(t.smallTickHit)
+                        .sliderEndHits(t.sliderTailHit)
+                    } else { builder
+                        .n300(t.great + t.miss)
+                        .n100(t.ok)
+                        .n50(t.meh)
+
+                        this.legacyScore?.takeIf { it > 0 }?.let { builder.legacyTotalScore(it.toInt()) }
+                    }
             }
 
-            if (!this.passed) {
-                builder.n300(0)
+                1.toByte() -> {
+                    if (m.great > 0) { builder
+                        .n300(m.great - t.ok)
+                        .n100(t.ok)
+                        .misses(0)
+
+                    } else { builder
+                        .n300(t.great + t.miss)
+                        .n100(t.ok)
+                        .misses(0)
+                    }
+
+                    t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                }
+
+                2.toByte() -> {
+                    if (m.great > 0) { builder
+                        .n300(m.great)
+                        .n100(m.largeTickHit)
+                        .n50(t.smallTickHit)
+                        .misses(0)
+
+                    } else { builder
+                        .n300(t.great + t.miss)
+                        .n100(t.largeTickHit + t.largeTickMiss)
+                        .n50(t.smallTickHit)
+                        .misses(0)
+                    }
+                }
+
+                3.toByte() -> {
+                    if (m.perfect > 0) {
+                        val rate = (t.perfect * 1.0) / (t.perfect + t.great).coerceAtLeast(1)
+                        val total = m.perfect - t.good - t.ok - t.meh
+
+                        val perfect = (total * rate).toInt().coerceAtMost(total)
+                        val great = (total - perfect).coerceAtLeast(0)
+
+                        builder
+                            .nGeki(perfect)
+                            .n300(great)
+                            .nKatu(t.good)
+                            .n100(t.ok)
+                            .n50(t.meh)
+                            .misses(0)
+                    } else {
+                        val rate = (t.perfect * 1.0) / (t.perfect + t.great).coerceAtLeast(1)
+                        val perfect = (t.miss * rate).toInt().coerceAtMost(t.miss)
+                        val great = (t.miss - perfect).coerceAtLeast(0)
+
+                        builder
+                            .nGeki(t.perfect + perfect)
+                            .n300(t.great + great)
+                            .nKatu(t.good)
+                            .n100(t.ok)
+                            .n50(t.meh)
+                            .misses(0)
+                    }
+                }
             }
 
             return builder.build()
@@ -805,7 +852,6 @@ class CalculateApiImpl(
                 .accuracy(100.0)
                 .combo(this.beatmap.maxCombo ?: (Int.MAX_VALUE / 2))
 
-            val t = this.statistics
             val m = this.maximumStatistics
 
             when(this.mode.safeModeValue) {
@@ -820,7 +866,7 @@ class CalculateApiImpl(
 
                     this.legacyScore?.takeIf { it > 0 }?.let { builder.legacyTotalScore(it.toInt()) }
                 } else { builder
-                    .n300(t.great + t.ok + t.meh + t.miss)
+                    .n300(Int.MAX_VALUE / 2)
                     .n100(0)
                     .n50(0)
                     .misses(0)
@@ -834,12 +880,12 @@ class CalculateApiImpl(
                         .n100(0)
                         .misses(0)
                     } else { builder
-                        .n300(t.great + t.ok + t.miss)
+                        .n300(Int.MAX_VALUE / 2)
                         .n100(0)
                         .misses(0)
                     }
 
-                    // m.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                    m.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
                 }
 
                 2.toByte() -> if (m.great > 0) { builder
@@ -848,9 +894,9 @@ class CalculateApiImpl(
                     .n50(m.smallTickHit)
                     .misses(0)
                 } else { builder
-                    .n300(t.great + t.miss)
-                    .n100(t.largeTickHit + t.largeTickMiss)
-                    .n50(t.smallTickHit + t.smallTickMiss)
+                    .n300(Int.MAX_VALUE / 2)
+                    .n100(Int.MAX_VALUE / 2)
+                    .n50(Int.MAX_VALUE / 2)
                     .misses(0)
                 }
 
@@ -862,7 +908,7 @@ class CalculateApiImpl(
                     .n50(0)
                     .misses(0)
                 } else { builder
-                    .nGeki(t.perfect + t.great + t.good + t.ok + t.meh + t.miss)
+                    .nGeki(Int.MAX_VALUE / 2)
                     .n300(0)
                     .nKatu(0)
                     .n100(0)

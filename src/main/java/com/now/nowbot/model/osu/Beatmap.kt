@@ -268,13 +268,23 @@ data class Beatmap(
         }
     }
 
-    @delegate:JsonIgnore
-    val originalDetails: BeatmapDetails by lazy {
-        BeatmapDetails(
-            ar ?: 0f, cs ?: 0f, od ?: 0f, hp ?: 0f, bpm,
-            hitLength ?: 0, totalLength
-        )
+    @field:JsonIgnore
+    var originalDetails: BeatmapDetails? = null
+        private set // 不允许外部随意修改它
+
+    // 提供一个显式拍快照的方法
+    fun captureOriginalDetails() {
+        // 只有在从未拍过快照时才初始化，防止二次触发被污染
+        if (originalDetails == null) {
+            originalDetails = BeatmapDetails(
+                ar ?: 0f, cs ?: 0f, od ?: 0f, hp ?: 0f, bpm,
+                hitLength ?: 0, totalLength
+            )
+        }
     }
+
+    @get:JsonProperty("original_rating")
+    val originalStar = starRating
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
