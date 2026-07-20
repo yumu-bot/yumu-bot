@@ -12,6 +12,7 @@ import com.now.nowbot.model.calculate.FullCalculatePerformance
 import com.now.nowbot.model.calculate.FullCosuPerformance
 import com.now.nowbot.model.calculate.RosuPerformance
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toRosuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.LazerMod.Companion.getClockRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
@@ -672,6 +673,55 @@ class CalculateApiImpl(
     companion object {
         // private val log = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
 
+        fun customDifficultyRequest(mods: List<LazerMod>, isLazer: Boolean? = null, mode: OsuMode = OsuMode.DEFAULT, clockRate: Double? = null): DifficultyRequest {
+            val client = if (mode.isDefault()) {
+                ScoreMode.DEFAULT
+            } else {
+                when(mode.safeModeValue) {
+                    0.toByte(), 3.toByte() -> when(isLazer) {
+                        true -> ScoreMode.LAZER
+                        false -> ScoreMode.STABLE
+                        null -> ScoreMode.DEFAULT
+                    }
+
+                    else -> ScoreMode.DEFAULT
+                }
+            }
+
+            val builder = DifficultyRequest.builder()
+                .mode(mode.toRosuMode())
+                .modsJson(mods.toJson())
+                .clockRate(clockRate ?: mods.getClockRate().toDouble())
+
+            client.takeIf { it != ScoreMode.DEFAULT }?.let { builder.scoreMode(it) }
+
+            return builder.build()
+        }
+
+        fun LazerScore.buildDifficultyRequest(): DifficultyRequest {
+            val client = if (this.mode.isDefault()) {
+                ScoreMode.DEFAULT
+            } else {
+                when(this.mode.safeModeValue) {
+                    0.toByte(), 3.toByte() -> when(this.isLazer) {
+                        true -> ScoreMode.LAZER
+                        false -> ScoreMode.STABLE
+                    }
+
+                    else -> ScoreMode.DEFAULT
+                }
+            }
+
+            val builder = DifficultyRequest.builder()
+                .mode(this.mode.toRosuMode())
+                .modsJson(this.mods.toJson())
+                .clockRate(this.mods.getClockRate().toDouble())
+
+            client.takeIf { it != ScoreMode.DEFAULT }?.let { builder.scoreMode(it) }
+
+            return builder.build()
+        }
+
         fun DifficultyRequest.customPerformanceRequest(
             accuracy: Double? = 1.0,
             combo: Int?,
@@ -684,44 +734,6 @@ class CalculateApiImpl(
             misses?.let { builder.misses(it) }
 
             return builder.build()
-        }
-
-        fun customDifficultyRequest(mods: List<LazerMod>, isLazer: Boolean? = null, mode: OsuMode = OsuMode.DEFAULT, clockRate: Double? = null): DifficultyRequest {
-            val client = when(mode.safeModeValue) {
-                0.toByte(), 3.toByte() -> when(isLazer) {
-                    true -> ScoreMode.LAZER
-                    false -> ScoreMode.STABLE
-                    null -> ScoreMode.DEFAULT
-                }
-
-                else -> when(isLazer) {
-                    false -> ScoreMode.STABLE
-                    else -> ScoreMode.DEFAULT
-                }
-            }
-
-            return DifficultyRequest.builder()
-                .modsJson(mods.toJson())
-                .clockRate(clockRate ?: mods.getClockRate().toDouble())
-                .scoreMode(client)
-                .build()
-        }
-
-        fun LazerScore.buildDifficultyRequest(): DifficultyRequest {
-            val client = when(mode.safeModeValue) {
-                0.toByte(), 3.toByte() -> when(isLazer) {
-                    true -> ScoreMode.LAZER
-                    false -> ScoreMode.STABLE
-                }
-
-                else -> ScoreMode.STABLE
-            }
-
-            return DifficultyRequest.builder()
-                .modsJson(this.mods.toJson())
-                .clockRate(this.mods.getClockRate().toDouble())
-                .scoreMode(client)
-                .build()
         }
 
         fun LazerScore.buildFullComboRequest(

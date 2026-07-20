@@ -9,6 +9,7 @@ import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.util.DataUtil
+import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
@@ -336,13 +337,24 @@ open class OsuUser: IDUser {
         var variantID: Byte = 0,
     )
 
+    @get:JsonProperty("monthly_playcounts")
+    @set:JsonIgnore
+    var monthlyPlaycounts: List<UserMonthly> = emptyList()
 
+    @set:JsonProperty("monthly_playcounts")
     @get:JsonIgnore
-    var monthlyPlaycounts: List<UserMonthly> = listOf()
+    var monthlyPlaycountsRaw: JsonNode? = null
+        set(value) {
+            field = value
 
-    @JsonProperty("monthly_playcounts") fun setMonthlyPlayCount(dataList: List<HashMap<String, Any>>) {
-        monthlyPlaycounts = dataList.map { UserMonthly(it["start_date"] as String, it["count"] as Int) }
-    }
+            if (value != null && value.isArray) {
+                this.monthlyPlaycounts = value.asIterable().map { node ->
+                    val startDate = node.path("start_date").asString("")
+                    val count = node.path("count").asInt(0)
+                    UserMonthly(startDate, count)
+                }
+            }
+        }
 
     data class UserMonthly(@field:JsonProperty("start_date") val startDate: String, val count: Int)
 

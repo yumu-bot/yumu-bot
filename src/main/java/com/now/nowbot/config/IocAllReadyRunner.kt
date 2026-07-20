@@ -69,7 +69,11 @@ class IocAllReadyRunner(
 
         try {
             val refresh = percentileCacheProvider.refreshCache()
-            log.info("玩家信息：缓存数据已经加载: ${refresh.values.joinToString(", ")}")
+            if (refresh.isNotEmpty()) {
+                log.info("玩家信息：缓存数据已经加载: ${refresh.values.joinToString(", ")}")
+            } else {
+                log.warn("玩家信息：缓存数据是空的")
+            }
         } catch (e: Exception) {
             log.warn("玩家信息：缓存数据加载错误", e)
         }

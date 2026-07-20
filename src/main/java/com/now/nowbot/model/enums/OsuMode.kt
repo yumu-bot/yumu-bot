@@ -187,5 +187,26 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             }
             return Optional.of(mode.shortName)
         }
+
+
+        fun me.aloic.rosupp.GameMode.toOsuMode(): OsuMode {
+            return when (this) {
+                me.aloic.rosupp.GameMode.OSU -> OSU
+                me.aloic.rosupp.GameMode.TAIKO -> TAIKO
+                me.aloic.rosupp.GameMode.CATCH -> CATCH
+                me.aloic.rosupp.GameMode.MANIA -> MANIA
+            }
+        }
+
+        fun OsuMode.toRosuMode(): me.aloic.rosupp.GameMode {
+            return when (this.safeModeValue) {
+                0.toByte() -> me.aloic.rosupp.GameMode.OSU
+                1.toByte() -> me.aloic.rosupp.GameMode.TAIKO
+                2.toByte() -> me.aloic.rosupp.GameMode.CATCH
+                3.toByte() -> me.aloic.rosupp.GameMode.MANIA
+
+                else -> me.aloic.rosupp.GameMode.OSU
+            }
+        }
     }
 }

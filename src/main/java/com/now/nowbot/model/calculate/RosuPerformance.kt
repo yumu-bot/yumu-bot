@@ -3,6 +3,7 @@ package com.now.nowbot.model.calculate
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 
@@ -65,17 +66,6 @@ open class RosuPerformance(result: me.aloic.rosupp.PerformanceResult? = null) : 
             }
 
             else -> {}
-        }
-    }
-
-    companion object {
-        fun me.aloic.rosupp.GameMode.toOsuMode(): OsuMode {
-            return when (this) {
-                me.aloic.rosupp.GameMode.OSU -> OsuMode.OSU
-                me.aloic.rosupp.GameMode.TAIKO -> OsuMode.TAIKO
-                me.aloic.rosupp.GameMode.CATCH -> OsuMode.CATCH
-                me.aloic.rosupp.GameMode.MANIA -> OsuMode.MANIA
-            }
         }
     }
 
