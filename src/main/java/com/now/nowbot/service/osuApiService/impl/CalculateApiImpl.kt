@@ -214,7 +214,7 @@ class CalculateApiImpl(
 
         rosu.let { r ->
             r.loadBeatmap(bytes).use { beatmap ->
-                val difficulty = customDifficultyRequest(mods, score.isLazer)
+                val difficulty = customDifficultyRequest(mods, score.isLazer, score.mode)
                 val performance = score.buildPerformanceRequest(difficulty)
                 result = r.calculatePerformance(beatmap, performance)
                 fullPP = r.calculatePerformance(beatmap, score.buildFullComboRequest(difficulty)).pp
@@ -407,7 +407,7 @@ class CalculateApiImpl(
         return accuracy.map { acc ->
             rosu.let { r ->
                 r.loadBeatmap(bytes).use { beatmap ->
-                    val difficulty = customDifficultyRequest(mods, isLazer, clockRate)
+                    val difficulty = customDifficultyRequest(mods, isLazer, mode, clockRate)
                     val performance = difficulty.customPerformanceRequest(acc, combo, misses)
                     val result = r.calculatePerformance(beatmap, performance)
 
@@ -433,7 +433,7 @@ class CalculateApiImpl(
 
         return rosu.let { r ->
             r.loadBeatmap(bytes).use { beatmap ->
-                val difficulty = customDifficultyRequest(mods, isLazer, clockRate)
+                val difficulty = customDifficultyRequest(mods, isLazer, mode, clockRate)
                 val performance = difficulty.customPerformanceRequest(accuracy, combo, misses)
                 val result = r.calculatePerformance(beatmap, performance)
 
@@ -551,7 +551,7 @@ class CalculateApiImpl(
             if (bytes != null) {
                 rosu.let { r ->
                     r.loadBeatmap(bytes).use { beatmap ->
-                        val difficulty = customDifficultyRequest(nd.mods)
+                        val difficulty = customDifficultyRequest(nd.mods, null, nd.mode)
                         val result = r.calculateDifficulty(beatmap, difficulty)
 
                         val star = result.stars
@@ -686,11 +686,18 @@ class CalculateApiImpl(
             return builder.build()
         }
 
-        fun customDifficultyRequest(mods: List<LazerMod>, isLazer: Boolean? = null, clockRate: Double? = null): DifficultyRequest {
-            val client = when(isLazer) {
-                true -> ScoreMode.LAZER
-                false -> ScoreMode.STABLE
-                null -> ScoreMode.DEFAULT
+        fun customDifficultyRequest(mods: List<LazerMod>, isLazer: Boolean? = null, mode: OsuMode = OsuMode.DEFAULT, clockRate: Double? = null): DifficultyRequest {
+            val client = when(mode.safeModeValue) {
+                0.toByte(), 3.toByte() -> when(isLazer) {
+                    true -> ScoreMode.LAZER
+                    false -> ScoreMode.STABLE
+                    null -> ScoreMode.DEFAULT
+                }
+
+                else -> when(isLazer) {
+                    false -> ScoreMode.STABLE
+                    else -> ScoreMode.DEFAULT
+                }
             }
 
             return DifficultyRequest.builder()
@@ -701,9 +708,13 @@ class CalculateApiImpl(
         }
 
         fun LazerScore.buildDifficultyRequest(): DifficultyRequest {
-            val client = when(isLazer) {
-                true -> ScoreMode.LAZER
-                false -> ScoreMode.STABLE
+            val client = when(mode.safeModeValue) {
+                0.toByte(), 3.toByte() -> when(isLazer) {
+                    true -> ScoreMode.LAZER
+                    false -> ScoreMode.STABLE
+                }
+
+                else -> ScoreMode.STABLE
             }
 
             return DifficultyRequest.builder()
@@ -744,7 +755,7 @@ class CalculateApiImpl(
                     .n100(t.ok)
                     .misses(0)
 
-                    t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                    // t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
                 }
 
                 2.toByte() -> builder
@@ -816,7 +827,7 @@ class CalculateApiImpl(
                         .misses(0)
                     }
 
-                    m.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                    // m.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
                 }
 
                 2.toByte() -> if (m.great > 0) { builder
@@ -883,7 +894,7 @@ class CalculateApiImpl(
                     .n100(t.ok)
                     .misses(t.miss)
 
-                    t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
+                    // t.largeBonus.takeIf { it > 0 }?.let { builder.nGeki(it) }
                 }
 
                 2.toByte() -> builder

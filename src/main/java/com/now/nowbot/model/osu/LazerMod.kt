@@ -2733,19 +2733,18 @@ sealed class LazerMod {
             return strings.any { hiddenSet.contains(it) }
         }
 
-        inline fun <reified T: LazerMod> List<T>.containsHidden(): Boolean {
+        fun List<LazerMod>.containsHidden(): Boolean {
             val hiddenSet = setOf(
                 Hidden::class,
                 Flashlight::class,
                 Blinds::class,
                 FadeIn::class,
             )
-
             return this.any { hiddenSet.contains(it::class) }
         }
 
         fun List<LazerMod>.toJson(): String {
-            return JacksonUtil.objectToJson(this)
+            return JacksonUtil.objectToJson(this.filterNot { it::class == ScoreV2::class })
         }
 
         fun getModsListFromModInt(modInt: Int): List<LazerMod> {
