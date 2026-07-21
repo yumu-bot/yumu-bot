@@ -27,7 +27,7 @@ class BeatmapLite {
     @Column(name = "is_convert")
     var convert: Boolean? = null
 
-    @Column(columnDefinition = "text")
+    @Column(name = "version", columnDefinition = "text")
     var difficultyName: String? = null
 
     @Column(columnDefinition = "text")
@@ -46,8 +46,11 @@ class BeatmapLite {
     //drain值
     var hp: Float? = null
 
+    @Column(name = "difficulty_rating")
     var difficultyRating: Float? = null
+    @Column(name = "bpm")
     var bpm: Float? = null
+    @Column(name = "max_combo")
     var maxCombo: Int? = null
 
     //物件数
@@ -56,11 +59,13 @@ class BeatmapLite {
     var spinners: Int? = null
 
     //秒
+    @Column(name = "total_length")
     var totalLength: Int? = null
+    @Column(name = "hit_length")
     var hitLength: Int? = null
 
-
     //mode_init 0->osu ...
+    @Column(name = "mode_int")
     var modeInt: Int? = null
 
     var ranked: Int? = null
