@@ -6,6 +6,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.MicroUser
@@ -202,10 +203,9 @@ class PopularService(
     }
 
     override fun handleMessage(event: MessageEvent, param: PopularParam): ServiceCallStatistic? {
-
-        val me = bindDao.getBindFromQQOrNull(event.sender.contactID)
-
-        val mode = OsuMode.getMode(param.mode, me?.mode, bindDao.getGroupModeConfig(event))
+        val mode = param.mode
+            .orElse(bindDao.getGroupMode(event))
+            .orElse(bindDao.getBindModeFromID(event.sender.contactID))
 
         val bot = try {
             botContainer.robots[event.bot!!.botID] ?: throw TipsException("流行谱面：机器人为空")

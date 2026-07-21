@@ -1,6 +1,7 @@
 package com.now.nowbot.model.enums
 
 import com.fasterxml.jackson.annotation.JsonValue
+import com.now.nowbot.model.osu.Beatmap
 import java.util.*
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -35,13 +36,11 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             DEFAULT -> 0
         }
 
-    fun isDefault(): Boolean {
-        return isDefaultOrNull(this)
-    }
+    val isDefault: Boolean
+        get() = this.isDefaultOrNull()
 
-    fun isNotDefault(): Boolean {
-        return isNotDefaultOrNull(this)
-    }
+    val isNotDefault: Boolean
+        get() = this.isNotDefaultOrNull()
 
     /**
      * 当且仅当这是转谱组合时（主模式搭配输入的其他模式）
@@ -66,44 +65,15 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
     }
 
     companion object {
-        /**
-         * 当 mode 为 Default 或者 mode == mode2 时，返回 true
-         */
-        fun equalOrDefault(mode: OsuMode, mode2: Any?) : Boolean {
-            return mode2 is OsuMode && (mode == mode2 || mode == DEFAULT)
+        fun String?.toOsuMode(orElse: OsuMode? = null): OsuMode {
+            return getMode(this).orElse(orElse)
         }
 
-        fun getMode(str: String?, default: String?): OsuMode {
-            val mode = getMode(default)
-            if (DEFAULT != mode) return getMode(str, mode)
-            return getMode(str)
-        }
+        fun OsuMode?.takeUnlessDefault(): OsuMode? = this?.takeUnless { it == DEFAULT }
 
-        fun getMode(str: String?, default: OsuMode?): OsuMode {
-            val mode = getMode(str)
-            if (DEFAULT == mode) return default ?: DEFAULT
-            return mode
-        }
+        fun OsuMode?.orElse(mode: OsuMode? = null): OsuMode = this.takeUnlessDefault() ?: mode ?: DEFAULT
 
-        @JvmStatic
-        fun getMode(mode: OsuMode?, default: OsuMode?): OsuMode {
-            if (isDefaultOrNull(mode)) return default ?: DEFAULT
-            return mode
-        }
-
-        /**
-         * 用于覆盖默认的游戏模式。优先级：mode > groupMode > selfMode
-         * @param mode 玩家查询时输入的游戏模式
-         * @param selfMode 一般是玩家自己绑定的游戏模式
-         * @param groupMode 群聊绑定游戏模式
-         */
-
-        @JvmStatic
-        fun getMode(mode: OsuMode?, selfMode: OsuMode?, groupMode: OsuMode?): OsuMode {
-            if (isNotDefaultOrNull(mode)) return mode
-            if (isNotDefaultOrNull(groupMode)) return groupMode
-            return selfMode ?: DEFAULT
-        }
+        fun OsuMode?.orElse(value: Number?): OsuMode = this.takeUnlessDefault() ?: value.toOsuMode()
 
         @JvmStatic
         fun getMode(name: String?): OsuMode {
@@ -131,63 +101,67 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
         private val valuesTable: Array<OsuMode> = sortedEntries.toTypedArray()
 
         fun Byte?.toOsuMode(): OsuMode {
-            return getMode(this)
-        }
-
-        fun Number?.toOsuMode(): OsuMode {
-            return getMode(this?.toByte())
-        }
-
-        @JvmStatic
-        fun getMode(num: Byte?): OsuMode {
-            val index = keysTable.binarySearch(num ?: return DEFAULT)
+            val index = keysTable.binarySearch(this ?: return DEFAULT)
             return if (index >= 0) valuesTable[index] else DEFAULT
         }
 
-        @JvmStatic
-        fun getMode(num: Int?): OsuMode {
-            return getMode(num?.toByte())
+        fun Number?.toOsuMode(): OsuMode {
+            return this?.toByte().toOsuMode()
         }
 
         @JvmStatic
-        @OptIn(ExperimentalContracts::class)
-        fun isDefaultOrNull(mode: OsuMode?): Boolean {
-            contract {
-                returns(false) implies (mode != null)
-            }
-            return mode == null || mode == DEFAULT
+        fun getMode(num: Number?): OsuMode {
+            return num.toOsuMode()
         }
 
-        @JvmStatic
         @OptIn(ExperimentalContracts::class)
-        fun isNotDefaultOrNull(mode: OsuMode?): Boolean {
+        fun OsuMode?.isDefaultOrNull(): Boolean {
             contract {
-                returns(true) implies (mode != null)
+                returns(false) implies (this@isDefaultOrNull != null)
             }
-            return mode != null && mode != DEFAULT
+
+            return this == null || this == DEFAULT
         }
+
+        @OptIn(ExperimentalContracts::class)
+        fun OsuMode?.isNotDefaultOrNull(): Boolean {
+            contract {
+                returns(true) implies (this@isNotDefaultOrNull != null)
+            }
+
+            return this != null && this != DEFAULT
+        }
+        /**
+         * 修正无法转换的模式：只有可转换的谱面才能赋予模式
+         */
+        fun OsuMode?.takeIfConvertable(beatmap: Beatmap?): OsuMode = this.takeIfConvertable(beatmap?.mode)
+
+        /**
+         * 修正无法转换的模式：只有可转换的谱面才能赋予模式
+         */
+        fun OsuMode?.takeIfConvertable(beatmapMode: OsuMode?): OsuMode =
+            if (this.isDefaultOrNull() || (beatmapMode != null && beatmapMode.safeModeValue != 0.toByte())) {
+                beatmapMode ?: DEFAULT
+            } else {
+                this
+            }
 
         /**
          * 修正无法转换的模式：只有可转换的谱面才能赋予模式
          */
         fun getConvertableMode(convert: OsuMode?, map: OsuMode?): OsuMode {
-            return if (isDefaultOrNull(convert) || (map != null && map != OSU && map != DEFAULT)) {
+            return if (convert.isDefaultOrNull() || (map != null && map != OSU && map != DEFAULT)) {
                 map ?: DEFAULT
             } else {
                 convert
             }
         }
 
-        fun getQueryName(mode: OsuMode?): Optional<String> {
-            if (mode == null) {
-                return Optional.empty()
-            }
-            if (DEFAULT == mode) {
-                return Optional.empty()
-            }
-            return Optional.of(mode.shortName)
+        fun OsuMode?.getQuery(): Optional<String> = if (this.isDefaultOrNull()) {
+            Optional.empty()
+        } else {
+            Optional.of(this.shortName)
         }
-
 
         fun me.aloic.rosupp.GameMode.toOsuMode(): OsuMode {
             return when (this) {

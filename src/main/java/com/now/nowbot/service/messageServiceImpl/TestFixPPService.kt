@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -51,7 +52,7 @@ import kotlin.math.roundToInt
                 throw IllegalArgumentException.WrongException.PlayerName()
             }
 
-            val mode = OsuMode.getMode(matcher.group("mode"))
+            val mode = matcher.group("mode").toOsuMode()
 
             if (Permission.isCommonUser(event)) {
                 throw PermissionException.DeniedException.BelowGroupAdministrator()
@@ -101,7 +102,7 @@ import kotlin.math.roundToInt
         // 获取第一个玩家，来设定默认游戏模式
         if (mode == OsuMode.DEFAULT) {
             val firstUser = userApiService.getOsuUser(ids.first(), mode)
-            mode = firstUser.currentOsuMode
+            mode = firstUser.mode
         }
 
         val actions = ids.map {

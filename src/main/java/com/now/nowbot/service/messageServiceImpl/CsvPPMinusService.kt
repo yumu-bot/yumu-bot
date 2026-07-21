@@ -4,6 +4,8 @@ import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -43,7 +45,7 @@ class CsvPPMinusService(
                 throw NoSuchElementException.Data()
             }
 
-            val mode = OsuMode.getMode(matcher.group("mode"))
+            val mode = matcher.group("mode").toOsuMode()
 
             data.value = CSVPPMinusParam(names, mode)
             return true
@@ -83,7 +85,7 @@ class CsvPPMinusService(
         // 获取第一个玩家，来设定默认游戏模式
         if (mode == OsuMode.DEFAULT) {
             val firstUser = userApiService.getOsuUser(ids.first(), mode)
-            mode = firstUser.currentOsuMode
+            mode = firstUser.mode
         }
 
         val actions = ids.map { id ->
@@ -91,8 +93,8 @@ class CsvPPMinusService(
                 try {
                     val u = userApiService.getOsuUser(id, mode)
 
-                    if (OsuMode.isDefaultOrNull(mode)) {
-                        mode = u.currentOsuMode
+                    if (mode.isDefaultOrNull()) {
+                        mode = u.mode
                     }
 
                     val s = scoreApiService.getBestScores(id, mode)

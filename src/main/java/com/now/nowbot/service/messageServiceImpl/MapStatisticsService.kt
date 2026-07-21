@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -123,9 +125,9 @@ class MapStatisticsService(
         }
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
-        val inputMode = OsuMode.getMode(matcher.group(FLAG_MODE))
+        val mode = matcher.group(FLAG_MODE).toOsuMode()
+            .takeIfConvertable(beatmap)
 
-        val mode = OsuMode.getConvertableMode(inputMode, beatmap.mode)
         val expected = Expected(mode, accuracy, c, misses, mods, beatmap.lazerOnly || isLazer)
 
         return MapStatisticsParam(beatmapset, beatmap, expected)

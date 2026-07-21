@@ -550,7 +550,7 @@ class BindDao(
                 return
             }
 
-            log.debug("更新用户: {}", u.username);
+            log.debug("更新用户: {}", u.username)
             refreshOldUserToken(u, userApiService)
             return
         }
@@ -697,12 +697,20 @@ class BindDao(
                 (lite.groupId ?: -1) to (lite.mainMode ?: OsuMode.DEFAULT)
             }
 
-    fun getGroupModeConfig(event: MessageEvent?): OsuMode {
+    fun getGroupMode(event: MessageEvent?): OsuMode {
         if (event == null || event.subject !is Group) {
             return OsuMode.DEFAULT
         }
 
         return osuGroupConfigRepository.findById(event.subject.contactID).getOrNull()?.mainMode ?: OsuMode.DEFAULT
+    }
+
+    fun saveGroupMode(groupID: Long, mode: OsuMode?) {
+        if (mode.isDefaultOrNull()) {
+            osuGroupConfigRepository.deleteById(groupID)
+        } else {
+            osuGroupConfigRepository.save(OsuGroupConfigLite(groupID, mode))
+        }
     }
 
     fun getBindUsersLimit50(offset: Int): List<BindUser> {
@@ -715,14 +723,6 @@ class BindDao(
 
     fun getAllQQBindUser(qqs: Collection<Long>): List<QQBindLite.QQUser> {
         return bindQQMapper.findAllUserByQQ(qqs)
-    }
-
-    fun saveGroupModeConfig(groupId: Long, mode: OsuMode?) {
-        if (isDefaultOrNull(mode)) {
-            osuGroupConfigRepository.deleteById(groupId)
-        } else {
-            osuGroupConfigRepository.save(OsuGroupConfigLite(groupId, mode))
-        }
     }
 
     private class RefreshException(var successCount: Int) : RuntimeException()

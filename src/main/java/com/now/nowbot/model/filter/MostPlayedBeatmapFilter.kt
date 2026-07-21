@@ -3,7 +3,7 @@ package com.now.nowbot.model.filter
 import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuLanguage
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.util.DataUtil
@@ -108,7 +108,7 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
 
                     fit(operator, b.totalLength.toLong(), seconds)
                 }
-                MODE -> fit(operator, b.mode.modeValue.toInt(), OsuMode.getMode(str).modeValue.toInt())
+                MODE -> fit(operator, b.mode.modeValue.toInt(), str.toOsuMode().modeValue.toInt())
                 CATEGORY -> fit(operator, DataUtil.getStatus(b.status), DataUtil.getStatus(str))
                 GENRE -> fit(operator, s.genreID.toInt(), OsuGenre.getByte(str)?.toInt())
                 LANGUAGE -> fit(operator, s.languageID.toInt(), OsuLanguage.getByte(str)?.toInt())

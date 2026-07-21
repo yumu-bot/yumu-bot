@@ -4,6 +4,8 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.command.*
@@ -91,7 +93,7 @@ class UserIDUtil(
         }
 
         if (myID != null && isMyself.get()) {
-            setMode(mode, me.mode, event)
+            setMode(mode, event, me.mode)
             return myID
         }
 
@@ -131,7 +133,7 @@ class UserIDUtil(
         }
 
         if (myID != null && isMyself.get()) {
-            setMode(mode, me.mode, null)
+            setMode(mode, selfMode = me.mode)
             return myID
         }
 
@@ -158,7 +160,7 @@ class UserIDUtil(
 
         val me = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
-        setMode(mode, me?.mode ?: OsuMode.DEFAULT, event)
+        setMode(mode, event, me?.mode ?: OsuMode.DEFAULT)
 
         if (event.hasAt()) {
             return getUserIDFromQQ(event.target, me, mode, isVS)
@@ -181,7 +183,7 @@ class UserIDUtil(
                 throw BindException.NotBindException.YouNotBind()
             }
 
-            setMode(mode, me.mode, event)
+            setMode(mode, event, me.mode)
             return me.userID to null
         }
 
@@ -198,7 +200,7 @@ class UserIDUtil(
             else -> {
                 val bind = bindDao.getBindFromQQ(event.sender.contactID, true)
 
-                setMode(mode, bind.mode, event)
+                setMode(mode, event, bind.mode)
                 return bind.userID to null
             }
         }
@@ -215,7 +217,7 @@ class UserIDUtil(
             BindUser(- qq, "unknown")
         }
 
-        setMode(mode, me?.mode ?: OsuMode.DEFAULT)
+        setMode(mode, selfMode = me?.mode ?: OsuMode.DEFAULT)
 
         return if (isVS && me != null) {
             me.userID to you.userID
@@ -233,7 +235,7 @@ class UserIDUtil(
             null
         }
 
-        setMode(mode, me?.mode ?: OsuMode.DEFAULT)
+        setMode(mode, selfMode = me?.mode ?: OsuMode.DEFAULT)
 
         return if (isVS && me != null) {
             me.userID to yourID
@@ -275,7 +277,7 @@ class UserIDUtil(
                 val user = bindDao.getBindUser(range.first.toString())
 
                 return if (user != null) {
-                    setMode(mode, user.mode, event)
+                    setMode(mode, event, user.mode)
                     InstructionRange(user.userID)
                 } else {
                     InstructionRange(null, range.first)
@@ -285,7 +287,7 @@ class UserIDUtil(
             isMyself.set(true)
 
             val me = bindDao.getBindFromQQ(event.sender.contactID)
-            setMode(mode, me.mode, event)
+            setMode(mode, event, me.mode)
 
             return InstructionRange(me.userID, range.first, range.second)
         }
@@ -305,7 +307,7 @@ class UserIDUtil(
                 val user = bindDao.getBindUser(range.data!!)
 
                 if (user != null) {
-                    setMode(mode, user.mode, event)
+                    setMode(mode, event, user.mode)
                 } else {
                     setMode(mode, event)
                 }
@@ -358,7 +360,7 @@ class UserIDUtil(
                 }
 
                 return if (user != null) {
-                    setMode(mode, user.mode, null)
+                    setMode(mode, selfMode = user.mode)
                     InstructionRange(user.userID)
                 } else {
                     InstructionRange(null, range.first)
@@ -368,7 +370,7 @@ class UserIDUtil(
             isMyself.set(true)
 
             val me = bindDao.getSBBindFromQQ(event.sender.contactID, true)
-            setMode(mode, me.mode, null)
+            setMode(mode, selfMode = me.mode)
 
             return InstructionRange(me.userID, range.first, range.second)
         }
@@ -392,7 +394,7 @@ class UserIDUtil(
                 }
 
                 if (user != null) {
-                    setMode(mode, user.mode, null)
+                    setMode(mode, selfMode = user.mode)
                 } else {
                     setMode(mode, null)
                 }
@@ -451,7 +453,7 @@ class UserIDUtil(
             // 必须提前返回，否则对方没绑定时会掉到后面去
             val sb = bindDao.getBindFromQQOrNull(qq) ?: return null
 
-            setMode(mode, sb.mode, event)
+            setMode(mode, event, sb.mode)
             return sb.userID
         }
 
@@ -517,7 +519,7 @@ class UserIDUtil(
 
             try {
                 val sb = bindDao.getSBBindFromQQ(qq, isMyself.get())
-                setMode(mode, sb.mode)
+                setMode(mode, selfMode = sb.mode)
                 return sb.userID
             } catch (_: BindException) {}
         }
@@ -558,13 +560,26 @@ class UserIDUtil(
     }
 
     /**
+     * 用于覆盖默认的游戏模式。优先级：mode > selfMode
+     * @param mode 玩家查询时输入的游戏模式
+     * @param selfMode 一般是玩家自己的游戏模式
+     */
+    private fun setMode(mode: InstructionObject<OsuMode>, selfMode: OsuMode) {
+        if (mode.data.isDefaultOrNull()) {
+            mode.data = selfMode
+        }
+    }
+
+    /**
      * 用于覆盖默认的游戏模式。优先级：mode > groupMode > selfMode
      * @param mode 玩家查询时输入的游戏模式
-     * @param selfMode 一般是玩家自己绑定的游戏模式
      * @param event 可能为群聊
+     * @param selfMode 一般是玩家自己的游戏模式
      */
-    private fun setMode(mode: InstructionObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
-        mode.data = OsuMode.getMode(mode.data, selfMode, bindDao.getGroupModeConfig(event))
+    private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent, selfMode: OsuMode) {
+        if (mode.data.isDefaultOrNull()) {
+            mode.data = bindDao.getGroupMode(event).orElse(selfMode)
+        }
     }
 
     /**
@@ -573,7 +588,9 @@ class UserIDUtil(
      * @param event 可能为群聊
      */
     private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent? = null) {
-        mode.data = OsuMode.getMode(mode.data, OsuMode.DEFAULT, bindDao.getGroupModeConfig(event))
+        if (mode.data.isDefaultOrNull()) {
+            mode.data = bindDao.getGroupMode(event)
+        }
     }
 
     companion object {

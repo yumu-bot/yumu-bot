@@ -559,7 +559,7 @@ class BeatmapDao(
     companion object {
         fun fromBeatmapLite(bl: BeatmapLite): Beatmap {
             val b = bl.toBeatmap()
-            b.beatmapset = fromBeatmapsetLite(bl.mapSet)
+            b.beatmapset = fromBeatmapsetLite(bl.mapSet!!)
             return b
         }
 

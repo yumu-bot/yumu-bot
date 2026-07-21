@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.BeatmapsetSearch
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -121,7 +122,7 @@ import java.util.regex.Matcher
             throw IllegalArgumentException.WrongException.Henan()
         }
 
-        val mode = OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), bindDao.getGroupModeConfig(event))
+        val mode = matcher.group(FLAG_MODE).toOsuMode(bindDao.getGroupMode(event))
         val status = DataUtil.getStatus(statusStr)
         val genre = OsuGenre.getByte(genreStr)
         val sort = DataUtil.getSort(sortStr ?: "ranked_asc")

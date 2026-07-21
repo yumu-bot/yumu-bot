@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -53,7 +53,7 @@ class SBInfoService(
             throw IllegalStateException.Send("玩家信息")
         }
 
-        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.currentOsuMode)
+        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.mode)
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 3): InfoParam {
@@ -99,9 +99,9 @@ class SBInfoService(
 
          */
 
-        val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
+        val currentMode = mode.data.orElse(user.mode)
 
-        val percentiles = infoDao.getPercentiles(user, user.currentOsuMode)
+        val percentiles = infoDao.getPercentiles(user, user.mode)
 
         return InfoParam(user, bests, currentMode, historyUser = null, isMyself.get(), version, percentiles)
     }

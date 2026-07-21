@@ -49,7 +49,7 @@ class InfoCardService(
             throw IllegalStateException.Send("迷你信息")
         }
 
-        return ServiceCallStatistic.build(event, userID = param.userID, mode = param.currentOsuMode)
+        return ServiceCallStatistic.build(event, userID = param.userID, mode = param.mode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): OsuUser? {

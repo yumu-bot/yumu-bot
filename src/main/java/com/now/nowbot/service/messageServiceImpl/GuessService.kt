@@ -990,7 +990,7 @@ class GuessService(
                     throw TipsException(GuessReply.Conflict)
                 }
 
-                event.replyGuess(game, GuessReply.Start(param.user.username, param.user.currentOsuMode, selected.size))
+                event.replyGuess(game, GuessReply.Start(param.user.username, param.user.mode, selected.size))
             }
 
             is GuessParam.GuessEndParam -> {
@@ -1126,7 +1126,7 @@ class GuessService(
     }
 
     fun getStartParam(event: MessageEvent, matcher: Matcher): GuessParam {
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event))
+        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event))
 
         val userID = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 

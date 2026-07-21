@@ -4,6 +4,7 @@ import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
@@ -97,7 +98,7 @@ class SBScoreService(
             event,
             beatmapIDs = scores.map { it.beatmapID }.distinct(),
             userIDs = listOf(param.user.userID),
-            modes = listOf(param.user.currentOsuMode),
+            modes = listOf(param.user.mode),
         )
     }
 
@@ -125,7 +126,7 @@ class SBScoreService(
              */
 
             val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && inputMode.data!!.modeValue in 0..3) {
-                OsuMode.getMode(inputMode.data!!.modeValue + 4.toByte())
+                (inputMode.data!!.modeValue + 4.toByte()).toOsuMode()
             } else {
                 inputMode.data!!
             }
@@ -176,7 +177,7 @@ class SBScoreService(
                 val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 
                 val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && currentMode.data!!.modeValue in 0..3) {
-                    OsuMode.getMode(currentMode.data!!.modeValue + 4.toByte())
+                    (currentMode.data!!.modeValue + 4.toByte()).toOsuMode()
                 } else {
                     currentMode.data!!
                 }
@@ -220,7 +221,7 @@ class SBScoreService(
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 
             val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && currentMode.data!!.modeValue in 0..3) {
-                OsuMode.getMode(currentMode.data!!.modeValue + 4.toByte())
+                (currentMode.data!!.modeValue + 4.toByte()).toOsuMode()
             } else {
                 currentMode.data!!
             }
@@ -239,7 +240,7 @@ class SBScoreService(
 
                 user = async.first?.toOsuUser(rx) ?: throw NoSuchElementException.Player(id.toString())
                 recent = async.second.firstOrNull()?.toLazerScore()
-                    ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
+                    ?: throw NoSuchElementException.RecentScore(user.username, user.mode)
             } else {
                 user = InstructionUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(rx)
 
@@ -250,7 +251,7 @@ class SBScoreService(
                     offset = 0,
                     limit = 1
                 ).firstOrNull()?.toLazerScore()
-                    ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
+                    ?: throw NoSuchElementException.RecentScore(user.username, user.mode)
             }
 
             map = beatmapApiService.getBeatmap(recent.beatmapID)

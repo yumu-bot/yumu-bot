@@ -6,6 +6,7 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.UserSnapShotDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -72,7 +73,7 @@ class BestHistoryRecoverService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): BestHistoryParam {
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event))
+        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event))
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
         val user: OsuUser
@@ -81,14 +82,14 @@ class BestHistoryRecoverService(
             user = runCatching {
                 userApiService.getOsuUser(id, mode.data!!)
             }.getOrElse {
-                OsuUser(userID = id).apply { this.mode = mode.data!!.shortName }
+                OsuUser(userID = id).apply { this.mode = mode.data!! }
             }
 
         } else {
             user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
         }
 
-        return BestHistoryParam(user, OsuMode.getMode(user.currentOsuMode, mode.data!!))
+        return BestHistoryParam(user, user.mode.orElse(mode.data))
     }
 
     private fun BestHistoryParam.replyAndGetSelected(event: MessageEvent): Int? {

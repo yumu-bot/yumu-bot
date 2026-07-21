@@ -3,6 +3,7 @@ package com.now.nowbot.model.ppysb
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
@@ -54,7 +55,7 @@ data class SBUser(
     fun toOsuUser(mode: OsuMode?): OsuUser {
         val sb = this
 
-        if (OsuMode.isNotDefaultOrNull(mode)) {
+        if (mode.isNotDefaultOrNull()) {
             sb.currentMode = mode
         }
 
@@ -98,8 +99,8 @@ data class SBUser(
                 team = OsuUser.Team(null, sb.clan.clanID.toInt(), sb.clan.clanName, sb.clan.clanTag)
             }
 
-            defaultOsuMode = sb.mode
-            currentOsuMode = sb.currentMode
+            this.defaultMode = sb.mode
+            this.mode = sb.currentMode
 
             if (sb.customBadgeName != null && sb.customBadgeIcon != null) {
                 badges = listOf(

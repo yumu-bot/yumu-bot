@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean
             throw IllegalStateException.Send("奖牌信息")
         }
 
-        return ServiceCallStatistic.build(event, userID = param.userID, mode = param.currentOsuMode)
+        return ServiceCallStatistic.build(event, userID = param.userID, mode = param.mode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): OsuUser? {

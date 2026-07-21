@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -23,12 +23,10 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.InstructionUtil
-import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.ZoneOffset
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
@@ -44,7 +42,7 @@ import java.util.regex.Matcher
     data class BAParam(val user: OsuUser, val bests: List<LazerScore>, val isMyself: Boolean, val mappers: List<MicroUser>, val version: Int) {
         fun toMap(version: Int = this.version): Map<String, Any> {
             if (bests.size <= 5) {
-                throw NoSuchElementException.PlayerBestScore(user.username, user.currentOsuMode)
+                throw NoSuchElementException.PlayerBestScore(user.username, user.mode)
             }
 
             val rankMap = mutableMapOf<String, MutableList<Double>>()
@@ -209,7 +207,7 @@ import java.util.regex.Matcher
                     "rank_attr" to rankAttribute,
                     "pp_raw" to bestPP,
                     "pp" to userPP,
-                    "game_mode" to user.currentOsuMode,
+                    "game_mode" to user.mode,
                 )
 
                 else ->
@@ -265,7 +263,7 @@ import java.util.regex.Matcher
             throw IllegalStateException.Send("最好成绩分析")
         }
 
-        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.currentOsuMode)
+        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.mode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): BAParam? {
@@ -287,24 +285,23 @@ import java.util.regex.Matcher
 
         // 1. 使用 if 表达式并结合解构声明，集中处理数据的获取逻辑
         val (user, bests) = if (id != null) {
-            val m = OsuMode.getMode(mode.data,
-                bindDao.getBindModeFromID(id),
-                bindDao.getGroupModeConfig(event)
-            )
+            val m = mode.data
+                .orElse(bindDao.getGroupMode(event))
+                .orElse(bindDao.getBindModeFromID(id))
 
-            if (m.isNotDefault()) {
+            if (m.isNotDefault) {
                 AsyncMethodExecutor.awaitPair(
                     { userApiService.getOsuUser(id, m) },
                     { scoreApiService.getBestScores(id, m) }
                 )
             } else {
                 val fetchedUser = userApiService.getOsuUser(id)
-                val fetchedBests = scoreApiService.getBestScores(id, fetchedUser.currentOsuMode)
+                val fetchedBests = scoreApiService.getBestScores(id, fetchedUser.mode)
                 fetchedUser to fetchedBests
             }
         } else {
             val fetchedUser = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
-            val fetchedBests = scoreApiService.getBestScores(fetchedUser.userID, fetchedUser.currentOsuMode)
+            val fetchedBests = scoreApiService.getBestScores(fetchedUser.userID, fetchedUser.mode)
             fetchedUser to fetchedBests
         }
 

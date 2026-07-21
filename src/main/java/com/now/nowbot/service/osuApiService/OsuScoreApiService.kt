@@ -29,7 +29,7 @@ interface OsuScoreApiService {
     }
 
     fun getBestScores(user: OsuUser): List<LazerScore> {
-        return getBestScores(user.userID, user.currentOsuMode, 0, 200)
+        return getBestScores(user.userID, user.mode, 0, 200)
     }
 
     fun getBestScores(user: OsuUser, mode: OsuMode?): List<LazerScore> {
@@ -45,7 +45,7 @@ interface OsuScoreApiService {
     }
 
     fun getBestScores(user: OsuUser, offset: Int, limit: Int): List<LazerScore> {
-        return getBestScores(user.userID, user.currentOsuMode, offset, limit)
+        return getBestScores(user.userID, user.mode, offset, limit)
     }
 
     fun getBestScoresSerial(id: Long, mode: OsuMode?): List<LazerScore> {
@@ -89,7 +89,7 @@ interface OsuScoreApiService {
     fun getPassedScore(uid: Long, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
 
     fun getPassedScore(user: OsuUser): List<LazerScore> {
-        return getPassedScore(user.userID, user.currentOsuMode, 0, 100)
+        return getPassedScore(user.userID, user.mode, 0, 100)
     }
 
     /**
@@ -108,7 +108,7 @@ interface OsuScoreApiService {
     fun getRecentScore(uid: Long, mode: OsuMode?, offset: Int, limit: Int, isBackground: Boolean = false): List<LazerScore>
 
     fun getRecentScore(user: OsuUser): List<LazerScore> {
-        return getRecentScore(user.userID, user.currentOsuMode, 0, 100)
+        return getRecentScore(user.userID, user.mode, 0, 100)
     }
 
     fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore?

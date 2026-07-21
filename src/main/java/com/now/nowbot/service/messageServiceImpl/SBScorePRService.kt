@@ -89,7 +89,7 @@ class SBScorePRService(
             event,
             beatmapIDs = scores.map { it.second.beatmapID }.distinct(),
             userIDs = listOf(param.user.userID),
-            modes = listOf(param.user.currentOsuMode),
+            modes = listOf(param.user.mode),
         )
     }
 
@@ -160,7 +160,7 @@ class SBScorePRService(
             }
 
             val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
-                OsuMode.getMode(mode.data!!.modeValue + 4.toByte())
+                (mode.data!!.modeValue + 4.toByte()).toOsuMode()
             } else {
                 mode.data!!
             }
@@ -208,9 +208,9 @@ class SBScorePRService(
 
         if (filteredScores.isEmpty()) {
             if (isPass) {
-                throw NoSuchElementException.PassedScoreFiltered(user.username, user.currentOsuMode)
+                throw NoSuchElementException.PassedScoreFiltered(user.username, user.mode)
             } else {
-                throw NoSuchElementException.RecentScoreFiltered(user.username, user.currentOsuMode)
+                throw NoSuchElementException.RecentScoreFiltered(user.username, user.mode)
             }
         }
 

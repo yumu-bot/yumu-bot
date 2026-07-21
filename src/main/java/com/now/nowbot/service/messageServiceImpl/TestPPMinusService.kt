@@ -65,7 +65,7 @@ class TestPPMinusService(
         val bests: List<LazerScore> = scoreApiService.getBestScores(user)
 
         if (user.statistics!!.playTime!! < 60 || user.statistics!!.playCount!! < 30) {
-            throw NoSuchElementException.PlayerPlayWithMode(user.username, user.currentOsuMode)
+            throw NoSuchElementException.PlayerPlayWithMode(user.username, user.mode)
         }
 
         try {
@@ -87,7 +87,7 @@ class TestPPMinusService(
         }
 
         try {
-            return PPMinus4.getInstance(user, bests, surrounding, delta, user.currentOsuMode)!!
+            return PPMinus4.getInstance(user, bests, surrounding, delta, user.mode)!!
         } catch (e: Exception) {
             log.error("PP-：数据计算失败", e)
             throw IllegalStateException.Calculate("PPM")

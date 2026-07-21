@@ -345,7 +345,7 @@ class PPMinusService(
             val users = InstructionUtil.get2User(event, matcher, inputMode, isVs)
 
             val m = if (version != -1) {
-                users.first().currentOsuMode
+                users.first().mode
             } else mode
 
             me = users.first()
@@ -365,7 +365,7 @@ class PPMinusService(
         fun getPPMinus2(user: OsuUser, bests: List<LazerScore>, ppMinusDao: PPMinusDao, version: Int = 2): PPMinus {
             if (version != -1) {
                 if (user.statistics!!.playTime!! < 60 || user.statistics!!.playCount!! < 30) {
-                    throw NoSuchElementException.PlayerPlayWithMode(user.username, user.currentOsuMode)
+                    throw NoSuchElementException.PlayerPlayWithMode(user.username, user.mode)
                 }
 
                 AsyncMethodExecutor.asyncRunnableExecute {
@@ -378,7 +378,7 @@ class PPMinusService(
             }
 
             try {
-                return PPMinus.getInstance(user.currentOsuMode, user, bests)
+                return PPMinus.getInstance(user.mode, user, bests)
             } catch (e: Exception) {
                 log.error("PPM2：数据计算失败", e)
                 throw IllegalStateException.Calculate("PPM")
@@ -388,7 +388,7 @@ class PPMinusService(
         @JvmStatic
         fun getPPMinus4(user: OsuUser, bests: List<LazerScore>, ppMinusDao: PPMinusDao): PPMinus4 {
             if (user.statistics!!.playTime!! < 60 || user.statistics!!.playCount!! < 30) {
-                throw NoSuchElementException.PlayerPlayWithMode(user.username, user.currentOsuMode)
+                throw NoSuchElementException.PlayerPlayWithMode(user.username, user.mode)
             }
 
             AsyncMethodExecutor.asyncRunnableExecute {
@@ -412,7 +412,7 @@ class PPMinusService(
             }
 
             try {
-                return PPMinus4.getInstance(user, bests, surrounding, delta, user.currentOsuMode)!!
+                return PPMinus4.getInstance(user, bests, surrounding, delta, user.mode)!!
             } catch (e: Exception) {
                 log.error("PPM4：数据计算失败", e)
                 throw IllegalStateException.Calculate("PPM4")
@@ -445,7 +445,7 @@ class PPMinusService(
         private fun getOsuImprovementIndicator(user: OsuUser): Double {
             val pp = user.pp
 
-            val expectedPT = when (user.currentOsuMode) {
+            val expectedPT = when (user.mode) {
                 OSU, OSU_AUTOPILOT, OSU_RELAX -> {
                     -12.0 + 0.0781 * pp + 6.01E-6 * pp * pp
                 }

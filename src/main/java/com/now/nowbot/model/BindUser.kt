@@ -67,7 +67,7 @@ class BindUser {
     constructor(user: OsuUser) {
         this.userID = user.userID
         this.username = user.username
-        this.mode = user.currentOsuMode
+        this.mode = user.mode
         time = 0L
         setTimeToNow()
     }

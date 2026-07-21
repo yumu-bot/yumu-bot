@@ -7,6 +7,7 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
@@ -123,18 +124,16 @@ class GroupLeaderBoardService(
 
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: rangeInConditions.firstOrNull()?.toIntOrNull() ?: 1
 
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event)).data
-
         val beatmap = beatmapApiService.getBeatmapFromAnyID(matcher) { dao.getLastBeatmapID(event) }
 
-        val m = OsuMode.getConvertableMode(mode, beatmap.mode)
+        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event)).data.takeIfConvertable(beatmap)
 
         val mods = InstructionUtil.getMod(matcher)
 
         val (ss, user) = runBlocking(Dispatchers.IO) {
             launch {
                 BeatmapUtil.applyBeatmapChanges(beatmap, mods)
-                calculateApiService.applyStarToBeatmap(beatmap, m, mods)
+                calculateApiService.applyStarToBeatmap(beatmap, mode, mods)
             }
 
             val scoresDeferred = async {
@@ -161,7 +160,7 @@ class GroupLeaderBoardService(
 
                 val userIDs = bindDao.getAllQQBindUser(members).map { it.uid }
 
-                val scores = scoreDao.getBeatmapScores(userIDs, beatmap.beatmapID, m).ifEmpty {
+                val scores = scoreDao.getBeatmapScores(userIDs, beatmap.beatmapID, mode).ifEmpty {
                     throw NoSuchElementException.GroupBeatmapScore(beatmap.previewName)
                 }
 
@@ -204,7 +203,7 @@ class GroupLeaderBoardService(
 
             val userDeferred = async {
                 runCatching {
-                    userApiService.getOsuUser(bindDao.getBindFromQQOrNull(event.sender.contactID) ?: return@runCatching null, m)
+                    userApiService.getOsuUser(bindDao.getBindFromQQOrNull(event.sender.contactID) ?: return@runCatching null, mode)
                 }.getOrNull()
             }
 
@@ -215,7 +214,7 @@ class GroupLeaderBoardService(
 
         split.applyMicroUser()
 
-        return GroupLeaderBoardParam(user, beatmap, m, split, event.subject.contactID, currentPage, maxPage)
+        return GroupLeaderBoardParam(user, beatmap, mode, split, event.subject.contactID, currentPage, maxPage)
     }
     
     companion object {

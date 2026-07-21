@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -79,7 +80,7 @@ class SBBPService(
             event,
             beatmapIDs = scores.map { it.second.beatmapID }.distinct(),
             userIDs = listOf(param.user.userID),
-            modes = listOf(param.user.currentOsuMode),
+            modes = listOf(param.user.mode),
         )
     }
 
@@ -97,13 +98,7 @@ class SBBPService(
         val isRelax = if (any.isNotBlank()) {
             val rxMatcher = ScoreFilter.MOD.regex.toPattern().matcher(any)
 
-            if (!rxMatcher.find()) {
-                false
-            } else if (rxMatcher.group("n").contains("([Rr][Xx])|([Rr]elax)".toRegex())) {
-                true
-            } else {
-                false
-            }
+            rxMatcher.find() && rxMatcher.group("n").contains("([Rr][Xx])|([Rr]elax)".toRegex())
         } else {
             false
         }
@@ -151,7 +146,7 @@ class SBBPService(
             }
 
             val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
-                OsuMode.getMode(mode.data!!.modeValue + 4.toByte())
+                (mode.data!!.modeValue + 4.toByte()).toOsuMode()
             } else {
                 mode.data!!
             }
@@ -183,7 +178,7 @@ class SBBPService(
             }
 
             val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
-                OsuMode.getMode(mode.data!!.modeValue + 4.toByte())
+                (mode.data!!.modeValue + 4.toByte()).toOsuMode()
             } else {
                 mode.data!!
             }

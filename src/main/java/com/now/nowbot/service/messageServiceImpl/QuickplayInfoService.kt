@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.multiplayer.Room
 import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.multiplayer.RoomStatistics
@@ -58,7 +60,7 @@ class QuickplayInfoService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): QuickplayInfoParam {
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event))
+        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event))
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
         val variant: Byte = when (mode.data) {
@@ -90,7 +92,7 @@ class QuickplayInfoService(
             infos = userApiService.getQuickplay(user.userID).rooms
         }
 
-        val m = OsuMode.getMode(mode.data, user.currentOsuMode)
+        val m = mode.data.orElse(user.mode)
 
         val targetInfos = infos
             .filter {
@@ -113,7 +115,7 @@ class QuickplayInfoService(
             """.trimIndent())
         }
 
-        val (maxPage, surrounding) = getSurrounding(current.rank, user.userID, user.currentOsuMode, current.poolID)
+        val (maxPage, surrounding) = getSurrounding(current.rank, user.userID, user.mode, current.poolID)
 
         val rooms = matchApiService.getRooms(targetInfos, 25)
 
@@ -185,7 +187,7 @@ class QuickplayInfoService(
 
         return mapOf(
             "user" to user,
-            "mode" to user.currentOsuMode,
+            "mode" to user.mode,
             "stats" to stats,
             "recently" to roomStats.take(4),
             "surrounding" to surrounding,
@@ -209,7 +211,7 @@ class QuickplayInfoService(
             } else ""
 
             """
-                ${p.name}: $active $provisional (${OsuMode.getMode(p.rulesetID).fullName}${variant})
+                ${p.name}: $active $provisional (${p.rulesetID.toOsuMode().fullName}${variant})
                 排名：#${m.rank}
                 段位分：${m.rating}
                 胜场：${m.firstPlacements} / ${m.plays} (${"%.0f".format(winRate)}%)

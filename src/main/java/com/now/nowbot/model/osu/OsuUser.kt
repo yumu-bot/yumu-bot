@@ -8,25 +8,27 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.util.DataUtil
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class OsuUser(
-    @get:JsonProperty("user_id")
-    @set:JsonProperty("id")
-    @set:JsonAlias("user_id")
+    @field:JsonProperty("user_id")
+    @field:JsonAlias("id")
     override var userID: Long = 0L
 ): IDUser {
+    @get:JsonProperty("id")
+    private val id: Long
+        get() = userID
+
     @JsonProperty("avatar_url")
     var avatarUrl: String = ""
 
@@ -91,32 +93,24 @@ data class OsuUser(
     var occupation: String? = ""
 
     /**
-     * 注意，如果以其他模式请求 OsuUser，这里依旧是玩家的默认模式。需要获得其他模式请使用 getCurrentOsuMode
+     * 注意，如果以其他模式请求 OsuUser，这里依旧是玩家的默认模式。需要获得其他模式请使用 currentOsuMode
      * 所以尽量不要用这个。如果你一定要用，那肯定是请求玩家的默认模式
-     * 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
-     * @return 默认游戏模式
-     */
-    /**
-     * 不要用这个
      */
     @JsonProperty("playmode")
-    var mode: String = ""
+    private var playMode: String = ""
 
-    @JsonProperty("mode", access = JsonProperty.Access.READ_ONLY)
-    var currentOsuMode: OsuMode = OsuMode.DEFAULT
-        get() = if (rankHistory != null) {
-            getMode(rankHistory!!.mode, defaultOsuMode)
-        } else {
-            getMode(getMode(mode, defaultOsuMode), field)
+    @get:JsonIgnore
+    @set:JsonIgnore
+    var defaultMode: OsuMode
+        get() = playMode.toOsuMode()
+        set(value) {
+            playMode = value.shortName
         }
-        
-        set(mode) {
-            if (rankHistory == null) {
-                rankHistory = RankHistory(mode.shortName, listOf())
-            }
-            
-            field = mode
-        }
+
+    @get:JsonProperty("mode")
+    @set:JsonIgnore
+    var mode: OsuMode = OsuMode.DEFAULT
+        get() = rankHistory?.mode.toOsuMode(field).orElse(defaultMode)
 
     @JsonProperty("playstyle")
     var playStyle: List<String>? = listOf()
@@ -487,13 +481,6 @@ data class OsuUser(
         this.profileColor = user.profileColor
     }
 
-    @get:JsonIgnore
-    var defaultOsuMode: OsuMode
-        get() = getMode(mode)
-        set(mode) {
-            this.mode = mode.shortName
-        }
-
     @get:JsonProperty("accuracy")
     val accuracy: Double
         get() = statistics?.accuracy ?: 0.0
@@ -531,11 +518,11 @@ data class OsuUser(
         get() = statistics?.levelProgress ?: 0
 
     override fun toString(): String {
-        return "OsuUser(avatarUrl=$avatarUrl, countryCode=$countryCode, id=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, isRestricted=$isRestricted, pmFriendsOnly=$pmFriendsOnly, username=$username, coverUrl=$coverUrl, discord=$discord, hasSupported=$hasSupported, interests=$interests, joinDate=$joinDate, location=$location, maxBlocks=$maxBlocks, maxFriends=$maxFriends, occupation=$occupation, mode=$mode, playStyle=$playStyle, postCount=$postCount, profileHue=$profileHue, profileOrder=$profileOrder, twitter=$twitter, website=$website, country=$country, cover=$cover, kudosu=$kudosu, profileBanners=$profileBanners, badges=$badges, beatmapPlaycount=$beatmapPlaycount, commentsCount=$commentsCount, dailyChallenge=$dailyChallenge, favoriteCount=$favoriteCount, followerCount=$followerCount, graveyardCount=$graveyardCount, groups=$groups, guestCount=$guestCount, lovedCount=$lovedCount, mappingFollowerCount=$mappingFollowerCount, monthlyPlaycounts=$monthlyPlaycounts, nominatedCount=$nominatedCount, page=$page, pendingCount=$pendingCount, previousNames=$previousNames, highestRank=$highestRank, rankedCount=$rankedCount, replaysWatchedCounts=$replaysWatchedCounts, scoreBestCount=$scoreBestCount, scoreFirstCount=$scoreFirstCount, scorePinnedCount=$scorePinnedCount, scoreRecentCount=$scoreRecentCount, statistics=$statistics, supportLevel=$supportLevel, userAchievements=$userAchievements, rankHistory=$rankHistory)"
+        return "OsuUser(avatarUrl=$avatarUrl, countryCode=$countryCode, id=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, isRestricted=$isRestricted, pmFriendsOnly=$pmFriendsOnly, username=$username, coverUrl=$coverUrl, discord=$discord, hasSupported=$hasSupported, interests=$interests, joinDate=$joinDate, location=$location, maxBlocks=$maxBlocks, maxFriends=$maxFriends, occupation=$occupation, mode=$defaultMode, playStyle=$playStyle, postCount=$postCount, profileHue=$profileHue, profileOrder=$profileOrder, twitter=$twitter, website=$website, country=$country, cover=$cover, kudosu=$kudosu, profileBanners=$profileBanners, badges=$badges, beatmapPlaycount=$beatmapPlaycount, commentsCount=$commentsCount, dailyChallenge=$dailyChallenge, favoriteCount=$favoriteCount, followerCount=$followerCount, graveyardCount=$graveyardCount, groups=$groups, guestCount=$guestCount, lovedCount=$lovedCount, mappingFollowerCount=$mappingFollowerCount, monthlyPlaycounts=$monthlyPlaycounts, nominatedCount=$nominatedCount, page=$page, pendingCount=$pendingCount, previousNames=$previousNames, highestRank=$highestRank, rankedCount=$rankedCount, replaysWatchedCounts=$replaysWatchedCounts, scoreBestCount=$scoreBestCount, scoreFirstCount=$scoreFirstCount, scorePinnedCount=$scorePinnedCount, scoreRecentCount=$scoreRecentCount, statistics=$statistics, supportLevel=$supportLevel, userAchievements=$userAchievements, rankHistory=$rankHistory)"
     }
 
     fun toCSV(): String {
-        return "${getUserName(username)},${userID},${statistics?.pp},${statistics?.pp4K},${statistics?.pp7K},${statistics?.accuracy},${statistics?.rankedScore},${statistics?.totalScore},${statistics?.playCount},${statistics?.playTime},${statistics?.totalHits},${avatarUrl},${countryCode},${defaultGroup},${isActive},${isBot},${isDeleted},${isOnline},${isSupporter},${isRestricted},${lastVisit},${pmFriendsOnly},${profileColor},${coverUrl},${replaceCommas(discord)},${hasSupported},${replaceCommas(interests)},${joinDate},${replaceCommas(location)},${maxBlocks},${maxFriends},${replaceCommas(occupation)},${mode},${playStyle?.joinToString(",")},${postCount},${profileOrder?.joinToString(",")},${title},${titleUrl},${twitter},${website},${country?.name},${cover?.custom},${kudosu?.total},${beatmapPlaycount},${commentsCount},${favoriteCount},${followerCount},${graveyardCount},${guestCount},${lovedCount},${mappingFollowerCount},${nominatedCount},${pendingCount},${previousNames?.joinToString(",")},${highestRank?.rank},${rankedCount},${replaysWatchedCounts.size},${scoreBestCount},${scoreFirstCount},${scorePinnedCount},${scoreRecentCount},${supportLevel},${userAchievements?.size}"
+        return "${getUserName(username)},${userID},${statistics?.pp},${statistics?.pp4K},${statistics?.pp7K},${statistics?.accuracy},${statistics?.rankedScore},${statistics?.totalScore},${statistics?.playCount},${statistics?.playTime},${statistics?.totalHits},${avatarUrl},${countryCode},${defaultGroup},${isActive},${isBot},${isDeleted},${isOnline},${isSupporter},${isRestricted},${lastVisit},${pmFriendsOnly},${profileColor},${coverUrl},${replaceCommas(discord)},${hasSupported},${replaceCommas(interests)},${joinDate},${replaceCommas(location)},${maxBlocks},${maxFriends},${replaceCommas(occupation)},${defaultMode},${playStyle?.joinToString(",")},${postCount},${profileOrder?.joinToString(",")},${title},${titleUrl},${twitter},${website},${country?.name},${cover?.custom},${kudosu?.total},${beatmapPlaycount},${commentsCount},${favoriteCount},${followerCount},${graveyardCount},${guestCount},${lovedCount},${mappingFollowerCount},${nominatedCount},${pendingCount},${previousNames?.joinToString(",")},${highestRank?.rank},${rankedCount},${replaysWatchedCounts.size},${scoreBestCount},${scoreFirstCount},${scorePinnedCount},${scoreRecentCount},${supportLevel},${userAchievements?.size}"
     }
 
     private fun getUserName(username: String): String {
@@ -583,9 +570,6 @@ data class OsuUser(
     }
 
     companion object {
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
-            .withZone(ZoneOffset.UTC)
-
         /**
          * List<OsuUser> 去重方法
          *

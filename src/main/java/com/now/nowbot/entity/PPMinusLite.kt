@@ -85,7 +85,7 @@ class PPMinusLite(
     fun toLite(user: OsuUser, bests: List<LazerScore>): PPMinusLite {
         val lite = PPMinusLite()
 
-        val mode = user.currentOsuMode
+        val mode = user.mode
 
         lite.time = System.currentTimeMillis()
         lite.mode = mode.modeValue

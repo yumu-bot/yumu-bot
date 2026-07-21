@@ -3,6 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -133,7 +135,7 @@ class OldAvatarService(
         val qqStr: String = matcher.group(FLAG_QQ_ID) ?: ""
         val uidStr: String = matcher.group(FLAG_UID) ?: ""
         val name: String = matcher.group(FLAG_DATA) ?: ""
-        val mode = OsuMode.getMode(matcher.group(FLAG_MODE), bindDao.getGroupModeConfig(event))
+        val mode = matcher.group(FLAG_MODE).toOsuMode(bindDao.getGroupMode(event))
 
         return if (event.hasAt()) {
             OAParam(event.target, null, null, at = true, isMyself = false, mode = mode, version = version)
@@ -238,11 +240,11 @@ class OldAvatarService(
             throw NoSuchElementException.Player(name)
         }
 
-        val m = OsuMode.getMode(mode, OsuMode.getMode(set.ranked))
+        val m = mode.orElse(set.ranked)
 
         val banned = set.creatorData!!.apply {
             this.username = set.creator
-            this.currentOsuMode = m
+            this.mode = m
         }
 
         return banned
@@ -260,7 +262,7 @@ class OldAvatarService(
         } else if (param.qq != null) {
             val bind = bindDao.getBindFromQQ(param.qq, param.isMyself)
 
-            user = userApiService.getOsuUser(bind.userID, OsuMode.getMode(param.mode, bind.mode))
+            user = userApiService.getOsuUser(bind.userID, param.mode.orElse(bind.mode))
         } else {
             val users = parseDataString(param.name, param.mode)
 

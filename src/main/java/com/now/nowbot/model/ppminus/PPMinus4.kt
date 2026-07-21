@@ -2,6 +2,7 @@ package com.now.nowbot.model.ppminus
 
 import com.now.nowbot.entity.PPMinusLite
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.util.DataUtil
@@ -22,7 +23,7 @@ abstract class PPMinus4 {
             delta: Int = 0,
             mode: OsuMode = OsuMode.DEFAULT
         ): PPMinus4? {
-            return when (OsuMode.getMode(mode, user.currentOsuMode)) {
+            return when (mode.orElse(user.mode)) {
                 OsuMode.OSU -> PPMinus4Standard(user, bests, surrounding, delta)
                 OsuMode.TAIKO -> PPMinus4Standard(user, bests, surrounding, delta)
                 OsuMode.CATCH -> PPMinus4Standard(user, bests, surrounding, delta)

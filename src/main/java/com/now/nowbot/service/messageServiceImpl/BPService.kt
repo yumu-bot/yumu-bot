@@ -88,7 +88,7 @@ import java.util.regex.Matcher
             event,
             beatmapIDs = scores.map { it.second.beatmapID }.distinct(),
             userIDs = listOf(param.user.userID),
-            modes = listOf( param.user.currentOsuMode),
+            modes = listOf( param.user.mode),
         )
     }
 

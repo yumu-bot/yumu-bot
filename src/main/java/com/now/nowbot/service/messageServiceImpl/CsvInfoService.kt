@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -34,7 +34,7 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
         val matcher = Instruction.CSV_INFO.matcher(messageText)
         if (!matcher.find()) return false
 
-        val mode = getMode(matcher.group("mode"))
+        val mode = matcher.group("mode").toOsuMode()
         val names = splitString(matcher.group("data"))
 
         val name = if (names.isNullOrEmpty()) {

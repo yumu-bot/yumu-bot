@@ -3,6 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -12,7 +14,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.BeatmapUtil
@@ -140,7 +141,7 @@ class GetItemsService(
         val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
         val target = matcher.group(FLAG_DATA)?.toDoubleOrNull()
 
-        val m = OsuMode.getMode(mode.data, user.currentOsuMode)
+        val m = mode.data.orElse(user.mode)
 
         if (target != null) {
             val u = userInfoDao.getClosestFromTarget(user.userID, m, target)
@@ -175,7 +176,7 @@ class GetItemsService(
 
         val count = matcher.group(FLAG_RANGE)?.toIntOrNull() ?: 5
 
-        val m = OsuMode.getMode(mode.data, user.currentOsuMode)
+        val m = mode.data.orElse(user.mode)
 
         val bests = scoreApiService.getBestScores(user, m)
 
@@ -228,7 +229,7 @@ class GetItemsService(
                 }
             }
 
-            calculateApiService.applyStarToBeatmap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
+            calculateApiService.applyStarToBeatmap(b, mode.takeIfConvertable(b), mods)
 
             return@map """
             <Beatmap
@@ -255,7 +256,7 @@ class GetItemsService(
             }
 
             val bs = s.beatmaps.orEmpty().onEach {
-                calculateApiService.applyStarToBeatmap(it, OsuMode.getConvertableMode(mode, it.mode), mods)
+                calculateApiService.applyStarToBeatmap(it, mode.takeIfConvertable(it), mods)
             }.sortedBy { it.starRating }
 
             val t = bs.lastOrNull()
@@ -289,7 +290,7 @@ class GetItemsService(
             }
         }
 
-        calculateApiService.applyStarToBeatmap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
+        calculateApiService.applyStarToBeatmap(b, mode.takeIfConvertable(b), mods)
 
         val displayCombos = this.combo.isNotEmpty() && this.accuracy.isNotEmpty()
 

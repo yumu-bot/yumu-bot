@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.match.MatchRating.Companion.applyDTMod
@@ -111,8 +111,8 @@ class QuickplayService(
 
         val modeByte = quickplay.rooms.getOrNull(index)?.currentPlaylistItem?.rulesetID ?: (-1).toByte()
 
-        val user = if (u.currentOsuMode.modeValue != modeByte) {
-            userApiService.getOsuUser(u.userID, OsuMode.getMode(modeByte))
+        val user = if (u.mode.modeValue != modeByte) {
+            userApiService.getOsuUser(u.userID, modeByte.toOsuMode())
         } else {
             u
         }

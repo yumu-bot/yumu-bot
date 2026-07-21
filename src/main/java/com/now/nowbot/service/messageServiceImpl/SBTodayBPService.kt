@@ -169,9 +169,9 @@ class SBTodayBPService(
 
         if (dataMap.isEmpty()) {
             if (isToday) {
-                throw NoSuchElementException.TodayBestScore(user.username, user.currentOsuMode)
+                throw NoSuchElementException.TodayBestScore(user.username, user.mode)
             } else {
-                throw NoSuchElementException.PeriodBestScore(user.username, user.currentOsuMode)
+                throw NoSuchElementException.PeriodBestScore(user.username, user.mode)
             }
         }
 

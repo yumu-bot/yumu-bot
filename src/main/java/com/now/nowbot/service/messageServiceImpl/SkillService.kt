@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.LazerMod.Companion.getFinalRate
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -168,7 +169,7 @@ import kotlin.math.sqrt
             me = users.first()
             other = users.getOrNull(1)
 
-            mode = OsuMode.getMode(inputMode.data!!, me.currentOsuMode)
+            mode = inputMode.data.orElse(me.mode)
 
             myBests = scoreApiService.getBestScores(me.userID, mode)
             otherBests = other?.let { scoreApiService.getBestScores(it.userID, mode) }
@@ -289,14 +290,14 @@ import kotlin.math.sqrt
         return if (isMyself) mapOf(
             "user" to user,
             "skill" to skills,
-            "abbreviates" to Skill6.getAbbr(user.currentOsuMode),
+            "abbreviates" to Skill6.getAbbr(user.mode),
             "scores" to scores,
             "total" to userRating,
             "dan" to dan,
         ) else mapOf(
             "vs_user" to user,
             "vs_skill" to skills,
-            "vs_abbreviates" to Skill6.getAbbr(user.currentOsuMode),
+            "vs_abbreviates" to Skill6.getAbbr(user.mode),
             "vs_scores" to scores,
             "vs_total" to userRating,
             "vs_dan" to dan,

@@ -4,6 +4,9 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
@@ -13,7 +16,6 @@ import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.InstructionUtil.Companion.getUserWithRange
 import com.now.nowbot.util.command.*
 import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
@@ -65,7 +67,7 @@ class InstructionUtil(
         }
 
         if (me != null && isMyself.get()) {
-            setMode(mode, me.mode, event)
+            setMode(mode, event, me.mode)
             return getOsuUser(me, mode.data)
         }
 
@@ -133,7 +135,7 @@ class InstructionUtil(
                 }
 
                 return if (user != null) {
-                    setMode(mode, bindMode, event)
+                    setMode(mode, event, bindMode)
                     InstructionRange(user)
                 } else {
                     InstructionRange(null, range.first)
@@ -159,7 +161,7 @@ class InstructionUtil(
             } else {
                 val bindMode = bindDao.getBindUser(range.data!!)?.mode ?: OsuMode.DEFAULT
 
-                setMode(mode, bindMode, event)
+                setMode(mode, event, bindMode)
                 val user = getOsuUser(range.data!!, mode.data)
                 result = InstructionRange(user, range.start, range.end)
             }
@@ -206,7 +208,7 @@ class InstructionUtil(
             return user
         } else if (me != null) {
             isMyself.set(true)
-            setMode(mode, me.mode)
+            setMode(mode, selfMode = me.mode)
             return sbUserApiService.getUser(me.userID)
                 ?.apply { mode.data?.let { this.currentMode = it } }
                 ?: throw BindException.TokenExpiredException.SBYourTokenExpired()
@@ -276,7 +278,7 @@ class InstructionUtil(
                 val user = sbUserApiService.getUser(username = range.first.toString())
 
                 return if (user != null) {
-                    setMode(mode, bindMode)
+                    setMode(mode, selfMode = bindMode)
                     InstructionRange(user)
                 } else {
                     InstructionRange(null, range.first)
@@ -302,7 +304,7 @@ class InstructionUtil(
             } else {
                 val bindMode = bindDao.getBindUser(range.data!!)?.mode ?: OsuMode.DEFAULT
 
-                setMode(mode, bindMode)
+                setMode(mode, selfMode = bindMode)
                 val user = sbUserApiService.getUser(username = range.data!!)
                 result = InstructionRange(user, range.start, range.end)
             }
@@ -334,7 +336,7 @@ class InstructionUtil(
 
         val myBind = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
-        setMode(mode, myBind?.mode ?: OsuMode.DEFAULT, event)
+        setMode(mode, event, myBind?.mode ?: OsuMode.DEFAULT)
 
         /**
          * @param qq 如果是负数，则认为是 UID
@@ -346,7 +348,7 @@ class InstructionUtil(
                 getOsuUser(-qq, mode.data)
             }
 
-            setMode(mode, you.currentOsuMode)
+            setMode(mode, selfMode = you.mode)
 
             if (isVS && myBind != null) {
                 val me = getOsuUser(myBind.username, mode.data)
@@ -378,7 +380,7 @@ class InstructionUtil(
                 throw BindException.TokenExpiredException.YourTokenExpired()
             }
 
-            setMode(mode, myBind.mode, event)
+            setMode(mode, event, myBind.mode)
             return listOf(getOsuUser(myBind, mode.data))
         }
 
@@ -387,7 +389,7 @@ class InstructionUtil(
         if (gs.size == 1) {
             val you = getOsuUser(gs.first().trim(), mode.data)
 
-            setMode(mode, you.currentOsuMode)
+            setMode(mode, selfMode = you.mode)
 
             if (isVS && myBind != null) {
                 val me = getOsuUser(myBind.username, mode.data)
@@ -400,7 +402,7 @@ class InstructionUtil(
             // 默认 VS 状态
 
             val you = getOsuUser(gs.first().trim(), mode.data)
-            setMode(mode, you.currentOsuMode)
+            setMode(mode, selfMode = you.mode)
 
             val they = getOsuUser(gs.last().trim(), mode.data)
 
@@ -408,7 +410,7 @@ class InstructionUtil(
         } else {
             val bind = bindDao.getBindFromQQ(event.sender.contactID, true)
 
-            setMode(mode, bind.mode, event)
+            setMode(mode, event, bind.mode)
             return listOf(getOsuUser(bind, mode.data))
         }
     }
@@ -445,7 +447,7 @@ class InstructionUtil(
             // 有问题在这里抛出
             val bind = bindDao.getBindFromQQ(qq, isMyself.get())
 
-            setMode(mode, bind.mode, event)
+            setMode(mode, event, bind.mode)
             return getOsuUser(bind, mode.data)
         }
 
@@ -503,7 +505,7 @@ class InstructionUtil(
         if (qq != 0L) {
             val bind = bindDao.getSBBindFromQQ(qq, isMyself.get())
 
-            setMode(mode, bind.mode, event)
+            setMode(mode, event, bind.mode)
             return sbUserApiService.getUser(id = bind.userID)
         } else {
             setMode(mode, event)
@@ -559,13 +561,26 @@ class InstructionUtil(
     }
 
     /**
+     * 用于覆盖默认的游戏模式。优先级：mode > selfMode
+     * @param mode 玩家查询时输入的游戏模式
+     * @param selfMode 一般是玩家自己的游戏模式
+     */
+    private fun setMode(mode: InstructionObject<OsuMode>, selfMode: OsuMode) {
+        if (mode.data.isDefaultOrNull()) {
+            mode.data = selfMode
+        }
+    }
+
+    /**
      * 用于覆盖默认的游戏模式。优先级：mode > groupMode > selfMode
      * @param mode 玩家查询时输入的游戏模式
-     * @param selfMode 一般是玩家自己绑定的游戏模式
      * @param event 可能为群聊
+     * @param selfMode 一般是玩家自己的游戏模式
      */
-    private fun setMode(mode: InstructionObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
-        mode.data = OsuMode.getMode(mode.data, selfMode, bindDao.getGroupModeConfig(event))
+    private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent, selfMode: OsuMode) {
+        if (mode.data.isDefaultOrNull()) {
+            mode.data = bindDao.getGroupMode(event).orElse(selfMode)
+        }
     }
 
     /**
@@ -574,7 +589,9 @@ class InstructionUtil(
      * @param event 可能为群聊
      */
     private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent? = null) {
-        mode.data = OsuMode.getMode(mode.data, OsuMode.DEFAULT, bindDao.getGroupModeConfig(event))
+        if (mode.data.isDefaultOrNull()) {
+            mode.data = bindDao.getGroupMode(event)
+        }
     }
 
     companion object {
@@ -835,14 +852,14 @@ class InstructionUtil(
         fun getMode(matcher: Matcher): InstructionObject<OsuMode> {
             val result = InstructionObject(OsuMode.DEFAULT)
             if (matcher.namedGroups().containsKey(FLAG_MODE)) {
-                result.data = OsuMode.getMode(matcher.group(FLAG_MODE) ?: "")
+                result.data = matcher.group(FLAG_MODE).toOsuMode()
             }
             return result
         }
 
         /** 获取一个包装的 mode 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果 */
         fun getMode(matcher: Matcher, other: OsuMode = OsuMode.DEFAULT): InstructionObject<OsuMode> {
-            val result = InstructionObject(OsuMode.getMode(getMode(matcher).data, other))
+            val result = InstructionObject(getMode(matcher).data.orElse(other))
             return result
         }
 

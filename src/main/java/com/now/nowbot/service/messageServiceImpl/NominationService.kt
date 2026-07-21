@@ -115,7 +115,7 @@ import kotlin.math.floor
 
         beatmapset.creatorData?.let {
             try {
-                beatmapset.creatorData = userApiService.getOsuUser(it.userID, it.currentOsuMode)
+                beatmapset.creatorData = userApiService.getOsuUser(it.userID, it.mode)
             } catch (_: Exception) {
 
             }

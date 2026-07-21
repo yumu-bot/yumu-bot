@@ -67,7 +67,7 @@ import java.util.regex.Matcher
             event,
             beatmapIDs = scores.map { it.beatmapID }.distinct(),
             userIDs = listOf(param.user.userID),
-            modes = listOf(param.user.currentOsuMode),
+            modes = listOf(param.user.mode),
         )
     }
 
@@ -200,13 +200,13 @@ import java.util.regex.Matcher
 
                 user = async.first
                 recent = async.second.firstOrNull()
-                    ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
+                    ?: throw NoSuchElementException.RecentScore(user.username, user.mode)
 
             } else {
                 user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
 
                 recent = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).firstOrNull()
-                    ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
+                    ?: throw NoSuchElementException.RecentScore(user.username, user.mode)
             }
 
             map = beatmapApiService.getBeatmap(recent.beatmapID)

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.BeatmapsetFilter
 import com.now.nowbot.model.filter.MostPlayedBeatmapFilter
 import com.now.nowbot.model.filter.SearchBeatmapsetFilter
@@ -166,7 +167,7 @@ class ExploreService(
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
         val any = matcher.group(FLAG_ANY)?.trim() ?: ""
 
-        val user = InstructionUtil.getUserWithoutRange(event, matcher, InstructionObject(bindDao.getGroupModeConfig(event)))
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, InstructionObject(bindDao.getGroupMode(event)))
 
         when(type) {
             BeatmapType.SEARCH -> {
@@ -210,7 +211,7 @@ class ExploreService(
                 val before: Int
 
                 // 此时这个字段用于筛选模式
-                val mode = OsuMode.getMode(matcher.group(FLAG_TYPE))
+                val mode = matcher.group(FLAG_TYPE).toOsuMode()
 
                 val most = if (hasRangeInConditions.not() && hasCondition.not() && mode == OsuMode.DEFAULT) {
                     // 这个数量级肯定很大，所以减小查询
@@ -339,7 +340,7 @@ class ExploreService(
                 "q" to any
             )
         } else {
-            val groupMode = bindDao.getGroupModeConfig(event)
+            val groupMode = bindDao.getGroupMode(event)
 
             val overwritten = if (groupMode != OsuMode.DEFAULT) {
                 mapOf(

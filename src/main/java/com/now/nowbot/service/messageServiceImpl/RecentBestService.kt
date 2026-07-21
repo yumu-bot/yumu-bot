@@ -71,7 +71,7 @@ class RecentBestService(
             event,
             beatmapIDs = param.scores.map { it.beatmapID }.distinct(),
             userIDs = listOf(param.user.userID),
-            modes = listOf(param.user.currentOsuMode),
+            modes = listOf(param.user.mode),
         )
     }
 
@@ -121,7 +121,7 @@ class RecentBestService(
         val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
 
-        val mode = dataMode.data ?: user.currentOsuMode
+        val mode = dataMode.data ?: user.mode
 
         val scores = scoreDao.getUserRankedScore(user.userID, mode.modeValue, earlierDay, laterDay)
 

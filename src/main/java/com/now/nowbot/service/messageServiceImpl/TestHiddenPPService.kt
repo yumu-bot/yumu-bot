@@ -4,6 +4,7 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -46,7 +47,7 @@ class TestHiddenPPService(
         }
 
         val names: List<String>? = splitString(param.group("data"))
-        var mode = OsuMode.getMode(param.group("mode"))
+        var mode = param.group("mode").toOsuMode()
 
         if (names.isNullOrEmpty())
             throw IllegalStateException.Fetch("玩家名")
@@ -66,7 +67,7 @@ class TestHiddenPPService(
                 user = userApiService.getOsuUser(name)
 
                 if (mode == OsuMode.DEFAULT) {
-                    mode = user.currentOsuMode
+                    mode = user.mode
                 }
 
                 bps = scoreApiService.getBestScores(user, mode)

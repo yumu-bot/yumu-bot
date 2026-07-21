@@ -151,7 +151,7 @@ class ScorePRService(
             event,
             beatmapIDs = scores.map { it.second.beatmapID }.distinct(),
             userIDs = listOf(param.user.userID),
-            modes = listOf(param.user.currentOsuMode),
+            modes = listOf(param.user.mode),
         )
     }
 
@@ -312,9 +312,9 @@ class ScorePRService(
 
         if (filteredScores.isEmpty()) {
             if (isPass) {
-                throw NoSuchElementException.PassedScoreFiltered(user.username, user.currentOsuMode)
+                throw NoSuchElementException.PassedScoreFiltered(user.username, user.mode)
             } else {
-                throw NoSuchElementException.RecentScoreFiltered(user.username, user.currentOsuMode)
+                throw NoSuchElementException.RecentScoreFiltered(user.username, user.mode)
             }
         }
 
@@ -412,7 +412,7 @@ class ScorePRService(
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
             val name = data!!.username
-            val mode = data!!.currentOsuMode
+            val mode = data!!.mode
 
             if (isPass) {
                 if (offset > 0) {

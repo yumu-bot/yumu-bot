@@ -126,14 +126,14 @@ import kotlin.time.Duration.Companion.seconds
                 event,
                 beatmapIDs = scores.map { it.beatmapID }.distinct(),
                 userIDs = listOf(param.user.userID),
-                modes = listOf(param.user.currentOsuMode),
+                modes = listOf(param.user.mode),
             )
         } else {
             // 部分情况下不记录 bids
             ServiceCallStatistic.builds(
                 event,
                 userIDs = listOf(param.user.userID),
-                modes = listOf(param.user.currentOsuMode),
+                modes = listOf(param.user.mode),
             )
         }
     }
@@ -313,13 +313,13 @@ import kotlin.time.Duration.Companion.seconds
 
             user = async.first
             recent = async.second.firstOrNull()
-                ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
+                ?: throw NoSuchElementException.RecentScore(user.username, user.mode)
 
         } else {
             user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
 
             recent = scoreApiService.getRecentScore(user.userID, inputMode.data!!, 0, 1).firstOrNull()
-                ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
+                ?: throw NoSuchElementException.RecentScore(user.username, user.mode)
         }
 
         val map: Beatmap = beatmapApiService.getBeatmap(recent.beatmapID)

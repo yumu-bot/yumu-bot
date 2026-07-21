@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.skill.Skill6
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -27,7 +28,7 @@ import java.util.regex.Matcher
 
     override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val bids = param.group("data").split(REG_SEPERATOR.toRegex()).map { it.toLongOrNull() ?: -1L }
-        val mode = OsuMode.getMode(param.group("mode")).modeValue
+        val mode = param.group("mode").toOsuMode().modeValue
 
         val files = bids.filter { it != -1L }.map {
                 try {

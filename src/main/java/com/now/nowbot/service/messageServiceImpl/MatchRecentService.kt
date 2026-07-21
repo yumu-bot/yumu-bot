@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -191,7 +192,9 @@ class MatchRecentService(
         } else {
             val bindUser = bindDao.getBindFromQQ(this.qq!!)
 
-            userApiService.getOsuUser(bindUser.userID, OsuMode.getMode(mode, bindUser.mode))
+            val m = mode.orElse(bindUser.mode)
+
+            userApiService.getOsuUser(bindUser.userID, m)
         }
 
         val playerScores = scores.filter { s ->

@@ -6,6 +6,7 @@ import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.calculate.InfoLogStatistics
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -24,7 +25,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.command.FLAG_DAY
-import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -177,7 +177,7 @@ class InfoService(
             throw IllegalStateException.Send("玩家信息")
         }
 
-        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.currentOsuMode)
+        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.mode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): InfoParam? {
@@ -230,11 +230,11 @@ class InfoService(
 
         val historyUser = infoDao.getHistoryUser(user, day.days)
 
-        val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
+        val m = mode.data.orElse(user.mode)
 
-        val percentiles = infoDao.getPercentiles(user, user.currentOsuMode)
+        val percentiles = infoDao.getPercentiles(user, user.mode)
 
-        return InfoParam(user, bests, currentMode, historyUser, isMyself.get(), version, percentiles)
+        return InfoParam(user, bests, m, historyUser, isMyself.get(), version, percentiles)
     }
 
     private fun InfoParam.getMessageChain(): MessageChain {

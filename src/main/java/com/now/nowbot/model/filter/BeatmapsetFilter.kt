@@ -3,7 +3,7 @@ package com.now.nowbot.model.filter
 import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuLanguage
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTime
 import com.now.nowbot.model.osu.Beatmapset
@@ -164,7 +164,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.starRating, double, digit = 2, isRound = false, isInteger = true)
                 }.contains(true)
                 MODE -> bs.map {
-                    fit(operator, it.modeInt!!, OsuMode.getMode(str).modeValue)
+                    fit(operator, it.modeInt!!, str.toOsuMode().modeValue)
                 }.contains(true)
                 CATEGORY -> bs.map {
                     fit(operator, it.ranked, DataUtil.getStatusIndex(str) ?: return false)

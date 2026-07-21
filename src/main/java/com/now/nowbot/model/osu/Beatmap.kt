@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSetter
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
@@ -136,9 +137,7 @@ data class Beatmap(
     @set:JsonIgnore
     @get:JsonProperty("mode")
     var mode: OsuMode
-    get() {
-        return OsuMode.getMode(modeStr)
-    }
+    get() = modeStr.toOsuMode()
     set(value) {
         modeStr = value.shortName
     }

@@ -5,6 +5,8 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.UserSnapShotDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.getQuery
+import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.*
@@ -189,7 +191,7 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 0)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                    .queryParamIfPresent("mode", mode.getQuery())
                     .build(bid, uid)
             },
             { base.insertHeader(this) },
@@ -197,7 +199,7 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 1)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                    .queryParamIfPresent("mode", mode.getQuery())
                     .build(bid, uid)
             },
         )
@@ -217,8 +219,8 @@ class ScoreApiImpl(
             {
                 it.path("beatmaps/{bid}/scores/users/{uid}").queryParam("legacy_only", 0)
 
-                if (OsuMode.isNotDefaultOrNull(mode)) {
-                    it.queryParam("mode", OsuMode.getQueryName(mode))
+                if (mode.isNotDefaultOrNull()) {
+                    it.queryParam("mode", mode.getQuery())
                 }
 
                 it.build(bid, user.userID)
@@ -230,8 +232,8 @@ class ScoreApiImpl(
                 it.path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 1)
 
-                if (OsuMode.isNotDefaultOrNull(mode)) {
-                    it.queryParam("mode", OsuMode.getQueryName(mode))
+                if (mode.isNotDefaultOrNull()) {
+                    it.queryParam("mode", mode.getQuery())
                 }
 
                 it.build(bid, user.userID)
@@ -254,8 +256,8 @@ class ScoreApiImpl(
             builder.path("beatmaps/{bid}/scores/users/{uid}")
                 .queryParam("legacy_only", 0)
                 .apply {
-                    if (OsuMode.isNotDefaultOrNull(mode)) {
-                        queryParam("mode", OsuMode.getQueryName(mode))
+                    if (mode.isNotDefaultOrNull()) {
+                        queryParam("mode", mode.getQuery())
                     }
                     LazerMod.setMods(this, mods)
                 }
@@ -287,8 +289,8 @@ class ScoreApiImpl(
             builder.path("beatmaps/{bid}/scores/users/{uid}")
                 .queryParam("legacy_only", 0)
                 .apply {
-                    if (OsuMode.isNotDefaultOrNull(mode)) {
-                        queryParam("mode", OsuMode.getQueryName(mode))
+                    if (mode.isNotDefaultOrNull()) {
+                        queryParam("mode", mode.getQuery())
                     }
                     LazerMod.setMods(this, mods)
                 }
@@ -317,8 +319,8 @@ class ScoreApiImpl(
             builder.path("beatmaps/{bid}/scores/users/{uid}/all")
                 .queryParam("legacy_only", 0)
                 .apply {
-                    if (OsuMode.isNotDefaultOrNull(mode)) {
-                        queryParam("mode", OsuMode.getQueryName(mode))
+                    if (mode.isNotDefaultOrNull()) {
+                        queryParam("mode", mode.getQuery())
                     }
                 }
                 .build(bid, user.userID)
@@ -340,8 +342,8 @@ class ScoreApiImpl(
             builder.path("beatmaps/{bid}/scores/users/{uid}/all")
                 .queryParam("legacy_only", 0)
                 .apply {
-                    if (OsuMode.isNotDefaultOrNull(mode)) {
-                        queryParam("mode", OsuMode.getQueryName(mode))
+                    if (mode.isNotDefaultOrNull()) {
+                        queryParam("mode", mode.getQuery())
                     }
                 }
                 .build(bid, uid)
@@ -370,7 +372,7 @@ class ScoreApiImpl(
             .uri {
                 it.path("beatmaps/{bid}/scores")
                     .queryParam("legacy_only", if (legacy) 1 else 0)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                    .queryParamIfPresent("mode", mode.getQuery())
                     .queryParamIfPresent("type", Optional.ofNullable(type))
 
                 LazerMod.setMods(it, mods)
@@ -492,7 +494,7 @@ class ScoreApiImpl(
                         .queryParam("legacy_only", 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .queryParamIfPresent("mode", mode.getQuery())
                         .build(id)
                 }
                 .headers(base::insertHeader)
@@ -520,7 +522,7 @@ class ScoreApiImpl(
                         .queryParam("include_fails", if (includeFails) 1 else 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .queryParamIfPresent("mode", mode.getQuery())
                         .build(user.userID)
                 }
                 .headers { headers ->
@@ -551,7 +553,7 @@ class ScoreApiImpl(
                         .queryParam("include_fails", if (includeFails) 1 else 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .queryParamIfPresent("mode", mode.getQuery())
                         .build(uid)
                 }
                 .headers(base::insertHeader)

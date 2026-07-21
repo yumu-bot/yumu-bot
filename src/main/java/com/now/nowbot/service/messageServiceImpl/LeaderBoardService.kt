@@ -7,6 +7,9 @@ import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
@@ -154,8 +157,6 @@ class LeaderBoardService(
             1..50
         }
 
-        val inputMode = OsuMode.getMode(matcher.group(FLAG_MODE), bindDao.getGroupModeConfig(event))
-
         val type = getType(matcher.group(FLAG_TYPE2))
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
@@ -164,7 +165,9 @@ class LeaderBoardService(
 
         val isSSPanel: Boolean
         
-        val mode = OsuMode.getConvertableMode(inputMode, beatmap.mode)
+        val mode = matcher.group(FLAG_MODE).toOsuMode()
+            .orElse(bindDao.getGroupMode(event))
+            .takeIfConvertable(beatmap)
 
         calculateApiService.applyStarToBeatmap(beatmap, mode, mods)
 

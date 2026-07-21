@@ -90,7 +90,7 @@ class UUPRService(
             beatmapIDs = entries.map { it.value.beatmapID },
             beatmapsetIDs = entries.map { it.value.beatmapset.beatmapsetID },
             userIDs = listOf(param.user.userID),
-            modes = listOf(param.user.currentOsuMode)
+            modes = listOf(param.user.mode)
         )
     }
 
@@ -208,9 +208,9 @@ class UUPRService(
 
         if (filteredScores.isEmpty()) {
             if (isPass) {
-                throw NoSuchElementException.PassedScoreFiltered(user.username, user.currentOsuMode)
+                throw NoSuchElementException.PassedScoreFiltered(user.username, user.mode)
             } else {
-                throw NoSuchElementException.RecentScoreFiltered(user.username, user.currentOsuMode)
+                throw NoSuchElementException.RecentScoreFiltered(user.username, user.mode)
             }
         }
 
@@ -251,7 +251,7 @@ class UUPRService(
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
             val name = data!!.username
-            val mode = data!!.currentOsuMode
+            val mode = data!!.mode
 
             if (isPass) {
                 if (offset > 0) {
@@ -375,7 +375,7 @@ class UUPRService(
 
             val sb = MessageChain.MessageChainBuilder()
 
-            sb.addText("${user.username} (${user.currentOsuMode.shortName}):\n\n")
+            sb.addText("${user.username} (${user.mode.shortName}):\n\n")
 
             scores.mapIndexed { i, (rk, s) ->
                 val cover = covers.getOrNull(i)

@@ -122,7 +122,7 @@ class BPFixService(
 
     private fun fix(user: OsuUser, bestsMap: Map<Int, LazerScore>): Pair<List<LazerScoreWithFcPP>, Double> {
         if (bestsMap.isEmpty()) {
-            throw NoSuchElementException.BestScoreWithMode(user.username, user.currentOsuMode)
+            throw NoSuchElementException.BestScoreWithMode(user.username, user.mode)
         }
 
         val playerPP = user.pp

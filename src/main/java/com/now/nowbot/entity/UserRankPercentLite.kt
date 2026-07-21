@@ -39,7 +39,7 @@ class UserRankPercentLite(
 
             return this.apply {
                 this.userID = user.userID
-                this.mode = user.currentOsuMode.modeValue
+                this.mode = user.mode.modeValue
                 this.countryRank = user.countryRank
                 this.globalRankPercent = percent
             }

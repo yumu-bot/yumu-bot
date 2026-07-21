@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -36,7 +37,7 @@ class SBSetModeService (
         val m = Instruction.SB_SET_MODE.matcher(messageText)
         if (!m.find()) return false
 
-        val mode = OsuMode.getMode(m.group(FLAG_MODE))
+        val mode = m.group(FLAG_MODE).toOsuMode()
         val qq = m.group(FLAG_QQ_ID)?.toLongOrNull()
         val name = m.group(FLAG_NAME)?.trim()
 
@@ -66,7 +67,7 @@ class SBSetModeService (
 
         if (!m.find()) return null
 
-        val mode = OsuMode.getMode(m.group(FLAG_MODE))
+        val mode = m.group(FLAG_MODE).toOsuMode()
 
         val user = try {
             bindDao.getSBBindFromQQ(-event.sender.contactID, true)
@@ -86,21 +87,21 @@ class SBSetModeService (
     }
 
     private fun getReply(param: SBSetModeParam, event: MessageEvent): MessageChain {
-        val predeterminedMode = bindDao.getGroupModeConfig(event)
+        val predeterminedMode = bindDao.getGroupMode(event)
         val mode = param.mode
         val user = param.user
 
         bindDao.updateSBMode(user.userID, mode)
 
         val info = if (mode == OsuMode.DEFAULT) {
-            if (user.mode.isDefault()) {
+            if (user.mode.isDefault) {
                 throw TipsException("""
                     你没有已绑定的游戏模式。
                     请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) / 4(osu relax) / 5(taiko relax) / 6(catch relax) / 8(osu autopilot) 
                     来修改绑定的游戏模式。
                     """.trimIndent())
             } else {
-                if (predeterminedMode.isDefault()) { """
+                if (predeterminedMode.isDefault) { """
                     已移除绑定的游戏模式 ${user.mode.fullName}。
                     注意，移除绑定模式后，将无法统计您的每日数据，影响部分功能使用。
                     """.trimIndent()
@@ -114,7 +115,7 @@ class SBSetModeService (
             }
             // return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
         } else if (mode.isEqualOrDefault(user.mode)) {
-            if (predeterminedMode.isDefault()) { """
+            if (predeterminedMode.isDefault) { """
                 已将绑定的游戏模式修改为：${mode.fullName}。
                 
                 当前群聊没有绑定游戏模式。
@@ -128,7 +129,7 @@ class SBSetModeService (
                 """.trimIndent()
             }
         } else {
-            if (predeterminedMode.isDefault()) { """
+            if (predeterminedMode.isDefault) { """
                 已将绑定的游戏模式 ${user.mode.fullName} 修改为：${mode.fullName}。
                 """.trimIndent()
             } else { """

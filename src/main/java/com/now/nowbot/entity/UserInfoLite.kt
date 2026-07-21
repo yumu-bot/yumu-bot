@@ -48,7 +48,7 @@ class UserInfoLite(
                 this.userID = user.userID
                 this.beatmapPlaycount = user.beatmapPlaycount
                 this.achievementsCount = user.userAchievementsCount
-                this.mode = user.currentOsuMode.modeValue
+                this.mode = user.mode.modeValue
             }
         }
     }

@@ -118,7 +118,7 @@ class OsuUserInfoDao(
             4.toByte(), 8.toByte() -> 0.toByte()
             5.toByte() -> 1.toByte()
             6.toByte() -> 2.toByte()
-            (-1).toByte() -> user.currentOsuMode.modeValue
+            (-1).toByte() -> user.mode.modeValue
             else -> mode.modeValue
         }
 
@@ -290,7 +290,7 @@ class OsuUserInfoDao(
     fun getHistoryUser(user: OsuUser, duration: Duration = 1.days): OsuUser? {
         val today = LocalDate.now(ZoneOffset.UTC)
         val from = today.minusDays(duration.inWholeDays)
-        val mode = user.currentOsuMode.modeValue
+        val mode = user.mode.modeValue
 
         val info = getInformationFrom(user.userID, mode, from)
         val stats = getStatisticsFrom(user.userID, mode, from)
@@ -344,7 +344,7 @@ class OsuUserInfoDao(
 
     private fun upsertGlobalRank(user: OsuUser) {
         val history = user.rankHistory?.data ?: return
-        val mode = user.currentOsuMode.modeValue
+        val mode = user.mode.modeValue
         val today = LocalDate.now(ZoneOffset.UTC)
 
         val totalDays = history.size
@@ -420,7 +420,7 @@ class OsuUserInfoDao(
 
     private fun upsertPercent(user: OsuUser) {
         val today = LocalDate.now(ZoneOffset.UTC)
-        val latest = userRankPercentRepository.getLatest(user.userID, user.currentOsuMode.modeValue)
+        val latest = userRankPercentRepository.getLatest(user.userID, user.mode.modeValue)
 
         val countryRank = user.countryRank
 
@@ -495,7 +495,7 @@ class OsuUserInfoDao(
 
     private fun upsertUserInfo(user: OsuUser) {
         val today = LocalDate.now(ZoneOffset.UTC)
-        val latest = userInfoRepository.getLatest(user.userID, user.currentOsuMode.modeValue)
+        val latest = userInfoRepository.getLatest(user.userID, user.mode.modeValue)
 
         val achievementsCount = user.userAchievementsCount
 
@@ -563,7 +563,7 @@ class OsuUserInfoDao(
 
     private fun upsertUserStatistics(user: OsuUser) {
         val today = LocalDate.now(ZoneOffset.UTC)
-        val latest = userStatisticsRepository.getLatest(user.userID, user.currentOsuMode.modeValue)
+        val latest = userStatisticsRepository.getLatest(user.userID, user.mode.modeValue)
 
         val newTotalHits = user.totalHits
 
@@ -671,7 +671,7 @@ class OsuUserInfoDao(
             return OsuUser(info.userID).apply {
                 this.beatmapPlaycount = info.beatmapPlaycount
                 this.userAchievementsCount = info.achievementsCount
-                this.currentOsuMode = info.mode.toOsuMode()
+                this.mode = info.mode.toOsuMode()
 
                 if (!ranks.isNullOrEmpty()) {
                     this.rankHistory = OsuUser.RankHistory(info.mode.toOsuMode().shortName, ranks)

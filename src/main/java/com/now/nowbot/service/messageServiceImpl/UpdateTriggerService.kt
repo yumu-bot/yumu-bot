@@ -5,6 +5,7 @@ import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.DailyStatisticsService
 import com.now.nowbot.service.MessageService
@@ -166,7 +167,7 @@ class UpdateTriggerService(
             }
 
             OSU_STAR_RATING -> {
-                val mode = OsuMode.getMode(param.second)
+                val mode = param.second.toOsuMode()
 
                 val modeStr = if (mode == OsuMode.DEFAULT) {
                     "所有"

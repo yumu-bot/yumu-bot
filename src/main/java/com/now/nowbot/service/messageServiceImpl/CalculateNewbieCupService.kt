@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
@@ -55,7 +56,7 @@ class CalculateNewbieCupService(
 
         val accuracy = m.group(FLAG_SID)?.toLongOrNull()
 
-        val mode = OsuMode.getMode(m.group(FLAG_MODE), matches.first().events.firstNotNullOfOrNull { it.round }?.mode)
+        val mode = m.group(FLAG_MODE).toOsuMode(matches.first().events.firstNotNullOfOrNull { it.round }?.mode)
 
         data.value = NewbieCupParam(matches, sorts, accuracy, mode)
         return true

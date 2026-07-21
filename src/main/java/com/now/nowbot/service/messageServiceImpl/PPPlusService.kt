@@ -126,12 +126,12 @@ class PPPlusService(
             null -> ServiceCallStatistic.build(
                 event,
                 userID = me.userID,
-                mode = me.currentOsuMode
+                mode = me.mode
             )
             else -> ServiceCallStatistic.builds(
                 event,
                 userIDs = listOf(me.userID, other.userID),
-                modes = listOf(me.currentOsuMode)
+                modes = listOf(me.mode)
             )
         }
     }

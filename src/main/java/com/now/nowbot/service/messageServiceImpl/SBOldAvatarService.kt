@@ -3,6 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -82,7 +84,7 @@ class SBOldAvatarService(
         val qqStr: String = matcher.group(FLAG_QQ_ID) ?: ""
         val uidStr: String = matcher.group(FLAG_UID) ?: ""
         val name: String = matcher.group(FLAG_DATA) ?: ""
-        val mode = OsuMode.getMode(matcher.group(FLAG_MODE), bindDao.getGroupModeConfig(event))
+        val mode = matcher.group(FLAG_MODE).toOsuMode(bindDao.getGroupMode(event))
 
         return if (event.hasAt()) {
             OAParam(event.target, null, null, at = true, isMyself = false, mode = mode, version = version)
@@ -131,7 +133,7 @@ class SBOldAvatarService(
         } else if (param.qq != null) {
             val bind = bindDao.getSBBindFromQQ(param.qq, param.isMyself)
 
-            user = userApiService.getUser(bind.userID)?.toOsuUser(OsuMode.getMode(param.mode, bind.mode))
+            user = userApiService.getUser(bind.userID)?.toOsuUser(param.mode.orElse(bind.mode))
                 ?: throw NoSuchElementException.Player(bind.userID.toString())
         } else {
             val users = parseDataString(param.name, param.mode)

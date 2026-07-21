@@ -199,8 +199,8 @@ import java.util.function.Predicate
 
         if (qb == null) {
             bindDao.bindQQ(qq, BindUser(ou))
-            bindDao.updateMode(ou.userID, ou.defaultOsuMode)
-            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultOsuMode))
+            bindDao.updateMode(ou.userID, ou.defaultMode)
+            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultMode))
             return
         }
 
@@ -211,7 +211,7 @@ import java.util.function.Predicate
         if (ev.rawMessage.uppercase().startsWith("OK")) {
             bindDao.bindQQ(qq, BindUser(ou))
 
-            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultOsuMode))
+            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultMode))
         } else {
             event.replyAsync(BindException.BindReceiveException.ReceiveRefused())
         }
@@ -288,7 +288,7 @@ import java.util.function.Predicate
             val bu = bindDao.getBindUser(uid)
 
             if (bu != null && bu.hasToken) {
-                val mode = userApiService.getOsuUser(bu.userID).currentOsuMode
+                val mode = userApiService.getOsuUser(bu.userID).mode
 
                 bindDao.bindQQ(qq, bu)
                 bindDao.updateMode(bu.userID, mode)
@@ -328,8 +328,8 @@ import java.util.function.Predicate
             }
         } else {
             bindDao.bindQQ(qq, BindUser(ou))
-            bindDao.updateMode(ou.userID, ou.defaultOsuMode)
-            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, name, ou.defaultOsuMode))
+            bindDao.updateMode(ou.userID, ou.defaultMode)
+            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, name, ou.defaultMode))
         }
     }
 

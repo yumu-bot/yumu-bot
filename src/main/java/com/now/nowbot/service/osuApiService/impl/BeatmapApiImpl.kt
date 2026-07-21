@@ -15,6 +15,7 @@ import com.now.nowbot.model.enums.IDType
 import com.now.nowbot.model.enums.IDType.BeatmapID
 import com.now.nowbot.model.enums.IDType.BeatmapsetID
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
@@ -593,12 +594,12 @@ class BeatmapApiImpl(
             val b = beatmapDao.getBeatmapLite(s.beatmapID)
 
             b?.let {
-                s.beatmap.difficultyName = b.version
-                s.beatmap.starRating = b.difficultyRating.toDouble()
-                s.beatmap.beatmapID = b.id
+                s.beatmap.difficultyName = b.difficultyName ?: ""
+                s.beatmap.starRating = b.difficultyRating!!.toDouble()
+                s.beatmap.beatmapID = b.beatmapID!!
             }
 
-            b?.id
+            b?.beatmapID
         }.toSet()
 
         val notExistScores = scores.filterNot { it.beatmapID in existSet }
@@ -612,7 +613,7 @@ class BeatmapApiImpl(
     override fun isNotOverRating(beatmapID: Long): Boolean {
         try {
             val map = beatmapDao.getBeatmapLite(beatmapID)!!
-            return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating <= STAR_BOUNDARY
+            return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating!! <= STAR_BOUNDARY
         } catch (_: Exception) {
         }
 
@@ -938,7 +939,7 @@ class BeatmapApiImpl(
     override fun getAttributes(id: Long, mode: OsuMode?, mods: List<LazerMod>?): BeatmapDifficultyAttributes {
         val body: MutableMap<String, Any> = HashMap()
 
-        if (OsuMode.isNotDefaultOrNull(mode)) {
+        if (mode.isNotDefaultOrNull()) {
             body["ruleset_id"] = mode.safeModeValue
         }
 
@@ -1169,7 +1170,7 @@ class BeatmapApiImpl(
                     uri.queryParam("no_diff_reduction", no)
                 }
 
-                if (OsuMode.isNotDefaultOrNull(mode)) {
+                if (mode.isNotDefaultOrNull()) {
                     uri.queryParam("ruleset_id", mode.shortName)
                 }
 

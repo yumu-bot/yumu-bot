@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -53,24 +53,23 @@ class BPAnalysisLegacyService(
 
         // 1. 使用 if 表达式并结合解构声明，集中处理数据的获取逻辑
         val (user, bests) = if (id != null) {
-            val m = OsuMode.getMode(mode.data,
-                bindDao.getBindModeFromID(id),
-                bindDao.getGroupModeConfig(event)
-            )
+            val m = mode.data
+                .orElse(bindDao.getGroupMode(event))
+                .orElse(bindDao.getBindModeFromID(id))
 
-            if (m.isNotDefault()) {
+            if (m.isNotDefault) {
                 AsyncMethodExecutor.awaitPair(
                     { userApiService.getOsuUser(id, m) },
                     { scoreApiService.getBestScores(id, m) }
                 )
             } else {
                 val fetchedUser = userApiService.getOsuUser(id)
-                val fetchedBests = scoreApiService.getBestScores(id, fetchedUser.currentOsuMode)
+                val fetchedBests = scoreApiService.getBestScores(id, fetchedUser.mode)
                 fetchedUser to fetchedBests
             }
         } else {
             val fetchedUser = InstructionUtil.getUserWithoutRange(event, matcher, mode, isMyself)
-            val fetchedBests = scoreApiService.getBestScores(fetchedUser.userID, fetchedUser.currentOsuMode)
+            val fetchedBests = scoreApiService.getBestScores(fetchedUser.userID, fetchedUser.mode)
             fetchedUser to fetchedBests
         }
 
@@ -93,7 +92,7 @@ class BPAnalysisLegacyService(
             throw IllegalStateException.Send("最好成绩分析")
         }
 
-        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.currentOsuMode)
+        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.mode)
     }
 
     companion object {

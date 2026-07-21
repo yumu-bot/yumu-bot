@@ -7,7 +7,7 @@ import com.now.nowbot.entity.Team
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.ETXDuelRating
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -135,7 +135,7 @@ import java.util.concurrent.CancellationException
         getOsuUser(user).apply {
             user.userID = this.userID
             user.username = this.username
-            user.mode = this.currentOsuMode
+            user.mode = this.mode
         }
     }
 
@@ -153,7 +153,7 @@ import java.util.concurrent.CancellationException
         bindUser.username = user.username
         bindUser.mode = mode
 
-        user.currentOsuMode = getMode(mode, user.defaultOsuMode)
+        user.mode = mode.orElse(user.defaultMode)
 
         userInfoDao.upsertUserTodayAsync(user)
         bindDao.updateNameToIDAsync(user)
@@ -168,7 +168,7 @@ import java.util.concurrent.CancellationException
             }.headers(base::insertHeader).toBody<OsuUser>()
         }
 
-        user.currentOsuMode = getMode(mode, user.defaultOsuMode)
+        user.mode = mode.orElse(user.defaultMode)
 
         userInfoDao.upsertUserTodayAsync(user)
         bindDao.updateNameToIDAsync(user)
@@ -184,7 +184,7 @@ import java.util.concurrent.CancellationException
                 .toBody<OsuUser>()
         }
 
-        user.currentOsuMode = getMode(mode, user.defaultOsuMode)
+        user.mode = mode.orElse(user.defaultMode)
 
         userInfoDao.upsertUserTodayAsync(user)
         bindDao.updateNameToIDAsync(user)
@@ -366,11 +366,7 @@ import java.util.concurrent.CancellationException
     }
 
     override fun getTeam(teamID: Number, mode: OsuMode?): Team {
-        val ruleset = if (OsuMode.isDefaultOrNull(mode)) {
-            ""
-        } else {
-            mode.shortName
-        }
+        val ruleset = mode?.shortName ?: ""
 
         val uri = if (ruleset.isEmpty()) {
             "teams/$teamID"

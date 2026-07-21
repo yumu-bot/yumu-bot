@@ -3,6 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
@@ -74,13 +76,9 @@ class TopPlaysService(
     private fun getParam(event: MessageEvent, matcher: Matcher): TopPlaysParam {
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull()?.coerceIn(1, 20) ?: 1
 
-        val user = bindDao.getBindFromQQOrNull(event.sender.contactID)
-
-        val mode = OsuMode.getMode(
-            OsuMode.getMode(matcher.group(FLAG_MODE)),
-            user?.mode,
-            bindDao.getGroupModeConfig(event)
-        )
+        val mode = matcher.group(FLAG_MODE).toOsuMode()
+            .orElse(bindDao.getGroupMode(event))
+            .orElse(bindDao.getBindModeFromID(event.sender.contactID))
 
         val nonDefaultMode = if (mode == OsuMode.DEFAULT) OsuMode.OSU else mode
 

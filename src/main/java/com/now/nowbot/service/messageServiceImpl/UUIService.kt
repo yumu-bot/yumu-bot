@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -52,14 +53,14 @@ class UUIService(
             return false
         }
 
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupModeConfig(event))
+        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event))
         val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
 
         val historyUser = infoDao.getHistoryUser(user, day.days)
 
-        val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
+        val currentMode = mode.data.orElse(user.mode)
 
         data.value = UUIParam(user, historyUser, currentMode)
         return true
@@ -79,7 +80,7 @@ class UUIService(
             event.replyAsync("UUI 请求超时。\n请重试。或使用增强的 !yminfo。")
         }
 
-        return ServiceCallStatistic.build(event, userID = user.userID, mode = user.currentOsuMode)
+        return ServiceCallStatistic.build(event, userID = user.userID, mode = user.mode)
     }
 
     companion object {
@@ -182,7 +183,7 @@ class UUIService(
 
             val info = """
             
-            ${user.username} (${user.currentOsuMode.shortName}): ${pp}PP $deltaPP
+            ${user.username} (${user.mode.shortName}): ${pp}PP $deltaPP
             Rank: $globalRank$deltaGR $countryRank$deltaCR
             
             PC: ${String.format("%,d", user.playCount)}$deltaPC

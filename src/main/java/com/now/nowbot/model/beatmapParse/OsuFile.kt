@@ -3,6 +3,7 @@ package com.now.nowbot.model.beatmapParse
 import com.now.nowbot.entity.BeatmapFileLite
 import com.now.nowbot.model.beatmapParse.parse.*
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -58,7 +59,7 @@ class OsuFile @Throws(IOException::class) constructor(private val reader: Buffer
             val value = entity[1].trim()
 
             when (key) {
-                "Mode" -> general.mode = OsuMode.getMode(value)
+                "Mode" -> general.mode = value.toOsuMode()
                 "StackLeniency" -> general.stackLeniency = value.toDoubleOrNull() ?: 0.0
                 "SampleSet" -> general.sampleSet = value
             }

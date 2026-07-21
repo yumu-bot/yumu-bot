@@ -2,6 +2,7 @@ package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.ServiceCallStatisticsDao;
+import com.now.nowbot.entity.IDUser;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.entity.ServiceCallStatistic;
 import com.now.nowbot.mapper.ServiceCallRepository;
@@ -248,16 +249,14 @@ public class CheckAspect {
         return score.getUserID() == MY_ID;
     }
 
-    private OsuUser getUser(OsuUser user) {
+    private IDUser getUser(OsuUser user) {
         if (user.getUserID() == 0L) return user;
         var profile = userProfileRepository.findTopById(user.getUserID());
 
         if (profile == null) {
             return user;
         } else {
-            var user2 = OsuUserPlus.copyOf(user);
-            user2.setProfile(profile);
-            return user2;
+            return new OsuUserPlus(user, profile);
         }
     }
 

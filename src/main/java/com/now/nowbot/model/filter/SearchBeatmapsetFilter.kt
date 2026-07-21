@@ -4,7 +4,7 @@ import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.Operator.Companion.getText
 import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuLanguage
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
@@ -117,7 +117,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                         HP -> "q" to "hp${op}${text}"
                         LENGTH -> "q" to "length${op}${text}"
                         ANY -> "q" to text
-                        MODE -> "m" to OsuMode.getMode(text).modeValue.toString()
+                        MODE -> "m" to text.toOsuMode().modeValue.toString()
                         CATEGORY -> {
                             val s = DataUtil.getStatus(text)
 

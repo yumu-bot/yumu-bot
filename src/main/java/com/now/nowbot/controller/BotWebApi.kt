@@ -8,7 +8,8 @@ import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.IDType
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.mappool.old.MapPoolDto
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
@@ -76,7 +77,7 @@ import kotlin.time.Duration.Companion.days
     ): ResponseEntity<ByteArray> {
         return getImageOrThrow(name.trim(), "sn", "查询玩家的 SAN") {
 
-            val mode = getMode(playMode)
+            val mode = playMode.toOsuMode()
 
             val me: OsuUser
             val myBests: List<LazerScore>
@@ -119,7 +120,7 @@ import kotlin.time.Duration.Companion.days
         }
 
         return getImageOrThrow(name.trim(), "pm", "查询玩家的 PPM") {
-            val mode = getMode(playMode)
+            val mode = playMode.toOsuMode()
 
             val me = userApiService.getOsuUser(name.trim(), mode)
             val myBest = scoreApiService.getBestScores(me, mode, 0, 100)
@@ -145,7 +146,7 @@ import kotlin.time.Duration.Companion.days
     ): ResponseEntity<ByteArray> {
         return getImageOrThrow("${name.trim()} vs ${name2.trim()}", "pv", "比较玩家的 PPM") {
 
-            val mode = getMode(playMode)
+            val mode = playMode.toOsuMode()
 
             val me = userApiService.getOsuUser(name.trim(), mode)
             val myBest = scoreApiService.getBestScores(me, mode, 0, 100)
@@ -270,7 +271,7 @@ import kotlin.time.Duration.Companion.days
         @RequestParam("mode") @Nullable modeStr: String?,
         @RequestBody dataMap: Map<String, List<Long>>
     ): ResponseEntity<ByteArray> {
-        val mode = getMode(modeStr)
+        val mode = modeStr.toOsuMode()
         val mapPool = MapPoolDto(name, mode, dataMap, beatmapApiService, calculateApiService)
         if (mapPool.modPools.isEmpty()) throw TipsRuntimeException(MapPoolException.Type.GP_Map_Empty.message)
 
@@ -310,7 +311,7 @@ import kotlin.time.Duration.Companion.days
         end: Long?,
         isMultiple: Boolean = false,
     ): ResponseEntity<ByteArray> {
-        val mode = getMode(modeStr)
+        val mode = modeStr.toOsuMode()
 
         val user = userApiService.getOsuUser(name.trim(), mode)
         val scores: Collection<LazerScore>
@@ -332,7 +333,7 @@ import kotlin.time.Duration.Companion.days
             ScoreType.BP -> {
                 scores = scoreApiService.getBestScores(user.userID, mode, offset, limit)
                     .takeIf { it.isNotEmpty() }
-                    ?: throw TipsRuntimeException(NoSuchElementException.BestScoreWithMode(user.username, user.currentOsuMode))
+                    ?: throw TipsRuntimeException(NoSuchElementException.BestScoreWithMode(user.username, user.mode))
 
                 val ranks = ArrayList<Int>()
                 for (i in offset..(offset + limit)) ranks.add(i + 1)
@@ -369,7 +370,7 @@ import kotlin.time.Duration.Companion.days
             ScoreType.Pass -> {
                 scores = scoreApiService.getPassedScore(user.userID, mode, offset, limit)
                     .takeIf { it.isNotEmpty() }
-                    ?: throw TipsRuntimeException(NoSuchElementException.PassedScore(user.username, user.currentOsuMode))
+                    ?: throw TipsRuntimeException(NoSuchElementException.PassedScore(user.username, user.mode))
 
                 BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
@@ -405,7 +406,7 @@ import kotlin.time.Duration.Companion.days
             ScoreType.Recent -> {
                 scores = scoreApiService.getPassedScore(user.userID, mode, offset, limit)
                     .takeIf { it.isNotEmpty() }
-                    ?: throw TipsRuntimeException(NoSuchElementException.RecentScore(user.username, user.currentOsuMode))
+                    ?: throw TipsRuntimeException(NoSuchElementException.RecentScore(user.username, user.mode))
 
                 BeatmapUtil.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
@@ -441,7 +442,7 @@ import kotlin.time.Duration.Companion.days
             ScoreType.PassCard -> {
                 scores = scoreApiService.getScore(user.userID, mode, offset, 1, true)
                     .takeIf { it.isNotEmpty() }
-                    ?: throw TipsRuntimeException(NoSuchElementException.PassedScore(user.username, user.currentOsuMode))
+                    ?: throw TipsRuntimeException(NoSuchElementException.PassedScore(user.username, user.mode))
                 val score: LazerScore = scores.first()
 
                 BeatmapUtil.applyBeatmapChanges(scores)
@@ -456,7 +457,7 @@ import kotlin.time.Duration.Companion.days
             ScoreType.RecentCard -> {
                 scores = scoreApiService.getScore(user.userID, mode, offset, 1, false)
                     .takeIf { it.isNotEmpty() }
-                    ?: throw TipsRuntimeException(NoSuchElementException.RecentScore(user.username, user.currentOsuMode))
+                    ?: throw TipsRuntimeException(NoSuchElementException.RecentScore(user.username, user.mode))
                 val score: LazerScore = scores.first()
 
                 BeatmapUtil.applyBeatmapChanges(scores)
@@ -476,7 +477,7 @@ import kotlin.time.Duration.Companion.days
                     scoreApiService.getBestScores(user.userID, mode).mapIndexed { i, it -> i + 1 to it }.toMap()
                         .filter { dayBefore.isBefore(it.value.endedTime) }
                         .takeIf { it.isNotEmpty() }
-                        ?: throw TipsRuntimeException(NoSuchElementException.TodayBestScore(user.username, user.currentOsuMode))
+                        ?: throw TipsRuntimeException(NoSuchElementException.TodayBestScore(user.username, user.mode))
 
                 val ranks = bests.keys
                 scores = bests.values
@@ -625,7 +626,7 @@ import kotlin.time.Duration.Companion.days
         return getImageOrThrow(bid, "score", "查询玩家成绩") {
             val user: OsuUser
 
-            val mode = getMode(playMode)
+            val mode = playMode.toOsuMode()
             val uid: Long
             val modInt = if (mods.isNullOrBlank()) {
                 LazerMod.getModsValue(mods)
@@ -691,7 +692,7 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") modeStr: String?
     ): ResponseEntity<ByteArray> {
         return getImageOrThrow(name, "ba", "最好成绩分析") {
-            val mode = getMode(modeStr)
+            val mode = modeStr.toOsuMode()
             val user: OsuUser = userApiService.getOsuUser(name.trim(), mode)
             val bests: List<LazerScore> = scoreApiService.getBestScores(user.userID, mode)
             val mappers: List<MicroUser> = userApiService.getMicroUsers(bests.flatMap { it.beatmap.mapperIDs }.toSet())
@@ -783,7 +784,7 @@ import kotlin.time.Duration.Companion.days
         return getImageOrThrow(
             bid, "map", "谱面信息"
         ) {
-            val mode = getMode(modeStr, OsuMode.OSU)
+            val mode = modeStr.toOsuMode(OsuMode.OSU)
             val beatmap = beatmapApiService.getBeatmap(bid)
             val beatmapset = beatmapApiService.getBeatmapset(beatmap.beatmapsetID)
             val mods = LazerMod.getModsList(modStr)
@@ -820,7 +821,7 @@ import kotlin.time.Duration.Companion.days
                 throw TipsRuntimeException(NoSuchElementException.Leaderboard())
             }
 
-            val mode = OsuMode.getConvertableMode(getMode(modeStr, OsuMode.OSU), beatmap.mode)
+            val mode = modeStr.toOsuMode(OsuMode.OSU).takeIfConvertable(beatmap)
 
             val mods = LazerMod.getModsList(modStr)
 
@@ -868,7 +869,7 @@ import kotlin.time.Duration.Companion.days
         @DiscordParam(name = "day", description = "回溯天数") @RequestParam("day") @Nullable day: Long?
     ): ResponseEntity<ByteArray> {
         val user = getPlayerInfoJson(uid, name, modeStr)
-        val mode = getMode(modeStr, user.currentOsuMode)
+        val mode = modeStr.toOsuMode(user.mode)
 
         val bests = scoreApiService.getBestScores(user, mode)
 
@@ -966,7 +967,7 @@ import kotlin.time.Duration.Companion.days
         return getImageOrThrow(beatmapset.beatmapsetID, "nomination", "查询提名信息") {
             beatmapset.creatorData?.let {
                 try {
-                    beatmapset.creatorData = userApiService.getOsuUser(it.userID, it.currentOsuMode)
+                    beatmapset.creatorData = userApiService.getOsuUser(it.userID, it.mode)
                 } catch (_: Exception) {
 
                 }
@@ -1033,7 +1034,7 @@ import kotlin.time.Duration.Companion.days
         @RequestParam("name") @Nullable name: String?,
         @RequestParam("mode") @Nullable modeStr: String?
     ): OsuUser {
-        val mode = getMode(modeStr)
+        val mode = modeStr.toOsuMode()
         return if (uid != null) {
             userApiService.getOsuUser(uid, mode)
         } else if (name.isNullOrBlank().not()) {
@@ -1074,7 +1075,7 @@ import kotlin.time.Duration.Companion.days
     ): BeatmapDifficultyAttributes {
         return if (bid != null) {
             beatmapApiService.getAttributes(
-                bid, getMode(mode), LazerMod.getModsList(mods)
+                bid, mode.toOsuMode(), LazerMod.getModsList(mods)
             )
         } else {
             BeatmapDifficultyAttributes()
@@ -1098,7 +1099,7 @@ import kotlin.time.Duration.Companion.days
         @RequestParam("start") @Nullable start: Long?,
         @RequestParam("end") @Nullable end: Long?
     ): List<LazerScore> {
-        val mode = getMode(modeStr)
+        val mode = modeStr.toOsuMode()
 
         val offset = parseRange2Offset(start?.toInt(), end?.toInt())
         val limit = parseRange2Limit(start?.toInt(), end?.toInt())
@@ -1132,7 +1133,7 @@ import kotlin.time.Duration.Companion.days
         @RequestParam("end") @Nullable end: Long?,
         @RequestParam("isPassed") @Nullable isPass: Boolean? = true
     ): List<LazerScore> {
-        val mode = getMode(modeStr)
+        val mode = modeStr.toOsuMode()
 
         val offset = parseRange2Offset(start?.toInt(), end?.toInt())
         val limit = parseRange2Limit(start?.toInt(), end?.toInt())
