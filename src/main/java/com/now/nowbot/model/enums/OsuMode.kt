@@ -61,43 +61,38 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
      * 返回不可以被 mode 转换
      */
     fun isNotConvertAble(mode: OsuMode?): Boolean {
-        return (this == TAIKO || this == CATCH || this == MANIA) && (mode != DEFAULT && mode != this)
+        return (this.safeModeValue in 1..3) && (mode != DEFAULT && mode?.safeModeValue != this.safeModeValue)
     }
 
     companion object {
-        fun String?.toOsuMode(orElse: OsuMode? = null): OsuMode {
-            return getMode(this).orElse(orElse)
-        }
-
         fun OsuMode?.takeUnlessDefault(): OsuMode? = this?.takeUnless { it == DEFAULT }
 
         fun OsuMode?.orElse(mode: OsuMode? = null): OsuMode = this.takeUnlessDefault() ?: mode ?: DEFAULT
 
         fun OsuMode?.orElse(value: Number?): OsuMode = this.takeUnlessDefault() ?: value.toOsuMode()
 
-        @JvmStatic
-        fun getMode(name: String?): OsuMode {
-            return when (name?.replace(" ", "")?.trim()?.lowercase()) {
-                "taiko", "t", "1", "osu!taiko" -> TAIKO
-                "catch", "catchthebeat", "ctb", "c", "fruits", "fruit", "f", "2", "osu!catch" -> CATCH
-                "mania", "m", "3", "osu!mania" -> MANIA
-                "osu", "o", "0", "osu!", "std", "standard" -> OSU
-                "osu relax", "osurelax", "std relax", "stdrelax", "osurx", "osu rx", "or", "4", "rx0" -> OSU_RELAX
-                "taiko relax", "taikorelax", "taikorx", "tr", "5", "rx1" -> TAIKO_RELAX
-                "catch relax", "catchrelax", "catchrx", "cr", "6", "rx2" -> CATCH_RELAX
-                "mania7k", "7k", "7", "osu!mania7k" -> MANIA_7K
-                "osu autopilot", "osuautopilot", "autopilot", "stdap", "std ap", "osuap", "oa", "ap", "8" -> OSU_AUTOPILOT
+        private val MODE_LOOKUP_MAP: Map<String, OsuMode> by lazy {
+            buildMap {
+                fun register(mode: OsuMode, vararg aliases: String) {
+                    aliases.forEach { put(it, mode) }
+                }
 
-                else -> DEFAULT
+                register(TAIKO, "taiko", "t", "1", "osu!taiko")
+                register(CATCH, "catch", "catchthebeat", "ctb", "c", "fruits", "fruit", "f", "2", "osu!catch")
+                register(MANIA, "mania", "m", "3", "osu!mania")
+                register(OSU, "osu", "o", "0", "osu!", "std", "standard")
+                register(OSU_RELAX, "osurelax", "stdrelax", "osurx", "or", "4", "rx0")
+                register(TAIKO_RELAX, "taikorelax", "taikorx", "tr", "5", "rx1")
+                register(CATCH_RELAX, "catchrelax", "catchrx", "cr", "6", "rx2")
+                register(MANIA_7K, "mania7k", "7k", "7", "osu!mania7k")
+                register(OSU_AUTOPILOT, "osuautopilot", "autopilot", "stdap", "osuap", "oa", "ap", "8")
             }
         }
 
         private val sortedEntries = OsuMode.entries.sortedBy { it.modeValue }
 
-        // 2. 提取出纯基本类型的 IntArray，用于二分查找（无装箱开销）
         private val keysTable: ByteArray = sortedEntries.map { it.modeValue }.toByteArray()
 
-        // 3. 提取出对应的枚举实例数组
         private val valuesTable: Array<OsuMode> = sortedEntries.toTypedArray()
 
         fun Byte?.toOsuMode(): OsuMode {
@@ -109,9 +104,15 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             return this?.toByte().toOsuMode()
         }
 
-        @JvmStatic
-        fun getMode(num: Number?): OsuMode {
-            return num.toOsuMode()
+        fun String?.toOsuMode(orElse: OsuMode? = null): OsuMode {
+            fun getMode(name: String?): OsuMode {
+                if (name.isNullOrBlank()) return DEFAULT
+
+                val key = name.replace(" ", "").lowercase()
+                return MODE_LOOKUP_MAP[key] ?: DEFAULT
+            }
+
+            return getMode(this).orElse(orElse)
         }
 
         @OptIn(ExperimentalContracts::class)
