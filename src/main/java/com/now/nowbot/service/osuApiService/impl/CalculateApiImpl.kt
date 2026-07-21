@@ -764,7 +764,7 @@ class CalculateApiImpl(
                         .smallTickHits(t.smallTickHit)
                         .sliderEndHits(t.sliderTailHit)
                     } else { builder
-                        .n300(t.great + t.miss)
+                        .n300(m.great - t.ok - t.meh)
                         .n100(t.ok)
                         .n50(t.meh)
 
