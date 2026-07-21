@@ -84,11 +84,11 @@ class UUPRService(
             event.replyAsync("最近成绩文字：发送失败，请重试。")
         }
 
-        val pairs = param.scores.toList().take(5)
+        val entries = param.scores.entries.take(5)
 
         return ServiceCallStatistic.builds(event,
-            beatmapIDs = pairs.map { it.second.beatmapID },
-            beatmapsetIDs = pairs.map { it.second.beatmapset.beatmapsetID },
+            beatmapIDs = entries.map { it.value.beatmapID },
+            beatmapsetIDs = entries.map { it.value.beatmapset.beatmapsetID },
             userIDs = listOf(param.user.userID),
             modes = listOf(param.user.currentOsuMode)
         )
@@ -337,8 +337,9 @@ class UUPRService(
 
     private fun ScorePRParam.getUUMessageChain(): MessageChain {
         return if (scores.size > 1) {
-            val list = scores.toList().take(5)
-            val ss = list.map { it.second }
+            val entries = scores.entries.take(5)
+            val ss = entries.map { it.value }
+            val list = entries.map { it.key to it.value }
 
             AsyncMethodExecutor.awaitPair (
                 { beatmapApiService.applyBeatmapExtend(ss) },
@@ -349,17 +350,17 @@ class UUPRService(
 
             getUUScores(user, list, covers)
         } else {
+            val (ranking, score) = scores.entries.single()
+            score.ranking = ranking
 
-            val s = scores.toList().first().second
-
-            val cover = scoreApiService.getCover(s, CoverType.COVER)
+            val cover = scoreApiService.getCover(score, CoverType.COVER)
 
             AsyncMethodExecutor.awaitPair (
-                { beatmapApiService.applyBeatmapExtend(s) },
-                { calculateApiService.applyPPToScore(s) },
+                { beatmapApiService.applyBeatmapExtend(score) },
+                { calculateApiService.applyPPToScore(score) },
             )
 
-            getUUScore(user, s, cover)
+            getUUScore(user, score, cover)
         }
     }
 

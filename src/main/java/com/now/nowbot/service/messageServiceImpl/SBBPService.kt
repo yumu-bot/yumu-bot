@@ -317,10 +317,8 @@ class SBBPService(
 
                 MessageChain(imageService.getPanel(body, "A4"))
             } else {
-                val pair = scores.toList().first()
-
-                val score: LazerScore = pair.second
-                score.ranking = pair.first
+                val (ranking, score) = scores.entries.single()
+                score.ranking = ranking
 
                 val e5Param = ScorePRService.getE5ParamForFilteredScore(
                     user, null, score, "B", osuBeatmapApiService, osuCalculateApiService
@@ -337,8 +335,9 @@ class SBBPService(
 
     private fun BPParam.getUUMessageChain(): MessageChain {
         return if (scores.size > 1) {
-            val list = scores.toList().take(5)
-            val ss = list.map { it.second }
+            val entries = scores.entries.take(5)
+            val ss = entries.map { it.value }
+            val list = entries.map { it.key to it.value }
 
             runCatching {
                 osuBeatmapApiService.applyBeatmapExtend(ss)
@@ -348,16 +347,16 @@ class SBBPService(
 
             getUUScores(user, list, covers)
         } else {
+            val (ranking, score) = scores.entries.single()
+            score.ranking = ranking
 
-            val s = scores.toList().first().second
-
-            val cover = osuScoreApiService.getCover(s, CoverType.COVER)
+            val cover = osuScoreApiService.getCover(score, CoverType.COVER)
 
             runCatching {
-                osuBeatmapApiService.applyBeatmapExtend(s)
+                osuBeatmapApiService.applyBeatmapExtend(score)
             }
 
-            getUUScore(user, s, cover)
+            getUUScore(user, score, cover)
         }
     }
 

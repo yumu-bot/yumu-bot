@@ -365,10 +365,8 @@ class SBScorePRService(
             return MessageChain(image)
         } else {
             // 单成绩发送
-            val pair = scores.toList().first()
-
-            val score: LazerScore = pair.second
-            score.ranking = pair.first
+            val (ranking, score) = scores.entries.single()
+            score.ranking = ranking
 
             val e5 = getE5ParamForFilteredScore(user, null, score, (if (isPass) "P" else "R"), osuBeatmapApiService, osuCalculateApiService)
 

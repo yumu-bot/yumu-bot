@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 @Component
 class PPMinusDao(private val ppMinusRepository: PPMinusRepository) {
     fun savePPMinus(user: OsuUser, bests: List<LazerScore>): Boolean {
-        val history = ppMinusRepository.findByUserID(user.id, user.currentOsuMode.modeValue)
+        val history = ppMinusRepository.findByUserID(user.userID, user.currentOsuMode.modeValue)
 
         val aDay: Long = 20 * 60 * 60 * 1000 // 20 小时
 
@@ -25,7 +25,7 @@ class PPMinusDao(private val ppMinusRepository: PPMinusRepository) {
     fun getSurroundingPPMinus(user: OsuUser, bests: List<LazerScore>, delta: Int = 500): List<PPMinusLite> {
         val rawPP = DataUtil.getBestsPP(bests)
 
-        val surrounds = ppMinusRepository.findSurroundingByUserID(user.id, rawPP - delta, rawPP + delta, user.currentOsuMode.modeValue)
+        val surrounds = ppMinusRepository.findSurroundingByUserID(user.userID, rawPP - delta, rawPP + delta, user.currentOsuMode.modeValue)
 
         return surrounds.orEmpty()
     }

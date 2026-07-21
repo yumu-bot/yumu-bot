@@ -6,7 +6,6 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.UserSnapShotDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -82,7 +81,7 @@ class BestHistoryRecoverService(
             user = runCatching {
                 userApiService.getOsuUser(id, mode.data!!)
             }.getOrElse {
-                OsuUser(id = id).apply { this.mode = mode.data!!.shortName }
+                OsuUser(userID = id).apply { this.mode = mode.data!!.shortName }
             }
 
         } else {
@@ -170,31 +169,29 @@ class BestHistoryRecoverService(
 
         val map = scoreDao.getScoresFromIDs(ids).associateBy { it.scoreID }
 
-        val scoreMap = List(ids.size) { i -> i + 1 }
+        val scores = List(ids.size) { i -> i + 1 }
             .zip(ids)
             .mapNotNull { (index, id) ->
                 map[id]?.let { score -> index to score}
             }.toMap()
 
-        val snapshotPP = scoreMap.map { (index, score) ->
+        val snapshotPP = scores.map { (index, score) ->
             score.pp * FastPower095.pow(index - 1)
         }.sum() + DataUtil.getBonusPP(user.beatmapPlaycount)
 
-        return if (scoreMap.size > 1) {
-            val ranks = scoreMap.keys
-            val scores = scoreMap.values
+        return if (scores.size > 1) {
 
             AsyncMethodExecutor.awaitPair(
-                { beatmapApiService.applyBeatmapExtend(scoreMap) },
-                { calculateApiService.applyStarToScores(scoreMap) }
+                { beatmapApiService.applyBeatmapExtend(scores) },
+                { calculateApiService.applyStarToScores(scores) }
             )
 
             val body = mapOf(
                 "user" to user.apply {
                     this.ppEstimate = snapshotPP
                     this.statistics!!.pp = 0.0 },
-                "scores" to scores,
-                "rank" to ranks,
+                "scores" to scores.values,
+                "rank" to scores.keys,
                 "panel" to "BH",
                 "compact" to (scores.size > 100),
                 "created_at" to snapshot.createdAt,
@@ -202,11 +199,8 @@ class BestHistoryRecoverService(
 
             MessageChain(imageService.getPanel(body, "A4"))
         } else {
-
-            val pair = scoreMap.toList().first()
-
-            val score: LazerScore = pair.second
-            score.ranking = pair.first
+            val (ranking, score) = scores.entries.single()
+            score.ranking = ranking
 
             val e5Param = ScorePRService.getE5ParamForFilteredScore(
                 user.apply {

@@ -335,10 +335,8 @@ import java.util.regex.Matcher
 
                 MessageChain(imageService.getPanel(body, "A4"))
             } else {
-                val pair = scores.toList().first()
-
-                val score: LazerScore = pair.second
-                score.ranking = pair.first
+                val (ranking, score) = scores.entries.single()
+                score.ranking = ranking
 
                 val e5Param = ScorePRService.getE5ParamForFilteredScore(user, historyUser, score, "B", beatmapApiService, calculateApiService)
 
@@ -353,8 +351,9 @@ import java.util.regex.Matcher
 
     private fun BPParam.getUUMessageChain(): MessageChain {
         return if (scores.size > 1) {
-            val list = scores.toList().take(5)
-            val ss = list.map { it.second }
+            val entries = scores.entries.take(5)
+            val ss = entries.map { it.value }
+            val list = entries.map { it.key to it.value }
 
             // beatmapApiService.applyBeatmapExtend(ss)
 
@@ -362,13 +361,14 @@ import java.util.regex.Matcher
 
             getUUScores(user, list, covers)
         } else {
-            val s = scores.toList().first().second
+            val (ranking, score) = scores.entries.single()
+            score.ranking = ranking
 
-            val cover = scoreApiService.getCover(s, CoverType.COVER)
+            val cover = scoreApiService.getCover(score, CoverType.COVER)
 
             // beatmapApiService.applyBeatmapExtend(s)
 
-            getUUScore(user, s, cover)
+            getUUScore(user, score, cover)
         }
     }
 

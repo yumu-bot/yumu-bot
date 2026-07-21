@@ -216,10 +216,9 @@ class SBTodayBPService(
 
                 MessageChain(imageService.getPanel(body, "A4"))
             } else {
-                val pair = scores.toList().first()
+                val (ranking, score) = scores.entries.single()
 
-                val score: LazerScore = pair.second
-                score.ranking = pair.first
+                score.ranking = ranking
 
                 val body = ScorePRService.getE5ParamForFilteredScore(user, null, score, "T", osuBeatmapApiService, osuCalculateApiService)
 
@@ -233,8 +232,9 @@ class SBTodayBPService(
 
     private fun TodayBPParam.getUUMessageChain(): MessageChain {
         return if (scores.size > 1) {
-            val list = scores.toList().take(5)
-            val ss = list.map { it.second }
+            val entries = scores.entries.take(5)
+            val ss = entries.map { it.value }
+            val list = entries.map { it.key to it.value }
 
             AsyncMethodExecutor.awaitPair (
                 { osuBeatmapApiService.applyBeatmapExtend(ss) },
@@ -245,17 +245,17 @@ class SBTodayBPService(
 
             getUUScores(user, list, covers)
         } else {
+            val (ranking, score) = scores.entries.single()
+            score.ranking = ranking
 
-            val s = scores.toList().first().second
-
-            val cover = osuScoreApiService.getCover(s, CoverType.COVER)
+            val cover = osuScoreApiService.getCover(score, CoverType.COVER)
 
             AsyncMethodExecutor.awaitPair (
-                { osuBeatmapApiService.applyBeatmapExtend(s) },
-                { osuCalculateApiService.applyPPToScore(s) },
+                { osuBeatmapApiService.applyBeatmapExtend(score) },
+                { osuCalculateApiService.applyPPToScore(score) },
             )
 
-            getUUScore(user, s, cover)
+            getUUScore(user, score, cover)
         }
     }
 

@@ -76,7 +76,7 @@ class SetModeService (
             val osuUser = userApiService.getOsuUser(-event.sender.contactID)
             val bindUser = BindUser()
             with(bindUser) {
-                this.userID = osuUser.id
+                this.userID = osuUser.userID
                 this.username = osuUser.username
                 this.mode = osuUser.defaultOsuMode
             }

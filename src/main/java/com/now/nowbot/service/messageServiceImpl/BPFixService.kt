@@ -57,13 +57,11 @@ class BPFixService(
             throw IllegalStateException.Send("理论最好成绩")
         }
 
-        val scores = param.bests.toList()
-
         return ServiceCallStatistic.builds(
             event,
-            beatmapIDs = scores.map { it.second.beatmapID },
-            beatmapsetIDs = scores.map { it.second.beatmapset.beatmapsetID },
-            userIDs =  listOf(param.user.userID),
+            beatmapIDs = param.bests.map { it.value.beatmapID },
+            beatmapsetIDs = param.bests.map { it.value.beatmapset.beatmapsetID },
+            userIDs = listOf(param.user.userID),
             modes = listOf(param.mode)
         )
     }

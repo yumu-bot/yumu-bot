@@ -6,7 +6,6 @@ import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.yumu.core.extensions.isNotNull
 import jakarta.persistence.Column
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -47,7 +46,8 @@ data class Beatmapset(
 
     @field:JsonProperty("nsfw")
     var nsfw: Boolean = false,
-        @field:JsonProperty("offset")
+
+    @field:JsonProperty("offset")
     var offset: Short = 0, 
 
     @field:JsonProperty("play_count")
@@ -56,14 +56,16 @@ data class Beatmapset(
     @field:JsonProperty("preview_url")
     var previewUrl: String = "",
 
-        @field:JsonProperty("source")
+    @field:JsonProperty("source")
     var source: String = "",
-        @field:JsonProperty("status")
+
+    @field:JsonProperty("status")
     var status: String = "", 
 
     @field:JsonProperty("spotlight")
     var spotlight: Boolean = false,
 
+    @field:JsonProperty("title")
     var title: String = "", 
 
     @field:JsonProperty("title_unicode")
@@ -74,7 +76,8 @@ data class Beatmapset(
 
     @field:JsonProperty("user_id")
     var creatorID: Long = 0,
-        @field:JsonProperty("video")
+
+    @field:JsonProperty("video")
     var video: Boolean = false, 
 
     @field:JsonProperty("bpm")
@@ -85,11 +88,6 @@ data class Beatmapset(
 
     @field:JsonProperty("deleted_at")
     var deletedAt: OffsetDateTime? = null,
-
-//已经弃用 Deprecated, all beatmapsets now have discussion enabled.
-//     @field:JsonProperty("discussion_enabled")
-//Boolean discussionEnabled
-//    , 
 
     @field:JsonProperty("discussion_locked")
     var discussionLocked: Boolean = false, 
@@ -102,7 +100,8 @@ data class Beatmapset(
 
     @field:JsonProperty("legacy_thread_url")
     var legacyThreadUrl: String? = null,
-        @field:JsonProperty("ranked")
+
+    @field:JsonProperty("ranked")
     var ranked: Byte = 0, 
 
     @field:JsonProperty("ranked_date")
@@ -152,14 +151,10 @@ data class Beatmapset(
     var relatedTags: List<Tag> = listOf()
 ) {
 
-
     data class Hype(val current: Int, val required: Int)
     data class Language(val id: Int, val name: String)
-
     data class Genre(val id: Int, val name: String)
-    data class Description(
-        val description: String
-    )
+    data class Description(val description: String)
 
     data class Availability(
         @field:JsonProperty("download_disabled")
@@ -173,12 +168,13 @@ data class Beatmapset(
         @field:JsonProperty("beatmapset_id")
         val beatmapsetID: Long,
 
-            @field:JsonProperty("rulesets")
+        @field:JsonProperty("rulesets")
         val mode: List<String>?,
 
+        @field:JsonProperty("reset")
         val reset: Boolean,
 
-            @field:JsonProperty("user_id")
+        @field:JsonProperty("user_id")
         val userID: Long
     )
 
@@ -216,19 +212,11 @@ data class Beatmapset(
             val secondary: Byte
             val bs = beatmaps
 
-            if (bs.isNullOrEmpty()) {
-                secondary = 0
+            secondary = if (bs.isNullOrEmpty()) {
+                0
             } else {
-                val formatter = DateTimeFormatterBuilder()
-                    .appendPattern("yyyy-MM-dd")
-                    .appendLiteral("T")
-                    .appendPattern("HH:mm:ss")
-                    .appendZoneId().toFormatter()
-
-                val changedTime = LocalDateTime.from(formatter.parse("2024-06-03T00:00:00Z"))
-
                 // 没榜，或者最后更新时间晚于这一天的谱面才应用这次更改
-                secondary = if (lastUpdated.toLocalDateTime().isAfter(changedTime) || !this.hasLeaderBoard) {
+                if (lastUpdated.toLocalDateTime().isAfter(changedTime) || !this.hasLeaderBoard) {
                     max(bs.map { it.modeInt }.toSet().size - 1, 0).toByte()
                 } else {
                     // 之前的，其他模式要 x2
@@ -286,42 +274,32 @@ data class Beatmapset(
 
     //自己算
     @get:JsonProperty("mappers")
-    val mappers: MutableList<OsuUser>
+    val mappers: List<OsuUser>
         get() {
-            val m = mutableListOf<OsuUser>()
+            val users = relatedUsers ?: return emptyList()
 
-            if (relatedUsers.isNullOrEmpty().not()) {
-                for (u in relatedUsers!!) {
-                    if ((nominators.isEmpty() || nominators.contains(u).not()) && u.userID != creatorID) {
-                        m.add(u)
-                    }
-                }
+            val nominatorSet = nominators.map { it.userID }.toSet()
+
+            return users.filter { u ->
+                u.userID != creatorID && u.userID !in nominatorSet
             }
-
-            return m
         }
 
     //自己算
     @get:JsonProperty("nominators")
     val nominators: List<OsuUser>
         get() {
-            val n = mutableListOf<OsuUser>()
+            val nominations = currentNominations ?: return emptyList()
+            val users = relatedUsers ?: return emptyList()
 
-            if (currentNominations.isNotNull() && relatedUsers.isNotNull()) {
-                for ((_, _, _, userID) in currentNominations!!) {
-                    for (u in relatedUsers!!) {
-                        if (u.userID == userID) {
-                            n.add(u)
-                            break
-                        }
-                    }
-                }
+            val userMap = users.associateBy { it.userID }
+
+            return nominations.mapNotNull { (_, _, _, userID) ->
+                userMap[userID]
             }
-
-            return n.toList()
         }
 
-        @field:JsonProperty("rating")
+    @field:JsonProperty("rating")
     var rating: Float = 0f
         get() = if (field != 0f) {
             field
@@ -335,51 +313,26 @@ data class Beatmapset(
             sum / ratings.sum().coerceAtLeast(1)
         }
 
-    /*
-    val publicRating: Double
-        get(){
-            if (ratings.isNullOrEmpty()) return 0.0
-
-            var r = 0.0
-            val sum = ratings!!.sumOf { it }.toDouble()
-
-            if (sum == 0.0) {
-                return 0.0
-            }
-
-            for (j in 0 .. 10) {
-                r += (j * ratings!![j] / sum)
-            }
-
-            return r
-        }
-
-     */
-
     //自己算
     @get:JsonProperty("has_leader_board")
     val hasLeaderBoard: Boolean
         get() {
-            return if (status.isNotBlank()) {
-                (status == "ranked" || status == "qualified" || status == "loved" || status == "approved")
-            } else {
-                when (ranked.toInt()) {
-                    1, 2, 3, 4 -> true
-                    else -> false
-                }
+            val firstChar = status.firstOrNull()?.lowercaseChar()
+
+            if (firstChar != null) {
+                return firstChar in LEADERBOARD_CHARS
             }
+            return ranked in 1..4
         }
 
     var fromDatabase: Boolean? = null
 
     @get:JsonProperty("preview_name")
     val previewName: String
-        get() = this.artist + " - " + this.title + " (" + this.creator + ")"
+        get() = "$artist - $title ($creator)"
 
     override fun equals(other: Any?): Boolean {
-        if (other !is Beatmapset) return false
-
-        return other.beatmapsetID == this.beatmapsetID
+        return other is Beatmapset && other.beatmapsetID == this.beatmapsetID
     }
 
     override fun hashCode(): Int {
@@ -390,5 +343,18 @@ data class Beatmapset(
     @JsonIgnore
     fun getTopDiff(last: Int = 1): Beatmap {
         return beatmaps?.sortedByDescending { it.starRating }?.getOrNull(last - 1) ?: throw NoSuchElementException.BeatmapTopDiff(beatmapsetID)
+    }
+
+    companion object {
+        // 匹配 'r' (ranked), 'q' (qualified), 'l' (loved), 'a' (approved)
+        private val LEADERBOARD_CHARS = charArrayOf('r', 'q', 'l', 'a')
+
+        private val formatter = DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            .appendLiteral("T")
+            .appendPattern("HH:mm:ss")
+            .appendZoneId().toFormatter()
+
+        private val changedTime = LocalDateTime.from(formatter.parse("2024-06-03T00:00:00Z"))
     }
 }

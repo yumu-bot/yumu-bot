@@ -457,24 +457,23 @@ class ScorePRService(
                 return MessageChain(image)
             } else {
                 // 单成绩发送
-                val pair = scores.toList().first()
+                val (ranking, score) = scores.entries.single()
 
-                val score: LazerScore = pair.second
-                score.ranking = pair.first
+                score.ranking = ranking
 
                 val e5 = getE5ParamForFilteredScore(user, history, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
 
                 return MessageChain(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
             }
         } catch (e: Exception) {
-            log.error(e.message)
+            log.error("最近成绩：渲染失败", e)
             return getUUMessageChain()
         }
     }
 
     private fun ScorePRParam.getUUMessageChain(): MessageChain {
         return if (scores.size > 1) {
-            val list = scores.toList().take(5)
+            val list = scores.entries.take(5).map { Pair(it.key, it.value) }
             val ss = list.map { it.second }
 
             val covers = scoreApiService.getCovers(ss, CoverType.COVER)
@@ -483,34 +482,19 @@ class ScorePRService(
 
             getUUScores(user, list, covers)
         } else {
+            val (ranking, score) = scores.entries.single()
+            score.ranking = ranking
 
-            val s = scores.toList().first().second
-
-            val cover = scoreApiService.getCover(s, CoverType.COVER)
+            val cover = scoreApiService.getCover(score, CoverType.COVER)
 
             AsyncMethodExecutor.awaitPair (
-                { beatmapApiService.applyBeatmapExtend(s) },
-                { calculateApiService.applyPPToScore(s) },
+                { beatmapApiService.applyBeatmapExtend(score) },
+                { calculateApiService.applyPPToScore(score) },
             )
 
-            getUUScore(user, s, cover)
+            getUUScore(user, score, cover)
         }
     }
-
-    /*
-    private fun ScorePRParam.getUUMessage(): MessageChain {
-        val score = scores.values.first()
-
-        val d = UUScore(score, beatmapApiService, calculateApiService)
-
-        val imgBytes = base.osuApiRestClient.get()
-            .uri(d.url ?: "")
-            .toBody<ByteArray>()
-
-        return MessageChain(d.scoreLegacyOutput, imgBytes)
-    }
-
-     */
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)

@@ -68,9 +68,9 @@ class PPMinusService(
                     }
 
                     if (other != null) {
-                        if (other.id == 17064371L) {
+                        if (other.userID == 17064371L) {
                             customizePerformanceMinus(others, 999.99f)
-                        } else if (other.id == 19673275L) {
+                        } else if (other.userID == 19673275L) {
                             customizePerformanceMinus(others, 0f)
                         }
                     }
@@ -165,7 +165,7 @@ class PPMinusService(
                         "panel" to "PM4",
                     )
 
-                    if (other != null && other.id == 17064371L) {
+                    if (other != null && other.userID == 17064371L) {
                         body["others"] = List(others!!.values.size) { i -> titles[i] to 999 }.toMap()
                     } else if (cardB2 != null) {
                         body["others"] = cardB2

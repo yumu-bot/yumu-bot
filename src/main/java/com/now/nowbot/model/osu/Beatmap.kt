@@ -5,9 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSetter
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.CATCH
-import com.now.nowbot.model.enums.OsuMode.CATCH_RELAX
-import jakarta.persistence.Column
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
@@ -21,7 +18,6 @@ data class Beatmap(
     var starRating: Double = 0.0,
 
     @field:JsonProperty("id")
-    @Column(name = "id")
     var beatmapID: Long = 0L,
 
     @field:JsonProperty("lazer_only")
@@ -51,9 +47,6 @@ data class Beatmap(
 
     @field:JsonProperty("checksum")
     var md5: String? = null,
-
-    // @field:JsonProperty("failtimes")
-    // var failTimes: JsonNode? = null,
 
     //retry == fail, fail == exit
     @set:JsonProperty("failtimes")
@@ -196,25 +189,24 @@ data class Beatmap(
 
     //自己算
     @get:JsonProperty("has_leader_board")
+
     val hasLeaderBoard: Boolean
         get() {
-            return when (status.firstOrNull()) {
-                'r', 'q', 'l', 'a' -> true
-                else -> when (ranked) {
-                    1, 2, 3, 4 -> true
-                    else -> false
-                }
+            val firstChar = status.firstOrNull()?.lowercaseChar()
+
+            if (firstChar != null) {
+                return firstChar in LEADERBOARD_CHARS
             }
+
+            return ranked in 1..4
         }
 
     //自己取
     @get:JsonProperty("preview_name")
     val previewName: String
-        get() = if (beatmapset != null) {
-            beatmapset!!.artist + " - " + beatmapset!!.title + " (" + beatmapset!!.creator + ") [" + difficultyName + "]"
-        } else {
-            difficultyName
-        }
+        get() = beatmapset?.let {
+            "${it.artist} - ${it.title} (${it.creator}) [$difficultyName]"
+        } ?: difficultyName
 
     //自己取
     @field:JsonProperty("user")
@@ -222,14 +214,17 @@ data class Beatmap(
 
     //自己算
     @get:JsonProperty("total_notes")
-    val totalNotes = when(this.mode) {
-        CATCH, CATCH_RELAX -> (circles ?: 0) + (sliders ?: 0)
+    val totalNotes = when(this.mode.safeModeValue) {
+        2.toByte() -> (circles ?: 0) + (sliders ?: 0)
         else -> (circles ?: 0) + (sliders ?: 0) + (spinners ?: 0)
     }
 
     data class TagData(
-        @field:JsonProperty("tag_id") val id: Int,
-        @field:JsonProperty("count") val count: Int,
+        @field:JsonProperty("tag_id")
+
+        val tagID: Int,
+        @field:JsonProperty("count")
+        val count: Int,
     )
 
     @get:JsonProperty("mapper_ids")
@@ -239,7 +234,6 @@ data class Beatmap(
     @get:JsonIgnore
     val mappers: List<NanoUser>
         get() = owners ?: listOf(NanoUser(mapperID, user?.username ?: "UID:${mapperID}"))
-
 
     //自己保存一份
     data class BeatmapDetails(
@@ -297,5 +291,9 @@ data class Beatmap(
 
     override fun hashCode(): Int {
         return 31 * beatmapID.hashCode() + mode.hashCode()
+    }
+
+    companion object {
+        private val LEADERBOARD_CHARS = charArrayOf('r', 'q', 'l', 'a')
     }
 }

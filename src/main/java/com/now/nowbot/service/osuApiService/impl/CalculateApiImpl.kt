@@ -30,6 +30,7 @@ import me.aloic.rosupp.PerformanceRequest
 import me.aloic.rosupp.PerformanceResult
 import me.aloic.rosupp.RosuPp
 import me.aloic.rosupp.ScoreMode
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
@@ -655,23 +656,29 @@ class CalculateApiImpl(
     }
 
     private fun getScoreRosuPerformance(score: LazerScore): RosuPerformance? {
-        if (rosu == null) return RosuPerformance()
+        if (rosu == null) return null
 
         val bytes = beatmapApiService.getBeatmapFileByte(score.beatmapID) ?: return null
 
-        return rosu.let { r ->
-            r.loadBeatmap(bytes).use { beatmap ->
-                val difficulty = score.buildDifficultyRequest()
-                val performance = score.buildPerformanceRequest(difficulty)
-                val result = r.calculatePerformance(beatmap, performance)
+        return try {
+            rosu.let { r ->
+                r.loadBeatmap(bytes).use { beatmap ->
+                    val difficulty = score.buildDifficultyRequest()
+                    val performance = score.buildPerformanceRequest(difficulty)
+                    val result = r.calculatePerformance(beatmap, performance)
 
-                RosuPerformance(result)
+                    RosuPerformance(result)
+                }
             }
+        } catch (e: me.aloic.rosupp.RosuPpException) {
+            log.warn("Failed to calculate Rosu performance for suspicious beatmap ID: {}, error: {}", score.beatmapID, e.message)
+
+            null
         }
     }
 
     companion object {
-        // private val log = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
+        private val log = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
 
         fun customDifficultyRequest(mods: List<LazerMod>, isLazer: Boolean? = null, mode: OsuMode = OsuMode.DEFAULT, clockRate: Double? = null): DifficultyRequest {
             val client = if (mode.isDefault()) {

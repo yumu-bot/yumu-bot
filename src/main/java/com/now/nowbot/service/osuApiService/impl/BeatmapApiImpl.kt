@@ -1358,7 +1358,7 @@ class BeatmapApiImpl(
 
         if (ids.isNullOrEmpty()) return
 
-        beatmap.tags = ids.mapNotNull { beatmapDao.getTag(it.id) }
+        beatmap.tags = ids.mapNotNull { beatmapDao.getTag(it.tagID) }
     }
 
     /**

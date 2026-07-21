@@ -1,5 +1,6 @@
 package com.now.nowbot.model.osu
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -20,7 +21,12 @@ import java.util.*
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-open class OsuUser: IDUser {
+data class OsuUser(
+    @get:JsonProperty("user_id")
+    @set:JsonProperty("id")
+    @set:JsonAlias("user_id")
+    override var userID: Long = 0L
+): IDUser {
     @JsonProperty("avatar_url")
     var avatarUrl: String = ""
 
@@ -30,14 +36,6 @@ open class OsuUser: IDUser {
     @JsonProperty("default_group")
     var defaultGroup: String? = ""
 
-    //不要动这个
-    var id: Long = 0L
-
-    @get:JsonProperty("user_id")
-    override val userID: Long
-        get() = id
-
-    //最近有活跃？
     @JsonProperty("is_active")
     var isActive: Boolean = false
 
@@ -425,13 +423,7 @@ open class OsuUser: IDUser {
 
     @get:JsonProperty("user_achievements_count")
     var userAchievementsCount: Int = 0
-        get() = if (field > 0) {
-            field
-        } else if (userAchievements != null) {
-            userAchievements!!.size
-        } else {
-            0
-        }
+        get() = if (field > 0) field else userAchievements?.size ?: 0
 
     data class UserAchievement(
         @field:JsonProperty("achieved_at") val achievedAt: OffsetDateTime,
@@ -461,31 +453,33 @@ open class OsuUser: IDUser {
     @get:JsonProperty("estimate_pp")
     var ppEstimate: Double = 0.0
 
-    constructor()
+    constructor(username: String) : this() {
+        this.username = username
+    }
 
-    constructor(statistics: Statistics) {
+    constructor(statistics: Statistics) : this() {
         this.statistics = statistics
     }
 
-    constructor(id: Long, pp: Double) {
-        this.id = id
+    constructor(id: Long, pp: Double) : this() {
+        this.userID = id
         this.pp = pp
     }
 
-    constructor(username: String, pp: Double) {
+    constructor(username: String, pp: Double) : this() {
         this.username = username
         this.pp = pp
     }
 
-    constructor(username: String, id: Long, pp: Double) {
-        this.id = id
+    constructor(username: String, id: Long, pp: Double) : this() {
+        this.userID = id
         this.username = username
         this.pp = pp
     }
 
-    constructor(user: MicroUser) {
+    constructor(user: MicroUser) : this() {
         this.username = user.username
-        this.id = user.userID
+        this.userID = user.userID
         user.avatarUrl?.let { this.avatarUrl = it }
         this.countryCode = user.countryCode
         this.country = user.country
@@ -493,45 +487,55 @@ open class OsuUser: IDUser {
         this.profileColor = user.profileColor
     }
 
+    @get:JsonIgnore
     var defaultOsuMode: OsuMode
         get() = getMode(mode)
         set(mode) {
             this.mode = mode.shortName
         }
 
+    @get:JsonProperty("accuracy")
     val accuracy: Double
         get() = statistics?.accuracy ?: 0.0
 
+    @get:JsonProperty("play_count")
     val playCount: Long
         get() = statistics?.playCount ?: 0L
 
+    @get:JsonProperty("play_time")
     val playTime: Long
         get() = statistics?.playTime ?: 0L
 
+    @get:JsonProperty("total_hits")
     val totalHits: Long
         get() = statistics?.totalHits ?: 0L
 
+    @get:JsonProperty("max_combo")
     val maxCombo: Int
         get() = statistics?.maxCombo ?: 0
 
+    @get:JsonProperty("global_rank")
     val globalRank: Long
         get() = statistics?.globalRank ?: 0L
 
+    @get:JsonProperty("country_rank")
     val countryRank: Long
         get() = statistics?.countryRank ?: 0L
 
+    @get:JsonProperty("level_current")
     val levelCurrent: Short
         get() = statistics?.levelCurrent ?: 0
 
+    @get:JsonProperty("level_progress")
     val levelProgress: Short
         get() = statistics?.levelProgress ?: 0
 
     override fun toString(): String {
-        return "OsuUser(avatarUrl=$avatarUrl, countryCode=$countryCode, id=$id, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, isRestricted=$isRestricted, pmFriendsOnly=$pmFriendsOnly, username=$username, coverUrl=$coverUrl, discord=$discord, hasSupported=$hasSupported, interests=$interests, joinDate=$joinDate, location=$location, maxBlocks=$maxBlocks, maxFriends=$maxFriends, occupation=$occupation, mode=$mode, playStyle=$playStyle, postCount=$postCount, profileHue=$profileHue, profileOrder=$profileOrder, twitter=$twitter, website=$website, country=$country, cover=$cover, kudosu=$kudosu, profileBanners=$profileBanners, badges=$badges, beatmapPlaycount=$beatmapPlaycount, commentsCount=$commentsCount, dailyChallenge=$dailyChallenge, favoriteCount=$favoriteCount, followerCount=$followerCount, graveyardCount=$graveyardCount, groups=$groups, guestCount=$guestCount, lovedCount=$lovedCount, mappingFollowerCount=$mappingFollowerCount, monthlyPlaycounts=$monthlyPlaycounts, nominatedCount=$nominatedCount, page=$page, pendingCount=$pendingCount, previousNames=$previousNames, highestRank=$highestRank, rankedCount=$rankedCount, replaysWatchedCounts=$replaysWatchedCounts, scoreBestCount=$scoreBestCount, scoreFirstCount=$scoreFirstCount, scorePinnedCount=$scorePinnedCount, scoreRecentCount=$scoreRecentCount, statistics=$statistics, supportLevel=$supportLevel, userAchievements=$userAchievements, rankHistory=$rankHistory)"
+        return "OsuUser(avatarUrl=$avatarUrl, countryCode=$countryCode, id=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, isRestricted=$isRestricted, pmFriendsOnly=$pmFriendsOnly, username=$username, coverUrl=$coverUrl, discord=$discord, hasSupported=$hasSupported, interests=$interests, joinDate=$joinDate, location=$location, maxBlocks=$maxBlocks, maxFriends=$maxFriends, occupation=$occupation, mode=$mode, playStyle=$playStyle, postCount=$postCount, profileHue=$profileHue, profileOrder=$profileOrder, twitter=$twitter, website=$website, country=$country, cover=$cover, kudosu=$kudosu, profileBanners=$profileBanners, badges=$badges, beatmapPlaycount=$beatmapPlaycount, commentsCount=$commentsCount, dailyChallenge=$dailyChallenge, favoriteCount=$favoriteCount, followerCount=$followerCount, graveyardCount=$graveyardCount, groups=$groups, guestCount=$guestCount, lovedCount=$lovedCount, mappingFollowerCount=$mappingFollowerCount, monthlyPlaycounts=$monthlyPlaycounts, nominatedCount=$nominatedCount, page=$page, pendingCount=$pendingCount, previousNames=$previousNames, highestRank=$highestRank, rankedCount=$rankedCount, replaysWatchedCounts=$replaysWatchedCounts, scoreBestCount=$scoreBestCount, scoreFirstCount=$scoreFirstCount, scorePinnedCount=$scorePinnedCount, scoreRecentCount=$scoreRecentCount, statistics=$statistics, supportLevel=$supportLevel, userAchievements=$userAchievements, rankHistory=$rankHistory)"
     }
 
     fun toCSV(): String {
-        return "${getUserName(username)},${id},${statistics?.pp},${statistics?.pp4K},${statistics?.pp7K},${statistics?.accuracy},${statistics?.rankedScore},${statistics?.totalScore},${statistics?.playCount},${statistics?.playTime},${statistics?.totalHits},${avatarUrl},${countryCode},${defaultGroup},${isActive},${isBot},${isDeleted},${isOnline},${isSupporter},${isRestricted},${lastVisit},${pmFriendsOnly},${profileColor},${coverUrl},${replaceCommas(discord)},${hasSupported},${replaceCommas(interests)},${joinDate},${replaceCommas(location)},${maxBlocks},${maxFriends},${replaceCommas(occupation)},${mode},${playStyle?.joinToString(",")},${postCount},${profileOrder?.joinToString(",")},${title},${titleUrl},${twitter},${website},${country?.name},${cover?.custom},${kudosu?.total},${beatmapPlaycount},${commentsCount},${favoriteCount},${followerCount},${graveyardCount},${guestCount},${lovedCount},${mappingFollowerCount},${nominatedCount},${pendingCount},${previousNames?.joinToString(",")},${highestRank?.rank},${rankedCount},${replaysWatchedCounts.size},${scoreBestCount},${scoreFirstCount},${scorePinnedCount},${scoreRecentCount},${supportLevel},${userAchievements?.size}"
+        return "${getUserName(username)},${userID},${statistics?.pp},${statistics?.pp4K},${statistics?.pp7K},${statistics?.accuracy},${statistics?.rankedScore},${statistics?.totalScore},${statistics?.playCount},${statistics?.playTime},${statistics?.totalHits},${avatarUrl},${countryCode},${defaultGroup},${isActive},${isBot},${isDeleted},${isOnline},${isSupporter},${isRestricted},${lastVisit},${pmFriendsOnly},${profileColor},${coverUrl},${replaceCommas(discord)},${hasSupported},${replaceCommas(interests)},${joinDate},${replaceCommas(location)},${maxBlocks},${maxFriends},${replaceCommas(occupation)},${mode},${playStyle?.joinToString(",")},${postCount},${profileOrder?.joinToString(",")},${title},${titleUrl},${twitter},${website},${country?.name},${cover?.custom},${kudosu?.total},${beatmapPlaycount},${commentsCount},${favoriteCount},${followerCount},${graveyardCount},${guestCount},${lovedCount},${mappingFollowerCount},${nominatedCount},${pendingCount},${previousNames?.joinToString(",")},${highestRank?.rank},${rankedCount},${replaysWatchedCounts.size},${scoreBestCount},${scoreFirstCount},${scorePinnedCount},${scoreRecentCount},${supportLevel},${userAchievements?.size}"
     }
 
     private fun getUserName(username: String): String {
@@ -554,19 +558,11 @@ open class OsuUser: IDUser {
         if (this === other) return true
         if (other !is OsuUser) return false
 
-        return id == other.id
+        return userID == other.userID
     }
 
     override fun hashCode(): Int {
-        return id.hashCode()
-    }
-
-    constructor(id: Long) {
-        this.id = id
-    }
-
-    constructor(name: String) {
-        this.username = name
+        return userID.hashCode()
     }
 
     @JsonIgnore
@@ -576,7 +572,7 @@ open class OsuUser: IDUser {
 
     @JsonIgnore
     fun updateEstimatedPP(bests: Collection<LazerScore>) {
-        if (this.pp == 0.0) {
+        if (this.pp < 1e-4) {
             val estimateBestsPP = DataUtil.getBestsPP(bests)
             val estimateBonusPP = DataUtil.getBonusPP(beatmapPlaycount)
 
@@ -589,33 +585,6 @@ open class OsuUser: IDUser {
     companion object {
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
             .withZone(ZoneOffset.UTC)
-
-        fun OsuUser.toMicroUser(): MicroUser {
-            val u = this
-
-            return MicroUser().apply {
-                avatarUrl = u.avatarUrl
-                coverUrl = u.coverUrl
-                defaultGroup = u.defaultGroup
-                userID = u.userID
-                isActive = u.isActive
-                isBot = u.isBot
-                isDeleted = u.isDeleted
-                isOnline = u.isOnline
-                isSupporter = u.isSupporter
-                lastVisitString = u.lastVisit?.format(formatter)
-                pmFriendsOnly = u.pmFriendsOnly
-                profileColor = u.profileColor
-                username = u.username
-                cover = u.cover
-                countryCode = u.countryCode
-                country = u.country
-                groups = u.groups
-                statistics = u.statistics
-                supportLevel = u.supportLevel
-                team = u.team
-            }
-        }
 
         /**
          * List<OsuUser> 去重方法

@@ -84,7 +84,7 @@ data class SBUser(
             supportLevel = privilege.toByte()
             hasSupported = privilege > 0
 
-            id = sb.userID
+            userID = sb.userID
             avatarUrl = sb.avatarUrl
             username = sb.username
             countryCode = code
