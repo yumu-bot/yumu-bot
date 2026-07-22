@@ -34,24 +34,49 @@
 
 ### 必备
 
-- JDK 21
-  - 或者支持虚拟线程的更高版本
-  - 目标 Kotlin 版本是 2.3
-  - 在 260228 之前的提交，使用的是 Kotlin 2.0
-  - 如果你想测试并运行一个较早版本的实例，可能需要 JDK 17（不需要 Kotlin）
-- PostgreSQL
+- Java Runtime Environment (JRE，JDK 包含它)
+  - 没它你没办法运行 jar
+  - 最低 [22](https://www.oracle.com/java/technologies/downloads/)，或者支持虚拟线程、[FFM API](https://inside.java/2025/06/14/javaone-ffm/) 的更高正式版本
+  - 代码 Kotlin 版本是 2.3
+  - 在 260228 (v0.7.6) 之前的提交，使用的 Kotlin 是 2.0
+  - 在 260723 (v0.8.3) 之前的提交，使用的 JRE 21 Preview
+  - 如果你想测试并运行一个较早版本的实例，可能需要 JRE 17（不需要 Kotlin）
+- PostgreSQL 数据库
+  - 记录存储各种信息，避免鸿儒 ppy 的 api
   - 最低 15，越新越好
 
 ### 可选
 
 简称你必然会踩到的坑
 
+- [Yumu 绘图模块](https://github.com/yumu-bot/yumu-image) 
+  - 用于将获取的数据绘制成可视化图片。
+  - 如果不运行，则主程序只会以最低的形式返回文字信息。
+  - 注意保证 8388 端口可用（你可以自行修改，记得同步修改。）
 - Redis 数据库
-  - 如果你没有装 Redis，请注释掉所有 @Cacheable（因为 application.yaml 配置项没有用）
-  - 将 IdempotentService 改成简单的 Caffeine 实现
-- rosuPP 本地计算
-  - 如果你没有拿到 rosu-pp-v0.4.0，请前往 OsuCalculateApiService.kt，将 LOCAL 改成 false
-  - 为什么这些不写到配置文件里？我也不知道。我本地都跑不通
+  - 如果你是开发者（想在 IDE 里运行这个项目）
+    - 如果你没（或没法）装 Redis，请注释掉所有 @Cacheable（因为 application.yaml 配置项没有用）
+    - 将 IdempotentService 基本都注释掉，改成简单的 Caffeine 实现
+  - 如果你是用户（想使用 .jar 运行代码）
+    - 查看[Redis 连接问题解决](#redis-连接问题解决)
+- rosu-pp 本地计算
+  - [项目地址](https://github.com/MaxOhn/rosu-pp)
+  - 访问[这个分支编译](https://github.com/Apeuriox/rosu-pp-java/actions/runs/29825729363)来获取并安装 rosu-pp-java.jar
+  - 如果你不想启用 rosu，可以去 application.yaml，将 rosu 移出 yumu.osu.priority
+- cosu 本地计算
+  - 访问[项目 OsuApiWrap](https://github.com/yumu-bot/OsuApiWrap)
+  - 注意保证 23316 端口可用（你可以自行修改）
+  - 在项目文件夹下，直接 ```dotnet run --project OsuApi.csproj```
+  - 或者使用 just：
+    - Windows (PowerShell/Chocolatey): choco install just 或 winget install casey.just 
+    - Mac (Homebrew): brew install just 
+    - Linux: sudo apt install just 等
+    - 在终端打开根目录，运行：```just --list```，尝试：```just run```
+  - 如果你不想启用 cosu，可以去 application.yaml，将 cosu 移出 yumu.osu.priority
+- pp-plus 表现分加算法
+  - 注意保证 5000 端口可用（你可以自行修改）
+  - 可以使用 docker 运行。地址：```ghcr.io/syriiin/difficalcy-performanceplus:latest```
+  - 如果你不想使用 pp+，直接禁用掉特定的功能即可。
 
 ## 配置文件
 
@@ -59,7 +84,9 @@
 
 可选: 在项目目录中创建 `logback.xml` 文件, 用于配置日志输出.
 
-运行 `java -jar yumu.jar` 启动项目.
+运行 `java -jar nowbot-linux.jar` 启动项目.
+
+我们使用的启动参数：`java -Xmx5120m -Xms2048m -XX:+UseZGC -server -jar nowbot-linux.jar`
 
 ## 指定配置文件启动
 
@@ -67,13 +94,13 @@
 
 ```bash
 # Linux / macOS
-java -jar nowbot-v0.8.0.jar --spring.config.location=/opt/yumubot/application.yaml
+java -jar nowbot-linux.jar --spring.config.location=/opt/yumubot/application.yaml
 
 # Windows (PowerShell)
-java -jar nowbot-v0.8.0.jar --spring.config.location=C:\yumubot\application.yaml
+java -jar nowbot-linux.jar --spring.config.location=C:\yumubot\application.yaml
 
 # 使用默认配置文件（放在 jar 同目录下）
-java -jar nowbot-v0.8.0.jar
+java -jar nowbot-linux.jar
 ```
 
 > **提示**: 配置文件必须与 jar 包在同一目录，或使用绝对路径指定。推荐为不同环境创建独立的配置文件：
@@ -252,12 +279,6 @@ docker run -d \
 
 # 附属项目
 
-## 必需
-
-- [yumu-image](https://github.com/yumu-bot/yumu-image) 绘图模块, 用于将获取的数据绘制成可视化图片。**目前必须搭配主程序运行**。
-
-## 可选
-
 - [yumu-docs](https://docs.365246692.xyz/) 帮助文档
 
 # 相关项目
@@ -265,8 +286,9 @@ docker run -d \
 本项目参考以下项目，或是使用了以下项目的 API：
 
 - [rosu-pp](https://github.com/MaxOhn/rosu-pp) rosu：提供了 osu!pp 计算模块, 用于计算 osu! 谱面的星级和表现分
+- [rosu-pp-java](https://github.com/Apeuriox/rosu-pp-java) rosu-pp-java：提供最新的基于 rosu 的 jar 包（因为 rosu 更新速度较慢）
 - [onebot11](https://onebot.dev) 提供了机器人协议标准, 用于与 QQ 机器人通信
 - [diving-fish](https://www.diving-fish.com/maimaidx/prober/#Tutorial) 水鱼查分器：提供了 maimai、chunithm 的账号数据和成绩
 - [Lxns-Network](https://maimai.lxns.net/docs) 落雪咖啡屋：提供了部分 maimai、chunithm 的歌曲信息和外号库
-- [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect/) 哔哩哔哩 - API 收集整理：提供了 bilibili 的部分 API 信息
+- [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect/) ~~哔哩哔哩 - API 收集整理：提供了 bilibili 的部分 API 信息~~ R.I.P.
 - [PP+](https://github.com/Syriiin/difficalcy-performanceplus) PP+：提供了表现分加功能的算法
