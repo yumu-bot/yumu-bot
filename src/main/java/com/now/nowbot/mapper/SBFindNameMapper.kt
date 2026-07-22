@@ -10,17 +10,23 @@ import org.springframework.transaction.annotation.Transactional
 interface SBFindNameMapper : JpaRepository<SBNameToIDLite, Long>, JpaSpecificationExecutor<SBNameToIDLite> {
     override fun <S : SBNameToIDLite> saveAll(iterable: Iterable<S>): List<S>
 
-    @Modifying @Transactional @Query("delete from SBNameToIDLite o where o.name = :name")
+    @Modifying
+    @Transactional
+    @Query("delete from SBNameToIDLite o where o.name = UPPER(:name)")
     fun deleteByName(name: String?)
 
-    @Modifying @Transactional @Query("delete from SBNameToIDLite o where o.userID = :userID")
+    @Modifying
+    @Transactional
+    @Query("delete from SBNameToIDLite o where o.userID = :userID")
     fun deleteByUserID(userID: Long?)
 
     @Query("select count(*) from SBNameToIDLite o where o.userID = :userID")
     fun countByUserID(userID: Long?): Int
 
     @Query(""" 
-        SELECT o.userID FROM SBNameToIDLite o WHERE o.name ILIKE :name ORDER BY o.index ASC LIMIT 1
+        SELECT o.userID FROM SBNameToIDLite o 
+        WHERE o.name = UPPER(:name) 
+        ORDER BY o.index ASC LIMIT 1
     """)
     fun getUserIDByUsernameIgnoreCase(name: String?): Long?
 

@@ -493,8 +493,7 @@ class ChuChartLite(
 @Entity
 @Table(
     name = "lx_maimai_song",
-    // indexes = [Index(name = "lx_mai_title_query", columnList = "query_text")]
-    // CREATE INDEX lx_mai_title_trgm ON lx_maimai_song USING gin (upper(query_text) gin_trgm_ops);
+    // CREATE INDEX lx_mai_title_trgm ON lx_maimai_song USING gin (query_text gin_trgm_ops);
 )
 class LxMaiSongLite {
     @Id
