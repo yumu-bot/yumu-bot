@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.ObjectUtils
 import org.springframework.web.client.HttpClientErrorException
 import java.util.*
@@ -438,14 +439,27 @@ class BindDao(
     fun removeNameToID(userID: Long) {
         osuFindNameMapper.deleteByUserID(userID)
     }
-
-    fun saveNameToID(id: Long, names: List<String>) {
+    
+    @Transactional
+    fun updateNameToID(id: Long, names: List<String>) {
         if (names.isEmpty()) return
 
-        names.forEachIndexed { index, name ->
-            val x = OsuNameToIDLite(id, name, index)
-            osuFindNameMapper.save(x)
+        val exists = osuFindNameMapper.getNamesByUserID(id)
+
+        val isSame = exists.size == names.size &&
+                exists.map { it.lowercase() }.toSet() == names.map { it.lowercase() }.toSet()
+
+        if (isSame) {
+            return
         }
+
+        osuFindNameMapper.deleteByUserID(id)
+
+        val entities = names.mapIndexed { index, name ->
+            OsuNameToIDLite(id, name, index)
+        }
+
+        osuFindNameMapper.saveAll(entities)
     }
 
     /**
@@ -455,10 +469,9 @@ class BindDao(
         return osuFindNameMapper.getUsername(userID) ?: userID.toString()
     }
 
-
-    fun countNameToID(userID: Long): Int {
-        return osuFindNameMapper.countByUserID(userID)
-    }
+//    fun countNameToID(userID: Long): Int {
+//        return osuFindNameMapper.countByUserID(userID)
+//    }
 
     fun updateNameToIDAsync(user: OsuUser) {
         Thread.startVirtualThread {
@@ -467,14 +480,12 @@ class BindDao(
     }
 
     fun updateNameToID(user: OsuUser) {
-        val names = listOf(user.username) + (user.previousNames.orEmpty())
-
-        val count = countNameToID(user.userID)
-
-        if (count == 0 || count != names.size) {
-            removeNameToID(user.userID)
-            saveNameToID(user.userID, names)
+        val names = buildList {
+            add(user.username)
+            user.previousNames?.let { addAll(it) }
         }
+
+        updateNameToID(user.userID, names)
     }
 
     fun getSBUserName(userID: Long): String {
@@ -489,18 +500,32 @@ class BindDao(
         sbFindNameMapper.deleteByUserID(userID)
     }
 
-    fun saveSBNameToID(id: Long, names: List<String>) {
+    @Transactional
+    fun updateSBNameToID(id: Long, names: List<String>) {
         if (names.isEmpty()) return
 
-        names.forEachIndexed { index, name ->
-            val x = SBNameToIDLite(id, name, index)
-            sbFindNameMapper.save(x)
+        val exists = osuFindNameMapper.getNamesByUserID(id)
+
+        val isSame = exists.size == names.size &&
+                exists.map { it.lowercase() }.toSet() == names.map { it.lowercase() }.toSet()
+
+        if (isSame) {
+            return
         }
+
+        osuFindNameMapper.deleteByUserID(id)
+
+        val entities = names.mapIndexed { index, name ->
+            OsuNameToIDLite(id, name, index)
+        }
+
+        osuFindNameMapper.saveAll(entities)
     }
 
-    fun countSBNameToID(userID: Long): Int {
-        return sbFindNameMapper.countByUserID(userID)
-    }
+
+//    fun countSBNameToID(userID: Long): Int {
+//        return sbFindNameMapper.countByUserID(userID)
+//    }
 
     fun updateSBNameToID(id: Long, name: String) {
         updateSBNameToID(SBUser(userID = id, username = name))
@@ -509,12 +534,7 @@ class BindDao(
     fun updateSBNameToID(user: SBUser) {
         val names = listOf(user.username)
 
-        val count = countSBNameToID(user.userID)
-
-        if (count == 0 || count != names.size) {
-            removeSBNameToID(user.userID)
-            saveSBNameToID(user.userID, names)
-        }
+        updateSBNameToID(user.userID, names)
     }
 
     fun getBindUserByDbId(id: Long?): BindUser? {

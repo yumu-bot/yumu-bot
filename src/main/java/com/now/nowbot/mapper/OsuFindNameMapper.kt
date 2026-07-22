@@ -12,23 +12,25 @@ interface OsuFindNameMapper : JpaRepository<OsuNameToIDLite, Long>, JpaSpecifica
 
     @Modifying @Transactional
     @Query("delete from OsuNameToIDLite o where o.name = :name")
-    fun deleteByName(name: String?)
+    fun deleteByName(name: String)
 
     @Modifying @Transactional
     @Query("delete from OsuNameToIDLite o where o.userID = :userID")
-    fun deleteByUserID(userID: Long?)
+    fun deleteByUserID(userID: Long)
 
     @Query("select count(*) from OsuNameToIDLite o where o.userID = :userID")
-    fun countByUserID(userID: Long?): Int
+    fun countByUserID(userID: Long): Int
 
-    // 💡 修改重点：将 ILIKE 改为 LOWER(o.name) = LOWER(:name)，完美吃上 idx_osu_name_id_lower_name 函数索引
     @Query(""" 
         SELECT o.userID FROM OsuNameToIDLite o 
         WHERE LOWER(o.name) = LOWER(:name) 
         ORDER BY o.index ASC LIMIT 1
     """)
-    fun getUserIDByUsernameIgnoreCase(name: String?): Long?
+    fun getUserIDByUsernameIgnoreCase(name: String): Long?
 
     @Query("SELECT o.name FROM OsuNameToIDLite o WHERE o.userID = :userID ORDER BY o.index ASC LIMIT 1")
-    fun getUsername(userID: Long?): String?
+    fun getUsername(userID: Long): String?
+    
+    @Query("SELECT o.name FROM OsuNameToIDLite o WHERE o.userID = :userID ORDER BY o.index ASC")
+    fun getNamesByUserID(userID: Long): List<String>
 }

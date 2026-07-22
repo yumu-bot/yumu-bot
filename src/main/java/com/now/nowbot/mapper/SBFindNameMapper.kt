@@ -13,23 +13,26 @@ interface SBFindNameMapper : JpaRepository<SBNameToIDLite, Long>, JpaSpecificati
     @Modifying
     @Transactional
     @Query("delete from SBNameToIDLite o where o.name = UPPER(:name)")
-    fun deleteByName(name: String?)
+    fun deleteByName(name: String)
 
     @Modifying
     @Transactional
     @Query("delete from SBNameToIDLite o where o.userID = :userID")
-    fun deleteByUserID(userID: Long?)
+    fun deleteByUserID(userID: Long)
 
     @Query("select count(*) from SBNameToIDLite o where o.userID = :userID")
-    fun countByUserID(userID: Long?): Int
+    fun countByUserID(userID: Long): Int
 
     @Query(""" 
         SELECT o.userID FROM SBNameToIDLite o 
         WHERE o.name = UPPER(:name) 
         ORDER BY o.index ASC LIMIT 1
     """)
-    fun getUserIDByUsernameIgnoreCase(name: String?): Long?
+    fun getUserIDByUsernameIgnoreCase(name: String): Long?
 
     @Query("SELECT o.name FROM SBNameToIDLite o WHERE o.userID = :userID ORDER BY o.index ASC LIMIT 1")
-    fun getUsername(userID: Long?): String?
+    fun getUsername(userID: Long): String?
+
+    @Query("SELECT o.name FROM SBNameToIDLite o WHERE o.userID = :userID ORDER BY o.index ASC")
+    fun getNamesByUserID(userID: Long): List<String>
 }
