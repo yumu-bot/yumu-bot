@@ -565,9 +565,13 @@ class BeatmapDao(
 
         fun fromBeatmapModel(b: Beatmap): BeatmapLite {
             val s = BeatmapLite(b)
+            val set = b.beatmapset
+
             var mapSet: BeatmapsetLite? = null
-            if (b.beatmapset != null) {
-                mapSet = fromBeatmapsetModel(b.beatmapset!!)
+
+            if (set != null) {
+                mapSet = fromBeatmapsetModel(set)
+                s.beatmapsetID = set.beatmapsetID.toInt()
             }
             s.mapSet = mapSet
             return s

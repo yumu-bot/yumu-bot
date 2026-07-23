@@ -19,7 +19,7 @@ class BeatmapLite {
     var beatmapID: Long = -1
 
     @Column(name = "map_id", insertable = false, updatable = false)
-    var beatmapsetID: Int = -1
+    var beatmapsetID: Int? = null
 
     @Column(name = "mapper_id")
     var mapperID: Long = -1
@@ -110,7 +110,7 @@ class BeatmapLite {
     fun toBeatmap(): Beatmap {
         val b = Beatmap()
         b.beatmapID = this.beatmapID
-        b.beatmapsetID = this.beatmapsetID.toLong()
+        b.beatmapsetID = this.beatmapsetID?.toLong() ?: -1L
         b.convert = this.convert
         b.difficultyName = this.difficultyName
         b.playCount = this.playcount
