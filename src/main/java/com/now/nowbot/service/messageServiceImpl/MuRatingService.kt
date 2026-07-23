@@ -150,8 +150,8 @@ import kotlin.time.Duration.Companion.seconds
                         (p.win.toDouble() * 100 / (p.win + p.lose)).roundToInt(),
                         p.total / 1000000.0,
                         p.rws * 100.0,
-                        p.playerClass!!.name,
-                        p.playerClass!!.nameCN,
+                        p.playerClass!!.english,
+                        p.playerClass!!.chinese,
                     )
                 ).append("\n\n")
         }

@@ -149,6 +149,9 @@ class SeriesRating(
         //挨个用户计算 AMG，并记录总 AMG，顺便赋予有关联的对局数量
         calculateAverageMuPoint()
 
+        //计算玩家的 arc，对顺序要求不高
+        calculateAssociatedRoundCounts()
+
         //挨个计算 MQ，并记录最小
         calculateNormalizedMuPoint()
 
@@ -232,14 +235,31 @@ class SeriesRating(
 
     // AMG
     private fun calculateAverageMuPoint() {
-        playerDataMap.values
-            .forEach {
-                it.calculateRWS()
-                it.calculateTMG()
-                it.calculateAverageScore()
-                it.associatedRoundCount = rounds.size
-                roundAMG += it.averageMuPoint
+        playerDataMap.values.forEach {
+            it.calculateRWS()
+            it.calculateTMG()
+            it.calculateAverageScore()
+            roundAMG += it.averageMuPoint
+        }
+    }
+
+    private fun calculateAssociatedRoundCounts() {
+        val roundCountByUserID = HashMap.newHashMap<Long, Int>(playerDataMap.size * 4 / 3 + 1)
+
+        for ((_, events, players) in matches) {
+            val roundsInMatch = events.count { it.round != null }
+            if (roundsInMatch == 0) continue
+
+            // 该场比赛中出现的所有玩家 ID
+            for (player in players) {
+                roundCountByUserID[player.userID] =
+                    (roundCountByUserID[player.userID] ?: 0) + roundsInMatch
             }
+        }
+
+        playerDataMap.values.forEach { data ->
+            data.associatedRoundCount = roundCountByUserID[data.player.userID] ?: 0
+        }
     }
 
     // MQ

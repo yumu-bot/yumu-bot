@@ -208,9 +208,9 @@ class SeriesRatingService(
                 .append(',')
                 .append(data.win + data.lose)
                 .append(',')
-                .append(data.playerClass!!.nameCN)
+                .append(data.playerClass!!.chinese)
                 .append(',')
-                .append(data.playerClass!!.name)
+                .append(data.playerClass!!.english)
                 .append(',')
                 .append(data.playerClass!!.color)
                 .append("\n")
@@ -247,8 +247,8 @@ class SeriesRatingService(
                         round((p.win * 100.0) / (p.win + p.lose)),
                         p.total / 1000000.0,
                         p.rws * 100.0,
-                        p.playerClass!!.name,
-                        p.playerClass!!.nameCN,
+                        p.playerClass!!.english,
+                        p.playerClass!!.chinese,
                     )
                 )
                 .append("\n\n")

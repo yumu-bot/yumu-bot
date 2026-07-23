@@ -383,7 +383,7 @@ class MatchRating(
 
         fun calculateRWS() { rws = roundWinShares.average().takeIf { !it.isNaN() } ?: 0.0 }
 
-        fun calculateClass() { playerClass = PlayerClass(eraIndex, draIndex, rwsIndex) }
+        fun calculateClass() { playerClass = PlayerClass.getV2(eraIndex, draIndex, rwsIndex) }
     }
 
     companion object {
