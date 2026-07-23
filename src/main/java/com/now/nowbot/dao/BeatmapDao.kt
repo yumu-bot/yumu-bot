@@ -575,8 +575,8 @@ class BeatmapDao(
 
         fun fromBeatmapsetLite(set: BeatmapsetLite): Beatmapset {
             val s = Beatmapset()
-            s.beatmapsetID = set.id.toLong()
-            s.creatorID = set.mapperId.toLong()
+            s.beatmapsetID = set.beatmapsetID.toLong()
+            s.creatorID = set.mapperID.toLong()
             s.creator = set.creator
             s.covers = Covers(set.cover, set.cover, set.card, set.card, set.list, set.list, set.slimcover, set.slimcover)
 
@@ -587,9 +587,9 @@ class BeatmapDao(
             s.playCount = set.playCount
             s.favouriteCount = set.favourite.toLong()
             s.title = set.title
-            s.titleUnicode = set.titleUTF
+            s.titleUnicode = set.titleUnicode
             s.artist = set.artist
-            s.artistUnicode = set.artistUTF
+            s.artistUnicode = set.artistUnicode
             s.legacyThreadUrl = set.legacyUrl
 
             s.fromDatabase = false
@@ -598,27 +598,27 @@ class BeatmapDao(
 
         fun fromBeatmapsetModel(mapSet: Beatmapset): BeatmapsetLite {
             val s = BeatmapsetLite()
-            s.id = mapSet.beatmapsetID.toInt()
+            s.beatmapsetID = mapSet.beatmapsetID.toInt()
             s.card = mapSet.covers.card2x
             s.cover = mapSet.covers.cover2x
             s.list = mapSet.covers.list2x
             s.slimcover = mapSet.covers.slimcover2x
 
-            s.availabilityDownloadDisable = mapSet.availability.downloadDisabled
+            s.availabilityDownloadDisabled = mapSet.availability.downloadDisabled
             s.nsfw = mapSet.nsfw
             s.storyboard = mapSet.storyboard
             s.legacyUrl = mapSet.legacyThreadUrl
 
-            s.mapperId = mapSet.creatorID.toInt()
+            s.mapperID = mapSet.creatorID.toInt()
             s.creator = mapSet.creator
             s.source = mapSet.source
             s.status = mapSet.status
             s.playCount = mapSet.playCount
             s.favourite = mapSet.favouriteCount.toInt()
             s.title = mapSet.title
-            s.titleUTF = mapSet.titleUnicode
+            s.titleUnicode = mapSet.titleUnicode
             s.artist = mapSet.artist
-            s.artistUTF = mapSet.artistUnicode
+            s.artistUnicode = mapSet.artistUnicode
 
             return s
         }

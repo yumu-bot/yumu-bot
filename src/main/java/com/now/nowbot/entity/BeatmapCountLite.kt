@@ -16,8 +16,8 @@ import java.util.UUID
 )
 class BeatmapCountLite(
     @Id
-        @Column(name = "id")
-    val beatmapID: Long,
+    @Column(name = "id")
+    var beatmapID: Long,
 
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "hash", columnDefinition = "uuid")

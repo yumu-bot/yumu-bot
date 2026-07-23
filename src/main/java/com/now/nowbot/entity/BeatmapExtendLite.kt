@@ -21,11 +21,11 @@ import java.time.LocalDateTime
 class BeatmapExtendLite(
     @Id
     @Column(name = "beatmap_id")
-    val beatmapID: Long = -1,
+    var beatmapID: Long = -1,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "beatmapset_id")
-    val beatmapset: BeatmapsetExtendLite,
+    var beatmapset: BeatmapsetExtendLite,
 
     @Column(name = "lazer_only", nullable = false, updatable = true)
     var lazerOnly: Boolean = false,
@@ -39,14 +39,14 @@ class BeatmapExtendLite(
     var exits: ByteArray? = null,
 
     @Column(name = "max_combo", nullable = false, updatable = true)
-    val maxCombo: Int = 0,
+    var maxCombo: Int = 0,
 
     @Type(JsonBinaryType::class)
     @Column(name = "owners", columnDefinition = "JSONB", nullable = true, updatable = true)
     var owners: String? = null,
 
     @Column(name = "created_at", updatable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    var createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "updated_at", nullable = false, updatable = true)
     var updatedAt: LocalDateTime = LocalDateTime.now()

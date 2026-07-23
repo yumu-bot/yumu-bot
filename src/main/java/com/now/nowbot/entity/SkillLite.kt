@@ -13,17 +13,17 @@ import java.io.Serializable
 class SkillLite(
     @Column("id")
     @Id
-    val id: Long,
+    var id: Long,
 
     @Column("mode")
     @Id
-    val mode: Byte = 0,
+    var mode: Byte = 0,
 
     @Column("values", columnDefinition = "double precision[]")
-    val values: DoubleArray = doubleArrayOf(),
+    var values: DoubleArray = doubleArrayOf(),
 
     @Column("star")
-    val star: Double = 0.0
+    var star: Double = 0.0
 ) {
     data class SkillKey(
         var id: Long,

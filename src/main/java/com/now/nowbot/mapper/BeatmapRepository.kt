@@ -9,12 +9,12 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface BeatmapRepository : JpaRepository<BeatmapLite, Long>, JpaSpecificationExecutor<BeatmapLite> {
-    @Query("select b.mapSet from BeatmapLite b where b.id = :bid")
+    @Query("select b.mapSet from BeatmapLite b where b.beatmapID = :bid")
     fun getBeatmapsetByBid(bid: Long): BeatmapsetLite?
 
-    @Query("select id as id, hit_length as length from osu_beatmap where id in (:id)", nativeQuery = true
-    ) fun getBeatmapHitLength(id: Collection<Long>): List<BeatmapHitLengthResult>
+    @Query("select id as id, hit_length as length from osu_beatmap where id in (:ids)", nativeQuery = true)
+    fun getBeatmapHitLength(@Param("ids") ids: Collection<Long>): List<BeatmapHitLengthResult>
 
-    @Query("SELECT b.id FROM BeatmapLite b WHERE b.id IN :ids")
+    @Query("SELECT b.id FROM BeatmapLite b WHERE b.id IN (:ids)")
     fun exists(@Param("ids") ids: Collection<Long>): List<Long>
 }

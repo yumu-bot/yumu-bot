@@ -8,38 +8,38 @@ import java.time.LocalDateTime
 class BeatmapsetExtendLite (
     @Id
     @Column(name = "beatmapset_id")
-    val beatmapsetID: Long = -1,
+    var beatmapsetID: Long = -1,
 
     // 一对多关系
     @OneToMany(mappedBy = "beatmapset", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val beatmaps: List<BeatmapExtendLite> = emptyList(),
+    var beatmaps: List<BeatmapExtendLite> = emptyList(),
 
     @Column(name = "anime_cover")
-    val animeCover: Boolean = false,
+    var animeCover: Boolean = false,
 
     @Column(name = "artist", columnDefinition = "TEXT")
-    val artist: String = "",
+    var artist: String = "",
 
     @Column(name = "artist_unicode", columnDefinition = "TEXT")
-    val artistUnicode: String = "",
+    var artistUnicode: String = "",
 
     @Column(name = "cover_cache", nullable = true)
-    val coverID: Long? = null,
+    var coverID: Long? = null,
 
     @Column(name = "creator", columnDefinition = "VARCHAR(20)")
-    val creator: String = "",
+    var creator: String = "",
 
     @Column(name = "favourite_count")
     var favouriteCount: Long = -1,
 
     @Column(name = "genre_id")
-    val genreID: Byte = -1,
+    var genreID: Byte = -1,
 
     @Column(name = "language_id")
-    val languageID: Byte = -1,
+    var languageID: Byte = -1,
 
     @Column(name = "nsfw")
-    val nsfw: Boolean = false,
+    var nsfw: Boolean = false,
 
     // PSQL 中，offset 是一个保留字
     @Column(name = "recommend_offset")
@@ -49,82 +49,82 @@ class BeatmapsetExtendLite (
     var playCount: Long = -1,
 
     @Column(name = "source", columnDefinition = "TEXT")
-    val source: String = "",
+    var source: String = "",
 
     @Column(name = "spotlight")
     var spotlight: Boolean = false,
 
     @Column(name = "status", columnDefinition = "VARCHAR(15)")
-    val status: String = "",
+    var status: String = "",
 
     @Column(name = "title", columnDefinition = "TEXT")
-    val title: String = "",
+    var title: String = "",
 
     @Column(name = "title_unicode", columnDefinition = "TEXT")
-    val titleUnicode: String = "",
+    var titleUnicode: String = "",
 
     @Column(name = "track_id", nullable = true)
     var trackID: Int? = null,
 
     @Column(name = "user_id")
-    val creatorID: Long = -1,
+    var creatorID: Long = -1,
 
     @Column(name = "video")
-    val video: Boolean = false,
+    var video: Boolean = false,
 
     @Column(name = "bpm")
-    val bpm: Float = 0f,
+    var bpm: Float = 0f,
 
     @Column(name = "discussion_locked")
     var discussionLocked: Boolean = false,
 
     @Column(name = "last_updated")
-    val lastUpdated: LocalDateTime = LocalDateTime.now(),
+    var lastUpdated: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "legacy_thread_url_id", nullable = true)
-    val threadID: Long? = null,
+    var threadID: Long? = null,
 
     @Column(name = "nominations_current", nullable = true)
-    val nominationsCurrent: Byte? = null,
+    var nominationsCurrent: Byte? = null,
 
     @Column(name = "nominations_rulesets", nullable = true)
-    val nominationsRulesets: Byte? = null,
+    var nominationsRulesets: Byte? = null,
 
     @Column(name = "nominations_required_main", nullable = true)
-    val nominationsRequiredMain: Byte? = null,
+    var nominationsRequiredMain: Byte? = null,
 
     @Column(name = "nominations_required_secondary", nullable = true)
-    val nominationsRequiredSecondary: Byte? = null,
+    var nominationsRequiredSecondary: Byte? = null,
 
     @Column(name = "ranked")
-    val ranked: Byte = 0,
+    var ranked: Byte = 0,
 
     @Column(name = "ranked_date", nullable = true)
-    val rankedDate: LocalDateTime? = null,
+    var rankedDate: LocalDateTime? = null,
 
     @Column(name = "rating")
     var rating: Float = 0f,
 
     @Column(name = "storyboard")
-    val storyboard: Boolean = false,
+    var storyboard: Boolean = false,
 
     @Column(name = "submitted_date")
-    val submittedDate: LocalDateTime = LocalDateTime.now(),
+    var submittedDate: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "tags", columnDefinition = "TEXT")
-    val tags: String = "",
+    var tags: String = "",
 
     @Column(name = "availability_download_disabled")
-    val downloadDisabled: Boolean = false,
+    var downloadDisabled: Boolean = false,
 
     @Column(name = "availability_more_information", nullable = true)
-    val moreInformation: String? = null,
+    var moreInformation: String? = null,
 
     @Column(name = "ratings", columnDefinition = "int4[]")
     var ratings: Array<Int> = arrayOf(),
 
     @Column(name = "created_at", updatable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    var createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "updated_at")
     var updatedAt: LocalDateTime = LocalDateTime.now()
