@@ -66,7 +66,7 @@ class BeatmapsetLite {
     @Column(name = "user_id")
     var mapperID: Int = 0
 
-    var storyboard: Boolean = false
+    var storyboard: Boolean? = null
 
     @Column(name = "download_disabled")
     var availabilityDownloadDisabled: Boolean? = false

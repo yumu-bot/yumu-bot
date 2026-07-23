@@ -2742,6 +2742,29 @@ sealed class LazerMod {
             return this.any { hiddenSet.contains(it::class) }
         }
 
+        fun List<LazerMod>.getKey(cs: Float): Float? {
+            val keySet = setOf(
+                Key1::class,
+                Key2::class,
+                Key3::class,
+                Key4::class,
+                Key5::class,
+                Key6::class,
+                Key7::class,
+                Key8::class,
+                Key9::class,
+                Key10::class,
+            )
+
+            if (this.any { it::class == DualStages::class }) {
+                return cs * 2.0f
+            }
+
+            val index = indexOfFirst { it::class in keySet }
+
+            return if (index != -1) (index + 1).toFloat() else null
+        }
+
         fun List<LazerMod>.toJson(): String {
             return JacksonUtil.objectToJson(this.filterNot { it::class == ScoreV2::class })
         }

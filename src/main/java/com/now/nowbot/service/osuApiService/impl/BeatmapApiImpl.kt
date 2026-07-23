@@ -594,9 +594,9 @@ class BeatmapApiImpl(
             val b = beatmapDao.getBeatmapLite(s.beatmapID)
 
             b?.let {
-                s.beatmap.difficultyName = b.difficultyName ?: ""
-                s.beatmap.starRating = b.difficultyRating!!.toDouble()
-                s.beatmap.beatmapID = b.beatmapID!!
+                s.beatmap.difficultyName = b.difficultyName
+                s.beatmap.starRating = b.difficultyRating.toDouble()
+                s.beatmap.beatmapID = b.beatmapID
             }
 
             b?.beatmapID

@@ -4,6 +4,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.getClockRate
+import com.now.nowbot.model.osu.LazerMod.Companion.getKey
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Mod
@@ -59,7 +60,7 @@ object BeatmapUtil {
         if (mods.isAffectStarRating()) {
             beatmap.bpm = applyBPM(beatmap.bpm, mods)
             beatmap.ar = applyAR(beatmap.ar ?: 0f, mods)
-            beatmap.cs = applyCS(beatmap.cs ?: 0f, mods)
+            beatmap.cs = applyCS(beatmap.cs ?: 0f, mods, mode)
             beatmap.od = applyOD(beatmap.od ?: 0f, mods, mode)
             beatmap.hp = applyHP(beatmap.hp ?: 0f, mods)
             beatmap.totalLength = applyLength(beatmap.totalLength, mods)
@@ -162,14 +163,19 @@ object BeatmapUtil {
         return o.roundToDigits2()
     }
 
-    fun applyCS(cs: Float, mods: List<LazerMod>): Float {
+    fun applyCS(cs: Float, mods: List<LazerMod>, mode: OsuMode): Float {
         var c = cs
 
         for (mod in mods) {
             if (mod is LazerMod.DifficultyAdjust) {
-                if (mod.circleSize != null) return mod.circleSize!!.roundToDigits2()
-                break
+                if (mod.circleSize != null) {
+                    return mod.circleSize!!.roundToDigits2()
+                }
             }
+        }
+
+        if (mode.safeModeValue == 0.toByte()) {
+            mods.getKey(cs)?.let { return it }
         }
 
         if (mods.contains(LazerMod.HardRock)) {
@@ -177,6 +183,7 @@ object BeatmapUtil {
         } else if (mods.contains(LazerMod.Easy)) {
             c /= 2f
         }
+
         return c.coerceIn(0f, 10f).roundToDigits2()
     }
 

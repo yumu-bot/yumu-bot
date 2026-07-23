@@ -246,40 +246,43 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             isRound: Boolean,
             isInteger: Boolean
         ): Boolean {
+
+            // 1. 确定保留的小数位数 dig
             val dig = if (isInteger) {
-                val toStr = to.toString()
-                val dotIndex = toStr.indexOf('.')
+                // 将 to 格式化为最多 digit 位小数的字符串，保留末尾的 0（如 7.0 就是 "7.0"）
+                val formatted = String.format("%.${digit}f", to).trimEnd('0')
+                val dotIndex = formatted.indexOf('.')
 
                 val actualDigits = if (dotIndex >= 0) {
-                    val decimalPart = toStr.substring(dotIndex + 1)
-                    decimalPart.trimEnd('0').length
+                    formatted.substring(dotIndex + 1).length
                 } else {
                     0
                 }
 
+                // 如果玩家输入的是 7.0，actualDigits 为 1；如果输入的是 7.27，actualDigits 为 2
                 actualDigits.coerceAtMost(digit)
             } else {
                 digit
             }
 
             val scale = 10.0.pow(dig)
-            val rc = if (isRound) {
+            val rc = if (isRound && digit == dig) {
                 round(compare * scale) / scale
             } else {
                 floor(compare * scale) / scale
             }
 
-            val epsilon = 10.0.pow(-dig)
+            val eps = 1e-9
             val diff = rc - to
 
             return when (operator) {
-                Operator.XQ -> abs(compare - to) <= 1e-9
-                Operator.EQ -> abs(diff) <= epsilon
-                Operator.NE -> abs(diff) > epsilon
-                Operator.GT -> diff > epsilon
-                Operator.GE -> diff >= -epsilon
-                Operator.LT -> diff < -epsilon
-                Operator.LE -> diff <= epsilon
+                Operator.XQ -> abs(compare - to) <= eps
+                Operator.EQ -> abs(diff) <= eps
+                Operator.NE -> abs(diff) > eps
+                Operator.GT -> diff > eps
+                Operator.GE -> diff >= -eps
+                Operator.LT -> diff < -eps
+                Operator.LE -> diff <= eps
             }
         }
 

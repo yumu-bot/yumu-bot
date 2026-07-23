@@ -107,6 +107,7 @@ data class Beatmapset(
     @field:JsonProperty("ranked_date")
     var rankedDate: OffsetDateTime? = null,
 
+    @field:JsonProperty("storyboard")
     var storyboard: Boolean = false, 
 
     @field:JsonProperty("submitted_date")

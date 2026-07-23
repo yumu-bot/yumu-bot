@@ -585,7 +585,7 @@ class BeatmapDao(
             s.covers = Covers(set.cover, set.cover, set.card, set.card, set.list, set.list, set.slimcover, set.slimcover)
 
             s.nsfw = set.nsfw
-            s.storyboard = set.storyboard
+            s.storyboard = set.storyboard ?: false
             s.source = set.source
             s.status = set.status
             s.playCount = set.playCount
