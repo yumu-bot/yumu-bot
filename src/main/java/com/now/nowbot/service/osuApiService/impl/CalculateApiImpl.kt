@@ -597,7 +597,7 @@ class CalculateApiImpl(
                 }
             }
 
-            val results = AsyncMethodExecutor.awaitCallableExecute(actions, 20.seconds)
+            val results = AsyncMethodExecutor.awaitList(actions, 20.seconds)
             results.filterNotNull().forEach { (details, star) -> resultMap[details] = star }
         }
 
@@ -633,7 +633,7 @@ class CalculateApiImpl(
                 }
             }
 
-            val results = AsyncMethodExecutor.awaitCallableExecute(actions, 20.seconds).filterNotNull()
+            val results = AsyncMethodExecutor.awaitList(actions, 20.seconds).filterNotNull()
 
             results.forEach { (details, star) ->
                 scoreDao.saveStarRatingCacheAsync(

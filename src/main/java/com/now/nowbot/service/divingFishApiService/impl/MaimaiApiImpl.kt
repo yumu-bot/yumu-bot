@@ -220,7 +220,7 @@ import kotlin.text.Charsets.UTF_8
             }
         }
 
-        AsyncMethodExecutor.awaitCallableExecute(actions)
+        AsyncMethodExecutor.awaitList(actions)
     }
 
     override fun insertMaimaiAliasForScore(score: MaiScore?) {

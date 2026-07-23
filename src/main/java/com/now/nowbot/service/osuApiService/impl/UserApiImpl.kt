@@ -245,7 +245,7 @@ import java.util.concurrent.CancellationException
                 }
             }
 
-            return AsyncMethodExecutor.awaitCallableExecute(callables).flatten()
+            return AsyncMethodExecutor.awaitList(callables).flatten()
         }
     }
 
