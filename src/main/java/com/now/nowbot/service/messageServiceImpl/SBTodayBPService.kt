@@ -24,9 +24,9 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
+import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.UserIDUtil
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
@@ -96,7 +96,7 @@ class SBTodayBPService(
         val mode = InstructionUtil.getMode(matcher)
         val isMyself = AtomicBoolean()
 
-        val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
+        val conditions = any.asConditions(ScoreFilter.regexes)
 
         // 如果不加井号，则有时候范围会被匹配到这里来
         val rangeInConditions = conditions.lastOrNull().orEmpty()

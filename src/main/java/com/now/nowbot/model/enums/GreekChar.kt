@@ -1,6 +1,6 @@
 package com.now.nowbot.model.enums
 
-enum class GreekChar(val capital: String, val small: String, val transformation: String, val romanized: String) {
+enum class GreekChar(val capital: String, val small: String, val romanised: String, val full: String) {
     ALPHA("Α", "α", "a", "alpha"),
     BETA("Β", "β", "b", "beta"),
     GAMMA("Γ", "γ", "g", "gamma"),
@@ -29,39 +29,76 @@ enum class GreekChar(val capital: String, val small: String, val transformation:
     ;
 
     companion object {
-        @JvmStatic
-        fun getRomanized(greek: String?): String {
-            if (greek.isNullOrEmpty()) {
-                return ""
-            }
+        private val GREEK_LOOKUP_TABLE = Array<String?>(65536) { null }.apply {
+            for (g in entries) {
+                val targetValue = g.romanised
 
-            if (! containsGreek(greek)) {
-                return greek
-            }
-
-            val sb = StringBuilder()
-
-            outro@
-            for(s in greek.toCharArray()) {
-                for(g in GreekChar.entries) {
-                    if (isEqual(s, g)) {
-                        sb.append(g.romanized)
-                        continue@outro
-                    }
+                // 1. 注册大写字符映射
+                if (g.capital.isNotEmpty()) {
+                    this[g.capital[0].code] = targetValue
                 }
+                // 2. 注册小写字符映射
+                if (g.small.isNotEmpty()) {
+                    this[g.small[0].code] = targetValue
+                }
+            }
+        }
 
-                sb.append(s)
+        fun getRomanized(greek: String?): String {
+            if (greek.isNullOrEmpty()) return ""
+
+            val len = greek.length
+            val sb = StringBuilder(len * 2)
+
+            for (i in 0 until len) {
+                val ch = greek[i]
+                val code = ch.code
+
+                // O(1) 直接查表拿转换后的字符串
+                val mapped = if (code < 65536) GREEK_LOOKUP_TABLE[code] else null
+
+                if (mapped != null) {
+                    sb.append(mapped)
+                } else {
+                    sb.append(ch)
+                }
             }
 
             return sb.toString()
         }
 
-        private fun isEqual(char: Char, greekChar: GreekChar): Boolean {
+        fun CharSequence.appendRomanizedGreekTo(target: StringBuilder) {
+            val len = this.length
+            for (i in 0 until len) {
+                val ch = this[i]
+                val code = ch.code
+
+                // 直接查静态数组（GREEK_LOOKUP_TABLE 是 Array<String?>）
+                val mapped = if (code < 65536) GreekChar.GREEK_LOOKUP_TABLE[code] else null
+
+                if (mapped != null) {
+                    target.append(mapped)
+                } else {
+                    target.append(ch)
+                }
+            }
+        }
+
+        fun isEqual(char: Char, greekChar: GreekChar): Boolean {
             return (char.toString() == greekChar.capital || char.toString() == greekChar.small)
         }
 
-        private fun containsGreek(T: CharSequence): Boolean {
-            return T.contains(Regex("[\u0370-\u03ff]"))
+        fun containsGreek(chars: CharSequence?): Boolean {
+            if (chars.isNullOrEmpty()) return false
+
+            val len = chars.length
+            for (i in 0 until len) {
+                val code = chars[i].code
+                if (code in 0x0370..0x03FF || code in 0x1F00..0x1FFF) {
+                    return true
+                }
+            }
+            return false
         }
     }
 }

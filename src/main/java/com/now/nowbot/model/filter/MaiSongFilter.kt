@@ -46,17 +46,17 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
     ;
 
     companion object {
+        val regexes: List<Regex> by lazy { entries.map { it.regex } }
+
         fun filterSongs(songs: List<MaiSong>, conditions: List<List<String>>, difficulties: List<MaiDifficulty>): List<MaiSong> {
             var collect = listOf<Pair<MaiSong, List<MaiDifficulty>>>()
-
-            val el = entries.toList()
 
             // 最后一个筛选条件无需匹配
             conditions
                 .dropLast(1)
                 .forEachIndexed { index, strings ->
                     if (strings.isNotEmpty()) {
-                        val fit = filterConditions(songs, el[index], strings)
+                        val fit = filterConditions(songs, entries[index], strings)
 
                         collect = getOrIntersect(collect, fit)
                     }
@@ -66,11 +66,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
             // 在这里设置高亮难度
             return collect.filter {
-                if (d.isEmpty()) {
-                    true
-                } else {
-                    d.containsAll(it.second.toSet())
-                }
+                d.isEmpty() || d.containsAll(it.second.toSet())
             }.map { r ->
                 val highlight = r.second
                     .map { diff -> MaiDifficulty.getIndex(diff) }

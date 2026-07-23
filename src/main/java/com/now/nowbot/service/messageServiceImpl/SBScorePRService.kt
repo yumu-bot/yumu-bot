@@ -24,6 +24,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
+import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -124,7 +125,7 @@ class SBScorePRService(
 
         id.setZeroToRange100()
 
-        val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
+        val conditions = any.asConditions(ScoreFilter.regexes)
 
         // 如果不加井号，则有时候范围会被匹配到这里来
         val rangeInConditions = conditions.lastOrNull().orEmpty()

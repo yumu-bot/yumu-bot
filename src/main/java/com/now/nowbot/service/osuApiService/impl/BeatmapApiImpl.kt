@@ -1289,7 +1289,7 @@ class BeatmapApiImpl(
     }
 
     override fun getBeatmapsetRankedTime(beatmap: Beatmap): String {
-        return if (beatmap.ranked == 3) {
+        return if (beatmap.ranked == 3.toByte()) {
             try {
                 val t = getBeatmapSetWithRankedTime(beatmap.beatmapsetID)
 

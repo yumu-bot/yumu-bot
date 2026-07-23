@@ -2,7 +2,7 @@ package com.now.nowbot.model.maimai
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.StringUtil.asHalfWidth
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class LxChuBestScore(
@@ -17,7 +17,7 @@ data class LxChuBestScore(
         val map = songs.associateBy { it.songID }
 
         return ChuBestScore().apply {
-            this.name = DataUtil.toHalfWidth(user.name)
+            this.name = user.name.asHalfWidth()
             this.rating = user.rating
             this.records = ChuBestScore.Records(
                 lx.bests.map {

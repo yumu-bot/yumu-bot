@@ -124,7 +124,7 @@ data class Beatmap(
     var playCount: Int = 0,
 
     @field:JsonProperty("ranked")
-    var ranked: Int = 0,
+    var ranked: Byte = 0,
 
     @field:JsonProperty("url")
     var url: String? = null,

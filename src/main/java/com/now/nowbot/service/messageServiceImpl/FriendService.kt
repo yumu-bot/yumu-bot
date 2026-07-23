@@ -23,6 +23,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
+import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_RANGE
@@ -186,7 +187,7 @@ class FriendService(
 
         val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
 
-        val conditions = DataUtil.getConditions(any, MicroUserFilter.entries.map { it.regex })
+        val conditions = any.asConditions(MicroUserFilter.regexes)
 
         // 如果不加井号，则有时候范围会被匹配到这里来
         val rangeInConditions = conditions.lastOrNull().orEmpty()
@@ -277,7 +278,7 @@ class FriendService(
                 }
             }
 
-            if (other == null || other.isTokenAvailable == null) {
+            if (other?.isTokenAvailable == null) {
                 // 对方未绑定模式
                 val others = InstructionUtil.getUserWithRange(event, matcher, InstructionObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
 

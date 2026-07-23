@@ -24,6 +24,8 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.*
+import com.now.nowbot.util.StringUtil.compareSimilarity
+import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.REG_SPACE
@@ -464,7 +466,7 @@ class GuessService(
             } else {
                 score.beatmapset.title
             }.toCharArray()
-                .map { DataUtil.getStandardisedString(it.toString()) }
+                .map { it.toString().standardised() }
                 .toSet()
 
             val totalCharsCount = uniqueChars.size
@@ -569,12 +571,14 @@ class GuessService(
 
             val c = char.lowercaseChar()
 
-            if (c.isWhitespace() || standardisedLetters.contains(c.toString())) {
+            val std = c.toString().standardised()
+
+            if (c.isWhitespace() || standardisedLetters.contains(std)) {
                 return false
             }
 
             revealedLetters.add(c)
-            standardisedLetters.add(DataUtil.getStandardisedString(c.toString()))
+            standardisedLetters.add(std)
 
             val autoDecryptedIndices = mutableListOf<Int>()
 
@@ -607,7 +611,7 @@ class GuessService(
             if (validText.isEmpty()) return true
 
             val revealedCount = validText.count { c ->
-                val std = DataUtil.getStandardisedString(c.toString())
+                val std = c.toString().standardised()
                 std in standardisedLetters
             }
 
@@ -629,7 +633,7 @@ class GuessService(
                 if (protectedSymbols.contains(c)) continue
 
                 // 3. 核心加密逻辑
-                val std = DataUtil.getStandardisedString(c.toString())
+                val std = c.toString().standardised()
 
                 // 如果该字符还没被猜出来（不在已解锁集合中），则加密为 #
                 if (std !in standardisedLetters) {
@@ -687,7 +691,7 @@ class GuessService(
             }
 
             // 3. 长词处理：相似度与包含关系并重
-            val similarity = DataUtil.getStringSimilarity(processedTitle, input)
+            val similarity = processedTitle.compareSimilarity(input)
 
             val contains = processedTitle.contains(input, ignoreCase = true)
 
@@ -964,7 +968,7 @@ class GuessService(
 
                             // 检查是否与已加入结果集的标题太像
                             val isTooSimilar = result.any { existing ->
-                                DataUtil.getStringSimilarity(currentTitle, existing.beatmapset.title) > SIMILARITY_THRESHOLD
+                                currentTitle.compareSimilarity(existing.beatmapset.title) > SIMILARITY_THRESHOLD
                             }
 
                             if (!isTooSimilar) {
@@ -1070,12 +1074,14 @@ class GuessService(
 
             val title = if (game.unicode) set.titleUnicode else set.title
 
+            val additional = if (set.title.compareSimilarity(set.titleUnicode) < SIMILARITY_THRESHOLD) {
+                " (${set.title})"
+            } else {
+                ""
+            }
+
             val decrypt =
-                "${set.artistUnicode} - ${set.titleUnicode}" + if (DataUtil.getStringSimilarity(set.title, set.titleUnicode, standardised = true) < SIMILARITY_THRESHOLD) {
-                    " (${set.title})"
-                } else {
-                    ""
-                }
+                "${set.artistUnicode} - ${set.titleUnicode}" + additional
 
             reply.append("#${r + 1}: $decrypt")
 
@@ -1083,7 +1089,7 @@ class GuessService(
 
             val isLuckyGuess = game.standardisedLetters.isEmpty() || (
                     title.replace(Regex("[^a-zA-Z0-9]"), "").all { c ->
-                        val std = DataUtil.getStandardisedString(c.toString())
+                        val std = c.toString().standardised()
 
                         std !in game.standardisedLetters
                     })

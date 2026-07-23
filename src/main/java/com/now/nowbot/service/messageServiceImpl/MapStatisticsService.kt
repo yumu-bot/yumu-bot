@@ -18,9 +18,9 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.BeatmapUtil
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_MOD
 import com.now.nowbot.util.command.FLAG_MODE
@@ -136,11 +136,15 @@ class MapStatisticsService(
     enum class MapFilter(@param:Language("RegExp") val regex: Regex) {
         ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|ac?c?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
         COMBO("(combo|连击|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
-        MISS("(m(is)?s|[msx0]|不可|红|失误|漏击)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+        MISS("(m(is)?s|[msx0]|不可|红|失误|漏击)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex());
+
+        companion object {
+            val regexes: List<Regex> by lazy { entries.map { it.regex } }
+        }
     }
 
     private fun parseAccuracyAndCombo(input: String?, before: String? = null): Triple<Double, Double, Int> {
-        val conditions = DataUtil.getConditions(input, MapFilter.entries.map { it.regex })
+        val conditions = input.asConditions(MapFilter.regexes)
 
         var accuracy: Double? = null
         var combo: Double? = null

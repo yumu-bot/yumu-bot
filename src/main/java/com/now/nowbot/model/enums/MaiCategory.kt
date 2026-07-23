@@ -51,7 +51,7 @@ enum class MaiCategory(val english: String) {
             }
 
             /*
-            val conditions = DataUtil.paramMatcher(genre, CategoryFilter.entries.map { it.regex })
+            val conditions = DataUtil.paramMatcher(genre, CategoryFilter.regexes)
 
             conditions.map { it.size }.forEachIndexed { size, i ->
                 if (size > 0) {

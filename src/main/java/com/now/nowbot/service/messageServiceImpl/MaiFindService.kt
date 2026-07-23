@@ -14,7 +14,11 @@ import com.now.nowbot.service.messageServiceImpl.MaiFindService.MaiFindParam
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.StringUtil.compareSimilarity
+import com.now.nowbot.util.StringUtil.asConditions
+import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.command.*
+
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
@@ -34,7 +38,6 @@ import java.util.regex.Matcher
                 "count" to count,
                 "page" to page,
                 "max_page" to maxPage,
-                // "user" to MaiBestScore.User("YumuBot", "", null, null, 0, 0, 0, null)
             )
         }
     }
@@ -70,7 +73,7 @@ import java.util.regex.Matcher
         fun getParam(matcher: Matcher, lxMaiApiService: LxMaiApiService): MaiFindParam {
             val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
 
-            val conditions = DataUtil.getConditions(any, MaiSongFilter.entries.map { it.regex },
+            val conditions = any.asConditions(MaiSongFilter.regexes,
                 endPattern = MaiSongFilter.RANGE.regex.pattern)
 
             val rangeInConditions = conditions.lastOrNull().orEmpty()
@@ -93,9 +96,9 @@ import java.util.regex.Matcher
                 } else {
                     // 标题搜歌模式
                     val possibles = lxMaiApiService.getPossibleMaiSongs(
-                        DataUtil.getStandardisedString(any)
+                        any.standardised()
                     )
-                        .associateBy { it.title.getSimilarity(any) }
+                        .associateBy { it.title.compareSimilarity(any) }
                         .filter { it.key > 0.4 }
                         .values
 
@@ -146,10 +149,6 @@ import java.util.regex.Matcher
             val pages = DataUtil.splitPage(songs, page, maxPerPage = 48)
 
             return MaiFindParam(pages.first, pages.second, pages.third, songs.size)
-        }
-
-        private fun String?.getSimilarity(other: String?): Double {
-            return DataUtil.getStringSimilarity(other, this)
         }
 
         /**

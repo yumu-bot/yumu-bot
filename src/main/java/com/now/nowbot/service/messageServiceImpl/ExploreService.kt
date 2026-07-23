@@ -27,6 +27,7 @@ import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_PAGE
 import com.now.nowbot.util.command.FLAG_TYPE
@@ -201,7 +202,7 @@ class ExploreService(
             }
 
             BeatmapType.MOST_PLAYED -> {
-                val conditions = DataUtil.getConditions(any, MostPlayedBeatmapFilter.entries.map { it.regex })
+                val conditions = any.asConditions(MostPlayedBeatmapFilter.regexes)
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
                 val rangeInConditions = conditions.lastOrNull().orEmpty()
@@ -255,7 +256,7 @@ class ExploreService(
             }
 
             else -> {
-                val conditions = DataUtil.getConditions(any, BeatmapsetFilter.entries.map { it.regex })
+                val conditions = any.asConditions(BeatmapsetFilter.regexes)
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
                 val rangeInConditions = conditions.lastOrNull().orEmpty()
@@ -327,7 +328,7 @@ class ExploreService(
 
         val query: Map<String, Any>
 
-        val conditions = DataUtil.getConditions(any, SearchBeatmapsetFilter.entries.map { it.regex })
+        val conditions = any.asConditions(SearchBeatmapsetFilter.regexes)
 
         // 如果不加井号，则有时候范围会被匹配到这里来
         val rangeInConditions = conditions.lastOrNull().orEmpty()

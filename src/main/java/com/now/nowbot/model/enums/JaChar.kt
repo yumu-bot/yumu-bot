@@ -135,155 +135,157 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
 
     ;
     companion object {
-        // 获取平假名片假名的罗马音，日文汉字就算了，那个要上 API
-        fun getRomanized(japanese: String?): String {
-            if (japanese.isNullOrEmpty()) {
-                return ""
+        private val Loong: Char = 'ー'
+
+        // 单假名查找表: CharCode -> JaChar
+        private val SINGLE_LOOKUP = Array<JaChar?>(65536) { null }
+
+        // 拗音查找表: (前字Code shl 16 or 后字Code) -> 罗马音 (例如: "き" + "ゃ" -> "kya")
+        private val YOUON_LOOKUP = HashMap<Int, String>()
+
+        // 促音字符 Set (っ 和 ッ)
+        private val SOKUON_CHARS = CharArray(65536)
+
+        // 拗音小字 Set (ゃ ぃ ゅ ぇ ょ / ャ ィ ュ ェ ョ)
+        private val YOUON_SMALL_CHARS = BooleanArray(65536)
+
+        // は行假名 CharCode 集合 (用于促音+は行的音变判断: は ひ ふ へ ほ / ハ ヒ フ ヘ ホ)
+        private val HA_ROW_CODES = IntArray(65536)
+
+        init {
+            for (ja in entries) {
+                // 单字符假名注册
+                if (ja.hiragana.length == 1) {
+                    SINGLE_LOOKUP[ja.hiragana[0].code] = ja
+                }
+                if (ja.katakana.length == 1) {
+                    SINGLE_LOOKUP[ja.katakana[0].code] = ja
+                }
+
+                // 拗音组合假名注册 (如 hiragana/katakana 长度为2，如 "みゃ")
+                if (ja.hiragana.length == 2) {
+                    val key = (ja.hiragana[0].code shl 16) or ja.hiragana[1].code
+                    YOUON_LOOKUP[key] = ja.romanized
+                }
+                if (ja.katakana.length == 2) {
+                    val key = (ja.katakana[0].code shl 16) or ja.katakana[1].code
+                    YOUON_LOOKUP[key] = ja.romanized
+                }
             }
 
-            if (!hasJapanese(japanese)) {
-                return japanese
+            // 标记促音
+            SOKUON_CHARS[TSU2.hiragana[0].code] = TSU2.hiragana[0]
+            SOKUON_CHARS[TSU2.katakana[0].code] = TSU2.katakana[0]
+
+            // 标记小写拗音
+            listOf(YA2, YI2, YU2, YE2, YO2).flatMap { listOf(it.hiragana, it.katakana) }.forEach {
+                YOUON_SMALL_CHARS[it[0].code] = true
             }
 
-            val charArray = japanese.toCharArray()
-            val sb = StringBuilder()
+            // 标记 HA 行假名
+            listOf(HA, HI, FU, HE, HO).flatMap { listOf(it.hiragana, it.katakana) }.forEach {
+                HA_ROW_CODES[it[0].code] = 1
+            }
+        }
 
-            outro@ for (i in charArray.indices) {
-                val now = charArray[i]
-                val after = if (i + 1 < charArray.size) charArray[i + 1] else null
-                val before = if (i > 0) charArray[i - 1] else null
+        /**
+         * 将 CharSequence 中的假名转换为罗马音追加到 target StringBuilder
+         */
+        fun CharSequence.appendRomanizedJapaneseTo(target: StringBuilder) {
+            val len = this.length
+            var i = 0
 
+            while (i < len) {
+                val now = this[i]
+                val nowCode = now.code
+                val next = if (i + 1 < len) this[i + 1] else null
+                val prev = if (i > 0) this[i - 1] else null
+
+                // 1. 空格直接追加
                 if (now == ' ') {
-                    sb.append(' ')
-                    continue@outro
+                    target.append(' ')
+                    i++
+                    continue
                 }
 
-                // 长音 えー -> ee
-                if (isChouon(now) && before != null) {
-                    for (j in JaChar.entries) {
-                        if (isEqual(before, j)) {
-                            sb.append(j.romanized.last())
-                            continue@outro
-                        }
+                // 2. 优先检查：是否与下一个字符构成【拗音】(如 みゃ -> mya)
+                if (next != null) {
+                    val youonKey = (nowCode shl 16) or next.code
+                    val youonRomanized = YOUON_LOOKUP[youonKey]
+                    if (youonRomanized != null) {
+                        target.append(youonRomanized)
+                        i += 2 // 消费掉两个字符！
+                        continue
                     }
                 }
 
-                // 促音 さっき -> Sakki (c = っ)
-                if (isSokuon(now)) {
-                    if (after != null && hasJapanese(after)) {
+                // 3. 检查：长音符号『ー』 (如 えー -> ee)
+                if (now == Loong && prev != null) {
+                    val prevJa = SINGLE_LOOKUP[prev.code]
+                    if (prevJa != null && prevJa.romanized.isNotEmpty()) {
+                        target.append(prevJa.romanized.last())
+                        i++
+                        continue
+                    }
+                }
 
-                        // は (ha) 行前有拗音的话，有音变，要变成 ぱ (pa) 行。放在下一轮处理。
-                        if (isEqual(after, listOf(HA, HI, FU, HE, HO))) {
-                            continue@outro
-                        }
-
-                        for (j in JaChar.entries) {
-                            if (isEqual(after, j)) {
-                                sb.append(j.romanized.first())
-                                continue@outro
+                // 4. 检查：促音『っ』/『ッ』(如 さっき -> sakki)
+                if (SOKUON_CHARS[nowCode] != '\u0000') {
+                    var handled = false
+                    if (next != null) {
+                        val nextCode = next.code
+                        // 特殊音变：促音 + は行 -> 音变为 ぱ行 (っは -> ppa)
+                        if (HA_ROW_CODES[nextCode] == 1) {
+                            val nextJa = SINGLE_LOOKUP[nextCode]
+                            if (nextJa != null) {
+                                // 把 ha/hi/fu/he/ho 的 h 换成 p，并在前面加 p
+                                val pSound = nextJa.romanized.replace('h', 'p').replace('f', 'p')
+                                target.append('p').append(pSound)
+                                i += 2 // 消费促音和后面的は行字符
+                                continue
                             }
                         }
-                    } else if (before != null) {
-                        // 比如 んっあっあっ，此时最后一个促音应该跟着前面 a。
-                        for (j in JaChar.entries) {
-                            if (isEqual(before, j)) {
-                                sb.append(j.romanized.last())
-                                continue@outro
-                            }
+
+                        // 普通促音：取后一个假名罗马字的首字母 (如 き -> k -> 追加 k)
+                        val nextJa = SINGLE_LOOKUP[nextCode]
+                        if (nextJa != null && nextJa.romanized.isNotEmpty()) {
+                            target.append(nextJa.romanized.first())
+                            handled = true
                         }
                     }
-                }
 
-                // は (ha) 行前有拗音的话，有音变，要变成 ぱ (pa) 行。在这里处理。
-                if (before != null && isSokuon(before) && isEqual(now, listOf(HA, HI, FU, HE, HO))) {
-                    for (j in listOf(HA, HI, FU, HE, HO)) {
-                        if (isEqual(now, j)) {
-                            sb.append((j.romanized.first() + j.romanized).replace('h', 'p'))
-                            continue@outro
+                    // 兜底促音：如 "んっあっ"，后无跟随假名，取前一个元音末尾字母
+                    if (!handled && prev != null) {
+                        val prevJa = SINGLE_LOOKUP[prev.code]
+                        if (prevJa != null && prevJa.romanized.isNotEmpty()) {
+                            target.append(prevJa.romanized.last())
+                            handled = true
                         }
                     }
-                }
 
-                // 拗音 みゃ -> mya (c = み)
-                if (after != null && isYouon(after)) {
-                    for (j in JaChar.entries) {
-                        if (isEqual(now.toString() + after.toString(), j)) {
-                            sb.append(j.romanized.dropLast(1))
-                            continue@outro
-                        }
+                    if (handled) {
+                        i++
+                        continue
                     }
                 }
 
-                for (j in JaChar.entries) {
-                    if (isEqual(now, j)) {
-                        sb.append(j.romanized)
-                        continue@outro
-                    }
+                // 5. 普通单字符假名查表
+                val ja = SINGLE_LOOKUP[nowCode]
+                if (ja != null) {
+                    target.append(ja.romanized)
+                } else {
+                    target.append(now) // 非假名原样追加
                 }
 
-                sb.append(now)
+                i++
             }
+        }
 
+        fun getRomanized(japanese: String?): String {
+            if (japanese.isNullOrEmpty()) return ""
+            val sb = StringBuilder(japanese.length * 2)
+            japanese.appendRomanizedJapaneseTo(sb)
             return sb.toString()
-        }
-
-        private val JAPANESE_RANGES = listOf(
-            0x3040..0x309F,  // 平假名
-            0x30A0..0x30FF,  // 片假名
-            0x31F0..0x31FF,  // 片假名扩展（小写假名等）
-            0xFF66..0xFF9F,  // 半角片假名
-            //0x4E00..0x9FFF,  // CJK统一汉字（包含日文汉字）
-            //0x3400..0x4DBF,  // CJK扩展A
-            //0x3000..0x303F,  // CJK符号和标点
-            0xFF00..0xFFEF,  // 全角ASCII及全角标点
-        )
-
-        private fun hasJapanese(charSequence: CharSequence): Boolean {
-            // 遍历检查每个字符
-            for (i in 0 until charSequence.length) {
-                val code = charSequence[i].code
-                if (JAPANESE_RANGES.any { code in it }) {
-                    return true
-                }
-            }
-            return false
-        }
-
-        private fun hasJapanese(char: Char): Boolean {
-            return JAPANESE_RANGES.any { char.code in it }
-        }
-
-        // 促音 さっき -> Sakki
-        private fun isSokuon(char: Char): Boolean {
-            return isEqual(char, TSU2)
-        }
-
-        // 拗音 みゃ -> mya
-        private fun isYouon(char: Char): Boolean {
-            return isEqual(char, listOf(YA2, YI2, YU2, YE2, YO2))
-        }
-
-        // 长音 ええ -> ee
-        private fun isChouon(char: Char): Boolean {
-            return char == 'ー'
-        }
-
-        private fun isEqual(char: Char, jaChar: JaChar): Boolean {
-            if (jaChar.hiragana.length > 1 || jaChar.katakana.length > 1) return false
-
-            return (jaChar.hiragana.contains(char) || jaChar.katakana.contains(char))
-        }
-
-        private fun isEqual(char: Char, jaChars: List<JaChar>): Boolean {
-            val str = char.toString()
-
-            return jaChars.any { ja ->
-                isEqual(str, ja)
-            }
-        }
-
-        private fun isEqual(str: String, jaChar: JaChar): Boolean {
-            return (str == jaChar.hiragana || str == jaChar.katakana)
         }
     }
 }

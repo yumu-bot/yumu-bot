@@ -11,6 +11,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
+import com.now.nowbot.util.StringUtil.compareSimilarity
 import com.now.nowbot.util.command.FLAG_NAME
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -306,11 +307,11 @@ import kotlin.math.floor
         val isMyself = if (bindUser == null || user == null) {
             false
         } else {
-            (user.userID == bindUser.userID) || (name.isNotEmpty() && DataUtil.getStringSimilarity(name, bindUser.username) > 0.8)
+            (user.userID == bindUser.userID) || (name.isNotEmpty() && name.compareSimilarity(bindUser.username) > 0.8)
         }
 
         val isPrevious =
-            user?.previousNames?.map { prev -> DataUtil.getStringSimilarity(name, prev) > 0.8 }?.contains(true) ?: false
+            user?.previousNames?.map { prev -> name.compareSimilarity(prev) > 0.8 }?.contains(true) ?: false
 
         val hostedCount = search.beatmapsets.count { set ->
             (set.beatmapsetID != user?.userID) && (set.beatmaps?.all { that -> that.beatmapID != user?.userID } ?: true)

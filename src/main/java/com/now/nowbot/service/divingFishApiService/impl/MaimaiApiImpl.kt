@@ -8,8 +8,8 @@ import com.now.nowbot.model.maimai.*
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.StringUtil.compareSimilarity
 import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -422,7 +422,7 @@ import kotlin.text.Charsets.UTF_8
         search@ for (e in aliases.entries) {
             for (alias in e.value) {
 
-                val y = DataUtil.getStringSimilarity(text, alias)
+                val y = text.compareSimilarity(alias)
 
                 if (y >= 0.5) {
                     val s = maiDao.findMaiSongByID(e.key)

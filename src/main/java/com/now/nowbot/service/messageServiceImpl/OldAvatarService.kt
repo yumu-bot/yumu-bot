@@ -19,10 +19,10 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.StringUtil.compareSimilarity
 import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_MODE
 import com.now.nowbot.util.command.FLAG_QQ_ID
@@ -215,9 +215,9 @@ class OldAvatarService(
             .sortedByDescending { it.ranked }
             .filter {
                 if (isDeleted) {
-                    DataUtil.getStringSimilarity(it.creatorID.toString(), name) > 0.8
+                    it.creatorID.toString().compareSimilarity(name) > 0.8
                 } else {
-                    DataUtil.getStringSimilarity(it.creator, name) > 0.8
+                    it.creator.compareSimilarity(name) > 0.8
                 }
             }
             .map { it.creatorID to it.beatmapsetID }

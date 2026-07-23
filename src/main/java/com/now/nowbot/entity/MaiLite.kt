@@ -1,7 +1,8 @@
 package com.now.nowbot.entity
 
 import com.now.nowbot.model.maimai.*
-import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.StringUtil.standardised
+
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
@@ -98,7 +99,7 @@ class MaiSongLite(
 
     companion object {
         fun from(song: MaiSong): MaiSongLite {
-            val queryTitle = DataUtil.getStandardisedString(song.title)
+            val queryTitle = song.title.standardised()
 
             val result = MaiSongLite(
                 songID = song.songID,
@@ -440,7 +441,7 @@ class ChuSongLite(
     companion object {
         @JvmStatic
         fun from(song: ChuSong): ChuSongLite {
-            val queryTitle = DataUtil.getStandardisedString(song.title)
+            val queryTitle = song.title.standardised()
 
             val result = ChuSongLite(
                 songID = song.songID,
@@ -568,7 +569,7 @@ class LxMaiSongLite {
 
     companion object {
         fun from(song: LxMaiSong): LxMaiSongLite {
-            val query = DataUtil.getStandardisedString(song.title)
+            val query = song.title.standardised()
 
             return LxMaiSongLite().apply {
                 songID = song.songID

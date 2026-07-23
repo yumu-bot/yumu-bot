@@ -57,6 +57,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
     RANGE(REG_RANGE.toRegex());
 
     companion object {
+        val regexes: List<Regex> by lazy { entries.map { it.regex } }
 
         /**
          * 后面的所有键值对，除了 q= 查询字段，其他键均只保留第一次出现的值
@@ -64,14 +65,12 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
          * @param overwritten 被覆盖的部分。
          */
         fun buildQuery(conditions: List<List<String>>, overwrite: Map<String, Any> = mapOf(), overwritten: Map<String, Any> = mapOf()): Map<String, Any> {
-            val el = SearchBeatmapsetFilter.entries.toList()
-
             // 最后一个筛选条件无需匹配
             val con = conditions
                 .dropLast(1)
                 .flatMapIndexed { index, strings ->
                     if (strings.isNotEmpty()) {
-                        filterConditions(el[index], strings)
+                        filterConditions(entries[index], strings)
                     } else {
                         listOf()
                     }
@@ -83,12 +82,12 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
         }
 
         private fun filterConditions(filter: SearchBeatmapsetFilter, conditions: List<String>): List<Pair<String, Any>> {
-            val maps = conditions.map { c ->
+            val maps = conditions.flatMap { c ->
                 val operator = Operator.getOperator(c)
                 val condition = Condition((c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim())
 
                 fitBeatmapset(operator, filter, condition)
-            }.flatten()
+            }
 
             return maps
         }

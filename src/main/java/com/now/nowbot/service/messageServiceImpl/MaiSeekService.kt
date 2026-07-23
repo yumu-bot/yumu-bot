@@ -7,9 +7,11 @@ import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.StringUtil.compareSimilarity
+import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.command.*
+
 import org.springframework.stereotype.Service
 
 @Service("MAI_SEEK")
@@ -70,14 +72,14 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         }
         
         val rankMap = maimaiApiService.getMaimaiRank()
-        val nameMap = rankMap.keys.associateBy { DataUtil.getStandardisedString(it).replace("\"", "") }
+        val nameMap = rankMap.keys.associateBy { it.standardised().replace("\"", "") }
 
         val similarities = mutableListOf<Pair<String, Double>>()
 
         val paramNoQuote = param.replace(REG_QUOTATION.toRegex(), "")
 
         for (std in nameMap.keys) {
-            val y = DataUtil.getStringSimilarity(paramNoQuote, std, standardised = false)
+            val y = paramNoQuote.compareSimilarity(std, standardised = false)
 
             if (y >= 0.4) {
                 similarities.add(Pair(std, y))

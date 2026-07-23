@@ -20,7 +20,11 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.StringUtil.compareSimilarity
+import com.now.nowbot.util.StringUtil.asConditions
+import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.command.*
+
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
@@ -132,8 +136,7 @@ import java.util.regex.Matcher
 
         val full: MaiBestScore
 
-        val conditions = DataUtil.getConditions(titleStr, MaiScoreFilter.entries.map { it.regex },
-            endPattern = MaiScoreFilter.RANGE.regex.pattern)
+        val conditions = titleStr.asConditions(MaiScoreFilter.regexes, endPattern = MaiScoreFilter.RANGE.regex.pattern)
 
         val rangeInConditions = conditions.lastOrNull().orEmpty()
         val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
@@ -177,8 +180,8 @@ import java.util.regex.Matcher
                     ?: throw NoSuchElementException.Song(id)
             } else {
                 val possibles = maimaiApiService
-                    .getMaimaiPossibleSongs(DataUtil.getStandardisedString(title))
-                    .associateBy { it.title.getSimilarity(title) }
+                    .getMaimaiPossibleSongs(title.standardised())
+                    .associateBy { it.title.compareSimilarity(title) }
 
                 val selected = selectSong(event, cabinet, possibles)
 
@@ -418,7 +421,7 @@ import java.util.regex.Matcher
             val result = mutableMapOf<Double, MaiSong>()
 
             for (s in songs) {
-                val similarity = s.title.getSimilarity(text)
+                val similarity = s.title.compareSimilarity(text)
 
                 if (similarity >= 0.4) {
                     result[similarity] = s
@@ -497,10 +500,6 @@ import java.util.regex.Matcher
                 "fsdp" -> "FDX+"
                 else -> "?"
             }
-        }
-
-        private fun String?.getSimilarity(other: String?): Double {
-            return DataUtil.getStringSimilarity(other, this)
         }
     }
 }

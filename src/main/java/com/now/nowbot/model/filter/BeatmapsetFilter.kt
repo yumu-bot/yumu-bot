@@ -5,6 +5,7 @@ import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
+import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTags
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTime
 import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.util.DataUtil
@@ -76,18 +77,17 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
     RANGE(REG_RANGE.toRegex());
 
     companion object {
+        val regexes: List<Regex> by lazy { entries.map { it.regex } }
 
         fun filterBeatmapsets(beatmapsets: List<Beatmapset>, conditions: List<List<String>>): List<Beatmapset> {
-
             val s = beatmapsets.toMutableList()
-            val el = BeatmapsetFilter.entries.toList()
 
             // 最后一个筛选条件无需匹配
             conditions
                 .dropLast(1)
                 .forEachIndexed { index, strings ->
                     if (strings.isNotEmpty()) {
-                        filterConditions(s, el[index], strings)
+                        filterConditions(s, entries[index], strings)
                     }
                 }
 
@@ -128,32 +128,15 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                 TITLE -> fit(operator, s.title, str) || fit(operator, s.titleUnicode, str)
                 ARTIST -> fit(operator, s.artist, str) || fit(operator, s.artistUnicode, str)
                 SOURCE -> fit(operator, s.source, str)
-                TAG -> {
-                    if (s.tags.isBlank()) {
-                        return false
-                    }
+                TAG -> fitTags(operator, s.tags, str)
 
-                    // 使用并行流
-                    s.tags.split("\\s+".toRegex())
-                        .filter { tag -> tag.isNotEmpty() }
-                        .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
-                        .parallelStream()  // 并行处理
-                        .anyMatch { tag ->
-                            fit(operator, tag, str)
-                        }
-                }
-                
                 ANY -> {
-                    // 使用并行流
-                    val ts = s.tags.split("\\s+".toRegex())
-                        .filter { tag -> tag.isNotEmpty() }
-                        .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
-                        .parallelStream()  // 并行处理
-                        .anyMatch { tag ->
-                            fit(operator, tag, str)
-                        }
-
-                    ts || fit(operator, s.title, str) || fit(operator, s.titleUnicode, str) || fit(operator, s.artist, str) || fit(operator, s.artistUnicode, str) || fit(operator, s.source, str)
+                    fitTags(operator, s.tags, str)
+                            || fit(operator, s.title, str)
+                            || fit(operator, s.titleUnicode, str)
+                            || fit(operator, s.artist, str)
+                            || fit(operator, s.artistUnicode, str)
+                            || fit(operator, s.source, str)
                 }
                 GENRE -> fit(operator, s.genreID.toInt(), OsuGenre.getByte(str)?.toInt() ?: return false)
                 LANGUAGE -> fit(operator, s.languageID.toInt(), OsuLanguage.getByte(str)?.toInt() ?: return false)
@@ -167,7 +150,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.modeInt!!, str.toOsuMode().modeValue)
                 }.contains(true)
                 CATEGORY -> bs.map {
-                    fit(operator, it.ranked, DataUtil.getStatusIndex(str) ?: return false)
+                    fit(operator, it.ranked, DataUtil.getStatusByte(str) ?: return false)
                 }.contains(true)
                 AR -> bs.map {
                     fit(operator, it.ar, double, 2, isRound = true, isInteger = true)
@@ -204,11 +187,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     bs.map {
                         val total = it.totalNotes
 
-                        if (total == 0) {
-                            false
-                        } else {
-                            fit(operator, total, long)
-                        }
+                        total != 0 && fit(operator, total, long)
                     }.contains(true)
                 }
                 CREATED_TIME -> fitTime(operator, s.submittedDate.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond(), str)

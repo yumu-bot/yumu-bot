@@ -8,9 +8,10 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
-import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
+
 import org.intellij.lang.annotations.Language
 import java.time.Instant
 import java.time.ZoneId
@@ -109,17 +110,17 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
     RANGE(REG_RANGE.toRegex());
     
     companion object {
+        val regexes: List<Regex> by lazy { entries.map { it.regex } }
 
         fun filterScores(scores: Map<Int, LazerScore>, conditions: List<List<String>>): Map<Int, LazerScore> {
             val s = scores.toMutableMap()
-            val el = entries.toList()
 
             // 最后一个筛选条件无需匹配
             conditions
                 .dropLast(1)
                 .forEachIndexed { index, strings ->
                 if (strings.isNotEmpty()) {
-                    filterConditions(s, el[index], strings)
+                    filterConditions(s, entries[index], strings)
                 }
             }
 
@@ -153,74 +154,23 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             isRound: Boolean = true,
             isInteger: Boolean = true,
         ): Boolean {
-            if (compare == null || to == null) return false
-
-            return when {
-                (compare is Long && to is Long) -> {
-                    val c: Long = compare
-                    val t: Long = to
-
-                    when (operator) {
-                        Operator.XQ, Operator.EQ -> c == t
-                        Operator.NE -> c != t
-                        Operator.GT -> c > t
-                        Operator.GE -> c >= t
-                        Operator.LT -> c < t
-                        Operator.LE -> c <= t
+            return !(compare == null || to == null) && when (compare) {
+                is Number if to is Number -> {
+                    if (isIntegral(compare) && isIntegral(to)) {
+                        compareLongs(operator, compare.toLong(), to.toLong())
+                    } else {
+                        compareDoubles(operator, compare.toDouble(), to.toDouble(), digit, isRound, isInteger)
                     }
                 }
 
-                (compare is Int && to is Int) -> fit(operator, compare.toLong(), to.toLong(), digit, isRound, isInteger)
-
-                (compare is Double && to is Double) -> {
-                    val c: Double = abs(compare)
-                    val t: Double = abs(to)
-
-                    val dig = if (isInteger) {
-                        var temp = 0
-
-                        for (i in 0..digit) {
-                            val sc = 10.0.pow(i)
-                            val tt = t * sc
-
-                            if (tt in floor(tt) ..< floor(tt) + 0.1) {
-                                temp = i
-                                break
-                            }
-                        }
-
-                        temp
-                    } else {
-                        digit
-                    }
-
-                    val scale = 10.0.pow(dig)
-
-                    val rc = if (isRound && digit == dig) {
-                        round(c * scale) / scale
-                    } else {
-                        floor(c * scale) / scale
-                    }
-
-                    when (operator) {
-                        Operator.XQ -> abs(c - t) <= 1e-4
-                        Operator.EQ -> abs(rc - t) <= 1e-4
-                        Operator.NE -> abs(rc - t) > 1e-4
-                        Operator.GT -> c > t
-                        Operator.GE -> c >= t
-                        Operator.LT -> c < t
-                        Operator.LE -> c <= t
-                    }
-                }
-
-                (compare is String && to is String) -> {
-                    val c: String = DataUtil.getStandardisedString(compare.trim())
-                    val t: String = DataUtil.getStandardisedString(to.trim())
+                is String if to is String -> {
+                    val c = compare.standardised()
+                    val t = to.standardised()
 
                     when (operator) {
                         Operator.XQ -> t.equals(c, ignoreCase = true)
                         Operator.EQ -> c.contains(t, ignoreCase = true)
-                        Operator.NE -> c.contains(t, ignoreCase = true).not()
+                        Operator.NE -> !c.contains(t, ignoreCase = true)
                         Operator.GT -> t.contains(c, ignoreCase = true) && t.length > c.length
                         Operator.GE -> t.contains(c, ignoreCase = true) && t.length >= c.length
                         Operator.LT -> c.contains(t, ignoreCase = true) && t.length < c.length
@@ -228,38 +178,109 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                (compare is Boolean && to is Boolean) -> {
-                    when(operator) {
+                is Boolean if to is Boolean -> {
+                    when (operator) {
                         Operator.XQ, Operator.EQ -> compare == to
                         Operator.NE -> compare != to
-
                         else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
                     }
                 }
 
-                (compare is Enum<*> && to is Enum<*>) -> {
-                    fit(operator, compare.ordinal.toLong(), to.ordinal.toLong(), digit, isRound)
+                is Enum<*> if to is Enum<*> -> {
+                    compareLongs(operator, compare.ordinal.toLong(), to.ordinal.toLong())
                 }
 
-                (compare is List<*> && to is List<*>) -> {
-                    val c = compare.filterNotNull().groupingBy { it }.eachCount()
-                    val t = to.filterNotNull().groupingBy { it }.eachCount()
-
-                    val cs = c.keys.toHashSet()
-                    val ts = t.keys.toHashSet()
+                is List<*> if to is List<*> -> {
+                    val cs = compare.filterNotNull().toSet()
+                    val ts = to.filterNotNull().toSet()
 
                     when (operator) {
                         Operator.XQ -> cs == ts
                         Operator.EQ -> cs.containsAll(ts)
                         Operator.NE -> !cs.containsAll(ts)
-                        Operator.GT -> ts.containsAll(cs) && t.size > c.size
-                        Operator.GE -> ts.containsAll(cs) && t.size >= c.size
-                        Operator.LT -> cs.containsAll(ts) && t.size < c.size
-                        Operator.LE -> cs.containsAll(ts) && t.size <= c.size
+                        Operator.GT -> ts.containsAll(cs) && ts.size > cs.size
+                        Operator.GE -> ts.containsAll(cs) && ts.size >= cs.size
+                        Operator.LT -> cs.containsAll(ts) && cs.size < ts.size
+                        Operator.LE -> cs.containsAll(ts) && cs.size <= ts.size
                     }
                 }
 
-                else -> fit(operator, compare.toString(), to.toString(), digit, isRound)
+                is Comparable<*> if compare::class == to::class -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val c = compare as Comparable<Any>
+                    val cmp = c.compareTo(to)
+                    when (operator) {
+                        Operator.XQ, Operator.EQ -> cmp == 0
+                        Operator.NE -> cmp != 0
+                        Operator.GT -> cmp > 0
+                        Operator.GE -> cmp >= 0
+                        Operator.LT -> cmp < 0
+                        Operator.LE -> cmp <= 0
+                    }
+                }
+
+                else -> false
+            }
+        }
+
+        private fun isIntegral(n: Number): Boolean =
+            n is Long || n is Int || n is Short || n is Byte
+
+        // 辅助方法：Long 集中比较
+        private fun compareLongs(operator: Operator, c: Long, t: Long): Boolean {
+            return when (operator) {
+                Operator.XQ, Operator.EQ -> c == t
+                Operator.NE -> c != t
+                Operator.GT -> c > t
+                Operator.GE -> c >= t
+                Operator.LT -> c < t
+                Operator.LE -> c <= t
+            }
+        }
+
+        // 辅助方法：Double 集中比较（修正了取 abs() 的 Bug，保留符号）
+        private fun compareDoubles(
+            operator: Operator,
+            compare: Double,
+            to: Double,
+            digit: Int,
+            isRound: Boolean,
+            isInteger: Boolean
+        ): Boolean {
+            val dig = if (isInteger) {
+                val toStr = to.toString()
+                val dotIndex = toStr.indexOf('.')
+
+                val actualDigits = if (dotIndex >= 0) {
+                    val decimalPart = toStr.substring(dotIndex + 1)
+                    decimalPart.trimEnd('0').length
+                } else {
+                    0
+                }
+
+                actualDigits.coerceAtMost(digit)
+            } else {
+                digit
+            }
+
+            val scale = 10.0.pow(dig)
+            val rc = if (isRound) {
+                round(compare * scale) / scale
+            } else {
+                floor(compare * scale) / scale
+            }
+
+            val epsilon = 10.0.pow(-dig)
+            val diff = rc - to
+
+            return when (operator) {
+                Operator.XQ -> abs(compare - to) <= 1e-9
+                Operator.EQ -> abs(diff) <= epsilon
+                Operator.NE -> abs(diff) > epsilon
+                Operator.GT -> diff > epsilon
+                Operator.GE -> diff >= -epsilon
+                Operator.LT -> diff < -epsilon
+                Operator.LE -> diff <= epsilon
             }
         }
 
@@ -294,32 +315,11 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 ARTIST -> (fit(operator, it.beatmapset.artist, str)
                         || fit(operator, it.beatmapset.artistUnicode, str))
                 SOURCE -> fit(operator, it.beatmapset.source, str)
-                TAG -> {
-                    if (it.beatmapset.tags.isBlank()) {
-                        return false
-                    }
-
-                    // 使用并行流
-                    it.beatmapset.tags.split("\\s+".toRegex())
-                        .filter { tag -> tag.isNotEmpty() }
-                        .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
-                        .parallelStream()  // 并行处理
-                        .anyMatch { tag ->
-                            fit(operator, tag, str)
-                        }
-                }
+                TAG -> fitTags(operator, it.beatmapset.tags, str)
 
                 ANY -> {
-                    // 使用并行流
-                    val ts = it.beatmapset.tags.split("\\s+".toRegex())
-                        .filter { tag -> tag.isNotEmpty() }
-                        .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
-                        .parallelStream()  // 并行处理
-                        .anyMatch { tag ->
-                            fit(operator, tag, str)
-                        }
-
-                    ts || fit(operator, it.beatmapset.title, str)
+                    fitTags(operator, it.beatmapset.tags, str)
+                            || fit(operator, it.beatmapset.title, str)
                             || fit(operator, it.beatmapset.titleUnicode, str)
                             || fit(operator, it.beatmapset.artist, str)
                             || fit(operator, it.beatmapset.artistUnicode, str)
@@ -382,17 +382,9 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 COMBO -> fitCountOrPercent(operator, it.maxCombo, double, it.beatmap.maxCombo, dec)
 
-                PERFECT -> if (it.mode == OsuMode.MANIA) {
-                    fitCountOrPercent(operator, it.statistics.perfect, double, it.maximumStatistics.perfect, dec)
-                } else {
-                    false
-                }
+                PERFECT -> it.mode == OsuMode.MANIA && fitCountOrPercent(operator, it.statistics.perfect, double, it.maximumStatistics.perfect, dec)
                 GREAT -> fitCountOrPercent(operator, it.statistics.great, double, it.maximumStatistics.great, dec)
-                GOOD -> if (it.mode == OsuMode.MANIA) {
-                    fitCountOrPercent(operator, it.statistics.good, double, it.maximumStatistics.good, dec)
-                } else {
-                    false
-                }
+                GOOD -> it.mode == OsuMode.MANIA && fitCountOrPercent(operator, it.statistics.good, double, it.maximumStatistics.good, dec)
 
                 OK -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
                     fitCountOrPercent(operator, it.statistics.ok, double, it.maximumStatistics.ok, dec)
@@ -408,25 +400,13 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 MISS -> fitCountOrPercent(operator, it.statistics.miss, double, it.maximumStatistics.miss, dec)
 
-                MISSED_FRUIT -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
-                    fitCountOrPercent(operator, it.statistics.miss - it.statistics.largeTickMiss, double, it.maximumStatistics.great, dec)
-                } else {
-                    false
-                }
+                MISSED_FRUIT -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && fitCountOrPercent(operator, it.statistics.miss - it.statistics.largeTickMiss, double, it.maximumStatistics.great, dec)
 
-                MISSED_DROP -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
-                    it.maximumStatistics.largeTickHit > 0 &&
-                    fitCountOrPercent(operator, it.statistics.largeTickMiss, double, it.maximumStatistics.largeTickHit, dec)
-                } else {
-                    false
-                }
+                MISSED_DROP -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.largeTickHit > 0 &&
+                        fitCountOrPercent(operator, it.statistics.largeTickMiss, double, it.maximumStatistics.largeTickHit, dec)
 
-                MISSED_DROPLET -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
-                    it.maximumStatistics.smallTickHit > 0 &&
-                    fitCountOrPercent(operator, it.statistics.smallTickMiss, double, it.maximumStatistics.smallTickHit, dec)
-                } else {
-                    false
-                }
+                MISSED_DROPLET -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.smallTickHit > 0 &&
+                        fitCountOrPercent(operator, it.statistics.smallTickMiss, double, it.maximumStatistics.smallTickHit, dec)
 
                 MOD -> fitMod(operator, str, it.mods)
 
@@ -446,11 +426,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 TOTAL -> {
                     val total = it.beatmap.totalNotes
 
-                    if (total == 0) {
-                        false
-                    } else {
-                        fit(operator, total, long)
-                    }
+                    total != 0 && fit(operator, total, long)
                 }
 
                 CONVERT -> when (str.trim().lowercase()) {
@@ -469,6 +445,41 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 else -> false
             }
+        }
+
+        fun fitTags(operator: Operator, tags: String, to: String): Boolean {
+            if (tags.isBlank()) return false
+
+            var start = 0
+            val length = tags.length
+
+            while (start < length) {
+                // 跳过前面的连续空格
+                while (start < length && tags[start].isWhitespace()) {
+                    start++
+                }
+                if (start >= length) break
+
+                // 查找当前 tag 的结束位置
+                var end = start
+                var hasUnderscore = false
+                while (end < length && !tags[end].isWhitespace()) {
+                    if (tags[end] == '_') hasUnderscore = true
+                    end++
+                }
+
+                // 提取并清洗 tag
+                val rawTag = tags.substring(start, end)
+                val tag = if (hasUnderscore) rawTag.replace("_", "") else rawTag
+
+                if (fit(operator, tag, to)) {
+                    return true
+                }
+
+                start = end + 1
+            }
+
+            return false
         }
 
         /**

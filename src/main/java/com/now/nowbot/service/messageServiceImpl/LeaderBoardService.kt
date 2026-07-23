@@ -26,8 +26,8 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.*
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -175,7 +175,7 @@ class LeaderBoardService(
 
         val any = matcher.group(FLAG_ANY)
 
-        val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
+        val conditions = any.asConditions(ScoreFilter.regexes)
 
         val scores: List<LazerScore> = if (!beatmap.hasLeaderBoard) {
             val beatmapID = beatmap.beatmapID

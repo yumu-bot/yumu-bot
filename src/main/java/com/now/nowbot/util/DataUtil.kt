@@ -1,8 +1,6 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.config.NowbotConfig
-import com.now.nowbot.model.enums.GreekChar
-import com.now.nowbot.model.enums.JaChar
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.osu.LazerScore
@@ -305,181 +303,190 @@ object DataUtil {
     /** 根据准确率，通过获取准确率，来构建一个 Statistic。 */
     fun accuracy2Statistics(accuracy: Double, total: Int, osuMode: OsuMode): Statistics {
         val stat = Statistics()
-
-        var acc = accuracy
-
-        // 一个物件所占的 Acc 权重
         if (total <= 0) return stat
-        val weight = 1.0 / total
 
-        fun getTheoreticalCount(value: Double): Int {
-            val count = (acc / value).toInt()
-            acc -= (value * count)
-            return count
-        }
+        // 限制 accuracy 在 0.0 ~ 1.0 之间
+        val clampedAcc = accuracy.coerceIn(0.0, 1.0)
 
         when (osuMode) {
-            OSU, OSU_RELAX, OSU_AUTOPILOT,
-            DEFAULT -> {
-                val n300 = min(getTheoreticalCount(weight), max(total, 0))
-                val n100 = min(getTheoreticalCount(weight / 3), max(total - n300, 0))
-                val n50 = min(getTheoreticalCount(weight / 6), max(total - n300 - n100, 0))
-                val n0 = max(total - n300 - n100 - n50, 0)
+            OSU, OSU_RELAX, OSU_AUTOPILOT, DEFAULT -> {
+                // 权重分值：300 = 6分, 100 = 2分, 50 = 1分, Miss = 0分 (总分 = total * 6)
+                var targetPoints = (clampedAcc * total * 6.0).roundToInt()
 
+                // 优先分配 300
+                val n300 = min(total, targetPoints / 6)
+                targetPoints -= n300 * 6
+                var remaining = total - n300
+
+                // 再分配 100
+                val n100 = min(remaining, targetPoints / 2)
+                targetPoints -= n100 * 2
+                remaining -= n100
+
+                // 再分配 50
+                val n50 = min(remaining, targetPoints)
+                remaining -= n50
+
+                // 剩下的都是 Miss
                 stat.count300 = n300
                 stat.count100 = n100
                 stat.count50 = n50
-                stat.countMiss = n0
+                stat.countMiss = max(0, remaining)
             }
 
             TAIKO, TAIKO_RELAX -> {
-                val n300 = min(getTheoreticalCount(weight), max(total, 0))
-                val n100 = min(getTheoreticalCount(weight / 3), max(total - n300, 0))
-                val n0 = max(total - n300 - n100, 0)
+                // 权重分值：300 = 2分, 100 = 1分, Miss = 0分 (总分 = total * 2)
+                var targetPoints = (clampedAcc * total * 2.0).roundToInt()
+
+                val n300 = min(total, targetPoints / 2)
+                targetPoints -= n300 * 2
+                var remaining = total - n300
+
+                val n100 = min(remaining, targetPoints)
+                remaining -= n100
 
                 stat.count300 = n300
                 stat.count100 = n100
-                stat.countMiss = n0
+                stat.countMiss = max(0, remaining)
             }
 
             CATCH, CATCH_RELAX -> {
-                val n300 = min(getTheoreticalCount(weight), max(total, 0))
-                val n0 = max(total - n300, 0)
+                // 权重分值：300 = 1分, Miss = 0分
+                val n300 = (clampedAcc * total).roundToInt().coerceIn(0, total)
 
                 stat.count300 = n300
-                stat.countMiss = n0
+                stat.countMiss = total - n300
             }
 
             MANIA, MANIA_7K -> {
-                val n320 = min(getTheoreticalCount(weight), max(total, 0))
-                val n200 = min(getTheoreticalCount(weight / 1.5), max(total - n320, 0))
-                val n100 = min(getTheoreticalCount(weight / 3), max(total - n320 - n200, 0))
-                val n50 = min(getTheoreticalCount(weight / 6), max(total - n320 - n200 - n100, 0))
-                val n0 = max(total - n320 - n200 - n100 - n50, 0)
+                // Mania 判定分值：MAX/300 = 6分, Katu(200) = 4分, 100 = 2分, 50 = 1分, Miss = 0分
+                var targetPoints = (clampedAcc * total * 6.0).roundToInt()
 
-                stat.countGeki = n320
-                stat.countKatu = n200
+                // 优先填满 MAX (Geki)
+                val nGeki = min(total, targetPoints / 6)
+                targetPoints -= nGeki * 6
+                var remaining = total - nGeki
+
+                // 再填 Katu (200)
+                val nKatu = min(remaining, targetPoints / 4)
+                targetPoints -= nKatu * 4
+                remaining -= nKatu
+
+                // 再填 100
+                val n100 = min(remaining, targetPoints / 2)
+                targetPoints -= n100 * 2
+                remaining -= n100
+
+                // 再填 50
+                val n50 = min(remaining, targetPoints)
+                remaining -= n50
+
+                stat.countGeki = nGeki
+                stat.count300 = 0
+                stat.countKatu = nKatu
                 stat.count100 = n100
                 stat.count50 = n50
-                stat.countMiss = n0
+                stat.countMiss = max(0, remaining)
             }
         }
 
         return stat
     }
 
-    /**
-     * 根据准确率，通过获取原成绩的判定结果的彩率，来构建一个达到目标准确率的判定结果
-     *
-     * @param aiming 准确率，0-10000
-     * @param stat 当前的判定结果
-     * @return 达到目标准确率时的判定结果
-     */
     fun maniaAimingAccuracy2Statistics(aiming: Double?, stat: Statistics): Statistics {
-        if (stat.isNull) {
-            return Statistics()
-        }
-
-        if (aiming == null) {
-            return stat
-        }
+        if (stat.isNull) return Statistics()
+        if (aiming == null) return stat
 
         val total = stat.getCountAll(MANIA)
-
-        // geki, 300, katu, 100, 50, 0
-        val list =
-            mutableListOf(
-                stat.countGeki ?: 0,
-                stat.count300 ?: 0,
-                stat.countKatu ?: 0,
-                stat.count100 ?: 0,
-                stat.count50 ?: 0,
-                stat.countMiss ?: 0
-            )
-
-        // 一个物件所占的 Acc 权重
         if (total <= 0) return stat
+
+        var currentAcc = stat.getAccuracy(MANIA)
+        if (currentAcc >= aiming) return stat
+
+        // 安全获取各个判定数量，规避 NPE
+        val countGeki = stat.countGeki ?: 0
+        val count300 = stat.count300 ?: 0
+        var countKatu = stat.countKatu ?: 0
+        var count100 = stat.count100 ?: 0
+        var count50 = stat.count50 ?: 0
+        var countMiss = stat.countMiss ?: 0
+
+        // 计算原始彩黄比 (Geki / (Geki + 300))
+        var total300 = countGeki + count300
+        val ratio = if (total300 > 0) countGeki.toDouble() / total300 else 0.0
+
+        // 一个物件所占的 Acc 权重 (0.0 ~ 1.0)
         val weight = 1.0 / total
 
-        // 彩黄比
-        val ratio =
-            if ((stat.count300!! + stat.countGeki!! > 0))
-                stat.countGeki!! * 1.0 / (stat.count300!! + stat.countGeki!!)
-            else 0.0
+        // 级联转换判定：将低判定提升为 MAX/300 判定
+        // 权重定义：MAX/300 = 1.0, Katu = 2/3, 100 = 1/3, 50 = 1/6, Miss = 0.0
 
-        var current = stat.getAccuracy(MANIA)
-
-        if (current >= aiming) return stat
-
-        // 交换评级
-        if (current < aiming && stat.countMiss!! > 0) {
-            val ex = exchangeJudge(list.first(), list.last(), 1.0, 0.0, current, aiming, weight)
-            list[0] = ex.great
-            list[5] = ex.bad
-            current = ex.accuracy
+        // 1. Miss -> Great (0.0 -> 1.0)
+        if (currentAcc < aiming && countMiss > 0) {
+            val result = exchangeJudgeMath(countMiss, 1.0, 0.0, currentAcc, aiming, weight)
+            countMiss -= result.converted
+            total300 += result.converted
+            currentAcc = result.newAcc
         }
 
-        if (current < aiming && stat.count50!! > 0) {
-            val ex = exchangeJudge(list.first(), list[4], 1.0, 1.0 / 6.0, current, aiming, weight)
-            list[0] = ex.great
-            list[4] = ex.bad
-            current = ex.accuracy
+        // 2. 50 -> Great (1/6 -> 1.0)
+        if (currentAcc < aiming && count50 > 0) {
+            val result = exchangeJudgeMath(count50, 1.0, 1.0 / 6.0, currentAcc, aiming, weight)
+            count50 -= result.converted
+            total300 += result.converted
+            currentAcc = result.newAcc
         }
 
-        if (current < aiming && stat.count100!! > 0) {
-            val ex = exchangeJudge(list.first(), list[3], 1.0, 1.0 / 3.0, current, aiming, weight)
-            list[0] = ex.great
-            list[3] = ex.bad
-            current = ex.accuracy
+        // 3. 100 -> Great (1/3 -> 1.0)
+        if (currentAcc < aiming && count100 > 0) {
+            val result = exchangeJudgeMath(count100, 1.0, 1.0 / 3.0, currentAcc, aiming, weight)
+            count100 -= result.converted
+            total300 += result.converted
+            currentAcc = result.newAcc
         }
 
-        if (current < aiming && stat.countKatu!! > 0) {
-            val ex = exchangeJudge(list.first(), list[2], 1.0, 2.0 / 3.0, current, aiming, weight)
-            list[0] = ex.great
-            list[2] = ex.bad
-            // current = ex.accuracy;
+        // 4. Katu -> Great (2/3 -> 1.0)
+        if (currentAcc < aiming && countKatu > 0) {
+            val result = exchangeJudgeMath(countKatu, 1.0, 2.0 / 3.0, currentAcc, aiming, weight)
+            countKatu -= result.converted
+            total300 += result.converted
+            currentAcc = result.newAcc
         }
 
-        val nGreat = list.first() + list[1]
-
-        list[0] = (nGreat * ratio).toInt()
-        list[1] = max((nGreat - list.first()).toDouble(), 0.0).toInt()
-
-        stat.countGeki = list.first()
-        stat.count300 = list[1]
-        stat.countKatu = list[2]
-        stat.count100 = list[3]
-        stat.count50 = list[4]
-        stat.countMiss = list.last()
+        // 根据原始彩黄比重新分配 Geki 和 300
+        stat.countGeki = (total300 * ratio).toInt()
+        stat.count300 = max(0, total300 - (stat.countGeki ?: 0))
+        stat.countKatu = countKatu
+        stat.count100 = count100
+        stat.count50 = count50
+        stat.countMiss = countMiss
 
         return stat
     }
 
-    // 交换评级
-    fun exchangeJudge(
-        nGreat: Int,
+    private data class ExchangeResult(val converted: Int, val newAcc: Double)
+
+    /**
+     * $O(1)$ 数学计算替换评级
+     */
+    private fun exchangeJudgeMath(
         nBad: Int,
         wGreat: Double,
         wBad: Double,
         currentAcc: Double,
         aimingAcc: Double,
         weight: Double
-    ): Exchange {
-        var g = nGreat
-        var b = nBad
-        var c = currentAcc
+    ): ExchangeResult {
+        val gainPerItem = weight * (wGreat - wBad)
+        if (gainPerItem <= 0) return ExchangeResult(0, currentAcc)
 
-        val gainAcc = weight * (wGreat - wBad)
+        val neededAcc = aimingAcc - currentAcc
+        // 计算所需最小转换数
+        val neededCount = ceil(neededAcc / gainPerItem).toInt()
+        val actualConverted = min(nBad, max(0, neededCount))
 
-        repeat(nBad) {
-            g++
-            b--
-            c += gainAcc
-
-            if (c >= aimingAcc) return@repeat
-        }
-
-        return Exchange(g, b, currentAcc)
+        val newAcc = currentAcc + actualConverted * gainPerItem
+        return ExchangeResult(actualConverted, newAcc)
     }
 
     fun string2Markdown(str: String): String {
@@ -862,39 +869,6 @@ object DataUtil {
 
      */
 
-    /**
-     * 缩短字符 220924
-     *
-     * @param str 需要被缩短的字符
-     * @param maxWidth 最大宽度
-     * @return 返回已缩短的字符
-     */
-    fun getShortenStr(str: String, maxWidth: Int): String {
-        val sb = StringBuilder()
-        val char = str.toCharArray()
-
-        val allWidth = 0f
-        var backL = 0
-
-        for (thisChar in char) {
-            if (allWidth > maxWidth) {
-                break
-            }
-            sb.append(thisChar)
-            if ((allWidth) < maxWidth) {
-                backL++
-            }
-        }
-        if (allWidth > maxWidth) {
-            sb.delete(backL, sb.length)
-            sb.append("...")
-        }
-
-        sb.delete(0, sb.length)
-
-        return sb.toString()
-    }
-
     /*
     public static float getBonusPP (double playerPP, double[] rawPP){
         double bonusPP, remainPP = 0, a, b, c, bpPP = 0, x = 0, x2 = 0, x3 = 0, x4 = 0, xy = 0, x2y = 0, y = 0;
@@ -1011,92 +985,6 @@ object DataUtil {
         }
     }
 
-    /**
-     * 获取两个字符串的相似度。
-     * 新版获取方法参考了 string-similarity-js
-     *
-     * @param stringLength 需要分割的字符串宽度。默认为 2
-     * @param caseSensitive 大小写敏感。默认不敏感
-     * @param standardised 是否标准化字符串。默认标准化。
-     * @return 0-1 之间的相似度
-     */
-    @JvmStatic
-    fun getStringSimilarity(
-        compare: String?,
-        to: String?,
-        stringLength: Int = 2,
-        caseSensitive: Boolean = false,
-        standardised: Boolean = true,
-    ): Double {
-        if (compare.isNullOrEmpty() || to.isNullOrEmpty()) return 0.0
-
-        val cs = if (standardised) {
-            if (caseSensitive) {
-                getStandardisedString(compare)
-            } else {
-                getStandardisedString(compare).lowercase()
-            }
-        } else {
-            if (caseSensitive) {
-                compare
-            } else {
-                compare.lowercase()
-            }
-        }
-
-        val ts = if (standardised) {
-            if (caseSensitive) {
-                getStandardisedString(to).lowercase()
-            } else {
-                getStandardisedString(to)
-            }
-        } else {
-            if (caseSensitive) {
-                to.lowercase()
-            } else {
-                to
-            }
-        }
-
-        if (cs.length < stringLength || ts.length < stringLength) {
-            return if (stringLength > 1) {
-                // 增强短字符串下的辨识性，此时只看包含单字符的比例
-                getStringSimilarity(compare, to, 1, caseSensitive, standardised)
-            } else {
-                0.0
-            }
-        }
-
-        val map = mutableMapOf<String, Int>()
-
-        for (i in 0 ..< cs.length - (stringLength - 1)) {
-            val cb = cs.substring(i, i + stringLength)
-
-            val v = if (map.contains(cb)) {
-                map[cb]?.plus(1)
-            } else {
-                1
-            }
-
-            map[cb] = v ?: 0
-        }
-
-        var match = 0
-
-        for (j in 0 ..< ts.length - (stringLength - 1)) {
-            val tb = ts.substring(j, j + stringLength)
-
-            val count = map[tb] ?: 0
-
-            if (count > 0) {
-                map[tb] = count - 1
-                match ++
-            }
-        }
-
-        return (match * 2.0) / (cs.length + ts.length - ((stringLength - 1.0) * 2.0))
-    }
-
     fun numberTo62(n: Long): String {
         val sb = StringBuilder()
         var number = n
@@ -1128,31 +1016,7 @@ object DataUtil {
         return result
     }
 
-    @JvmStatic
-    fun getStandardisedString(str: String?): String {
-        if (str.isNullOrEmpty()) return ""
-
-        return str
-            .toRomanizedJaChar()
-            .toRomanizedGreekChar()
-            .toHalfWidthChar()
-            .lowercase()
-            .replace(Regex(REG_HYPHEN), "-")
-            .replace(Regex(REG_PLUS), "+")
-            .replace(Regex(REG_COLON), ":")
-            .replace(Regex(REG_HASH), "#")
-            .replace(Regex(REG_STAR), "*")
-            .replace(Regex(REG_EXCLAMATION), "!")
-            .replace(Regex(REG_QUESTION), "?")
-            .replace(Regex(REG_QUOTATION), "\"")
-            .replace(Regex(REG_FULL_STOP), ".")
-            .replace(Regex(REG_LEFT_BRACKET), "[")
-            .replace(Regex(REG_RIGHT_BRACKET), "]")
-            .replace(Regex("[\\s　]+"), "") // 这里有个全宽还是零宽空格？
-    }
-
     // 标准化字段
-    @JvmStatic
     fun getSort(sort: String?): String {
         return when (sort?.lowercase()) {
             "t", "t+", "ta", "title", "title asc", "title_asc" -> "title_asc"
@@ -1187,7 +1051,7 @@ object DataUtil {
         }
     }
 
-    fun getStatusIndex(status: String?): Int? {
+    fun getStatusByte(status: String?): Byte? {
         return when (status?.lowercase()) {
             "0", "p", "pend", "pending" -> 0
             "1", "r", "rnk", "rank", "ranked" -> 1
@@ -1257,44 +1121,6 @@ object DataUtil {
                 if (combined.matches(regex)) {
                     result[index].add(combined)
                     continue
-                }
-            }
-        }
-
-        return result
-    }
-
-    /**
-     * 自己写的空格或逗号分隔的匹配器，这样子就可以无所谓匹配顺序了
-     * @param regexes 正则表达式。注意，这里的正则需要写得越简洁越好，不然会有大量重复匹配。推荐写成 xxx=yyy 的形式
-     * @param noContains 如果不填写，会自动按空格拼接不匹配此正则的字段。
-     * 举例：!mf v=spl 13，如果不填写 noContains，此时 13 会被拼接到 spl 内。
-     * 但如果填写了匹配数字的正则，则会在这里截断。
-     * @param keepWhiteSpace 保留空格
-     */
-    fun paramMatcher(str: String?, regexes: List<Regex>, noContains: Regex? = null, keepWhiteSpace: Boolean = false) : List<List<String>> {
-        if (str == null) return emptyList()
-
-        val result = List(regexes.size) { mutableListOf<String>() }
-        var matcher = ""
-
-        val strs = str.trim().lowercase().split(REG_SEPERATOR.toRegex())
-
-        strs.forEachIndexed { j, s ->
-            matcher +=
-                if (keepWhiteSpace) " $s" else s
-
-            for (i in regexes.indices) {
-                val reg = regexes[i]
-
-                if (reg.matches(matcher.trim())) {
-                    val after = strs[min(j + 1, strs.size - 1)] // 后一个元素，或是最后一个
-
-                    if (strs.size - 1 == j || after.contains(REG_OPERATOR.toRegex()) || (noContains != null && after.contains(noContains))) {
-                        result[i].add(matcher.trim())
-                        matcher = ""
-                        break
-                    }
                 }
             }
         }
@@ -1647,15 +1473,6 @@ object DataUtil {
         }
     }
 
-    // 反转义字符
-    fun unescapeHTML(str: String): String {
-        return str.replace("&amp;".toRegex(), "&").replace("&lt;".toRegex(), "<").replace("&gt;".toRegex(), ">")
-            .replace("&quot;".toRegex(), "\"").replace("&apos;".toRegex(), "'").replace("&nbsp;".toRegex(), " ")
-
-            .replace("&#038;".toRegex(), "&").replace("&#034;".toRegex(), "\"").replace("&#039;".toRegex(), "'")
-            .replace("&#160;".toRegex(), " ")
-    }
-
     inline fun <reified T: Throwable> Throwable.isCauseOfType(): Boolean {
         return this.findCauseOfType<T>() != null
     }
@@ -1675,29 +1492,6 @@ object DataUtil {
     }
 
     private data class Range(val offset: Int, val limit: Int)
-
-    data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
-
-    private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)
-    private fun String.toRomanizedGreekChar() = GreekChar.getRomanized(this)
-
-    fun toHalfWidth(str: String): String {
-        return str.toHalfWidthChar()
-    }
-
-    private fun String.toHalfWidthChar() = run {
-        val sb = StringBuilder(this.length)
-
-        for (c in this) {
-            if (c.code in 0xFF01..0xFF5E) {
-                sb.append((c.code - 0xFEE0).toChar())
-            } else {
-                sb.append(c)
-            }
-        }
-
-        return@run sb.toString()
-    }
 }
 
 object FastPower095 {

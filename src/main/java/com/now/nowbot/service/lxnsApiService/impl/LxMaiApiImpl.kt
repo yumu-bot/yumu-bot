@@ -10,9 +10,9 @@ import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.StringUtil.compareSimilarity
 import com.now.nowbot.util.toBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -184,7 +184,7 @@ class LxMaiApiImpl(
         search@ for (e in aliases.entries) {
             for (alias in e.value) {
 
-                val y = DataUtil.getStringSimilarity(text, alias)
+                val y = text.compareSimilarity(alias)
 
                 if (y >= 0.5) {
                     val s = maiDao.findLxMaiSongByID(e.key)

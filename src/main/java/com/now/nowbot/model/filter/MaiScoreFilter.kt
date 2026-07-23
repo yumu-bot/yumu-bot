@@ -62,6 +62,8 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
     ;
 
     companion object {
+        val regexes: List<Regex> by lazy { entries.map { it.regex } }
+
         enum class ComboType {
             PASS, FC, FC_PLUS, AP, AP_PLUS;
 
@@ -100,14 +102,13 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
         fun filterScores(scores: List<MaiScore>, conditions: List<List<String>>): List<MaiScore> {
             val s = scores.toMutableList()
-            val el = entries.toList()
 
             // 最后一个筛选条件无需匹配
             conditions
                 .dropLast(1)
                 .forEachIndexed { index, strings ->
                 if (strings.isNotEmpty()) {
-                    filterConditions(s, el[index], strings)
+                    filterConditions(s, entries[index], strings)
                 }
             }
 
