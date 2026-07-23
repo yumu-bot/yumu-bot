@@ -68,7 +68,8 @@ class BeatmapLite {
     @Column(name = "mode_int")
     var modeInt: Int? = null
 
-    var ranked: Int = 0
+    // 空列
+    var ranked: Int? = null
 
     @JdbcTypeCode(Types.CHAR)
     @Column(name = "check_str", columnDefinition = "char(32)")
