@@ -16,24 +16,24 @@ import java.sql.Types
 class BeatmapLite {
     @Id
     @Column(name = "id")
-    var beatmapID: Long? = null
+    var beatmapID: Long = -1
 
     @Column(name = "map_id", insertable = false, updatable = false)
-    var beatmapsetID: Int? = null
+    var beatmapsetID: Int = -1
 
     @Column(name = "mapper_id")
-    var mapperID: Long? = null
+    var mapperID: Long = -1
 
     @Column(name = "is_convert")
     var convert: Boolean? = null
 
     @Column(name = "version", columnDefinition = "text")
-    var difficultyName: String? = null
+    var difficultyName: String = ""
 
     @Column(columnDefinition = "text")
-    var status: String? = null
+    var status: String = ""
 
-    var playcount: Int? = null
+    var playcount: Int = 0
 
     var passcount: Int? = null
 
@@ -47,9 +47,9 @@ class BeatmapLite {
     var hp: Float? = null
 
     @Column(name = "difficulty_rating")
-    var difficultyRating: Float? = null
+    var difficultyRating: Float = 0f
     @Column(name = "bpm")
-    var bpm: Float? = null
+    var bpm: Float = 0f
     @Column(name = "max_combo")
     var maxCombo: Int? = null
 
@@ -60,7 +60,7 @@ class BeatmapLite {
 
     //秒
     @Column(name = "total_length")
-    var totalLength: Int? = null
+    var totalLength: Int = 0
     @Column(name = "hit_length")
     var hitLength: Int? = null
 
@@ -68,7 +68,7 @@ class BeatmapLite {
     @Column(name = "mode_int")
     var modeInt: Int? = null
 
-    var ranked: Int? = null
+    var ranked: Int = 0
 
     @JdbcTypeCode(Types.CHAR)
     @Column(name = "check_str", columnDefinition = "char(32)")
@@ -109,27 +109,27 @@ class BeatmapLite {
 
     fun toBeatmap(): Beatmap {
         val b = Beatmap()
-        b.beatmapID = this.beatmapID!!
-        b.beatmapsetID = this.beatmapsetID!!.toLong()
+        b.beatmapID = this.beatmapID
+        b.beatmapsetID = this.beatmapsetID.toLong()
         b.convert = this.convert
-        b.difficultyName = this.difficultyName!!
-        b.playCount = this.playcount!!
-        b.passCount = this.passcount!!
+        b.difficultyName = this.difficultyName
+        b.playCount = this.playcount
+        b.passCount = this.passcount
         b.od = this.od
         b.cs = this.cs
         b.ar = this.ar
         b.hp = this.hp
-        b.starRating = this.difficultyRating!!.toDouble()
-        b.bpm = this.bpm!!
+        b.starRating = this.difficultyRating.toDouble()
+        b.bpm = this.bpm
         b.maxCombo = this.maxCombo
-        b.status = this.status!!
+        b.status = this.status
         b.circles = this.circles
         b.sliders = this.sliders
         b.spinners = this.spinners
-        b.totalLength = this.totalLength!!
+        b.totalLength = this.totalLength
         b.hitLength = this.hitLength
         b.modeInt = this.modeInt
-        b.mapperID = this.mapperID!!
+        b.mapperID = this.mapperID
         b.md5 = this.md5
         return b
     }

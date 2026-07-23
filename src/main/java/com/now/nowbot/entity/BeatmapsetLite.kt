@@ -53,6 +53,7 @@ class BeatmapsetLite {
     @Column(columnDefinition = "TEXT")
     var source: String = ""
 
+    // 好像没有写存取哦
     @Column(columnDefinition = "TEXT")
     var tags: String = ""
 
@@ -68,5 +69,5 @@ class BeatmapsetLite {
     var storyboard: Boolean = false
 
     @Column(name = "download_disabled")
-    var availabilityDownloadDisabled: Boolean = false
+    var availabilityDownloadDisabled: Boolean? = false
 }
