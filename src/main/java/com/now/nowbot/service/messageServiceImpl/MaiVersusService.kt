@@ -15,7 +15,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.MaimaiUtil
 import com.now.nowbot.util.command.FLAG_2_USER
 import com.now.nowbot.util.command.FLAG_QQ_ID
-import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
+import com.now.nowbot.util.command.REGEX_SEPARATOR_NO_SPACE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -105,7 +105,7 @@ class MaiVersusService(
                 others = otherDeferred.await()
             }
         } else if (nameStr.isNotBlank()) {
-            val names = nameStr.split(REG_SEPERATOR_NO_SPACE.toRegex())
+            val names = nameStr.split(REGEX_SEPARATOR_NO_SPACE)
 
             when(names.size) {
                 2 -> runBlocking(Dispatchers.IO) {

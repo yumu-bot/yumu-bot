@@ -5,6 +5,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
@@ -20,7 +21,9 @@ class TestTaikoSRCalculateService : MessageService<Matcher> {
     }
     
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
-        val str = param.group("data").trim {it <= ' '} .replace("\\s+".toRegex(), "-")
+        val str = param.group("data")
+            .trim {it <= ' '}
+            .replace(REGEX_SPACE_MORE, "-")
         event.replyAsync("结果：" + getResult(str))
 
         return null

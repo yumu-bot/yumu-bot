@@ -22,6 +22,8 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.command.FLAG_MATCH_ID
+import com.now.nowbot.util.command.REGEX_SEPARATOR
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -173,7 +175,7 @@ import kotlin.time.Duration.Companion.seconds
             val remove: MutableList<Int> = mutableListOf()
 
             if (!removeStrArr.isNullOrBlank()) {
-                val split = removeStrArr.split("[\\s,，\\-|:]+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                val split = removeStrArr.split(REGEX_SEPARATOR).dropLastWhile { it.isEmpty() }.toTypedArray()
                 for (s in split) {
                     var r: Int
                     try {
@@ -195,7 +197,7 @@ import kotlin.time.Duration.Companion.seconds
          */
         @Throws(MRAException::class)
         fun getMuRatingParam(event: MessageEvent, matcher: Matcher, matchApiService: OsuMatchApiService, dao: ServiceCallStatisticsDao? = null): MuRatingPanelParam {
-            val matchIDStr = matcher.group("matchid")
+            val matchIDStr = matcher.group(FLAG_MATCH_ID)
 
             var matchID: Long? = matchIDStr?.toLongOrNull()
             val skipStr = matcher.group("skip")

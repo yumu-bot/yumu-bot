@@ -8,7 +8,7 @@ import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
+import com.now.nowbot.util.command.REGEX_NUMBER_DECIMAL
 import org.springframework.stereotype.Service
 import kotlin.math.roundToLong
 
@@ -18,7 +18,7 @@ import kotlin.math.roundToLong
         if (m.find()) {
             val starStr: String? = m.group("SR")
 
-            if (starStr.isNullOrBlank() || starStr.matches(REG_NUMBER_DECIMAL.toRegex()).not()) {
+            if (starStr.isNullOrBlank() || starStr.trim().matches(REGEX_NUMBER_DECIMAL).not()) {
                 throw IllegalArgumentException.WrongException.Henan()
             }
 

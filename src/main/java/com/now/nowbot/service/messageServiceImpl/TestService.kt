@@ -1,12 +1,12 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.cache.QQMessageCacheProvider
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -30,7 +30,7 @@ class TestService(
     }
 
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
-        val ids = param.replace("\\s*".toRegex(), "").split(",")
+        val ids = param.replace(REGEX_SPACE_MORE, "").split(",")
             .map { it.toLongOrNull() ?: throw TipsException("转换 $it 失败") }
 
         val matches = ids.flatMap { i ->

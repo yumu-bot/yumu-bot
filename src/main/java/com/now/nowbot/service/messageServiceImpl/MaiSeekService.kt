@@ -37,7 +37,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
     }
 
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
-        if (param.matches("\\s*$REG_NUMBER_MORE\\s*".toRegex()) && !param.contains(REG_QUOTATION.toRegex())) {
+        if (param.matches("\\s*$PATTERN_NUMBER_MORE\\s*".toRegex()) && !param.contains(PATTERN_QUOTATION.toRegex())) {
             val rating = param.toIntOrNull() ?: 0
             
             val surrounding = maimaiApiService.getMaimaiSurroundingRank(rating)
@@ -76,7 +76,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
 
         val similarities = mutableListOf<Pair<String, Double>>()
 
-        val paramNoQuote = param.replace(REG_QUOTATION.toRegex(), "")
+        val paramNoQuote = param.replace(PATTERN_QUOTATION.toRegex(), "")
 
         for (std in nameMap.keys) {
             val y = paramNoQuote.compareSimilarity(std, standardised = false)

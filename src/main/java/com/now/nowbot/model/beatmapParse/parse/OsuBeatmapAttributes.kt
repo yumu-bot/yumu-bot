@@ -63,7 +63,7 @@ open class OsuBeatmapAttributes(read: BufferedReader, general: BeatmapGeneral?) 
     var timings: MutableList<Timing> = LinkedList<Timing>()
 
     fun parseDifficulty(line: String) {
-        val entity: Array<String?> = line.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val entity: Array<String?> = line.split(":").dropLastWhile { it.isEmpty() }.toTypedArray()
         if (entity.size == 2) {
             val key = entity[0]!!.trim { it <= ' ' }
             val value = entity[1]!!.trim { it <= ' ' }
@@ -80,7 +80,7 @@ open class OsuBeatmapAttributes(read: BufferedReader, general: BeatmapGeneral?) 
     }
 
     fun parseTiming(line: String) {
-        val entity: Array<String> = line.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val entity: Array<String> = line.split(",").dropLastWhile { it.isEmpty() }.toTypedArray()
         if (entity.size < 8) throw RuntimeException("解析 [TimingPoints] 错误")
 
         val startTime = floor(entity[0].toDouble()).toInt()
@@ -211,7 +211,7 @@ open class OsuBeatmapAttributes(read: BufferedReader, general: BeatmapGeneral?) 
 
     fun parseHitObject(line: String) {
         // line 就是 '320,192,153921,1,0,0:0:0:0:' 这种格式的字符串
-        val entity: Array<String?> = line.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val entity: Array<String?> = line.split(",").dropLastWhile { it.isEmpty() }.toTypedArray()
         if (entity.size < 4) throw RuntimeException("解析 [HitObjects] 错误")
         // 解析类型
         val type = HitObjectType.getType(entity[3]!!.toInt())
@@ -259,7 +259,7 @@ open class OsuBeatmapAttributes(read: BufferedReader, general: BeatmapGeneral?) 
                 // 骂娘的长条不看 y (does not affect holds. It defaults to the center of the playfield)
                 hit.position = HitObjectPosition(x, 192)
                 hit.startTime = startTime
-                hit.endTime = entity[5]!!.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0].toInt()
+                hit.endTime = entity[5]!!.split(":").dropLastWhile { it.isEmpty() }.toTypedArray()[0].toInt()
             }
 
             else -> {}

@@ -19,71 +19,71 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("set\\s*(game\\s*)?mode", "(game\\s*)?mode", "sm", "mo")
-        appendColonCaptureGroup(FLAG_MODE, REG_MODE, prefixLevel = MAYBE)
+        appendColonCaptureGroup(FLAG_MODE, PATTERN_MODE, prefixLevel = MAYBE)
     }),
 
     SB_SET_MODE(CommandPatternBuilder.create {
         appendOfficialSBCommandsIgnoreAll("set\\s*(game\\s*)?mode", "(game\\s*)?mode", "sm", "mo")
-        appendColonCaptureGroup(FLAG_MODE, REG_MODE, prefixLevel = MAYBE)
+        appendColonCaptureGroup(FLAG_MODE, PATTERN_MODE, prefixLevel = MAYBE)
     }),
 
     SCORE_PASS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("p", "pass")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
     SCORE_PASS_SHOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("pw", "pass(es)?\\s*show")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
     SCORE_PASSES(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ps", "passes")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
     SCORE_RECENT(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("r", "recent")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
     SCORE_RECENT_SHOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("rw", "recents?\\s*show")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
     SCORE_RECENTS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("rs", "recents")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
@@ -100,10 +100,10 @@ enum class OfficialInstruction(val pattern: Pattern) {
     UU_PR(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("uu?\\s*(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
@@ -130,40 +130,40 @@ enum class OfficialInstruction(val pattern: Pattern) {
     BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("b", "best")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
     BP_SHOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("bw", "bests?\\s*show")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
     BPS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("bs", "bests")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
     TODAY_BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("t", "today\\s*(bests?|bp)")
         appendModeQQUIDNameRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
@@ -186,7 +186,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     INFO(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("i", "info")
         appendModeQQUIDName()
-        appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
+        appendHashCaptureGroup(FLAG_DAY, PATTERN_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
     INFO_CARD(CommandPatternBuilder.create {
@@ -201,14 +201,14 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     FRIEND(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("friends?", "fuck", "f")
-        appendColonCaptureGroup("sort", REG_ANYTHING_BUT_NO_SPACE, MORE)
+        appendColonCaptureGroup(FLAG_SORT, PATTERN_ANYTHING_BUT_NO_SPACE, MORE)
         appendQQ()
         appendUID()
         appendNameAndRange()
-        appendIgnore(REG_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_SPACE, MORE)
+        appendIgnore(PATTERN_OPERATOR)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_SPACE, MORE)
         appendSpace()
-        appendIgnore(REG_HYPHEN)
+        appendIgnore(PATTERN_HYPHEN)
         appendRange()
     }),
 
@@ -234,9 +234,9 @@ enum class OfficialInstruction(val pattern: Pattern) {
     TEAM(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("tm", "team", "clan")
         appendModeQQUIDName()
-        appendStarCaptureGroup(FLAG_ID, REG_NUMBER, MORE)
+        appendStarCaptureGroup(FLAG_ID, PATTERN_NUMBER, MORE)
         appendSpace()
-        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, contentLevel = MAYBE, prefixLevel = MAYBE)
+        appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER_1_100, contentLevel = MAYBE, prefixLevel = MAYBE)
     }),
 
     SKILL(CommandPatternBuilder.create {
@@ -280,7 +280,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendMode()
         appendBIDOrSID()
         appendSpace()
-        appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_PLUS, MORE)
+        appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_PLUS, MORE)
         appendSpace()
 
         appendMod()
@@ -292,7 +292,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendMode()
         appendBIDOrSID()
         appendSpace()
-        appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_PLUS, MORE)
+        appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_PLUS, MORE)
         appendSpace()
 
         appendMod()
@@ -313,7 +313,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append("sort=")
             appendSpace()
-            appendCaptureGroup("sort", "[\\-_+a-zA-Z]", MORE)
+            appendCaptureGroup(FLAG_SORT, "[\\-_+a-zA-Z]", MORE)
         }
 
         appendSpace()
@@ -323,7 +323,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
             appendCaptureGroup("genre", "\\w", MORE)
         }
 
-        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
+        appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
     LEADER_BOARD(CommandPatternBuilder.create {
@@ -332,9 +332,9 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendMode()
         appendBIDOrSID()
 
-        appendAtLeastSpaceGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
-        appendStarCaptureGroup(FLAG_TYPE2, REG_WORD, MORE)
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER_1_100, MAYBE)
+        appendStarCaptureGroup(FLAG_TYPE2, PATTERN_WORD, MORE)
         appendSpace()
     }),
 
@@ -347,7 +347,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
             append("[×xX]")
             appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup("rate", REG_NUMBER_DECIMAL, MORE)
+            appendCaptureGroup("rate", PATTERN_NUMBER_DECIMAL, MORE)
             append("[×xX]")
             appendMatchLevel(MAYBE)
         }
@@ -367,43 +367,43 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // px, pp
     PP_PLUS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("(?<function>(px|pp))")
-        appendCaptureGroup("area1", REG_USERNAME, ANY)
+        appendCaptureGroup("area1", PATTERN_USERNAME, ANY)
         appendSpace()
-        appendColonCaptureGroup("area2", REG_USERNAME, ANY)
+        appendColonCaptureGroup("area2", PATTERN_USERNAME, ANY)
     }),
 
     EXPLORE(
         CommandPatternBuilder.create {
             appendOfficialCommandsIgnoreAll("explore", "exp", "e", "find")
-            appendColonCaptureGroup(FLAG_TYPE, REG_ANYTHING_BUT_NO_SPACE, MORE)
+            appendColonCaptureGroup(FLAG_TYPE, PATTERN_ANYTHING_BUT_NO_SPACE, MORE)
             appendSpace()
-            appendCaptureGroup(FLAG_ANY, REG_ANYTHING, MORE)
+            appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING, MORE)
             appendSpace()
-            appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+            appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER_1_100, MAYBE)
         }
     ),
 
     EXPLORE_MOST_PLAYED(
         CommandPatternBuilder.create {
             appendOfficialCommandsIgnoreAll("(explore|exp|e|find)\\s*([mp]|most|played|mp|pm|play)")
-            appendColonCaptureGroup(FLAG_TYPE, REG_ANYTHING_BUT_NO_SPACE, MORE)
+            appendColonCaptureGroup(FLAG_TYPE, PATTERN_ANYTHING_BUT_NO_SPACE, MORE)
             appendSpace()
-            appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH, MORE)
+            appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH, MORE)
             appendSpace()
-            appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+            appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER_1_100, MAYBE)
         }
     ),
 
     VIEW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("view", "v")
         appendBIDOrSID()
-        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+        appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER_1_100, MAYBE)
     }),
 
     VIEW_VARIATION(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("(var(iation)?|sv)\\s*view", "view\\s*(var(iation)?|sv)", "view\\s*(\\+|plus)", "v[\\s:：]*v")
         appendBIDOrSID()
-        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+        appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER_1_100, MAYBE)
     }),
 
     // #5 osu! 比赛指令
@@ -427,20 +427,20 @@ enum class OfficialInstruction(val pattern: Pattern) {
     DICE(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("d", "dice", "roll")
         appendCaptureGroup("number", "-?\\d", ANY)
-        appendCaptureGroup("text", REG_ANYTHING, MORE)
+        appendCaptureGroup("text", PATTERN_ANYTHING, MORE)
     }),
 
     // #8 辅助指令
     OLD_AVATAR(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("o", "oa", "(old|osu)?\\s*avatar")
         appendModeQQUID()
-        appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
+        appendCaptureGroup(FLAG_DATA, PATTERN_USERNAME_SEPARATOR, ANY)
     }),
 
     OLD_AVATAR_CARD(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("oc", "(old|osu)?\\s*(avatar\\s*)?card")
         appendModeQQUID()
-        appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
+        appendCaptureGroup(FLAG_DATA, PATTERN_USERNAME_SEPARATOR, ANY)
     }),
 
     OSU_AVATAR_PROFILE(CommandPatternBuilder.create {
@@ -449,7 +449,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     OVER_SR(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("or")
-        appendCaptureGroup("SR", REG_NUMBER_DECIMAL)
+        appendCaptureGroup("SR", PATTERN_NUMBER_DECIMAL)
     }),
 
     // #9 自定义

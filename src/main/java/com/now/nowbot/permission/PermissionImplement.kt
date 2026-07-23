@@ -17,9 +17,9 @@ import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.ContextUtil
-import com.now.nowbot.util.command.REG_EXCLAMATION
-import com.now.nowbot.util.command.REG_IGNORE
-import com.now.nowbot.util.command.REG_SLASH
+import com.now.nowbot.util.command.PATTERN_EXCLAMATION
+import com.now.nowbot.util.command.PATTERN_IGNORE
+import com.now.nowbot.util.command.PATTERN_SLASH
 import org.slf4j.LoggerFactory
 import org.springframework.aop.support.AopUtils
 import org.springframework.stereotype.Component
@@ -50,7 +50,7 @@ class PermissionImplement(
         @Volatile
         private lateinit var GlobalService: PermissionService
 
-        private val DICE_PATTERN = Regex("^($REG_EXCLAMATION|$REG_SLASH|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d(?!${REG_IGNORE})).*").toPattern()
+        private val DICE_PATTERN = Regex("^($PATTERN_EXCLAMATION|$PATTERN_SLASH|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d(?!${PATTERN_IGNORE})).*").toPattern()
         private val PREFIX = "!！?？#＃/\\".toSet()
 
         /**

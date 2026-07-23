@@ -30,7 +30,7 @@ import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.UserIDUtil
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
-import com.now.nowbot.util.command.REG_HYPHEN
+import com.now.nowbot.util.command.REGEX_HYPHEN
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -110,7 +110,7 @@ class SBTodayBPService(
         val ranges = if (hasRangeInConditions) {
             rangeInConditions
         } else {
-            matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+            matcher.group(FLAG_RANGE)?.split(REGEX_HYPHEN)
         }
 
         val id = UserIDUtil.getSBUserIDWithRange(event, matcher, mode, isMyself, 999)

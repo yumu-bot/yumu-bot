@@ -119,9 +119,9 @@ class InstructionUtil(
             return InstructionRange()
         }
 
-        val hasHash = text.contains(REG_HASH.toRegex())
+        val hasHash = text.contains(REGEX_HASH)
 
-        if (text.matches(RANGE_ONLY.toRegex()) && !hasHash) {
+        if (text.matches(REGEX_RANGE_ONLY) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -173,7 +173,7 @@ class InstructionUtil(
             return result
         }
 
-        if (text.matches("$REG_RANGE\\s+\\S+".toRegex())) {
+        if (text.matches("$PATTERN_RANGE\\s+\\S+".toRegex())) {
             throw NoSuchElementException.PlayerWithRange(text)
         } else if (text.matches("\\S+\\s+\\d+".toRegex())) {
             throw NoSuchElementException.PlayerWithBeatmapID(text)
@@ -261,9 +261,9 @@ class InstructionUtil(
             return InstructionRange()
         }
 
-        val hasHash = text.contains(REG_HASH.toRegex())
+        val hasHash = text.contains(REGEX_HASH)
 
-        if (text.matches(RANGE_ONLY.toRegex()) && !hasHash) {
+        if (text.matches(REGEX_RANGE_ONLY) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -316,7 +316,7 @@ class InstructionUtil(
             return result
         }
 
-        if (text.matches("$REG_RANGE\\s+\\S+".toRegex())) {
+        if (text.matches("$PATTERN_RANGE\\s+\\S+".toRegex())) {
             throw NoSuchElementException.PlayerWithRange(text)
         } else if (text.matches("\\S+\\s+\\d+".toRegex())) {
             throw NoSuchElementException.PlayerWithBeatmapID(text)
@@ -384,7 +384,7 @@ class InstructionUtil(
             return listOf(getOsuUser(myBind, mode.data))
         }
 
-        val gs = g.split(REG_SEPERATOR_NO_SPACE.toRegex())
+        val gs = g.split(REGEX_SEPARATOR_NO_SPACE)
 
         if (gs.size == 1) {
             val you = getOsuUser(gs.first().trim(), mode.data)
@@ -735,7 +735,7 @@ class InstructionUtil(
          * 重写获取方法
          */
         fun parseNameWithHashedRange(input: String, maximum: Int = 200): InstructionRange<String> {
-            val split = input.split(REG_HASH.toRegex())
+            val split = input.split(REGEX_HASH)
 
             return when(split.size) {
                 2 -> {
@@ -776,7 +776,7 @@ class InstructionUtil(
             }
 
             // 情况2: 数字-数字 格式 (如 "200-100", "aaa 200-100")
-            val dashNumberRegex = Regex("(.+?)\\s*(\\d+)${REG_HYPHEN}(\\d+)\\s*$")
+            val dashNumberRegex = Regex("(.+?)\\s*(\\d+)${PATTERN_HYPHEN}(\\d+)\\s*$")
             dashNumberRegex.find(input)?.let { match ->
                 val (prefix, firstStr, secondStr) = match.destructured
 
@@ -818,7 +818,7 @@ class InstructionUtil(
                 text.removePrefix(CHAR_HASH.toString())
                     .removePrefix(CHAR_HASH_FULL.toString())
                     .trim()
-                    .split(REG_HYPHEN.toRegex())
+                    .split(REGEX_HYPHEN)
                     .dropWhile { it.isEmpty() }
                     .map { it.toIntOrNull() }
                     .toTypedArray()

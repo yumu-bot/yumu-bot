@@ -12,53 +12,53 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
-    CHARTER("(chart(er)?|mapper|谱师?|c)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    CHARTER("(chart(er)?|mapper|谱师?|c)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    ID("((song\\s*)?id|(歌曲)?编?号|i)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    ID("((song\\s*)?id|(歌曲)?编?号|i)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    DIFFICULTY("(difficulty|diff|难度?|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MAI_DIFFICULTY)".toRegex()),
+    DIFFICULTY("(difficulty|diff|难度?|d)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_MAI_DIFFICULTY)".toRegex()),
 
-    DIFFICULTY_NAME("(difficulty|diff|难度?|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    DIFFICULTY_NAME("(difficulty|diff|难度?|d)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    CABINET("(cabinet|框体?|cab|ca|n)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MAI_CABINET)".toRegex()),
+    CABINET("(cabinet|框体?|cab|ca|n)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_MAI_CABINET)".toRegex()),
 
-    VERSION("(version|版本?|v)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    VERSION("(version|版本?|v)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    TITLE("(title|name|song|歌?曲|名|歌?曲名|标题|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    TITLE("(title|name|song|歌?曲|名|歌?曲名|标题|t)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    ALIASES("(alias|aliases|外号|绰号|别名?|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    ALIASES("(alias|aliases|外号|绰号|别名?|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    ARTIST("(artist|singer|art|艺术家|歌手?|歌手名|a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    ARTIST("(artist|singer|art|艺术家|歌手?|歌手名|a)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    CATEGORY("(type|category|genre|类型?|[分种]类|t|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    CATEGORY("(type|category|genre|类型?|[分种]类|t|g)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    BPM("(bpm|曲?速|b|bm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    BPM("(bpm|曲?速|b|bm)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    ACHIEVEMENT("(accuracy|达成率?|精[确准][率度]?|准确?[率度]|achieve(ment)?|acc|ach|ac)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
+    ACHIEVEMENT("(accuracy|达成率?|精[确准][率度]?|准确?[率度]|achieve(ment)?|acc|ach|ac)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)[%％]?".toRegex()),
 
-    TAP("(tap|点击?|ta|tp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    TAP("(tap|点击?|ta|tp)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    HOLD("(hold|长?按|hod|ho|hd)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    HOLD("(hold|长?按|hod|ho|hd)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    SLIDE("(slider?|[滑划]动?|sld|sl|se)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    SLIDE("(slider?|[滑划]动?|sld|sl|se)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    TOUCH("(touch|触?摸|toh|tch|th|to)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    TOUCH("(touch|触?摸|toh|tch|th|to)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    BREAK("(break|绝?赞|brk|br|bk)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    BREAK("(break|绝?赞|brk|br|bk)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    DX_SCORE("(dx\\s*score|score|(dx)?分数?|dx|ds|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    DX_SCORE("(dx\\s*score|score|(dx)?分数?|dx|ds|o)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    DX_STAR("(dx\\s*star|star|(dx)?星星?|星|dxsr|dr|sr|s)(?<n>$REG_OPERATOR_WITH_SPACE[0-5])".toRegex()),
+    DX_STAR("(dx\\s*star|star|(dx)?星星?|星|dxsr|dr|sr|s)(?<n>$PATTERN_OPERATOR_WITH_SPACE[0-5])".toRegex()),
 
-    RATING("(rating|评?分|r|ra|rt)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    RATING("(rating|评?分|r|ra|rt)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    RANK("(rank|评价?|rk|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    RANK("(rank|评价?|rk|k)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    COMBO("(combo|连击?|cb|x)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    COMBO("(combo|连击?|cb|x)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    SYNC("(sync|同步?|sy|y)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    SYNC("(sync|同步?|sy|y)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    RANGE(REG_MAI_RANGE.toRegex()),
+    RANGE(REGEX_MAI_RANGE),
     ;
 
     companion object {
@@ -118,7 +118,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
         private fun filterConditions(scores: MutableList<MaiScore>, filter: MaiScoreFilter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = Operator.getOperator(c)
-                val condition = Condition((c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim())
+                val condition = Condition((c.split(REGEX_OPERATOR_WITH_SPACE).lastOrNull() ?: "").trim())
 
                 scores.removeIf { fitScore(it, operator, filter, condition).not() }
             }
@@ -246,8 +246,8 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
             val intRange = if (to.isNullOrBlank()) {
                 10..150
-            } else if (to.contains(REG_HYPHEN.toRegex())) {
-                val s = to.split(REG_HYPHEN.toRegex()).map { it.trim() }
+            } else if (to.contains(REGEX_HYPHEN)) {
+                val s = to.split(REGEX_HYPHEN).map { it.trim() }
 
                 if (s.size == 2) {
                     val f = parseLevel(s.first(), isAccurate = true)
@@ -283,7 +283,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
          * @param isAccurate 如果为真，则 13 会匹配成 13.0。否则只会匹配成 13.0-13.5。
          */
         private fun parseLevel(level: String, isAccurate: Boolean = false): IntRange {
-            if (level.contains(REG_PLUS.toRegex())) {
+            if (level.contains(REGEX_PLUS)) {
                 val i10 = level.dropLastWhile { it == '?' || it == '？' }.dropLastWhile { it == '+' || it == '＋' }.toDouble() * 10.0
 
                 return IntRange(i10.toInt() + 6, i10.toInt() + 9)

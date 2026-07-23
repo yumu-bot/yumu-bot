@@ -8,6 +8,7 @@ import com.now.nowbot.service.messageServiceImpl.BindService.BindData
 import com.now.nowbot.service.messageServiceImpl.BindService.Companion.getBind
 import com.now.nowbot.service.messageServiceImpl.BindService.Companion.removeBind
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import jakarta.annotation.Nullable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -106,7 +107,7 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
 
     @GetMapping("\${yumu.osu.callbackPath}")
     fun bind(@RequestParam("code") code: String?, @RequestParam("state") stat: String): String? {
-        val key = stat.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val key = stat.split(REGEX_SPACE_MORE).dropLastWhile { it.isEmpty() }.toTypedArray()
             .getOrNull(1) ?: return "噶?"
         return saveBind(code, key)
     }
@@ -197,7 +198,7 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
 
         try {
             if (stat != null) {
-                data = stat.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                data = stat.split(REGEX_SPACE_MORE).dropLastWhile { it.isEmpty() }.toTypedArray()
             }
 
             if (body != null) {

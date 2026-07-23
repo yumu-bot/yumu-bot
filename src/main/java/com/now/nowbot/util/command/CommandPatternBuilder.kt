@@ -35,7 +35,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendSBCommandsIgnoreAll(@Language("RegExp") vararg commands: String) {
         appendGroup {
-            append(REG_QUESTION)
+            append(PATTERN_QUESTION)
             appendSpace()
             appendGroup(MAYBE, "ym")
             appendGroup(*commands)
@@ -46,7 +46,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     private fun appendCommandsPrivate(@Language("RegExp") vararg commands: String) {
         appendGroup {
-            append(REG_EXCLAMATION)
+            append(PATTERN_EXCLAMATION)
             appendSpace()
             appendGroup(MAYBE, "ym")
             appendGroup(*commands)
@@ -79,7 +79,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     private fun appendUUPrivate(@Language("RegExp") vararg commands: String) {
         appendGroup {
-            append(REG_EXCLAMATION)
+            append(PATTERN_EXCLAMATION)
             appendSpace()
             append("uu?")
             appendGroup(*commands)
@@ -137,7 +137,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * 加 (?<id>\d+) 的匹配。
      */
     fun appendID() {
-        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE)
+        appendCaptureGroup(FLAG_ID, PATTERN_NUMBER, MORE)
         appendSpace()
     }
 
@@ -172,10 +172,10 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             }
         ) {
             append(FLAG_QQ_ID)
-            append(REG_EQUAL)
+            append(PATTERN_EQUAL)
         }
 
-        appendCaptureGroup(FLAG_QQ_ID, REG_QQ, EXIST, EXIST)
+        appendCaptureGroup(FLAG_QQ_ID, PATTERN_QQ, EXIST, EXIST)
         append(CHAR_GROUP_END)
         appendMatchLevel(bodyLevel)
 
@@ -197,10 +197,10 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             }
         ) {
             append(FLAG_QQ_GROUP)
-            append(REG_EQUAL)
+            append(PATTERN_EQUAL)
         }
 
-        appendCaptureGroup(FLAG_QQ_GROUP, REG_QQ, EXIST, EXIST)
+        appendCaptureGroup(FLAG_QQ_GROUP, PATTERN_QQ, EXIST, EXIST)
         append(CHAR_GROUP_END)
         appendMatchLevel(bodyLevel)
 
@@ -212,7 +212,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<name> X X+ X)
      */
     fun appendName() {
-        appendCaptureGroup(FLAG_NAME, REG_NAME)
+        appendCaptureGroup(FLAG_NAME, PATTERN_NAME)
         appendSpace()
     }
 
@@ -221,7 +221,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<name> X X+ X)
      */
     fun appendSBName() {
-        appendCaptureGroup(FLAG_NAME, REG_ANYTHING_BUT_NO_OPERATOR)
+        appendCaptureGroup(FLAG_NAME, PATTERN_ANYTHING_BUT_NO_OPERATOR)
         appendSpace()
     }
 
@@ -231,7 +231,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<name> X X+ X)
      */
     fun append2Name() {
-        appendCaptureGroup(FLAG_2_USER, REG_2_USER)
+        appendCaptureGroup(FLAG_2_USER, PATTERN_2_USER)
         appendSpace()
     }
 
@@ -240,12 +240,12 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<name> X X+ X)
      */
     fun appendNameAnyButNoHash() {
-        appendCaptureGroup(FLAG_NAME, REG_ANYTHING_BUT_NO_HASH, MORE)
+        appendCaptureGroup(FLAG_NAME, PATTERN_ANYTHING_BUT_NO_HASH, MORE)
         appendSpace()
     }
 
     fun appendNameAnyButNoHashStars() {
-        appendCaptureGroup(FLAG_NAME, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendCaptureGroup(FLAG_NAME, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendSpace()
     }
 
@@ -254,7 +254,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<name> X X+ X)
      */
     fun appendNameAny() {
-        appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
+        appendCaptureGroup(FLAG_NAME, PATTERN_ANYTHING, MORE)
         appendSpace()
     }
 
@@ -263,9 +263,9 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendUID() {
         appendGroup(MAYBE) {
-            append(REG_UID)
-            append(REG_EQUAL)
-            appendCaptureGroup(FLAG_UID, REG_NUMBER, MORE, EXIST)
+            append(PATTERN_UID)
+            append(PATTERN_EQUAL)
+            appendCaptureGroup(FLAG_UID, PATTERN_NUMBER, MORE, EXIST)
         }
         appendSpace()
     }
@@ -274,7 +274,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<bid>\d+)。**默认一个或更多个 (+)。注意！**
      */
     fun appendBID() {
-        appendCaptureGroup(FLAG_BID, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_BID, PATTERN_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
@@ -282,14 +282,14 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<sid>\d+)。**默认一个或更多个 (+)。注意！**
      */
     fun appendSID() {
-        appendCaptureGroup(FLAG_SID, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_SID, PATTERN_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
     fun appendNameAndRange() {
         appendCaptureGroup(
                     FLAG_USER_AND_RANGE,
-                    "$REG_NAME?$REG_SPACE$LEVEL_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
+                    "$PATTERN_NAME?$PATTERN_SPACE$LEVEL_ANY($PATTERN_HASH?(($PATTERN_NUMBER_13)$PATTERN_HYPHEN)?($PATTERN_NUMBER_13))?",
                     EXIST,
                     MAYBE,
                 )
@@ -299,7 +299,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     fun appendSBNameAndRange() {
         appendCaptureGroup(
             FLAG_USER_AND_RANGE,
-            "$REG_ANYTHING_BUT_NO_OPERATOR?$REG_SPACE$LEVEL_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
+            "$PATTERN_ANYTHING_BUT_NO_OPERATOR?$PATTERN_SPACE$LEVEL_ANY($PATTERN_HASH?(($PATTERN_NUMBER_13)$PATTERN_HYPHEN)?($PATTERN_NUMBER_13))?",
             EXIST,
             MAYBE,
         )
@@ -310,7 +310,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * [:：](?<mode>mode)。
      */
     fun appendMode() {
-        appendColonCaptureGroup(FLAG_MODE, REG_MODE)
+        appendColonCaptureGroup(FLAG_MODE, PATTERN_MODE)
         appendSpace()
     }
 
@@ -322,10 +322,10 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     fun appendMod(plusMust: Boolean = false, bodyMust: Boolean = false) {
         val level = if (bodyMust) EXIST else MAYBE
         appendGroup(level) {
-            append("(${REG_PLUS}|(mods?|模组)${REG_EQUAL})")
+            append("(${PATTERN_PLUS}|(mods?|模组)${PATTERN_EQUAL})")
             if (!plusMust) append('?')
             appendSpace()
-            appendCaptureGroup(FLAG_MOD, REG_MOD, MORE, EXIST)
+            appendCaptureGroup(FLAG_MOD, PATTERN_MOD, MORE, EXIST)
         }
         appendSpace()
     }
@@ -336,10 +336,10 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendRange(hashMust: Boolean = false) {
         appendGroup(MAYBE) {
-            append(REG_HASH)
+            append(PATTERN_HASH)
             if (!hashMust) append('?')
             appendSpace()
-            appendCaptureGroup(FLAG_RANGE, REG_RANGE)
+            appendCaptureGroup(FLAG_RANGE, PATTERN_RANGE)
         }
         appendSpace()
     }
@@ -349,16 +349,16 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     private fun appendRangeDay() {
         appendGroup(MAYBE) {
-            append(REG_HASH)
+            append(PATTERN_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup(FLAG_RANGE, REG_RANGE_DAY, EXIST)
+            appendCaptureGroup(FLAG_RANGE, PATTERN_RANGE_DAY, EXIST)
         }
         appendSpace()
     }
 
     fun appendMatchID() {
-        appendCaptureGroup(FLAG_MATCHID, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_MATCH_ID, PATTERN_NUMBER, MORE, MAYBE)
         appendSpace()
     }
 
@@ -367,7 +367,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             appendSpace()
             append("e(z|a[sz]y)?")
             appendSpace()
-            appendCaptureGroup("easy", REG_NUMBER_DECIMAL)
+            appendCaptureGroup("easy", PATTERN_NUMBER_DECIMAL)
             append("[×xX]?")
         }
 
@@ -378,7 +378,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
         appendGroup(MAYBE) {
             append("\\[")
-            appendCaptureGroup("remove", REG_NUMBER_SEPERATOR, MORE)
+            appendCaptureGroup("remove", PATTERN_NUMBER_SEPARATOR, MORE)
             append("]")
         }
         appendSpace()
@@ -484,7 +484,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendBIDOrSID() {
         appendCaptureGroup(FLAG_TYPE, "[bs]", contentLevel = MAYBE, bodyLevel = MAYBE)
-        appendCaptureGroup(FLAG_ID, REG_SIGNED_NUMBER, contentLevel = MORE, bodyLevel = MAYBE)
+        appendCaptureGroup(FLAG_ID, PATTERN_SIGNED_NUMBER, contentLevel = MORE, bodyLevel = MAYBE)
     }
 
     /**
@@ -493,7 +493,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @return 无
      */
     fun appendSpace(level: MatchLevel = ANY) {
-        append(REG_SPACE)
+        append(PATTERN_SPACE)
         appendMatchLevel(level)
     }
 
@@ -653,7 +653,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * 创建一个捕获组，前面带任意符号。([prefix](?< name >.....))?
-     * @param prefix 前缀，比如 REG_COLON
+     * @param prefix 前缀，比如 PATTERN_COLON
      * @param flag 捕获组名称
      * @param content 要匹配的内容
      * @param contentLevel 内容匹配等级。和内容连用。
@@ -691,7 +691,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         prefixLevel: MatchLevel = EXIST
     ) {
         appendPrefixCaptureGroup(
-            prefix = REG_COLON,
+            prefix = PATTERN_COLON,
             flag = flag,
             content = content,
             contentLevel = contentLevel,
@@ -714,7 +714,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         prefixLevel: MatchLevel = EXIST
     ) {
         appendPrefixCaptureGroup(
-            prefix = REG_HASH,
+            prefix = PATTERN_HASH,
             flag = flag,
             content = content,
             contentLevel = contentLevel,
@@ -736,7 +736,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         prefixLevel: MatchLevel = EXIST
     ) {
         appendPrefixCaptureGroup(
-            prefix = REG_STAR,
+            prefix = PATTERN_STAR,
             flag = flag,
             content = content,
             contentLevel = contentLevel,
@@ -789,14 +789,14 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * 忽略随便一段正则。如果有输入的其他正则，则使用后向忽略包围起来。
      * @param forward 是否是前向忽略。(?<!...)
      */
-    fun appendIgnore(@Language("RegExp") ign: String? = REG_IGNORE, forward: Boolean = false) {
+    fun appendIgnore(@Language("RegExp") ign: String? = PATTERN_IGNORE, forward: Boolean = false) {
         append('(')
         append('?')
         if (forward) append('<')
         append('!')
 
         if (ign.isNullOrEmpty()) {
-            append(REG_IGNORE)
+            append(PATTERN_IGNORE)
         } else {
             append(ign)
         }
@@ -838,8 +838,8 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             +start
         } else {
             +CHAR_BEGIN
-            +REG_CAPS_INSENSITIVE
-            +REG_SPACE
+            +INDICATOR_CAPS_INSENSITIVE
+            +PATTERN_SPACE
             +LEVEL_ANY
         }
     }

@@ -136,7 +136,7 @@ import java.util.regex.Matcher
 
         val full: MaiBestScore
 
-        val conditions = titleStr.asConditions(MaiScoreFilter.regexes, endPattern = MaiScoreFilter.RANGE.regex.pattern)
+        val conditions = titleStr.asConditions(MaiScoreFilter.regexes, endRegex = MaiScoreFilter.RANGE.regex)
 
         val rangeInConditions = conditions.lastOrNull().orEmpty()
         val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
@@ -151,14 +151,14 @@ import java.util.regex.Matcher
 
         var cabinet = MaiCabinet.getCabinet(matcher.group(FLAG_VERSION))
 
-        val isRange = titleStr.matches(REG_MAI_RANGE.toRegex())
+        val isRange = titleStr.matches(REGEX_MAI_RANGE)
 
         // 输入的可能是外号或者歌曲编号
         if (!hasCondition && titleStr.isNotEmpty() && !isRange) {
             val id: Long?
             val title: String?
 
-            if (titleStr.matches(REG_NUMBER_15.toRegex())) {
+            if (titleStr.matches(REGEX_NUMBER_15)) {
                 id = titleStr.toLong()
                 title = null
             } else {

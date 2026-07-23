@@ -7,6 +7,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.command.REGEX_CRLF
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -197,7 +198,7 @@ class ImageService(
     }
 
     fun getPanelAlpha(sb: StringBuilder): ByteArray {
-        return getPanelAlpha(*sb.toString().split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
+        return getPanelAlpha(*sb.toString().split(REGEX_CRLF).dropLastWhile { it.isEmpty() }.toTypedArray())
     }
 
     private val defaultHeader: HttpHeaders

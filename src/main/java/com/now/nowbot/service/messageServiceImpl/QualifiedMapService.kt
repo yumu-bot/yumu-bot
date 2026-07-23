@@ -20,6 +20,7 @@ import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
 import com.now.nowbot.util.command.FLAG_PAGE
+import com.now.nowbot.util.command.FLAG_SORT
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -112,7 +113,7 @@ import java.util.regex.Matcher
     private fun getParam(event: MessageEvent, matcher: Matcher): QualifiedMapParam {
         // 获取参数
         val statusStr: String? = matcher.group("status")
-        val sortStr: String? = matcher.group("sort")
+        val sortStr: String? = matcher.group(FLAG_SORT)
         val genreStr: String? = matcher.group("genre")
         val pageStr: String? = matcher.group(FLAG_PAGE)
 

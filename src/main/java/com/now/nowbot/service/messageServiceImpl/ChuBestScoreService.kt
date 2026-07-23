@@ -16,7 +16,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.InstructionRange
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.REG_HYPHEN
+import com.now.nowbot.util.command.REGEX_HYPHEN
 import org.springframework.stereotype.Service
 
 @Service("CHU_BP")
@@ -77,8 +77,8 @@ class ChuBestScoreService(
 
         val range =
             if (rangeStr.isNullOrBlank().not()) {
-                if (rangeStr.contains(Regex(REG_HYPHEN))) {
-                    val s = rangeStr.split(Regex(REG_HYPHEN))
+                if (rangeStr.contains(REGEX_HYPHEN)) {
+                    val s = rangeStr.split(REGEX_HYPHEN)
 
                     when (s.size) {
                         2 -> {

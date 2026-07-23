@@ -22,6 +22,9 @@ import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_MATCH_ID
+import com.now.nowbot.util.command.FLAG_OPERATE
+import com.now.nowbot.util.command.FLAG_SKIP
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -93,10 +96,10 @@ class MatchListenerService(
         val matcher = Instruction.MATCH_LISTENER.matcher(messageText)
         if (!matcher.find()) return false
 
-        val operate = parseOperation(matcher.group("operate"))
-        val idStr = matcher.group("matchid") ?: ""
+        val operate = parseOperation(matcher.group(FLAG_OPERATE))
+        val idStr = matcher.group(FLAG_MATCH_ID) ?: ""
         val id = idStr.toLongOrNull() ?: 0L
-        val skip = matcher.group("skip")?.toIntOrNull() ?: 0
+        val skip = matcher.group(FLAG_SKIP)?.toIntOrNull() ?: 0
         val isSuper = Permission.isSuperAdmin(event.sender.contactID)
 
         return when {

@@ -28,7 +28,7 @@ import com.now.nowbot.util.StringUtil.compareSimilarity
 import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_NAME
-import com.now.nowbot.util.command.REG_SPACE
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -520,7 +520,7 @@ class GuessService(
 
                 SOURCE_OR_TAG -> if (s.source.isEmpty()) {
                     MessageChain("谱面 #$i 没有来源。它的部分标签是：${s.tags
-                        .split(REG_SPACE.toRegex()).shuffled().take(5).joinToString(", ")
+                        .split(REGEX_SPACE_MORE).shuffled().take(5).joinToString(", ")
                     }。")
                 } else {
                     MessageChain("谱面 #$i 的来源是 ${s.source}。")

@@ -22,6 +22,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -196,7 +197,8 @@ import kotlin.math.floor
                 val minSR = if (bs.size <= 1) "" else floor(minStar).toString()
 
                 // 其他
-                val tags = beatmapset.tags.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                val tags = beatmapset.tags.split(REGEX_SPACE_MORE)
+                    .dropLastWhile { it.isEmpty() }.toTypedArray()
 
                 more = mapOf(
                     "host_count" to hostCount,

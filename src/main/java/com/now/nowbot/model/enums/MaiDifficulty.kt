@@ -1,6 +1,6 @@
 package com.now.nowbot.model.enums
 
-import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
+import com.now.nowbot.util.command.REGEX_SEPARATOR_NO_SPACE
 
 enum class MaiDifficulty(val full : String) {
     DEFAULT(""),
@@ -52,7 +52,7 @@ enum class MaiDifficulty(val full : String) {
         fun getDifficulties(str: String?): List<MaiDifficulty> {
             if (str.isNullOrEmpty()) return listOf()
 
-            val strs = str.split(REG_SEPERATOR_NO_SPACE.toRegex())
+            val strs = str.split(REGEX_SEPARATOR_NO_SPACE)
 
             val diffs = strs.map { getDifficulty(it) }
                 .distinct()

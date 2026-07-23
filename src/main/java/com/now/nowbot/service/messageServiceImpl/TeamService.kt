@@ -21,7 +21,7 @@ import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_PAGE
-import com.now.nowbot.util.command.REG_NUMBER
+import com.now.nowbot.util.command.PATTERN_NUMBER
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
@@ -93,7 +93,7 @@ class TeamService(
             id = idStr.toIntOrNull() ?: throw IllegalArgumentException.WrongException.TeamID()
 
             TeamParam(id, assumeTeam = true, page)
-        } else if (nameStr.matches(REG_NUMBER.toRegex())) {
+        } else if (nameStr.matches(PATTERN_NUMBER.toRegex())) {
             id = nameStr.toIntOrNull() ?: throw IllegalArgumentException.WrongException.TeamID()
 
             TeamParam(id, assumeTeam = false, page)

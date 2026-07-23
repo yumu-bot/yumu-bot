@@ -12,49 +12,49 @@ import kotlin.text.split
 
 // 当然，这个类是用来给 ppy 的 api 发送查询请求的
 enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
-    CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
-    GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
-    BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    SID("((beatmap\\s*)?setid|sid|s|(谱面)?集编号)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    SID("((beatmap\\s*)?setid|sid|s|(谱面)?集编号)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    TITLE("(title|name|song|t|歌?曲名|歌曲|标题)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING$LEVEL_MORE)".toRegex()),
+    TITLE("(title|name|song|t|歌?曲名|歌曲|标题)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING$LEVEL_MORE)".toRegex()),
 
-    ARTIST("(artist|singer|art|f?a|艺术家|曲师?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    ARTIST("(artist|singer|art|f?a|艺术家|曲师?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    SOURCE("(source|src|from|f|o|sc|来?源)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    SOURCE("(source|src|from|f|o|sc|来?源)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    ANY("(any(thing)?|y|任[何意]?(字段|文字)?|[字文])(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    ANY("(any(thing)?|y|任[何意]?(字段|文字)?|[字文])(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    DIFFICULTY("(difficult(y|ies)|diff|d|难度名?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    DIFFICULTY("(difficult(y|ies)|diff|d|难度名?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    STAR("(stars?|rating|sr|r|星数?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
+    STAR("(stars?|rating|sr|r|星数?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)$PATTERN_STAR$LEVEL_MAYBE".toRegex()),
 
-    AR("(ar|approach\\s*(rate)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    AR("(ar|approach\\s*(rate)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    CS("(cs|circle\\s*(size)?|keys?|键)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    CS("(cs|circle\\s*(size)?|keys?|键)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    OD("(od|overall\\s*(difficulty)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    OD("(od|overall\\s*(difficulty)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    HP("(hp|health\\s*(point)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    HP("(hp|health\\s*(point)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    LENGTH("(length|drain|time|长度|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE($REG_COLON$REG_NUMBER_MORE)?)".toRegex()),
+    LENGTH("(length|drain|time|长度|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE($PATTERN_COLON$PATTERN_NUMBER_MORE)?)".toRegex()),
 
-    GENERAL("(general|bool(ean)?|常规?|总览?|布尔值?|值|e)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    GENERAL("(general|bool(ean)?|常规?|总览?|布尔值?|值|e)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    MODE("(mode|模式?|m)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MODE)".toRegex()),
+    MODE("(mode|模式?|m)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_MODE)".toRegex()),
 
-    CATEGORY("(type|category|status|类型?|[分种]类|状态?|v|z)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    CATEGORY("(type|category|status|类型?|[分种]类|状态?|v|z)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    GENRE("(genre|g|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    GENRE("(genre|g|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    LANGUAGE("(languages?|l|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    LANGUAGE("(languages?|l|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    RANK("(rank(ing|s)?|评[价级]?|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
+    RANK("(rank(ing|s)?|评[价级]?|k)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    RANGE(REG_RANGE.toRegex());
+    RANGE(PATTERN_RANGE.toRegex());
 
     companion object {
         val regexes: List<Regex> by lazy { entries.map { it.regex } }
@@ -84,7 +84,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
         private fun filterConditions(filter: SearchBeatmapsetFilter, conditions: List<String>): List<Pair<String, Any>> {
             val maps = conditions.flatMap { c ->
                 val operator = Operator.getOperator(c)
-                val condition = Condition((c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim())
+                val condition = Condition((c.split(REGEX_OPERATOR_WITH_SPACE).lastOrNull() ?: "").trim())
 
                 fitBeatmapset(operator, filter, condition)
             }
@@ -190,7 +190,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
             companion object {
                 fun getGenerals(inputs: String): List<General> {
-                    return inputs.split(REG_SEPERATOR_NO_SPACE.toRegex())
+                    return inputs.split(REGEX_SEPARATOR_NO_SPACE)
                         .dropWhile { it.isEmpty() }
                         .mapNotNull { getGeneral(it) }
                 }

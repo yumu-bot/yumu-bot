@@ -159,7 +159,7 @@ import java.util.regex.Matcher
         val ranges = if (hasRangeInConditions) {
             rangeInConditions
         } else {
-            matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+            matcher.group(FLAG_RANGE)?.split(REGEX_HYPHEN)
         }
 
         val user: OsuUser
@@ -167,7 +167,7 @@ import java.util.regex.Matcher
 
         // todo 未来处理 selectedMode
         /*
-        val selectedMode = if (any.contains("(fruits?|[大中小]果|漏小?果?|((large|small|miss(ed)?)?\\s*drop(let)?s?)|[lsm]d|fr)\\s*$REG_OPERATOR".toRegex())) {
+        val selectedMode = if (any.contains("(fruits?|[大中小]果|漏小?果?|((large|small|miss(ed)?)?\\s*drop(let)?s?)|[lsm]d|fr)\\s*$REGEX_OPERATOR".toRegex())) {
             CmdObject(OsuMode.CATCH)
         } else if (any.contains("(rate|彩[率比]|黄彩比?|e|pm)".toRegex())) {
             CmdObject(OsuMode.MANIA)

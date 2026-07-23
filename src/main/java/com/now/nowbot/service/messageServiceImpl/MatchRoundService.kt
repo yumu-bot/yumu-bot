@@ -20,6 +20,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_MATCH_ID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -42,7 +43,7 @@ import java.util.regex.Matcher
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val matchID: Int
-        val matchIDStr = param.group("matchid")
+        val matchIDStr = param.group(FLAG_MATCH_ID)
 
         if (matchIDStr == null || matchIDStr.isBlank()) {
             try {

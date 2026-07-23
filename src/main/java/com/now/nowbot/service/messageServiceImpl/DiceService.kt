@@ -11,8 +11,9 @@ import com.now.nowbot.service.messageServiceImpl.DiceService.Split.*
 import com.now.nowbot.throwable.botRuntimeException.DiceException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.command.REG_COLON
-import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
+import com.now.nowbot.util.command.PATTERN_COLON
+import com.now.nowbot.util.command.PATTERN_NUMBER_DECIMAL
+import com.now.nowbot.util.command.REGEX_NUMBER_DECIMAL
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -263,7 +264,7 @@ import kotlin.time.Duration.Companion.seconds
         // 比分 2比4
         SCORE(
             Pattern.compile(
-                "\\s*(?<m1>$REG_NUMBER_DECIMAL)\\s*(?<c2>((?<![叠面傻装牛菜想提分排开小对阿科此豆死伦攀反字])比)|$REG_COLON)(?<m2>$REG_NUMBER_DECIMAL)"
+                "\\s*(?<m1>$PATTERN_NUMBER_DECIMAL)\\s*(?<c2>((?<![叠面傻装牛菜想提分排开小对阿科此豆死伦攀反字])比)|$PATTERN_COLON)(?<m2>$PATTERN_NUMBER_DECIMAL)"
             ), onlyC3 = false
         ),
 
@@ -470,7 +471,7 @@ import kotlin.time.Duration.Companion.seconds
                     return null
                 } else if (!number.isNullOrBlank()) {
                     return DiceParam(null, null, (number + text).trim())
-                } else if (text.trim().matches("^$REG_NUMBER_DECIMAL$".toRegex())) {
+                } else if (text.trim().matches(REGEX_NUMBER_DECIMAL)) {
                     // !roll 4
                     return DiceParam(1L, text.toLongOrNull() ?: 100L, null)
                 } else {

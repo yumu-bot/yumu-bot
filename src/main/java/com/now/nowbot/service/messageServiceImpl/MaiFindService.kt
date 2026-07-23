@@ -74,7 +74,7 @@ import java.util.regex.Matcher
             val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
 
             val conditions = any.asConditions(MaiSongFilter.regexes,
-                endPattern = MaiSongFilter.RANGE.regex.pattern)
+                endRegex = MaiSongFilter.RANGE.regex)
 
             val rangeInConditions = conditions.lastOrNull().orEmpty()
             val hasRangeInConditions = rangeInConditions.isNotEmpty()
@@ -82,11 +82,11 @@ import java.util.regex.Matcher
 
             val songs: List<MaiSong>
 
-            val isRange = any.matches(REG_MAI_RANGE.toRegex())
+            val isRange = any.matches(REGEX_MAI_RANGE)
 
             if (!hasRangeInConditions && !hasCondition && !isRange && any.isNotEmpty()) {
 
-                val id4Song = if (any.matches(REG_NUMBER_15.toRegex())) {
+                val id4Song = if (any.matches(REGEX_NUMBER_15)) {
                     lxMaiApiService.getMaiSong(any.toInt())
                 } else null
 

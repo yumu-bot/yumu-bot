@@ -168,7 +168,7 @@ object DataUtil {
      */
     fun splitString(str: String?, splitSpace: Boolean = false): List<String>? {
         if (str.isNullOrBlank()) return null
-        val regex = if (splitSpace) REG_SEPERATOR.toRegex() else REG_SEPERATOR_NO_SPACE.toRegex()
+        val regex = if (splitSpace) REGEX_SEPARATOR else REGEX_SEPARATOR_NO_SPACE
 
         val strings = str.split(regex).map { it.trim() }.dropLastWhile { it.isBlank() }
         if (strings.isEmpty()) return null
@@ -1065,70 +1065,6 @@ object DataUtil {
     }
 
     /**
-     * 升级版匹配器
-     *
-     * @param assignmentPattern 用于定位匹配的正则，一般就是运算符号（A=B的`=`），如果有其他定位方式，也需要写在这里
-     * @param endPattern 用于匹配部分特殊尾巴的正则，
-     * 举例：!mf v=spl 13，如果 endPattern 设为 null 而不是 REG_RANGE，此时 13 会被拼接到 spl 内。
-     */
-    fun getConditions(
-        input: String?,
-        regexes: List<Regex>,
-        assignmentPattern: String = REG_OPERATOR,
-        endPattern: String? = REG_RANGE,
-        separatorPattern: String = REG_SEPERATOR
-    ) : List<List<String>> {
-        if (input.isNullOrBlank()) return emptyList()
-
-        val result = List(regexes.size) { mutableListOf<String>() }
-        val combinedStrs = mutableListOf<String>()
-
-        // t = cycle hit d =home run artist= kai
-        // [t=cycle hit, d=home run, artist=kai]
-        val words = input.trim()
-            .replace("\\s*(${assignmentPattern})\\s*".toRegex()) { matchResult ->
-                matchResult.groupValues[1]  // 保留原始分隔符
-            }
-            .split("(\\s+(?=\\w+($assignmentPattern)))".toRegex())
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-
-        val lastWord = input.trim().split(separatorPattern.toRegex()).lastOrNull() ?: ""
-
-        if (endPattern != null && lastWord.matches(endPattern.toRegex())) {
-            val l = words.lastOrNull() ?: ""
-
-            if (words.size >= 2) {
-                combinedStrs.addAll(words.dropLast(1))
-            }
-
-            if (l.isNotEmpty() && !l.matches(endPattern.toRegex())) {
-                combinedStrs.add(l.replace("(.*${separatorPattern}\\S*)(\\s*${endPattern})".toRegex()) { matchResult ->
-                    matchResult.groupValues[1].trim()
-                })
-            }
-
-            combinedStrs.addLast(lastWord)
-        } else {
-            combinedStrs.addAll(words)
-        }
-
-
-        for (combined in combinedStrs) {
-            for (index in regexes.indices) {
-                val regex = regexes[index]
-
-                if (combined.matches(regex)) {
-                    result[index].add(combined)
-                    continue
-                }
-            }
-        }
-
-        return result
-    }
-
-    /**
      * 一个分页功能。
      * @param maxPerPage 每页最多元素数量，默认 50 个。
      * @param before 在集合前还有多少元素
@@ -1343,7 +1279,7 @@ object DataUtil {
 
         val pattern = "(\\d+)\\s*([yodhms]|years?|months?|days?|hours?|minutes?|seconds?|yr|mo|dy|hr|min?|sec?|[年月日天时分秒]|分钟|小时)".toRegex()
 
-        pattern.findAll(input.replace("\\s+".toRegex(), "")).forEach { matchResult ->
+        pattern.findAll(input.replace(REGEX_SPACE_MORE, "")).forEach { matchResult ->
             val value = matchResult.groupValues[1].toLongOrNull() ?: 0L
             val u = matchResult.groupValues[2]
 
@@ -1396,10 +1332,10 @@ object DataUtil {
      * @return Duration：时分秒
      */
     fun parseColonTime(input: String, mode: Boolean? = null): Duration {
-        if (input.isEmpty() || !input.contains(REG_COLON.toRegex())) return Duration.ZERO
+        if (input.isEmpty() || !input.contains(REGEX_COLON)) return Duration.ZERO
 
-        val parts = input.replace("\\s+".toRegex(), "")
-            .split(REG_COLON.toRegex())
+        val parts = input.replace(REGEX_SPACE_MORE, "")
+            .split(REGEX_COLON)
             .dropWhile { it.isEmpty() }
 
         return when (parts.size) {
@@ -1455,8 +1391,8 @@ object DataUtil {
     fun parseHyphenOrSlashTime(input: String): Period {
         if (input.isEmpty()) return Period.ZERO
 
-        val parts = input.replace("\\s+".toRegex(), "")
-            .split("($REG_HYPHEN|$REG_SLASH)+".toRegex())
+        val parts = input.replace(REGEX_SPACE_MORE, "")
+            .split(REGEX_HYPHEN_OR_SLASH)
             .dropWhile { it.isEmpty() }
 
         return when (parts.size) {

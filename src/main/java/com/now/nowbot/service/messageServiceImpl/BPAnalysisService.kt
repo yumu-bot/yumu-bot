@@ -23,6 +23,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.InstructionUtil
+import com.now.nowbot.util.command.REGEX_CRLF
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -328,7 +329,7 @@ import java.util.regex.Matcher
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
                 val msg = this.getText()
-                    .split("\n".toRegex())
+                    .split(REGEX_CRLF)
                     .dropLastWhile { it.isEmpty() }
                     .toTypedArray()
                 MessageChain(imageService.getPanelAlpha(*msg))

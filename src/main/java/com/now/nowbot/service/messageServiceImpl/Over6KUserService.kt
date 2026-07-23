@@ -10,6 +10,7 @@ import com.now.nowbot.service.messageServiceImpl.Over6KUserService.OverUser
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.command.REGEX_HASH
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -40,7 +41,7 @@ class Over6KUserService(private val userApiService: OsuUserApiService, fileConfi
         if (INITED && !messageText.startsWith("高阶出群")) {
             return false
         }
-        val ps = messageText.split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val ps = messageText.split(REGEX_HASH).dropLastWhile { it.isEmpty() }.toTypedArray()
         if (ps.size < 3) return false
         val name = ps[1]
         val time: LocalDate

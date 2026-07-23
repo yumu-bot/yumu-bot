@@ -13,7 +13,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_TIME
-import com.now.nowbot.util.command.REG_HYPHEN
+import com.now.nowbot.util.command.REGEX_HYPHEN
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -322,7 +322,7 @@ class ServiceCountService(
                 return now.minusDays(1) to now
             }
 
-            val split = input.split(REG_HYPHEN.toRegex())
+            val split = input.split(REGEX_HYPHEN)
                 .dropWhile { it.isEmpty() }
 
             return when (split.size) {

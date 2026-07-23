@@ -16,7 +16,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.REG_SEPERATOR
+import com.now.nowbot.util.command.REGEX_SEPARATOR
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -278,7 +278,7 @@ class SeriesRatingService(
         val dataStrArray =
             dataStr
                 .trim { it <= ' ' }
-                .split(REG_SEPERATOR.toRegex())
+                .split(REGEX_SEPARATOR)
                 .dropLastWhile { it.isEmpty() }
                 .toTypedArray()
         if (dataStr.isBlank() || dataStrArray.isEmpty()) return null

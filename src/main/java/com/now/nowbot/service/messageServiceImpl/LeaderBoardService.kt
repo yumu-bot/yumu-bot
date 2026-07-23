@@ -146,7 +146,7 @@ class LeaderBoardService(
         val rangeStr: String = matcher.group(FLAG_PAGE) ?: ""
 
         val selected = rangeStr.trim()
-            .replace(REG_HASH.toRegex(), "")
+            .replace(REGEX_HASH, "")
             .toIntOrNull()
 
         val range: IntRange = if (selected != null) {

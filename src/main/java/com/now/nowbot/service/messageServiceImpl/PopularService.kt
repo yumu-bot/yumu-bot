@@ -25,7 +25,7 @@ import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_RANGE
-import com.now.nowbot.util.command.REG_HYPHEN
+import com.now.nowbot.util.command.REGEX_HYPHEN
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.*
@@ -162,7 +162,7 @@ class PopularService(
         }
 
         val group = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull()
-        val ranges = matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+        val ranges = matcher.group(FLAG_RANGE)?.split(REGEX_HYPHEN)
 
         val mode = InstructionUtil.getMode(matcher)
 

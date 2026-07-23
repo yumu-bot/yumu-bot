@@ -16,7 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botException.MRAException
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.REG_SEPERATOR
+import com.now.nowbot.util.command.REGEX_SEPARATOR
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -166,7 +166,7 @@ import java.util.regex.Matcher
 
             val dataStrArray =
                 dataStr.trim { it <= ' ' }
-                    .split(REG_SEPERATOR.toRegex())
+                    .split(REGEX_SEPARATOR)
                     .dropLastWhile { it.isEmpty() }
                     .toTypedArray()
 

@@ -16,6 +16,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
+import com.now.nowbot.util.command.REGEX_SEPARATOR
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -76,7 +77,7 @@ class GetPoolService(
     }
 
     fun getFirstMapMode(dataStr: String): OsuMode {
-        val dataStrs = dataStr.trim().split("[\"\\s,，\\-|:]+".toRegex())
+        val dataStrs = dataStr.trim().split(REGEX_SEPARATOR)
         if (dataStrs.isEmpty()) return OsuMode.DEFAULT
 
         val bid = dataStrs.firstNotNullOfOrNull { it.toLongOrNull() } ?: return OsuMode.DEFAULT
@@ -90,7 +91,7 @@ class GetPoolService(
     }
 
     fun parseDataString(dataStr: String): Map<String, List<Long>>? {
-        val dataStrs = dataStr.trim().split("[\"\\s,，\\-|:]+".toRegex())
+        val dataStrs = dataStr.trim().split(REGEX_SEPARATOR)
         if (dataStrs.isEmpty()) return null
 
         val output = LinkedHashMap<String, List<Long>>()

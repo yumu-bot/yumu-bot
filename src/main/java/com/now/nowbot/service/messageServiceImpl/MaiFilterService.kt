@@ -77,13 +77,13 @@ class MaiFilterService(
             user = maimaiApiService.getMaimaiBest50(qqStr.toLongOrNull() ?: event.sender.contactID).getUser(maiDao)
             page = pageStr?.toIntOrNull() ?: 1
         } else if (!nameStr.isNullOrBlank()) {
-            if (nameStr.matches("\\w+\\s+$REG_NUMBER_1_100".toRegex())) {
-                val names = nameStr.split("\\s+".toRegex())
+            if (nameStr.matches("\\w+\\s+$PATTERN_NUMBER_1_100".toRegex())) {
+                val names = nameStr.split(REGEX_SPACE_MORE)
 
                 user = maimaiApiService.getMaimaiBest50(names.first()).getUser(maiDao)
                 page = names.last().toIntOrNull() ?: 1
 
-            } else if (nameStr.matches(REG_NUMBER_1_100.toRegex())) {
+            } else if (nameStr.matches(PATTERN_NUMBER_1_100.toRegex())) {
 
                 user = maimaiApiService.getMaimaiBest50(event.sender.contactID).getUser(maiDao)
                 page = nameStr.trim().toIntOrNull() ?: 1

@@ -6,8 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.botRuntimeException.ModsException
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.JacksonUtil.json
-import com.now.nowbot.util.command.LEVEL_MORE
-import com.now.nowbot.util.command.REG_SPACE
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import org.springframework.web.util.UriBuilder
 import kotlin.reflect.full.companionObjectInstance
 
@@ -2857,7 +2856,7 @@ sealed class LazerMod {
 
         fun splitModAcronyms(acronyms: String): List<String> {
             val newStr = acronyms.uppercase()
-                .replace("$REG_SPACE$LEVEL_MORE".toRegex(), "")
+                .replace(REGEX_SPACE_MORE, "")
             if (newStr.length % 2 != 0) {
                 throw ModsException.CharNotPaired(newStr)
             }

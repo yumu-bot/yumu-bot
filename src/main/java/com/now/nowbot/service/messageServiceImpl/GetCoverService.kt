@@ -18,7 +18,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.REG_SEPERATOR
+import com.now.nowbot.util.command.REGEX_SEPARATOR
 import org.springframework.stereotype.Service
 import java.net.URI
 import java.nio.file.Files
@@ -153,9 +153,9 @@ import java.nio.file.Files
         private fun parseDataString(
             dataStr: String,
         ): List<Long> {
-            val dataStrArray = dataStr.trim().split(REG_SEPERATOR.toRegex(), 0)
+            val dataStrArray = dataStr.trim().split(REGEX_SEPARATOR, 0)
 
-            if (dataStrArray.isEmpty()) return listOf()
+            if (dataStrArray.isEmpty()) return emptyList()
             return dataStrArray.filter { it.isNotBlank() }.map { it.toLongOrNull() ?: 0L }
         }
 

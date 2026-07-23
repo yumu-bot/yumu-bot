@@ -20,6 +20,7 @@ import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_SERVICE
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.CompletableFuture
@@ -251,7 +252,7 @@ class ServiceSwitchService(
 
         val future = CompletableFuture<List<String>>()
 
-        val ii = (input ?: "").trim().replace("\\s+".toRegex(), "_").uppercase()
+        val ii = (input ?: "").trim().replace(REGEX_SPACE_MORE, "_").uppercase()
 
         val type = ServiceType.getTypeFromInput(ii)
 

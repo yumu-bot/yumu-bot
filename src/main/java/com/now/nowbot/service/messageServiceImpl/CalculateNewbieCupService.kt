@@ -69,7 +69,10 @@ class CalculateNewbieCupService(
 
         val str = printResult(result, param.sortBy, param.accuracy)
 
-        val name = param.matches.first().name.split("\\s*$REG_COLON\\s*".toRegex()).firstOrNull()?.trim() ?: "OCNC"
+        val name = param.matches.first().name
+            .replace(REGEX_SPACE_MORE, "")
+            .split(REGEX_COLON)
+            .firstOrNull()?.trim() ?: "OCNC"
 
         event.replyFileInGroupAsync(str.toByteArray(Charsets.UTF_8), "$name.csv")
 
@@ -189,7 +192,7 @@ class CalculateNewbieCupService(
         private fun parseLong(string: String?): List<Long> {
             if (string.isNullOrEmpty()) return emptyList()
 
-            val strs = string.trim().split(REG_SEPERATOR.toRegex()).dropWhile { it.isBlank() }
+            val strs = string.trim().split(REGEX_SEPARATOR).dropWhile { it.isBlank() }
 
             return strs.map {
                 it.toLongOrNull() ?: run {

@@ -24,9 +24,11 @@ import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_MOD
 import com.now.nowbot.util.command.FLAG_MODE
-import com.now.nowbot.util.command.REG_EQUAL
-import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
-import com.now.nowbot.util.command.REG_OPERATOR_WITH_SPACE
+import com.now.nowbot.util.command.PATTERN_EQUAL
+import com.now.nowbot.util.command.PATTERN_NUMBER_DECIMAL
+import com.now.nowbot.util.command.PATTERN_OPERATOR_WITH_SPACE
+import com.now.nowbot.util.command.REGEX_OPERATOR_WITH_SPACE
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import org.intellij.lang.annotations.Language
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
@@ -134,9 +136,9 @@ class MapStatisticsService(
     }
 
     enum class MapFilter(@param:Language("RegExp") val regex: Regex) {
-        ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|ac?c?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
-        COMBO("(combo|连击|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
-        MISS("(m(is)?s|[msx0]|不可|红|失误|漏击)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex());
+        ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|ac?c?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)[%％]?".toRegex()),
+        COMBO("(combo|连击|cb?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL[xX]?)".toRegex()),
+        MISS("(m(is)?s|[msx0]|不可|红|失误|漏击)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex());
 
         companion object {
             val regexes: List<Regex> by lazy { entries.map { it.regex } }
@@ -153,7 +155,7 @@ class MapStatisticsService(
         if (conditions.isNotEmpty()) {
             conditions.mapIndexed { index, cond ->
                 val type = MapFilter.entries[index]
-                val value = cond.firstOrNull()?.split(REG_OPERATOR_WITH_SPACE.toRegex())?.lastOrNull() ?: ""
+                val value = cond.firstOrNull()?.split(REGEX_OPERATOR_WITH_SPACE)?.lastOrNull() ?: ""
 
                 when(type) {
                     ACCURACY -> accuracy = when(val rd = value.toDoubleOrNull()) {
@@ -176,11 +178,9 @@ class MapStatisticsService(
             input ?: ""
         }
 
-        val kvRegex = "\\w+${REG_EQUAL}\\S+".toRegex()
-
         val remain = reconstruct.replace(kvRegex, "")
             .trim()
-            .split("\\s+".toRegex())
+            .split(REGEX_SPACE_MORE)
             .map { it.trim() }
             .filter { it.isNotEmpty() }
 
@@ -293,6 +293,8 @@ class MapStatisticsService(
     )
 
     companion object {
+        private val kvRegex = "\\w+${PATTERN_EQUAL}\\S+".toRegex()
+
         // 等于绘图模块的 calcMap
         // 注意，0 是 if fc，1-6是 fc，7-12是 nc，acc 分别是100 99 98 96 94 92
         fun getPPList(

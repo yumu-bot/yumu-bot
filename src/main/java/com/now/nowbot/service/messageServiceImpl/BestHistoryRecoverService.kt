@@ -24,7 +24,7 @@ import com.now.nowbot.util.FastPower095
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.UserIDUtil
-import com.now.nowbot.util.command.REG_HASH
+import com.now.nowbot.util.command.REGEX_HASH
 import org.springframework.stereotype.Service
 import java.time.format.DateTimeFormatter
 import java.util.regex.Matcher
@@ -134,8 +134,8 @@ class BestHistoryRecoverService(
             if (next != null) {
                 current = next
 
-                val index = next.rawMessage.replace(REG_HASH.toRegex(), "").toIntOrNull()
-                val hash = next.rawMessage.contains(REG_HASH.toRegex())
+                val index = next.rawMessage.replace(REGEX_HASH, "").toIntOrNull()
+                val hash = next.rawMessage.contains(REGEX_HASH)
 
                 if (index != null) {
                     if (hash && index in 1..maxPage) {

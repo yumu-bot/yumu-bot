@@ -14,7 +14,8 @@ import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.InstructionRange
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.REG_HYPHEN
+import com.now.nowbot.util.command.REGEX_HYPHEN
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import org.springframework.stereotype.Service
 
 @Service("MAI_BP")
@@ -78,8 +79,8 @@ class MaiBestScoreService(
 
         val range =
             if (rangeStr.isNullOrBlank().not()) {
-                if (rangeStr.contains(Regex(REG_HYPHEN))) {
-                    val s = rangeStr.split(Regex(REG_HYPHEN))
+                if (rangeStr.contains(REGEX_HYPHEN)) {
+                    val s = rangeStr.split(REGEX_HYPHEN)
 
                     when (s.size) {
                         2 -> {
@@ -101,8 +102,8 @@ class MaiBestScoreService(
 
         if (matcher.group("name").isNullOrBlank().not()) {
             val name = matcher.group("name").trim()
-            if (name.contains(Regex("\\s+"))) {
-                val strs = name.split(Regex("\\s+"))
+            if (name.contains(REGEX_SPACE_MORE)) {
+                val strs = name.split(REGEX_SPACE_MORE)
 
                 if (strs.size == 2 && Regex("\\d{1,3}").matches(strs.last())) {
                     data.value =

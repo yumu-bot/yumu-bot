@@ -187,7 +187,7 @@ class UserIDUtil(
             return me.userID to null
         }
 
-        val gs = g.split(REG_SEPERATOR_NO_SPACE.toRegex())
+        val gs = g.split(REGEX_SEPARATOR_NO_SPACE)
 
         when (gs.size) {
             1 -> return getUserIDFromName(gs.first().trim(), me, mode, isVS)
@@ -267,9 +267,9 @@ class UserIDUtil(
             return InstructionRange()
         }
 
-        val hasHash = text.contains(REG_HASH.toRegex())
+        val hasHash = text.contains(REGEX_HASH)
 
-        if (text.matches(RANGE_ONLY.toRegex()) && !hasHash) {
+        if (text.matches(REGEX_RANGE_ONLY) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -346,9 +346,9 @@ class UserIDUtil(
             return InstructionRange()
         }
 
-        val hasHash = text.contains(REG_HASH.toRegex())
+        val hasHash = text.contains(REGEX_HASH)
 
-        if (text.matches(RANGE_ONLY.toRegex()) && !hasHash) {
+        if (text.matches(REGEX_RANGE_ONLY) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -415,7 +415,7 @@ class UserIDUtil(
             .removePrefix(CHAR_HASH.toString())
             .removePrefix(CHAR_HASH_FULL.toString())
             .trim()
-            .split(REG_HYPHEN.toRegex())
+            .split(REGEX_HYPHEN)
             .dropLastWhile { it.isEmpty() }
             .mapNotNull { it.trim().toIntOrNull() }
             .toTypedArray()
@@ -479,9 +479,9 @@ class UserIDUtil(
         if (matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) {
             val name2: String = matcher.group(FLAG_USER_AND_RANGE) ?: ""
 
-            val onlyRange = name2.matches(RANGE_ONLY.toRegex())
+            val onlyRange = name2.matches(REGEX_RANGE_ONLY)
 
-            val hasOthers = !name2.isBlank() && !onlyRange
+            val hasOthers = name2.isNotBlank() && !onlyRange
 
             if (hasOthers || (name2.toIntOrNull() ?: Int.MIN_VALUE) > maximum) {
                 isMyself.set(false)

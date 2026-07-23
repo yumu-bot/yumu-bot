@@ -10,7 +10,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.REG_SEPERATOR
+import com.now.nowbot.util.command.REGEX_SEPARATOR
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
@@ -27,7 +27,7 @@ import java.util.regex.Matcher
     }
 
     override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
-        val bids = param.group("data").split(REG_SEPERATOR.toRegex()).map { it.toLongOrNull() ?: -1L }
+        val bids = param.group("data").split(REGEX_SEPARATOR).map { it.toLongOrNull() ?: -1L }
         val mode = param.group("mode").toOsuMode().modeValue
 
         val files = bids.filter { it != -1L }.map {

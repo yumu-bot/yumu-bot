@@ -34,6 +34,7 @@ import com.now.nowbot.util.DataUtil.parseRange2Limit
 import com.now.nowbot.util.DataUtil.parseRange2Offset
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.command.REGEX_NUMBER
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.*
@@ -725,7 +726,7 @@ import kotlin.time.Duration.Companion.days
                 if (compare.isNullOrBlank()) {
                     message = String.format("%.0f", DiceService.getRandom(100))
                 } else {
-                    val isOnlyNumbers = compare.matches("^[0-9.]+$".toRegex())
+                    val isOnlyNumbers = compare.matches(REGEX_NUMBER)
 
                     if (isOnlyNumbers) {
                         val r = DiceService.getRandom(compare.toIntOrNull() ?: 100)

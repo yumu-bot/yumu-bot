@@ -22,7 +22,7 @@ import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_MODE
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_UID
-import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
+import com.now.nowbot.util.command.REGEX_SEPARATOR_NO_SPACE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -106,7 +106,7 @@ class SBOldAvatarService(
         val strings =
             dataStr
                 .trim()
-                .split(REG_SEPERATOR_NO_SPACE.toRegex())
+                .split(REGEX_SEPARATOR_NO_SPACE)
                 .dropLastWhile { it.isEmpty() }
                 .map { it.trim() }
                 .filter { it.isNotBlank() }

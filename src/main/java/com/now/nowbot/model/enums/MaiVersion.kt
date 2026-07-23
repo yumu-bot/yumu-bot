@@ -1,8 +1,8 @@
 package com.now.nowbot.model.enums
 
-import com.now.nowbot.util.command.REG_PLUS
-import com.now.nowbot.util.command.REG_SEPERATOR
-import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
+import com.now.nowbot.util.command.REGEX_PLUS
+import com.now.nowbot.util.command.REGEX_SEPARATOR
+import com.now.nowbot.util.command.REGEX_SEPARATOR_NO_SPACE
 
 enum class MaiVersion(val full: String, val abbreviation: String, val code: String, val value: Int) {
     DEFAULT("", "", "", 0),
@@ -87,7 +87,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
             if (str == null) return listOf(DEFAULT)
 
             val out = mutableSetOf<MaiVersion>()
-            val strList = str.split(REG_SEPERATOR_NO_SPACE.toRegex())
+            val strList = str.split(REGEX_SEPARATOR_NO_SPACE)
 
             if (strList.isEmpty()) return listOf(DEFAULT)
 
@@ -112,8 +112,8 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
             if (str == null) return DEFAULT
 
             return when (str
-                .replace(Regex(REG_PLUS), "+")
-                .replace(Regex(REG_SEPERATOR), "")
+                .replace(REGEX_PLUS, "+")
+                .replace(REGEX_SEPARATOR, "")
                 .lowercase()
             ) {
                 "circleplus",

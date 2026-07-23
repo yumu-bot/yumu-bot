@@ -2,9 +2,9 @@ package com.now.nowbot.util
 
 import com.now.nowbot.model.enums.GreekChar.Companion.appendRomanizedGreekTo
 import com.now.nowbot.model.enums.JaChar.Companion.appendRomanizedJapaneseTo
-import com.now.nowbot.util.command.REG_OPERATOR
-import com.now.nowbot.util.command.REG_RANGE
-import com.now.nowbot.util.command.REG_SEPERATOR
+import com.now.nowbot.util.command.REGEX_OPERATOR
+import com.now.nowbot.util.command.REGEX_RANGE
+import com.now.nowbot.util.command.REGEX_SEPARATOR
 
 object StringUtil {
 
@@ -67,15 +67,15 @@ object StringUtil {
     /**
      * 升级版匹配器（重构版）
      *
-     * @param assignmentPattern 用于定位匹配的正则，一般就是运算符号（A=B的`=`），如果有其他定位方式，也需要写在这里
-     * @param endPattern 用于匹配部分特殊尾巴的正则，
-     * 举例：!mf v=spl 13，如果 endPattern 设为 null 而不是 REG_RANGE，此时 13 会被拼接到 spl 内。
+     * @param assignmentRegex 用于定位匹配的正则，一般就是运算符号（A=B的`=`），如果有其他定位方式，也需要写在这里
+     * @param endRegex 用于匹配部分特殊尾巴的正则，
+     * 举例：!mf v=spl 13，如果 endPattern 设为 null 而不是 PATTERN_RANGE，此时 13 会被拼接到 spl 内。
      */
     fun String?.asConditions(
         regexes: List<Regex>,
-        assignmentPattern: String = REG_OPERATOR,
-        endPattern: String? = REG_RANGE,
-        separatorPattern: String = REG_SEPERATOR
+        assignmentRegex: Regex = REGEX_OPERATOR,
+        endRegex: Regex? = REGEX_RANGE,
+        separatorRegex: Regex = REGEX_SEPARATOR
     ): List<List<String>> {
         val input = this
 
@@ -83,10 +83,8 @@ object StringUtil {
 
         val trimmedInput = input.trim()
 
-        // 1. 预编译并转义正则，避免正则注入与重复编译开销
-        val escapedAssignment = Regex.escape(assignmentPattern)
-        val sanitizeAssignmentRegex = "\\s*($escapedAssignment)\\s*".toRegex()
-        val splitRegex = "\\s+(?=\\w+$escapedAssignment)".toRegex()
+        val sanitizeAssignmentRegex = "\\s*(${assignmentRegex.pattern})\\s*".toRegex()
+        val splitRegex = "\\s+(?=\\w+${assignmentRegex.pattern})".toRegex()
 
         // 2. 格式化 input 并切分成 Key-Value 单元
         val words = trimmedInput
@@ -95,9 +93,6 @@ object StringUtil {
             .map { it.trim() }
             .filter { it.isNotEmpty() }
 
-        val separatorRegex = separatorPattern.toRegex()
-        val escapedEndPattern = endPattern?.takeIf { it.isNotEmpty() }?.let { Regex.escape(it) }
-        val endRegex = escapedEndPattern?.toRegex()
         val lastWord = trimmedInput.split(separatorRegex).lastOrNull().orEmpty()
 
         val combinedStrs = mutableListOf<String>()
@@ -110,7 +105,7 @@ object StringUtil {
             }
 
             if (lastWordInList.isNotEmpty() && !lastWordInList.matches(endRegex)) {
-                val trimTailRegex = "(.*$separatorPattern\\S*)\\s*$escapedEndPattern".toRegex()
+                val trimTailRegex = "(.*$separatorRegex\\S*)\\s*${endRegex.pattern}".toRegex()
                 val cleaned = lastWordInList.replace(trimTailRegex) { it.groupValues[1].trim() }
                 combinedStrs.add(cleaned)
             }
@@ -318,17 +313,17 @@ object StringUtil {
                 this['\uFF5E'.code] = '-' // ～
                 this['\u301C'.code] = '-' // 〜
 
-                // REG_COLON -> ':'
+                // PATTERN_COLON -> ':'
                 this['\uFF1A'.code] = ':' // ：
                 this['\uFF1B'.code] = ';'
 
-                // REG_PLUS -> '+'
+                // PATTERN_PLUS -> '+'
                 this['\uFF0B'.code] = '+' // ＋
 
-                // REG_HASH -> '#'
+                // PATTERN_HASH -> '#'
                 this['\uFF03'.code] = '#' // ＃
 
-                // REG_STAR -> '*'
+                // PATTERN_STAR -> '*'
                 this['\u2042'.code] = '*' // ⁂
                 this['\u2605'.code] = '*' // ★
                 this['\u2606'.code] = '*' // ☆
@@ -359,14 +354,14 @@ object StringUtil {
                 this['\uFF0A'.code] = '*' // ＊
 
 
-                // REG_EXCLAMATION -> '!'
+                // PATTERN_EXCLAMATION -> '!'
                 this['\u00A1'.code] = '!' // ¡
                 this['\u203C'.code] = '!' // !!
                 this['\uFE15'.code] = '!' // ︕
                 this['\uFE57'.code] = '!' // ﹗
                 this['\uFF01'.code] = '!' // ！
 
-                // REG_QUESTION -> '?'
+                // PATTERN_QUESTION -> '?'
                 this['\u00BF'.code] = '?' // ¿
                 this['\u061F'.code] = '?' // ؟
                 this['\uFF1F'.code] = '?' // ？
@@ -378,7 +373,7 @@ object StringUtil {
                 this['\uFE56'.code] = '?'
                 this['\uFF1F'.code] = '?'
 
-                // REG_QUOTATION -> '"'
+                // PATTERN_QUOTATION -> '"'
                 this['\u201C'.code] = '"' // “
                 this['\u201D'.code] = '"' // ”
                 this['\u201E'.code] = '"'
@@ -393,7 +388,7 @@ object StringUtil {
                 this['\u301E'.code] = '"'
                 this['\u301F'.code] = '"'
 
-                // REG_QUOTATION (')
+                // PATTERN_QUOTATION (')
                 this['\u2018'.code] = '\'' // ‘
                 this['\u2019'.code] = '\'' // ’
                 this['\u201B'.code] = '\'' // ‛
@@ -403,7 +398,7 @@ object StringUtil {
                 this['\u203A'.code] = '>'
                 this['\u276F'.code] = '>'
 
-                // REG_FULL_STOP -> '.'
+                // PATTERN_FULL_STOP -> '.'
                 this['\u0589'.code] = '.' // ։
                 this['\u0701'.code] = '.' // ܂
                 this['\u06D4'.code] = '.' // ۔
@@ -415,14 +410,14 @@ object StringUtil {
                 this['\u30FB'.code] = '.' // ・
                 this['\u3001'.code] = '.' // 、
 
-                // REG_LEFT_BRACKET -> '['
+                // PATTERN_LEFT_BRACKET -> '['
                 this['\u007B'.code] = '[' // {
                 this['\u300E'.code] = '[' // 『
                 this['\u3010'.code] = '[' // 【
                 this['\uFF3B'.code] = '[' // ［
                 this['\uFF62'.code] = '[' // ｢
 
-                // REG_RIGHT_BRACKET -> ']'
+                // PATTERN_RIGHT_BRACKET -> ']'
                 this['\u007D'.code] = ']' // }
                 this['\u300F'.code] = ']' // 』
                 this['\u3011'.code] = ']' // 】

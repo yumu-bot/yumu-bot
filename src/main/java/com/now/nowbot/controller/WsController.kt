@@ -3,6 +3,7 @@ package com.now.nowbot.controller
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.now.nowbot.service.messageServiceImpl.BindService.Companion.contains
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import okhttp3.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -28,7 +29,7 @@ class WsController : WebSocketListener() {
                 log.info("error:argument error")
             }
             val state: Array<String?> =
-                data.get("state").asText().split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                data.get("state").asText().split(REGEX_SPACE_MORE).dropLastWhile { it.isEmpty() }.toTypedArray()
             val code = data.get("code").asText()
             val echo = data.get("echo").asText()
             try {

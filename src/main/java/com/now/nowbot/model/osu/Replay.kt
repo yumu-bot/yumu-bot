@@ -113,12 +113,12 @@ class Replay(bf: ByteBuffer) {
 
                 if (s.isBlank()) return emptyList()
 
-                val lines = s.split(",".toRegex()).dropLastWhile { it.isEmpty() }
+                val lines = s.split(",").dropLastWhile { it.isEmpty() }
 
                 val hits = mutableListOf<Hit>()
 
                 for (line in lines) {
-                    val split = line.split("\\|".toRegex())
+                    val split = line.split("\\|")
                     hits.add(Hit(split[0].toLong(), split[1].toFloat(), split[2].toFloat(), split[3].toInt()))
                 }
 
@@ -131,13 +131,13 @@ class Replay(bf: ByteBuffer) {
         }
 
         private fun readHp(data: String): Map<Int, Float> {
-            val lines = data.split(",".toRegex()).map { it.trim() }
+            val lines = data.split(",").map { it.trim() }
 
-            return  lines.map {
-                val k = it.split("\\|".toRegex()).map { it.trim() }
+            return lines.associate {
+                val k = it.split("\\|").map { s -> s.trim() }
 
                 k[0].toInt() to k[1].toFloat()
-            }.toMap()
+            }
         }
 
         private fun readLength(bf: ByteBuffer): Int {

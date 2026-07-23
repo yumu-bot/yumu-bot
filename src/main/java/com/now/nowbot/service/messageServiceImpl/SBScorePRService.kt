@@ -139,7 +139,7 @@ class SBScorePRService(
         val ranges = if (hasRangeInConditions) {
             rangeInConditions
         } else {
-            matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+            matcher.group(FLAG_RANGE)?.split(REGEX_HYPHEN)
         }
 
         val user: OsuUser

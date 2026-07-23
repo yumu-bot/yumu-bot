@@ -25,8 +25,8 @@ import com.now.nowbot.util.command.FLAG_ID
 import com.now.nowbot.util.command.FLAG_MOD
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.FLAG_TIME
-import com.now.nowbot.util.command.REG_SEPERATOR
-import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
+import com.now.nowbot.util.command.REGEX_SEPARATOR
+import com.now.nowbot.util.command.REGEX_SEPARATOR_NO_SPACE
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -378,7 +378,7 @@ class GetItemsService(
         }
 
         val mods = LazerMod.getModsList(mod
-            .split(REG_SEPERATOR_NO_SPACE.toRegex())
+            .split(REGEX_SEPARATOR_NO_SPACE)
             .dropLastWhile { it.isEmpty() }
         )
 
@@ -463,7 +463,7 @@ class GetItemsService(
 
     companion object {
         fun String?.parseToLongList(): List<Long> {
-            return this.orEmpty().split(REG_SEPERATOR.toRegex())
+            return this.orEmpty().split(REGEX_SEPARATOR)
                 .filter { it.isNotEmpty() }
                 .map {
                     it.trim().toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()

@@ -1,32 +1,32 @@
 package com.now.nowbot.model.enums
 
-import com.now.nowbot.util.command.REG_EQUAL
-import com.now.nowbot.util.command.REG_EXCLAMATION
-import com.now.nowbot.util.command.REG_GREATER
-import com.now.nowbot.util.command.REG_LESS
+import com.now.nowbot.util.command.PATTERN_EQUAL
+import com.now.nowbot.util.command.PATTERN_EXCLAMATION
+import com.now.nowbot.util.command.PATTERN_GREATER
+import com.now.nowbot.util.command.PATTERN_LESS
 import org.intellij.lang.annotations.Language
 
 enum class Operator(@param:Language("RegExp") val regex: Regex) {
     // 不等于
-    NE("$REG_EXCLAMATION$REG_EQUAL|$REG_LESS$REG_GREATER|≠".toRegex()),
+    NE("$PATTERN_EXCLAMATION$PATTERN_EQUAL|$PATTERN_LESS$PATTERN_GREATER|≠".toRegex()),
 
     // 完全等于
-    XQ("$REG_EQUAL$REG_EQUAL|≌".toRegex()),
+    XQ("$PATTERN_EQUAL$PATTERN_EQUAL|≌".toRegex()),
 
     // 大于等于
-    GE("$REG_GREATER$REG_EQUAL|≥".toRegex()),
+    GE("$PATTERN_GREATER$PATTERN_EQUAL|≥".toRegex()),
 
     // 大于
-    GT(REG_GREATER.toRegex()),
+    GT(PATTERN_GREATER.toRegex()),
 
     // 小于等于
-    LE("$REG_LESS$REG_EQUAL|≤".toRegex()),
+    LE("$PATTERN_LESS$PATTERN_EQUAL|≤".toRegex()),
 
     // 小于
-    LT(REG_LESS.toRegex()),
+    LT(PATTERN_LESS.toRegex()),
 
     // （约）等于
-    EQ("$REG_EQUAL|≈".toRegex());
+    EQ("$PATTERN_EQUAL|≈".toRegex());
 
     companion object {
         fun getOperator(string: String): Operator {
