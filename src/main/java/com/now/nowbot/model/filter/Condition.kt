@@ -1,15 +1,17 @@
 package com.now.nowbot.model.filter
 
+import com.now.nowbot.util.StringUtil.standardised
+
 data class Condition(
     private val string: String,
 ) {
-    val condition = string.replace('_', ' ').trim()
+    val condition = string.replace('_', ' ').trim().standardised()
     val long: Long = condition.toLongOrNull() ?: -1L
     val int: Int = condition.toIntOrNull() ?: -1
     val double: Double = condition.toDoubleOrNull() ?: -1.0
     val hasDecimal = condition.contains(".")
     val boolean = when(condition) {
-        "真", "是", "正确", "对", "t", "true", "y", "yes", "" -> true
+        "真", "是", "正确", "对", "t", "true", "y", "yes" -> true
         else -> false
     }
 
