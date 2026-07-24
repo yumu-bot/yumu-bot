@@ -3,6 +3,7 @@ package com.now.nowbot.entity
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.containsHiddenAcronym
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.util.JacksonUtil
@@ -89,8 +90,8 @@ class TachyonScoreLite(
         } else {
             when(lite.mode.toInt()) {
                 0, 1, 3 -> when(lite.accuracy) {
-                    in 1.0..1.001 -> if (LazerMod.containsHiddenAcronym(lite.mods)) "XH" else "X"
-                    in 0.95..1.0 -> if (LazerMod.containsHiddenAcronym(lite.mods)) "SH" else "S"
+                    in 1.0..1.001 -> if (lite.mods.containsHiddenAcronym()) "XH" else "X"
+                    in 0.95..1.0 -> if (lite.mods.containsHiddenAcronym()) "SH" else "S"
                     in 0.9..0.95 -> "A"
                     in 0.8..0.9 -> "B"
                     in 0.7..0.8 -> "C"
@@ -98,8 +99,8 @@ class TachyonScoreLite(
                 }
 
                 2 -> when(lite.accuracy) {
-                    in 1.0..1.001 -> if (LazerMod.containsHiddenAcronym(lite.mods)) "XH" else "X"
-                    in 0.98..1.0 -> if (LazerMod.containsHiddenAcronym(lite.mods)) "SH" else "S"
+                    in 1.0..1.001 -> if (lite.mods.containsHiddenAcronym()) "XH" else "X"
+                    in 0.98..1.0 -> if (lite.mods.containsHiddenAcronym()) "SH" else "S"
                     in 0.94..0.98 -> "A"
                     in 0.9..0.94 -> "B"
                     in 0.85..0.9 -> "C"

@@ -3,6 +3,8 @@ package com.now.nowbot.model.match
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.contains
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -100,7 +102,7 @@ class MatchRating(
         // easy multiplier and ranking
         rs.forEach { round ->
             round.scores.forEach { s ->
-                if (param.easy != 1.0 && LazerMod.hasMod(s.mods, LazerMod.Easy)) {
+                if (param.easy != 1.0 && s.mods.contains(LazerMod.Easy)) {
                     s.score = (s.score * param.easy).roundToLong()
                 }
             }
@@ -118,7 +120,7 @@ class MatchRating(
         rs.forEach { round ->
             round.beatmap?.let {
                 val b = beatmapApiService.getBeatmapFromDatabase(round.beatmapID)
-                calculateApiService.applyStarToBeatmap(b, round.mode, LazerMod.getModsList(round.mods))
+                calculateApiService.applyStarToBeatmap(b, round.mode, round.mods.toLazerMods())
                 round.beatmap = b
             }
         }
@@ -399,7 +401,7 @@ class MatchRating(
                 .mapNotNull { it.round }
                 .filter { it.beatmap != null }
                 .forEach { round ->
-                    val mods = LazerMod.getModsList(round.mods)
+                    val mods = round.mods.toLazerMods()
                     BeatmapUtil.applyBeatmapChanges(round.beatmap, mods)
                     calculateApiService.applyStarToBeatmap(round.beatmap, round.mode, mods)
                 }

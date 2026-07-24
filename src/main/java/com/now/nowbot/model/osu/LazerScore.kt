@@ -185,7 +185,7 @@ data class LazerScore(
         get() = if (this.isLazer) {
             rawMods
         } else {
-            rawMods.filterNot { it.acronym == "CL" }
+            rawMods.filterNot { it.acronym == LazerMod.Classic.type }
         }
 
         set(value) {

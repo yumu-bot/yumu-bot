@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -876,7 +877,7 @@ class InstructionUtil(
             if (!matcher.namedGroups().containsKey(FLAG_MOD)) {
                 return listOf()
             }
-            return LazerMod.getModsList(matcher.group(FLAG_MOD) ?: "")
+            return matcher.group(FLAG_MOD).toLazerMods()
         }
 
     }

@@ -147,17 +147,6 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
                 this
             }
 
-        /**
-         * 修正无法转换的模式：只有可转换的谱面才能赋予模式
-         */
-        fun getConvertableMode(convert: OsuMode?, map: OsuMode?): OsuMode {
-            return if (convert.isDefaultOrNull() || (map != null && map != OSU && map != DEFAULT)) {
-                map ?: DEFAULT
-            } else {
-                convert
-            }
-        }
-
         fun OsuMode?.getQuery(): Optional<String> = if (this.isDefaultOrNull()) {
             Optional.empty()
         } else {

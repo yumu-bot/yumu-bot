@@ -4,6 +4,7 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerMod
@@ -244,10 +245,10 @@ import kotlin.time.Duration.Companion.seconds
         if (!map.hasLeaderBoard) {
             if (userID != null) {
 
-                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+                mode = inputMode.data.takeIfConvertable(map)
                 user = userApiService.getOsuUser(userID, mode)
             } else {
-                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+                mode = inputMode.data.takeIfConvertable(map)
 
                 user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
             }
@@ -257,7 +258,7 @@ import kotlin.time.Duration.Companion.seconds
         }
 
         if (userID != null) {
-            mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+            mode = inputMode.data.takeIfConvertable(map)
 
             val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(userID, mode) },
@@ -267,7 +268,7 @@ import kotlin.time.Duration.Companion.seconds
             user = async.first
             scores = async.second.toList()
         } else {
-            mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+            mode = inputMode.data.takeIfConvertable(map)
 
             user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
 
@@ -324,7 +325,7 @@ import kotlin.time.Duration.Companion.seconds
 
         val map: Beatmap = beatmapApiService.getBeatmap(recent.beatmapID)
 
-        val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+        val mode = inputMode.data.takeIfConvertable(map)
 
         if (!map.hasLeaderBoard) {
             return getFromDatabase(user, map, mode, mods, event)
@@ -339,7 +340,7 @@ import kotlin.time.Duration.Companion.seconds
     private fun getFromBefore(beforeBeatmapID: Long, userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher, mods: List<LazerMod>): ScoreData {
         val map = beatmapApiService.getBeatmap(beforeBeatmapID)
 
-        val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+        val mode = inputMode.data.takeIfConvertable(map)
 
         val user: OsuUser
         val scores: List<LazerScore>

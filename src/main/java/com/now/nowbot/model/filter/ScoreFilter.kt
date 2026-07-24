@@ -5,6 +5,7 @@ import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerModAcronyms
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
@@ -550,18 +551,17 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
         }
 
         fun fitMod(operator: Operator, compare: String, to: List<LazerMod>): Boolean {
-            val com = LazerMod.getModsList(compare)
-                .map { it.acronym }.toSet()
+            val com = compare.toLazerModAcronyms().toSet()
             val too = to
-                .map { it.acronym }.filter { it != "CL" }.toSet()
+                .map { it.acronym }.filter { it != LazerMod.Classic.type }.toSet()
 
-            return if (compare.isEmpty() || compare.contains("NM", ignoreCase = true)) {
+            return if (compare.isEmpty() || compare.contains(LazerMod.NoMod.type, ignoreCase = true)) {
                 when (operator) {
                     Operator.XQ, Operator.EQ -> too.isEmpty()
                     Operator.NE, Operator.GE, Operator.GT -> too.isNotEmpty()
                     else -> false
                 }
-            } else if (compare.contains("FM", ignoreCase = true)) {
+            } else if (compare.contains(LazerMod.FreeMod.type, ignoreCase = true)) {
                 when (operator) {
                     Operator.XQ, Operator.EQ -> too.isNotEmpty()
                     Operator.NE, Operator.LE, Operator.LT -> too.isEmpty()

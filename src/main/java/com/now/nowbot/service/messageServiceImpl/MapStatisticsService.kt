@@ -7,6 +7,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -126,7 +127,7 @@ class MapStatisticsService(
             }
         }
 
-        val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
+        val mods = matcher.group(FLAG_MOD).toLazerMods()
         val mode = matcher.group(FLAG_MODE).toOsuMode()
             .takeIfConvertable(beatmap)
 
@@ -249,7 +250,7 @@ class MapStatisticsService(
                 AsyncMethodExecutor.awaitList(
                     views.map { v ->
                         Callable { calculateApiService.applyStarToBeatmap(v,
-                            OsuMode.getConvertableMode(expected.mode, v.mode), expected.mods
+                            expected.mode.takeIfConvertable(v), expected.mods
                         ) }
                     }
                 )

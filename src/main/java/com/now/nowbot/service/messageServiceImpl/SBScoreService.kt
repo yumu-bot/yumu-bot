@@ -4,9 +4,11 @@ import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.contains
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -125,14 +127,14 @@ class SBScoreService(
 
              */
 
-            val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && inputMode.data!!.modeValue in 0..3) {
+            val rx = if (mods.contains(LazerMod.Relax) && inputMode.data!!.modeValue in 0..3) {
                 (inputMode.data!!.modeValue + 4.toByte()).toOsuMode()
             } else {
                 inputMode.data!!
             }
 
             if (id != null) {
-                mode = OsuMode.getConvertableMode(rx, map.mode)
+                mode = rx.takeIfConvertable(map)
 
                 val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getUser(id) },
@@ -144,7 +146,7 @@ class SBScoreService(
                     .filter { it.userID == id }
                     .map { it.toLazerScore() }
             } else {
-                mode = OsuMode.getConvertableMode(rx, map.mode)
+                mode = rx.takeIfConvertable(map)
 
                 user = InstructionUtil.getSBUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score").toOsuUser(mode)
 
@@ -176,21 +178,19 @@ class SBScoreService(
 
                 val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 
-                val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && currentMode.data!!.modeValue in 0..3) {
+                val rx = if (mods.contains(LazerMod.Relax) && currentMode.data!!.modeValue in 0..3) {
                     (currentMode.data!!.modeValue + 4.toByte()).toOsuMode()
                 } else {
                     currentMode.data!!
                 }
 
-                if (id != null) {
-
-                    user = userApiService.getUser(id)?.toOsuUser(rx) ?: throw NoSuchElementException.Player(id.toString())
-
+                user = if (id != null) {
+                    userApiService.getUser(id)?.toOsuUser(rx) ?: throw NoSuchElementException.Player(id.toString())
                 } else {
-                    user = InstructionUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(rx)
+                    InstructionUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(rx)
                 }
 
-                mode = OsuMode.getConvertableMode(rx, map.mode)
+                mode = rx.takeIfConvertable(map)
 
                 scores = scoreApiService.getBeatmapRecentScore(bid, mods, mode)
                     .filter { it.userID == user.userID }
@@ -220,7 +220,7 @@ class SBScoreService(
 
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 
-            val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && currentMode.data!!.modeValue in 0..3) {
+            val rx = if (mods.contains(LazerMod.Relax) && currentMode.data!!.modeValue in 0..3) {
                 (currentMode.data!!.modeValue + 4.toByte()).toOsuMode()
             } else {
                 currentMode.data!!
@@ -256,7 +256,7 @@ class SBScoreService(
 
             map = beatmapApiService.getBeatmap(recent.beatmapID)
 
-            mode = OsuMode.getConvertableMode(rx, map.mode)
+            mode = rx.takeIfConvertable(map)
 
             scores = scoreApiService.getBeatmapRecentScore(bid, mods, mode)
                 .filter { it.userID == user.userID }

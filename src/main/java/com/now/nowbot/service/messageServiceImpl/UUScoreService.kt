@@ -4,6 +4,7 @@ import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
@@ -103,7 +104,7 @@ import java.util.regex.Matcher
             }
 
             if (id != null) {
-                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+                mode = inputMode.data.takeIfConvertable(map)
 
                 val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getOsuUser(id, mode) },
@@ -113,7 +114,7 @@ import java.util.regex.Matcher
                 user = async.first
                 scores = async.second.toList()
             } else {
-                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+                mode = inputMode.data.takeIfConvertable(map)
 
                 user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
 
@@ -160,7 +161,7 @@ import java.util.regex.Matcher
                     InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
                 }
 
-                mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
+                mode = currentMode.data.takeIfConvertable(map)
 
                 scores = scoreApiService.getBeatmapScores(beforeBeatmapID, user.userID, mode)
 
@@ -215,7 +216,7 @@ import java.util.regex.Matcher
                 throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
             }
 
-            mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
+            mode = currentMode.data.takeIfConvertable(map)
 
             scores = scoreApiService.getBeatmapScores(recent.beatmapID, user.userID, mode)
         }

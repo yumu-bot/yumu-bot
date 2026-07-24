@@ -3,13 +3,11 @@ package com.now.nowbot.util
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.contains
 import com.now.nowbot.model.osu.LazerMod.Companion.getClockRate
 import com.now.nowbot.model.osu.LazerMod.Companion.getKey
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.Mod
-import java.math.BigDecimal
-import java.math.RoundingMode
 import kotlin.collections.forEach
 import kotlin.math.roundToInt
 
@@ -86,12 +84,10 @@ object BeatmapUtil {
     fun applyAR(ar: Float, mods: List<LazerMod>): Float {
         var a = ar
 
-        for (mod in mods) {
-            if (mod is LazerMod.DifficultyAdjust) {
-                if (mod.approachRate != null) return mod.approachRate!!.roundToDigits2()
-                break
-            }
-        }
+        mods.filterIsInstance<LazerMod.DifficultyAdjust>()
+            .firstNotNullOfOrNull { it.approachRate }
+            ?.roundToDigits2()
+            ?.let { return it }
 
         if (mods.contains(LazerMod.HardRock)) {
             a = (a * 1.4f).coerceIn(0f, 10f)
@@ -132,7 +128,7 @@ object BeatmapUtil {
         else -> (80 - ms) / 6f
     }
 
-    fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
+    fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode = OsuMode.OSU): Float {
         var o = od
         if (mods.contains(LazerMod.HardRock)) {
             o = (o * 1.4f).coerceIn(0f, 10f)
@@ -140,12 +136,10 @@ object BeatmapUtil {
             o = (o / 2f).coerceIn(0f, 10f)
         }
 
-        for (mod in mods) {
-            if (mod is LazerMod.DifficultyAdjust) {
-                if (mod.overallDifficulty != null) return mod.overallDifficulty!!.roundToDigits2()
-                break
-            }
-        }
+        mods.filterIsInstance<LazerMod.DifficultyAdjust>()
+            .firstNotNullOfOrNull { it.overallDifficulty }
+            ?.roundToDigits2()
+            ?.let { return it }
 
         // mania 模式内，模组改变速率不影响 OD
         val speed = if (mode == OsuMode.MANIA) {
@@ -163,19 +157,16 @@ object BeatmapUtil {
         return o.roundToDigits2()
     }
 
-    fun applyCS(cs: Float, mods: List<LazerMod>, mode: OsuMode): Float {
+    fun applyCS(cs: Float, mods: List<LazerMod>, mode: OsuMode = OsuMode.OSU): Float {
         var c = cs
 
-        for (mod in mods) {
-            if (mod is LazerMod.DifficultyAdjust) {
-                if (mod.circleSize != null) {
-                    return mod.circleSize!!.roundToDigits2()
-                }
-            }
-        }
+        mods.filterIsInstance<LazerMod.DifficultyAdjust>()
+            .firstNotNullOfOrNull { it.circleSize }
+            ?.roundToDigits2()
+            ?.let { return it }
 
         if (mode.safeModeValue == 0.toByte()) {
-            mods.getKey(cs)?.let { return it }
+            c = mods.getKey(cs)
         }
 
         if (mods.contains(LazerMod.HardRock)) {
@@ -190,12 +181,10 @@ object BeatmapUtil {
     fun applyHP(hp: Float, mods: List<LazerMod>): Float {
         var h = hp
 
-        for (mod in mods) {
-            if (mod is LazerMod.DifficultyAdjust) {
-                if (mod.drainRate != null) return mod.drainRate!!.roundToDigits2()
-                break
-            }
-        }
+        mods.filterIsInstance<LazerMod.DifficultyAdjust>()
+            .firstNotNullOfOrNull { it.drainRate }
+            ?.roundToDigits2()
+            ?.let { return it }
 
         if (mods.contains(LazerMod.HardRock)) {
             h *= 1.4f
@@ -213,7 +202,5 @@ object BeatmapUtil {
         return ((length ?: 0).toDouble() / mods.getClockRate().coerceAtLeast(0.01f)).roundToInt()
     }
 
-    private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
-
-    private inline fun <reified T : Mod> List<LazerMod>.contains(type: T) = LazerMod.hasMod(this, type)
+    private fun Float.roundToDigits2(): Float = kotlin.math.round(this * 100f) / 100f
 }

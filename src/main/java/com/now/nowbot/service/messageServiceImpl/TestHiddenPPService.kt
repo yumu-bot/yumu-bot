@@ -5,6 +5,7 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
+import com.now.nowbot.model.osu.LazerMod.Companion.contains
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -81,7 +82,7 @@ class TestHiddenPPService(
             }
 
             for (bp in bps) {
-                if (LazerMod.hasMod(bp.mods, LazerMod.Hidden)) {
+                if (bp.mods.contains(LazerMod.Hidden)) {
                     hiddenPP += (bp.weight?.pp ?: 0.0)
                 }
             }

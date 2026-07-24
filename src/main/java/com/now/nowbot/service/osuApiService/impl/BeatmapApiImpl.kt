@@ -19,6 +19,7 @@ import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
+import com.now.nowbot.model.osu.LazerMod.Companion.toValue
 import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
@@ -613,7 +614,7 @@ class BeatmapApiImpl(
     override fun isNotOverRating(beatmapID: Long): Boolean {
         try {
             val map = beatmapDao.getBeatmapLite(beatmapID)!!
-            return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating!! <= STAR_BOUNDARY
+            return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating <= STAR_BOUNDARY
         } catch (_: Exception) {
         }
 
@@ -943,7 +944,7 @@ class BeatmapApiImpl(
             body["ruleset_id"] = mode.safeModeValue
         }
 
-        val modsInt = LazerMod.getModsValue(mods)
+        val modsInt = mods.toValue()
 
         if (!mods.isNullOrEmpty() && modsInt > 0) {
             body["mods"] = modsInt

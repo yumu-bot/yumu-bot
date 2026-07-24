@@ -16,6 +16,8 @@ import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.ActivityEvent.Companion.filterIsMapping
 import com.now.nowbot.model.osu.ActivityEvent.Companion.squash
+import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.skill.SkillMania
 import com.now.nowbot.model.skill.SkillMania6
 import com.now.nowbot.service.ImageService
@@ -629,14 +631,7 @@ import kotlin.time.Duration.Companion.days
 
             val mode = playMode.toOsuMode()
             val uid: Long
-            val modInt = if (mods.isNullOrBlank()) {
-                LazerMod.getModsValue(mods)
-            } else {
-                0
-            }
-
-            val scoreList: List<LazerScore>
-            var score: LazerScore? = null
+            val ms = mods.toLazerMods()
 
             try {
                 user = userApiService.getOsuUser(name)
@@ -645,33 +640,54 @@ import kotlin.time.Duration.Companion.days
                 throw TipsRuntimeException(NoSuchElementException.Player(name))
             }
 
-            if (mods.isNullOrBlank()) {
-                score = scoreApiService.getBeatmapScore(bid, uid, mode)!!.score
-            } else {
-                try {
-                    scoreList = scoreApiService.getBeatmapScores(bid, uid, mode)
-                    for (s in scoreList) {
-                        if (LazerMod.getModsValue(s.mods) == modInt) {
-                            score = s
-                            break
-                        }
+            val scores: List<LazerScore> = try {
+                if (mods.isNullOrBlank()) {
+                    val score = scoreApiService.getBeatmapScore(bid, uid, mode)?.score
+                        ?: throw TipsRuntimeException(NoSuchElementException.BeatmapScore(bid))
+
+                    listOf(score)
+                } else {
+                    val ss = scoreApiService.getBeatmapScores(bid, uid, mode)
+
+                    ss.filterMod(ms) {
+                        throw TipsRuntimeException(NoSuchElementException.BeatmapScoreFiltered(bid))
                     }
-                } catch (_: HttpClientErrorException.NotFound) {
-                    throw TipsRuntimeException(IllegalStateException.Fetch("成绩列表"))
                 }
+            } catch (_: HttpClientErrorException.NotFound) {
+                throw TipsRuntimeException(IllegalStateException.Fetch("成绩列表"))
             }
 
-            if (score == null) {
+            if (scores.isEmpty()) {
                 throw TipsRuntimeException(NoSuchElementException.BeatmapScore(bid))
             }
 
-            val image: ByteArray
+            val image: ByteArray = try {
+                if (scores.size > 1) {
+                    val map = beatmapApiService.getBeatmap(bid)
 
-            try {
-                val e5Param = ScorePRService.getE5Param(
-                    user, null, score, "S", beatmapApiService, calculateApiService
-                )
-                image = imageService.getPanel(e5Param.toMap(), "E5")
+                    beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
+                    calculateApiService.applyStarToScores(scores)
+
+                    // asyncDownloadBackground()
+
+                    val body = mapOf(
+                        "user" to user,
+
+                        "rank" to (1..(scores.size)).toList(),
+                        "scores" to scores,
+                        "panel" to "SS",
+                        "compact" to (scores.size > 100)
+                    )
+
+                    imageService.getPanel(body, "A5")
+                } else {
+                    val e5Param = ScorePRService.getE5Param(
+                        user, null, scores.first(), "S", beatmapApiService, calculateApiService
+                    )
+
+                    imageService.getPanel(e5Param.toMap(), "E5")
+                }
+
             } catch (_: Exception) {
                 throw TipsRuntimeException(IllegalStateException.Render("成绩列表"))
             }
@@ -788,7 +804,7 @@ import kotlin.time.Duration.Companion.days
             val mode = modeStr.toOsuMode(OsuMode.OSU)
             val beatmap = beatmapApiService.getBeatmap(bid)
             val beatmapset = beatmapApiService.getBeatmapset(beatmap.beatmapsetID)
-            val mods = LazerMod.getModsList(modStr)
+            val mods = modStr.toLazerMods()
 
             val expected = MapStatisticsService.Expected(
                 mode, accuracy ?: 1.0, combo?.toInt() ?: 0, miss?.toInt() ?: 0, mods, false
@@ -824,7 +840,7 @@ import kotlin.time.Duration.Companion.days
 
             val mode = modeStr.toOsuMode(OsuMode.OSU).takeIfConvertable(beatmap)
 
-            val mods = LazerMod.getModsList(modStr)
+            val mods = modStr.toLazerMods()
 
             val legacy = stable == true
 
@@ -1076,7 +1092,7 @@ import kotlin.time.Duration.Companion.days
     ): BeatmapDifficultyAttributes {
         return if (bid != null) {
             beatmapApiService.getAttributes(
-                bid, mode.toOsuMode(), LazerMod.getModsList(mods)
+                bid, mode.toOsuMode(), mods.toLazerMods()
             )
         } else {
             BeatmapDifficultyAttributes()
@@ -1270,9 +1286,12 @@ import kotlin.time.Duration.Companion.days
                 return ResponseEntity(
                     image, getImageHeader("${identifier}-${name}$extension", image.size), HttpStatus.OK
                 )
+            } catch (e: RuntimeException) {
+                log.error("${chinese}：运行时异常", e.message)
+                throw e
             } catch (e: Exception) {
-                log.error("${chinese}：API 异常", e)
-                throw TipsRuntimeException("${chinese}：API 异常\n${e.message}")
+                log.error("${chinese}：异常", e)
+                throw TipsRuntimeException("${chinese}：异常\n${e.message}")
             }
         }
 

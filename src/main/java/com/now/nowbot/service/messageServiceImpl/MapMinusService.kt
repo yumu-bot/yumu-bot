@@ -9,6 +9,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.getFinalRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.skill.Skill6
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -84,7 +85,7 @@ import kotlin.math.absoluteValue
     }
 
     private fun getMapMinusParam(event: MessageEvent, matcher: Matcher): MapMinusParam {
-        val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
+        val modsList: List<LazerMod> = matcher.group(FLAG_MOD).toLazerMods()
 
         val bid = matcher.group("bid")?.toLongOrNull()
             ?: dao.getLastBeatmapID(event)

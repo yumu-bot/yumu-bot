@@ -4,10 +4,12 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -146,11 +148,11 @@ class MatchMapService(
 
             val beatmap = beatmapApiService.getBeatmap(round.beatmapID)
 
-            val mode = OsuMode.getConvertableMode(round.mode, beatmap.mode)
+            val mode = round.mode.takeIfConvertable(beatmap)
 
             val original = BeatmapUtil.getDetailMap(beatmap)
 
-            val mods = LazerMod.getModsList(round.mods)
+            val mods = round.mods.toLazerMods()
 
             calculateApiService.applyStarToBeatmap(
                 beatmap,

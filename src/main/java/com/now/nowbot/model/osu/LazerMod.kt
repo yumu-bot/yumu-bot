@@ -3,12 +3,13 @@ package com.now.nowbot.model.osu
 import com.fasterxml.jackson.annotation.*
 import tools.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.throwable.botRuntimeException.ModsException
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.JacksonUtil.json
 import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import org.springframework.web.util.UriBuilder
+import kotlin.collections.isNullOrEmpty
 import kotlin.reflect.full.companionObjectInstance
+import kotlin.text.isNullOrEmpty
 
 sealed interface Mod {
     val type: String
@@ -130,7 +131,7 @@ sealed class LazerMod {
 
     override fun hashCode(): Int {
         var result = acronym.hashCode()
-        result = 31 * result + (settings?.hashCode() ?: 0)
+        result = 31 * result + settings.hashCode()
         return result
     }
 
@@ -2546,6 +2547,7 @@ sealed class LazerMod {
         override val color: String = KEY_MOD_COLOR
 
         companion object : Mod {
+            const val alias: String = "XK"
             override val type: String = "10K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key3, Key4, Key5, Key6, Key7, Key8, Key9)
@@ -2659,6 +2661,26 @@ sealed class LazerMod {
             Relax::class, Autopilot::class, Autoplay::class
         )
 
+        val hiddenSet = setOf(
+            Hidden.type,
+            Flashlight.type,
+            Blinds.type,
+            FadeIn.type,
+        )
+
+        val keyClasses = setOf(
+            Key1::class,
+            Key2::class,
+            Key3::class,
+            Key4::class,
+            Key5::class,
+            Key6::class,
+            Key7::class,
+            Key8::class,
+            Key9::class,
+            Key10::class,
+        )
+
         inline fun <reified T: LazerMod> List<T>.isValueMod(): Boolean {
             return this.all { it.settings == null && it::class.companionObjectInstance is ValueMod }
         }
@@ -2695,9 +2717,16 @@ sealed class LazerMod {
             }
         }
 
-        inline fun <reified T : Mod> hasModByString(mods: List<String>, type: T): Boolean {
-            return mods.any {
-                it.uppercase() == type.type
+        inline fun <reified T : Mod> List<LazerMod>.contains(type: T): Boolean {
+            return this.any {
+                it.acronym == type.type
+            }
+        }
+
+        inline fun <reified T : Mod> List<LazerMod>.contains(types: Collection<T>): Boolean {
+            val set = types.map { it.type }.toSet()
+            return this.any {
+                set.contains(it.acronym)
             }
         }
 
@@ -2707,8 +2736,8 @@ sealed class LazerMod {
         inline fun <reified T : LazerMod> hasMod(compare: Collection<T>, to: Collection<T>): Boolean {
             if (compare.isEmpty() || to.isEmpty()) return false
 
-            val compareSet = compare.map { it.acronym }.filter { it != "CL" || it.isNotEmpty() }.toSet()
-            val toSet = to.map { it.acronym }.filter { it != "CL" || it.isNotEmpty() }.toSet()
+            val compareSet = compare.map { it.acronym }.filter { it != Classic.type || it.isNotEmpty() }.toSet()
+            val toSet = to.map { it.acronym }.filter { it != Classic.type || it.isNotEmpty() }.toSet()
             val intersectSet = compareSet.intersect(toSet)
             return intersectSet.size == compareSet.size
         }
@@ -2719,50 +2748,28 @@ sealed class LazerMod {
             }
         }
 
-        fun containsHiddenAcronym(strings: List<String>?): Boolean {
-            if (strings.isNullOrEmpty()) return false
-
-            val hiddenSet = setOf(
-                Hidden.type,
-                Flashlight.type,
-                Blinds.type,
-                FadeIn.type,
-            )
-
-            return strings.any { hiddenSet.contains(it) }
+        fun List<String>?.containsHiddenAcronym(): Boolean {
+            return !this.isNullOrEmpty() && this.any { hiddenSet.contains(it) }
         }
 
-        fun List<LazerMod>.containsHidden(): Boolean {
-            val hiddenSet = setOf(
-                Hidden::class,
-                Flashlight::class,
-                Blinds::class,
-                FadeIn::class,
-            )
-            return this.any { hiddenSet.contains(it::class) }
+        fun List<LazerMod>?.containsHidden(): Boolean {
+            return !this.isNullOrEmpty() && this.any { hiddenSet.contains(it.acronym) }
         }
 
-        fun List<LazerMod>.getKey(cs: Float): Float? {
-            val keySet = setOf(
-                Key1::class,
-                Key2::class,
-                Key3::class,
-                Key4::class,
-                Key5::class,
-                Key6::class,
-                Key7::class,
-                Key8::class,
-                Key9::class,
-                Key10::class,
-            )
+        fun List<LazerMod>.getKey(cs: Float): Float {
+            val index = indexOfFirst { it::class in keyClasses }
 
-            if (this.any { it::class == DualStages::class }) {
-                return cs * 2.0f
+            val c = if (index != -1) {
+                (index + 1).toFloat()
+            } else {
+                cs
             }
 
-            val index = indexOfFirst { it::class in keySet }
-
-            return if (index != -1) (index + 1).toFloat() else null
+            return if (this.any { it::class == DualStages::class }) {
+                c * 2.0f
+            } else {
+                c
+            }
         }
 
         fun List<LazerMod>.toJson(): String {
@@ -2798,115 +2805,168 @@ sealed class LazerMod {
             return list[index]
         }
 
-        @JvmStatic
-        fun getModFromAcronym(acronym: String?): LazerMod {
-            return when (acronym?.uppercase()) {
-                Easy.type -> Easy()
-                NoFail.type -> NoFail()
-                HalfTime.type -> HalfTime()
-                Daycore.type -> Daycore()
-                HardRock.type -> HardRock()
-                SuddenDeath.type -> SuddenDeath()
-                Perfect.type -> Perfect()
-                DoubleTime.type -> DoubleTime()
-                Nightcore.type -> Nightcore()
-                Hidden.type -> Hidden()
-                Flashlight.type -> Flashlight()
-                Blinds.type -> Blinds()
-                StrictTracking.type -> StrictTracking()
-                AccuracyChallenge.type -> AccuracyChallenge()
-                TargetPractice.type -> TargetPractice()
-                DifficultyAdjust.type -> DifficultyAdjust()
-                Classic.type -> Classic()
-                Random.type -> Random()
-                Mirror.type -> Mirror()
-                Alternate.type -> Alternate()
-                SingleTap.type -> SingleTap()
-                Autoplay.type, Autoplay.alias -> Autoplay()
-                Cinema.type, Cinema.alias -> Cinema()
-                Relax.type -> Relax()
-                Autopilot.type -> Autopilot()
-                SpunOut.type -> SpunOut()
-                Transform.type -> Transform()
-                Wiggle.type -> Wiggle()
-                SpinIn.type -> SpinIn()
-                Grow.type -> Grow()
-                Deflate.type -> Deflate()
-                WindUp.type -> WindUp()
-                WindDown.type -> WindDown()
-                Traceable.type -> Traceable()
-                BarrelRoll.type -> BarrelRoll()
-                ApproachDifferent.type -> ApproachDifferent()
-                Muted.type -> Muted()
-                NoScope.type -> NoScope()
-                Magnetised.type -> Magnetised()
-                Repel.type -> Repel()
-                AdaptiveSpeed.type -> AdaptiveSpeed()
-                FreezeFrame.type -> FreezeFrame()
-                Bubbles.type -> Bubbles()
-                Synesthesia.type -> Synesthesia()
-                Depth.type -> Depth()
-                TouchDevice.type -> TouchDevice()
-                ScoreV2.type -> ScoreV2()
-                Swap.type -> Swap()
-                ConstantSpeed.type -> ConstantSpeed()
-                FloatingFruits.type -> FloatingFruits()
-                SimplifiedRhythm.type -> SimplifiedRhythm()
-                MovingFast.type -> MovingFast()
-                NoRelease.type -> NoRelease()
-                FadeIn.type -> FadeIn()
-                Cover.type -> Cover()
-                DualStages.type -> DualStages()
-                Invert.type, Invert.alias -> Invert()
-                HoldOff.type -> HoldOff()
-                Key1.type -> Key1()
-                Key2.type -> Key2()
-                Key3.type -> Key3()
-                Key4.type -> Key4()
-                Key5.type -> Key5()
-                Key6.type -> Key6()
-                Key7.type -> Key7()
-                Key8.type -> Key8()
-                Key9.type -> Key9()
-                Key10.type -> Key10()
-                NoMod.type -> NoMod()
-                FreeMod.type -> FreeMod()
-                Extra.type -> Extra()
-                Tiebreaker.type -> Tiebreaker()
-                else -> None()
+        private val modSuppliers: Map<String, () -> LazerMod> by lazy {
+            buildMap {
+                fun register(supplier: () -> LazerMod, vararg keys: String?) {
+                    for (key in keys) {
+                        if (!key.isNullOrEmpty()) {
+                            put(key.uppercase(), supplier)
+                        }
+                    }
+                }
+
+                register(::Easy, Easy.type)
+                register(::NoFail, NoFail.type)
+                register(::HalfTime, HalfTime.type)
+                register(::Daycore, Daycore.type)
+                register(::HardRock, HardRock.type)
+                register(::SuddenDeath, SuddenDeath.type)
+                register(::Perfect, Perfect.type)
+                register(::DoubleTime, DoubleTime.type)
+                register(::Nightcore, Nightcore.type)
+                register(::Hidden, Hidden.type)
+                register(::Flashlight, Flashlight.type)
+                register(::DifficultyAdjust, DifficultyAdjust.type)
+
+                register(::Autoplay, Autoplay.type, Autoplay.alias)
+                register(::Cinema, Cinema.type, Cinema.alias)
+                register(::Relax, Relax.type)
+                register(::Autopilot, Autopilot.type)
+                register(::SpunOut, SpunOut.type)
+
+                register(::Blinds, Blinds.type)
+                register(::StrictTracking, StrictTracking.type)
+                register(::AccuracyChallenge, AccuracyChallenge.type)
+                register(::TargetPractice, TargetPractice.type)
+                register(::Classic, Classic.type)
+                register(::Random, Random.type)
+                register(::Mirror, Mirror.type)
+                register(::Alternate, Alternate.type)
+                register(::SingleTap, SingleTap.type)
+                register(::Transform, Transform.type)
+                register(::Wiggle, Wiggle.type)
+                register(::SpinIn, SpinIn.type)
+                register(::Grow, Grow.type)
+                register(::Deflate, Deflate.type)
+                register(::WindUp, WindUp.type)
+                register(::WindDown, WindDown.type)
+                register(::Traceable, Traceable.type)
+                register(::BarrelRoll, BarrelRoll.type)
+                register(::ApproachDifferent, ApproachDifferent.type)
+                register(::Muted, Muted.type)
+                register(::NoScope, NoScope.type)
+                register(::Magnetised, Magnetised.type)
+                register(::Repel, Repel.type)
+                register(::AdaptiveSpeed, AdaptiveSpeed.type)
+                register(::FreezeFrame, FreezeFrame.type)
+                register(::Bubbles, Bubbles.type)
+                register(::Synesthesia, Synesthesia.type)
+                register(::Depth, Depth.type)
+                register(::TouchDevice, TouchDevice.type)
+                register(::ScoreV2, ScoreV2.type)
+                register(::Swap, Swap.type)
+                register(::ConstantSpeed, ConstantSpeed.type)
+                register(::FloatingFruits, FloatingFruits.type)
+                register(::SimplifiedRhythm, SimplifiedRhythm.type)
+                register(::MovingFast, MovingFast.type)
+                register(::NoRelease, NoRelease.type)
+                register(::FadeIn, FadeIn.type)
+                register(::Cover, Cover.type)
+                register(::DualStages, DualStages.type)
+                register(::Invert, Invert.type, Invert.alias)
+                register(::HoldOff, HoldOff.type)
+
+                register(::Key1, Key1.type)
+                register(::Key2, Key2.type)
+                register(::Key3, Key3.type)
+                register(::Key4, Key4.type)
+                register(::Key5, Key5.type)
+                register(::Key6, Key6.type)
+                register(::Key7, Key7.type)
+                register(::Key8, Key8.type)
+                register(::Key9, Key9.type)
+                register(::Key10, Key10.type, Key10.alias)
+
+                register(::NoMod, NoMod.type)
+                register(::FreeMod, FreeMod.type)
+                register(::Extra, Extra.type)
+                register(::Tiebreaker, Tiebreaker.type)
             }
         }
 
-        fun splitModAcronyms(acronyms: String): List<String> {
-            val newStr = acronyms.uppercase()
-                .replace(REGEX_SPACE_MORE, "")
-            if (newStr.length % 2 != 0) {
-                throw ModsException.CharNotPaired(newStr)
+        /**
+         * 必须2个字符或3个字符
+         */
+        fun String?.toLazerMod(): LazerMod {
+            if (this.isNullOrEmpty()) return None()
+
+            val key = this.uppercase()
+            val supplier = modSuppliers[key]
+
+            return supplier?.invoke() ?: None()
+        }
+
+        /**
+         * splitModAcronyms(acronyms: String): List<String>
+         */
+        fun String?.toLazerModAcronyms(): List<String> {
+            if (this.isNullOrBlank()) return emptyList()
+
+            val clean = this.replace(REGEX_SPACE_MORE, "").uppercase()
+            val result = mutableListOf<String>()
+
+            var i = 0
+            while (i < clean.length) {
+                // 1. 如果剩余长度 >= 3，优先尝试提取 3 个字符
+                if (i + 3 <= clean.length) {
+                    val possible3 = clean.substring(i, i + 3)
+                    val mod3 = possible3.toLazerMod()
+                    if (mod3 !is None) {
+                        result.add(mod3.acronym)
+                        i += 3 // 成功匹配 3 字符 Mod，指针前进 3 步
+                        continue
+                    }
+                }
+
+                // 2. 尝试提取 2 个字符
+                if (i + 2 <= clean.length) {
+                    val possible2 = clean.substring(i, i + 2)
+                    val mod2 = possible2.toLazerMod()
+                    if (mod2 !is None) {
+                        result.add(mod2.acronym)
+                        i += 2 // 成功匹配 2 字符 Mod，指针前进 2 步
+                        continue
+                    }
+                }
+
+                // 3. 如果 3 字符和 2 字符都匹配失败，说明遇到了非法字符或无法识别的缩写，跳过 1 个字符防止死循环
+                i++
             }
-            val list = newStr.chunked(2)
-            return list
+
+            return result
         }
 
-        fun getModsList(acronym: String?): List<LazerMod> {
-            if (acronym.isNullOrBlank()) return emptyList()
-            return getModsList(splitModAcronyms(acronym))
+        /**
+         * 字符串
+         */
+        fun String?.toLazerMods(): List<LazerMod> {
+            if (this.isNullOrBlank()) return emptyList()
+            return this.toLazerModAcronyms().toLazerMods()
         }
 
-        fun getModsList(mods: List<String>?): List<LazerMod> {
-            if (mods.isNullOrEmpty()) return emptyList()
-            return mods
-                .map { getModFromAcronym(it) }
+        fun List<String>?.toLazerMods(): List<LazerMod> {
+            if (this.isNullOrEmpty()) return emptyList()
+
+            return this
+                .map { it.toLazerMod() }
                 .distinctBy { it::class }
                 .filter { it !is None }
         }
 
-        fun getModsValue(acronym: String?): Int {
-            return getModsValue(getModsList(acronym))
-        }
+        fun List<LazerMod>?.toValue(): Int {
+            if (this.isNullOrEmpty()) return 0
 
-        fun getModsValue(mods: List<LazerMod>?): Int {
-            if (mods.isNullOrEmpty()) return 0
-            return mods.mapNotNull {
+            return this.mapNotNull {
                 val klass = it::class.companionObjectInstance
                 return@mapNotNull if (klass is ValueMod) {
                     klass.value
@@ -2921,7 +2981,7 @@ sealed class LazerMod {
         /**
          * 原 speed 方法
          */
-        fun getInitialRate(mod: LazerMod): Float? {
+        private fun getInitialRate(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
                 is Daycore -> mod.speedChange ?: 0.7f
@@ -2937,7 +2997,7 @@ sealed class LazerMod {
         /**
          * 原 speed final 方法
          */
-        fun getFinalRate(mod: LazerMod): Float? {
+        private fun getFinalRate(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
                 is Daycore -> mod.speedChange ?: 0.7f
@@ -2989,8 +3049,8 @@ sealed class LazerMod {
         ): List<LazerScore> {
             if (mods.isEmpty()) return this
 
-            val isNoMod = mods.any { it.acronym == "NM" }
-            val isFreeMod = mods.any { it.acronym  == "FM" }
+            val isNoMod = mods.any { it.acronym == NoMod.type }
+            val isFreeMod = mods.any { it.acronym  == FreeMod.type }
 
             val filtered = if (isNoMod) {
                 this.filter { it.mods.isEmpty() }

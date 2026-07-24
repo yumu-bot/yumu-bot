@@ -924,9 +924,11 @@ enum class Instruction(val pattern: Pattern) {
 
     MAP_4D_CALCULATE(CommandPatternBuilder.create {
         appendCommands("cal", "calculate", "cl")
-        appendCaptureGroup("type", "ar|od|cs|hp", EXIST, EXIST)
+        appendMode()
         appendSpace()
-        appendCaptureGroup("value", PATTERN_NUMBER_DECIMAL, EXIST, EXIST)
+        appendCaptureGroup(FLAG_TYPE, "ar|od|cs|hp", EXIST, EXIST)
+        appendSpace()
+        appendCaptureGroup(FLAG_ANY, PATTERN_NUMBER_DECIMAL, EXIST, EXIST)
         appendSpace()
         appendMod(plusMust = true)
     }),

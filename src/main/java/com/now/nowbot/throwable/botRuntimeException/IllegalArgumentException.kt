@@ -51,6 +51,12 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class BeatmapsetID:
             WrongException("请输入正确的谱面集编号 (SID)！")
 
+        class Dimension:
+            WrongException("请输入正确的谱面四维 (CS、AR、OD、HP)！")
+
+        class DimensionValue:
+            WrongException("请输入正确的谱面四维参数 (CS、AR、OD、HP)！")
+
         class Instruction(command: String):
             WrongException("没有找到指令 $command。")
 

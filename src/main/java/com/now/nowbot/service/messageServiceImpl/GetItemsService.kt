@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -26,7 +27,6 @@ import com.now.nowbot.util.command.FLAG_MOD
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.FLAG_TIME
 import com.now.nowbot.util.command.REGEX_SEPARATOR
-import com.now.nowbot.util.command.REGEX_SEPARATOR_NO_SPACE
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -377,10 +377,7 @@ class GetItemsService(
             return sb.toString()
         }
 
-        val mods = LazerMod.getModsList(mod
-            .split(REGEX_SEPARATOR_NO_SPACE)
-            .dropLastWhile { it.isEmpty() }
-        )
+        val mods = mod.toLazerMods()
 
         val a = beatmapApiService.getAttributes(beatmapID, b.mode, mods)
         val newTotalLength = BeatmapUtil.applyLength(b.totalLength, mods).toFloat()
@@ -392,7 +389,7 @@ class GetItemsService(
             .append(String.format("%02d", (newTotalLength % 60.0).roundToInt()))
             .append(',')
         sb.append(a.maxCombo).append(',')
-            .append(String.format("%.2f", BeatmapUtil.applyCS(b.cs!!, mods))).append(',')
+            .append(String.format("%.2f", BeatmapUtil.applyCS(b.cs!!, mods, b.mode))).append(',')
             .append(String.format("%.2f", BeatmapUtil.applyAR(b.ar!!, mods))).append(',')
             .append(String.format("%.2f", BeatmapUtil.applyOD(b.od!!, mods, b.mode)))
 

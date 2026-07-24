@@ -13,6 +13,7 @@ import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
@@ -159,7 +160,7 @@ class LeaderBoardService(
 
         val type = getType(matcher.group(FLAG_TYPE2))
 
-        val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
+        val mods = matcher.group(FLAG_MOD).toLazerMods()
 
         val beatmap: Beatmap = beatmapApiService.getBeatmapFromAnyID(matcher) { dao.getLastBeatmapID(event) }
 

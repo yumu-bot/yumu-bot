@@ -179,10 +179,9 @@ class GroupLeaderBoardService(
                     throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
                 }
 
-                val filtered = filteredScores.filterMod(mods,
-                    {
-                        throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
-                    })
+                val filtered = filteredScores.filterMod(mods) {
+                    throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
+                }
 
                 filtered.sortedWith { a, b ->
                     val aIsF = a.rank == "F"

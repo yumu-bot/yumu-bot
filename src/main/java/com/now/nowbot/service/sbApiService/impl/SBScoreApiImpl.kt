@@ -3,6 +3,7 @@ package com.now.nowbot.service.sbApiService.impl
 import tools.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toValue
 import com.now.nowbot.model.ppysb.SBScore
 import com.now.nowbot.service.sbApiService.SBScoreApiService
 import com.now.nowbot.throwable.TipsException
@@ -55,15 +56,14 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                     .queryParamIfPresent("include_failed", Optional.ofNullable(includeFailed))
 
                 if (!mods.isNullOrEmpty()) {
-                    it.queryParam("mods", LazerMod.getModsValue(mods))
+                    it.queryParam("mods", mods.toValue())
                 }
 
                 it.build()
             }.toBody<JsonNode>().let {
                 parseList<SBScore>(it, "scores", "玩家成绩")
             }
-        }
-            .drop(off)
+        }.drop(off)
     }
 
     override fun getBeatmapScore(
@@ -96,7 +96,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                     .queryParam("limit", size)
 
                 if (!mods.isNullOrEmpty()) {
-                    it.queryParam("mods", LazerMod.getModsValue(mods))
+                    it.queryParam("mods", mods.toValue())
                 }
 
                 it.build()

@@ -6,6 +6,7 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -47,7 +48,7 @@ class PPPlusMapService(
             ?: dao.getLastBeatmapID(event)
             ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
-        val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
+        val mods = matcher.group(FLAG_MOD).toLazerMods()
         data.value = PPPlusParam(bid, mods)
         return true
     }
@@ -83,11 +84,11 @@ class PPPlusMapService(
     }
 
     private fun Beatmap.applyDimensions(mods: List<LazerMod>) {
-        if (mods.isNotEmpty()) {
-            cs = BeatmapUtil.applyCS(cs!!, mods)
-            ar = BeatmapUtil.applyAR(ar!!, mods)
-            od = BeatmapUtil.applyOD(od!!, mods, OsuMode.OSU)
-            hp = BeatmapUtil.applyHP(hp!!, mods)
+        mods.takeIf { it.isNotEmpty() }?.let { nonEmptyMods ->
+            cs = cs?.let { BeatmapUtil.applyCS(it, nonEmptyMods, mode) }
+            ar = ar?.let { BeatmapUtil.applyAR(it, nonEmptyMods) }
+            od = od?.let { BeatmapUtil.applyOD(it, nonEmptyMods, mode) }
+            hp = hp?.let { BeatmapUtil.applyHP(it, nonEmptyMods) }
         }
     }
 

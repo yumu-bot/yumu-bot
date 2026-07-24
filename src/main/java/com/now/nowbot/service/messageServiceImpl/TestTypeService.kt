@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.getFinalRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.skill.SkillType
 import com.now.nowbot.model.skill.Skill
 import com.now.nowbot.qq.event.MessageEvent
@@ -42,7 +43,7 @@ import org.springframework.stereotype.Service
             return false
         }
 
-        val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
+        val modsList: List<LazerMod> = matcher.group(FLAG_MOD).toLazerMods()
 
         val bid = matcher.group("bid")?.toLongOrNull()
             ?: dao.getLastBeatmapID(event)

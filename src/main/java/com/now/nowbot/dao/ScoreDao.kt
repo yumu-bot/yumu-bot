@@ -9,6 +9,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toValue
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.model.osu.OsuUser
@@ -52,7 +53,7 @@ class ScoreDao(
         }
 
         try {
-            beatmapStarRatingCacheRepository.saveAndUpdate(beatmapID, mode.modeValue, LazerMod.getModsValue(mods), star)
+            beatmapStarRatingCacheRepository.saveAndUpdate(beatmapID, mode.modeValue, mods.toValue(), star)
         } catch (e: Exception) {
             log.error("保存星级缓存失败", e)
         }
@@ -71,8 +72,7 @@ class ScoreDao(
      * 提前确保这里是 valueMod
      */
     fun getStarRatingCache(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>): Float? {
-        val modsValue: Int = LazerMod.getModsValue(mods)
-        return beatmapStarRatingCacheRepository.getStarRating(beatmapID, mode.modeValue, modsValue)
+        return beatmapStarRatingCacheRepository.getStarRating(beatmapID, mode.modeValue, mods.toValue())
     }
 
 

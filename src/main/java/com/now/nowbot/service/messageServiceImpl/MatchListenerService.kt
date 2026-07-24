@@ -7,7 +7,7 @@ import com.now.nowbot.model.match.MatchAdapter
 import com.now.nowbot.model.match.MatchListener
 import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -213,7 +213,7 @@ class MatchListenerService(
         } ?: Beatmap().apply { this.beatmapID = game.beatmapID }
 
         game.beatmap?.let {
-            calculateApiService.applyStarToBeatmap(it, game.mode, LazerMod.getModsList(game.mods))
+            calculateApiService.applyStarToBeatmap(it, game.mode, game.mods.toLazerMods())
         }
 
         // 批量获取用户信息
@@ -282,7 +282,7 @@ class MatchListenerService(
                 ?: mr.rounds.lastOrNull()
                 ?: throw NoSuchElementException.MatchRound()
 
-            BeatmapUtil.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
+            BeatmapUtil.applyBeatmapChanges(round.beatmap, round.mods.toLazerMods())
 
             // 排序逻辑
             round.scores = if (round.scores.size > 2) {

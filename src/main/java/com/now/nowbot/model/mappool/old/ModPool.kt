@@ -3,6 +3,7 @@ package com.now.nowbot.model.mappool.old
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMod
 import com.now.nowbot.util.DataUtil
 
 class ModPool(private val abbr: String, val beatmaps: List<Beatmap>) {
@@ -11,7 +12,7 @@ class ModPool(private val abbr: String, val beatmaps: List<Beatmap>) {
     val mod: LazerMod?
 
     init {
-        val m = LazerMod.getModFromAcronym(abbr)
+        val m = abbr.toLazerMod()
 
         mod = if (m !is LazerMod.None && abbr.isNotBlank()) {
             m
