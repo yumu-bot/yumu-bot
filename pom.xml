@@ -343,8 +343,8 @@
                         </goals>
                         <configuration>
                             <sourceDirs>
-                                <source>src/main/java</source>
-                                <source>target/generated-sources/annotations</source>
+<!--                                <sourceDir>src/main/java</sourceDir>-->
+                                <sourceDir>target/generated-sources/annotations</sourceDir>
                             </sourceDirs>
                         </configuration>
                     </execution>
@@ -356,8 +356,8 @@
                         </goals>
                         <configuration>
                             <sourceDirs>
-                                <source>src/test/java</source>
-                                <source>target/generated-test-sources/test-annotations</source>
+                                <sourceDir>src/test/java</sourceDir>
+                                <sourceDir>target/generated-test-sources/test-annotations</sourceDir>
                             </sourceDirs>
                         </configuration>
                     </execution>
