@@ -2661,12 +2661,14 @@ sealed class LazerMod {
             Relax::class, Autopilot::class, Autoplay::class
         )
 
-        val hiddenSet = setOf(
-            Hidden.type,
-            Flashlight.type,
-            Blinds.type,
-            FadeIn.type,
-        )
+        val hiddenSet by lazy {
+            setOf(
+                Hidden.type,
+                Flashlight.type,
+                Blinds.type,
+                FadeIn.type,
+            )
+        }
 
         val keyClasses = setOf(
             Key1::class,

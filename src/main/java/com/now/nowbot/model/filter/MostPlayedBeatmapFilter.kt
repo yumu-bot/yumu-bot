@@ -102,7 +102,7 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
                         || fit(operator, s.artistUnicode, str)
                         || fit(operator, s.source, str)
                 DIFFICULTY -> fit(operator, b.difficultyName, str)
-                STAR -> fit(operator, b.starRating, double, digit = 2, isRound = false, isInteger = true)
+                STAR -> fit(operator, b.starRating, double, isRound = false)
                 LENGTH -> {
                     val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
 

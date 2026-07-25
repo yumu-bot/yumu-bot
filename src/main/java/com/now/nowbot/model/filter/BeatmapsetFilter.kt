@@ -144,7 +144,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.difficultyName, str)
                 }.contains(true)
                 STAR -> bs.map {
-                    fit(operator, it.starRating, double, digit = 2, isRound = false, isInteger = true)
+                    fit(operator, it.starRating, double, isRound = false)
                 }.contains(true)
                 MODE -> bs.map {
                     fit(operator, it.modeInt!!, str.toOsuMode().modeValue)
@@ -153,16 +153,16 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.ranked, DataUtil.getStatusByte(str) ?: return false)
                 }.contains(true)
                 AR -> bs.map {
-                    fit(operator, it.ar, double, 2, isRound = true, isInteger = true)
+                    fit(operator, it.ar, double, isRound = true)
                 }.contains(true)
                 CS -> bs.map {
-                    fit(operator, it.cs, double, 2, isRound = true, isInteger = true)
+                    fit(operator, it.cs, double, isRound = true)
                 }.contains(true)
                 OD -> bs.map {
-                    fit(operator, it.od, double, 2, isRound = true, isInteger = true)
+                    fit(operator, it.od, double, isRound = true)
                 }.contains(true)
                 HP -> bs.map {
-                    fit(operator, it.hp, double, 2, isRound = true, isInteger = true)
+                    fit(operator, it.hp, double, isRound = true)
                 }.contains(true)
                 LENGTH -> {
                     val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
@@ -172,16 +172,16 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     }.contains(true)
                 }
                 BPM -> bs.map {
-                    fit(operator, it.bpm.toDouble(), double, 0, isRound = true, isInteger = true)
+                    fit(operator, it.bpm.toDouble(), double, isRound = true)
                 }.contains(true)
                 CIRCLE -> bs.map {
-                    fit(operator, it.circles!!.toLong(), long, 0, isRound = true, isInteger = true)
+                    fit(operator, it.circles!!.toLong(), long, isRound = true)
                 }.contains(true)
                 SLIDER -> bs.map {
-                    fit(operator, it.sliders!!.toLong(), long, 0, isRound = true, isInteger = true)
+                    fit(operator, it.sliders!!.toLong(), long, isRound = true)
                 }.contains(true)
                 SPINNER -> bs.map {
-                    fit(operator, it.spinners!!.toLong(), long, 0, isRound = true, isInteger = true)
+                    fit(operator, it.spinners!!.toLong(), long, isRound = true)
                 }.contains(true)
                 TOTAL -> {
                     bs.map {

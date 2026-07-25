@@ -151,16 +151,14 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             operator: Operator,
             compare: Any?,
             to: Any?,
-            digit: Int = 0,
             isRound: Boolean = true,
-            isInteger: Boolean = true,
         ): Boolean {
             return !(compare == null || to == null) && when (compare) {
                 is Number if to is Number -> {
                     if (isIntegral(compare) && isIntegral(to)) {
                         compareLongs(operator, compare.toLong(), to.toLong())
                     } else {
-                        compareDoubles(operator, compare.toDouble(), to.toDouble(), digit, isRound, isInteger)
+                        compareDoubles(operator, compare.toDouble(), to.toDouble(), isRound)
                     }
                 }
 
@@ -238,52 +236,45 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             }
         }
 
-        // 辅助方法：Double 集中比较（修正了取 abs() 的 Bug，保留符号）
         private fun compareDoubles(
             operator: Operator,
             compare: Double,
             to: Double,
-            digit: Int,
-            isRound: Boolean,
-            isInteger: Boolean
+            isRound: Boolean = false
         ): Boolean {
-
-            // 1. 确定保留的小数位数 dig
-            val dig = if (isInteger) {
-                // 将 to 格式化为最多 digit 位小数的字符串，保留末尾的 0（如 7.0 就是 "7.0"）
-                val formatted = String.format("%.${digit}f", to).trimEnd('0')
-                val dotIndex = formatted.indexOf('.')
-
-                val actualDigits = if (dotIndex >= 0) {
-                    formatted.substring(dotIndex + 1).length
-                } else {
-                    0
-                }
-
-                // 如果玩家输入的是 7.0，actualDigits 为 1；如果输入的是 7.27，actualDigits 为 2
-                actualDigits.coerceAtMost(digit)
-            } else {
-                digit
-            }
+            // 1. 【探针】：通过 to 自动识别小数位数 dig (例如 0.99 -> dig = 2; 0.991 -> dig = 3)
+            val bdTo = to.toBigDecimal().stripTrailingZeros()
+            val dig = maxOf(0, bdTo.scale())
 
             val scale = 10.0.pow(dig)
-            val rc = if (isRound && digit == dig) {
-                round(compare * scale) / scale
-            } else {
-                floor(compare * scale) / scale
-            }
-
-            val eps = 1e-9
-            val diff = rc - to
+            val eps = 1e-7 // 消除浮点数存储误差微小量
 
             return when (operator) {
-                Operator.XQ -> abs(compare - to) <= eps
-                Operator.EQ -> abs(diff) <= eps
-                Operator.NE -> abs(diff) > eps
-                Operator.GT -> diff > eps
-                Operator.GE -> diff >= -eps
-                Operator.LT -> diff < -eps
-                Operator.LE -> diff <= eps
+                Operator.XQ -> abs(compare - to) <= 1e-4
+
+                // 大小比较：直接拿原始 compare 比较，保留所有微小尾数 (如 0.9910 > 0.99)
+                Operator.GT -> (compare - to) > eps
+                Operator.GE -> (compare - to) >= -eps
+                Operator.LT -> (to - compare) > eps
+                Operator.LE -> (to - compare) >= -eps
+
+                // 等于 / 不等于：按照探针识别的 dig 精度做归一化 (匹配整个 0.990 ~ 0.999 档位)
+                Operator.EQ, Operator.NE -> {
+                    val normCompare = if (isRound) {
+                        round((compare + eps) * scale) / scale
+                    } else {
+                        floor((compare + eps) * scale) / scale
+                    }
+
+                    val normTo = if (isRound) {
+                        round((to + eps) * scale) / scale
+                    } else {
+                        floor((to + eps) * scale) / scale
+                    }
+
+                    val diff = normCompare - normTo
+                    if (operator == Operator.EQ) abs(diff) <= 1e-4 else abs(diff) > 1e-4
+                }
             }
         }
 
@@ -334,16 +325,16 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 DIFFICULTY -> fit(operator, it.beatmap.difficultyName, str)
 
-                STAR -> fit(operator, it.beatmap.starRating, double, digit = 2, isRound = false, isInteger = true)
+                STAR -> fit(operator, it.beatmap.starRating, double, isRound = false)
 
                 SCORE -> fit(operator, it.score, long)
 
                 REPLAY -> fit(operator, it.replay, !(str == "false" || str == "f") || long > 0)
 
-                AR -> fit(operator, it.beatmap.ar?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
-                CS -> fit(operator, it.beatmap.cs?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
-                OD -> fit(operator, it.beatmap.od?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
-                HP -> fit(operator, it.beatmap.hp?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                AR -> fit(operator, it.beatmap.ar?.toDouble() ?: 0.0, double, isRound = true)
+                CS -> fit(operator, it.beatmap.cs?.toDouble() ?: 0.0, double, isRound = true)
+                OD -> fit(operator, it.beatmap.od?.toDouble() ?: 0.0, double, isRound = true)
+                HP -> fit(operator, it.beatmap.hp?.toDouble() ?: 0.0, double, isRound = true)
                 PERFORMANCE -> fit(operator, it.pp.roundToLong(), long) //fit(operator, it.pp, double, digit = 0, isRound = true, isInteger = true)
                 RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
@@ -371,7 +362,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.beatmap.totalLength.toLong(), seconds)
                 }
 
-                BPM -> fit(operator, it.beatmap.bpm.toDouble(), double, digit = 2, isRound = true, isInteger = true)
+                BPM -> fit(operator, it.beatmap.bpm.toDouble(), double, isRound = true)
                 ACCURACY -> {
                     val acc = when {
                         double > 10000.0 || double <= 0.0 -> throw IllegalArgumentException.WrongException.Henan()
@@ -380,7 +371,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         else -> double
                     } // 0-1
 
-                    fit(operator, it.accuracy, acc, digit = 2, isRound = true, isInteger = true)
+                    fit(operator, it.accuracy, acc, isRound = false)
                 }
 
                 COMBO -> fitCountOrPercent(operator, it.maxCombo, double, it.beatmap.maxCombo, dec)
@@ -419,7 +410,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     val rate = min((it.statistics.perfect * 1.0 / it.statistics.great), 100.0)
                     val input = if (double > 0.0) min(double, 100.0) else double
 
-                    fit(operator, rate, input, digit = 2, isRound = true, isInteger = true)
+                    fit(operator, rate, input, isRound = true)
                 }
 
                 CIRCLE -> fitCountOrPercent(operator, it.beatmap.circles, double, it.beatmap.totalNotes, dec)
@@ -497,7 +488,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             val l = total?.toDouble() ?: 0.0
 
             return if (hasDecimal && t in 0.0..1.0 && operator !== Operator.XQ) {
-                l != 0.0 && fit(operator, c / l, t, digit = 2, isRound = true, isInteger = false)
+                l != 0.0 && fit(operator, c / l, t, isRound = true)
             } else {
                 fit(operator, compare.toLong(), t.toLong())
             }

@@ -107,12 +107,13 @@ class BeatmapDao(
         }
     }
 
-    private fun saveBeatmap(beatmap: Beatmap): BeatmapLite {
+    private fun saveBeatmap(beatmap: Beatmap) {
         val set = beatmap.beatmapset
-        if (set != null) {
+
+        if (set != null && set.beatmapsetID > 0) {
             beatmapsetRepository.save(fromBeatmapsetModel(set))
+            beatmapRepository.save(fromBeatmapModel(beatmap))
         }
-        return beatmapRepository.save(fromBeatmapModel(beatmap))
     }
 
     fun saveBeatmapsAsync(beatmaps: Collection<Beatmap>) {
