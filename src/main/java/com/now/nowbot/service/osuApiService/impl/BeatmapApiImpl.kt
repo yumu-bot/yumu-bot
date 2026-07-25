@@ -1,6 +1,7 @@
 package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.cache.BeatmapFileCacheProvider
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
@@ -20,6 +21,7 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.model.osu.LazerMod.Companion.toValue
+import com.now.nowbot.cache.BeatmapPathCacheProvider
 import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
@@ -37,7 +39,6 @@ import io.ktor.util.collections.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
@@ -71,6 +72,8 @@ class BeatmapApiImpl(
     private val beatmapDao: BeatmapDao,
     private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
     private val beatmapCountMapper: BeatmapCountMapper,
+    private val beatmapPathCacheProvider: BeatmapPathCacheProvider,
+    private val beatmapFileCacheProvider: BeatmapFileCacheProvider,
 
     @param:Qualifier("proxyRestClient") private val proxyClient: RestClient,
 
@@ -162,19 +165,25 @@ class BeatmapApiImpl(
     }
 
     override fun hasBeatmapFileFromDirectory(beatmapID: Long): Boolean {
-        val path = osuDir.resolve("$beatmapID.osu")
+        return beatmapPathCacheProvider.getOrPreparePath(beatmapID) {
+            val path = osuDir.resolve("$beatmapID.osu")
 
-        return Files.isRegularFile(path) && try {
-            if (Files.size(path) < 100) {
-                log.info("谱面实现：检查到僵尸文件 $beatmapID.osu，删除中...")
-                deleteBeatmapFileFromDirectory(beatmapID)
-                false
-            } else {
-                true
+            if (!Files.isRegularFile(path)) {
+                return@getOrPreparePath false
             }
-        } catch (_: Exception) {
-            false
-        }
+
+            try {
+                if (Files.size(path) < 100) {
+                    log.info("谱面实现：检查到僵尸文件 $beatmapID.osu，删除中...")
+                    deleteBeatmapFileFromDirectory(beatmapID)
+                    false
+                } else {
+                    true
+                }
+            } catch (_: Exception) {
+                false
+            }
+        } == true
     }
 
     override fun getBeatmapFileFromDirectory(beatmapID: Long): String? {
@@ -214,54 +223,51 @@ class BeatmapApiImpl(
 
         if (hasBeatmapFileFromDirectory(beatmapID)) {
             try {
-                Files.delete(path)
+                Files.deleteIfExists(path)
             } catch (e: IOException) {
                 log.error("osu 谱面 API：删除本地谱面文件失败: ", e)
                 return false
+            } finally {
+                beatmapPathCacheProvider.remove(beatmapID)
+                beatmapFileCacheProvider.remove(beatmapID)
             }
-
-            val str = getBeatmapFileString(beatmapID)
-
-            return !str.isNullOrBlank()
         }
 
-        return false
+        val content = getBeatmapFileString(beatmapID)
+
+        return !content.isNullOrBlank()
     }
 
-    private fun writeBeatmapFileToDirectory(str: String?, bid: Long): Boolean {
-        val path = osuDir.resolve("$bid.osu")
+    private fun writeBeatmapFileToDirectory(str: String?, beatmapID: Long): Boolean {
+        if (str.isNullOrBlank()) return false
 
-        if (!str.isNullOrBlank()) {
-            try {
-                Files.writeString(path, str, StandardCharsets.UTF_8)
-                return true
-            } catch (e: IOException) {
-                log.error("osu 谱面 API：写入本地谱面文件失败: ", e)
-                return false
-            }
-        } else {
-            return false
+        val path = osuDir.resolve("$beatmapID.osu")
+        return try {
+            Files.writeString(path, str, StandardCharsets.UTF_8)
+            beatmapPathCacheProvider.put(beatmapID)
+            true
+        } catch (e: IOException) {
+            log.error("osu 谱面 API：写入本地谱面文件失败: ", e)
+            false
         }
     }
 
-    @Cacheable(value = ["beatmap file"], key = "#beatmapID")
     override fun getBeatmapFileByte(beatmapID: Long): ByteArray? {
         return getBeatmapFileString(beatmapID)?.toByteArray(StandardCharsets.UTF_8)
     }
 
-    @Cacheable(value = ["beatmap file_path"], key = "#beatmapID")
     override fun getBeatmapFilePath(beatmapID: Long): String {
-        var str: String? = null
-
         if (hasBeatmapFileFromDirectory(beatmapID)) {
-            str = osuDir.resolve("$beatmapID.osu").absolutePathString()
+            return osuDir.resolve("$beatmapID.osu").absolutePathString()
         }
 
-        if (!str.isNullOrBlank()) {
-            writeBeatmapFileToDirectory(getBeatmapFileStringFromOutside(beatmapID), beatmapID)
-        }
+        val content = getBeatmapFileStringFromOutside(beatmapID)
+            ?.takeIf { it.isNotBlank() }
+            ?: throw NoSuchElementException.BeatmapCache(beatmapID)
 
-        return str ?: osuDir.resolve("$beatmapID.osu").absolutePathString()
+        writeBeatmapFileToDirectory(content, beatmapID)
+
+        return osuDir.resolve("$beatmapID.osu").absolutePathString()
     }
 
 
@@ -329,23 +335,19 @@ class BeatmapApiImpl(
 
     // 获取谱面：先获取本地，再获取 bs api，最后获取网页
     override fun getBeatmapFileString(beatmapID: Long): String? {
-        var str: String? = null
+        return beatmapFileCacheProvider.getOrFetchString(beatmapID) {
 
-        if (hasBeatmapFileFromDirectory(beatmapID)) {
-            str = getBeatmapFileFromDirectory(beatmapID)
+            if (hasBeatmapFileFromDirectory(beatmapID)) {
+                val local = getBeatmapFileFromDirectory(beatmapID)
+                if (!local.isNullOrBlank()) {
+                    return@getOrFetchString local
+                }
+            }
+
+            getBeatmapFileStringFromOutside(beatmapID)
+                ?.takeIf { it.isNotBlank() }
+                ?.also { writeBeatmapFileToDirectory(it, beatmapID) }
         }
-
-        if (!str.isNullOrBlank()) {
-            return str
-        } else {
-            str = getBeatmapFileStringFromOutside(beatmapID)
-        }
-
-        if (!str.isNullOrBlank()) {
-            writeBeatmapFileToDirectory(str, beatmapID)
-        }
-
-        return str
     }
 
     // 查一下文件是否跟 checksum 是否对得上

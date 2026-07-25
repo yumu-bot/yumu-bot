@@ -14,7 +14,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import org.springframework.stereotype.Service
 import java.util.*
-import java.util.function.Consumer
 import java.util.regex.Matcher
 
 @Service("DRAW")
@@ -65,7 +64,7 @@ class DrawService(
         }
 
         val sb = StringBuilder()
-        clist.forEach(Consumer { c: DrawConfig.Card -> sb.append(c.name).append(", ") })
+        clist.forEach { c: DrawConfig.Card -> sb.append(c.name).append(", ") }
         event.replyAsync(sb.toString())
         return ServiceCallStatistic.building(event)
     }

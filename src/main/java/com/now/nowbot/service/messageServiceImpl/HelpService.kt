@@ -53,7 +53,7 @@ class HelpService(
         val mr = Instruction.REFRESH_HELP.matcher(messageText)
 
         if (mr.find() && Permission.isSuperAdmin(event.sender.contactID)) {
-            imageCacheProvider.clearCache()
+            imageCacheProvider.clear()
             event.replyAsync("已清除所有帮助文档的图片缓存。")
             return false
         }

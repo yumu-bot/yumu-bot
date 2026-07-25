@@ -1,5 +1,6 @@
 package com.now.nowbot.service.lxnsApiService.impl
 
+import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.LxnsConfig
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
@@ -11,15 +12,12 @@ import java.nio.file.Path
 class LxnsBaseService(
     @param:Qualifier("lxnsApiRestClient")
     val lxnsApiRestClient: RestClient,
-    lxnsConfig: LxnsConfig
+    lxnsConfig: LxnsConfig,
+    fileConfig: FileConfig
 ) {
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
-    // /home/spring/work/img/ExportFileV3/Maimai
-    final val maimaiPath: Path? = lxnsConfig.maimai
+    final val maimaiPath: Path? = Path.of(fileConfig.exportFile, lxnsConfig.maimai)
 
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Chunithm
-    // /home/spring/work/img/ExportFileV3/Chunithm
-    final val chunithmPath: Path? = lxnsConfig.chunithm
+    final val chunithmPath: Path? = Path.of(fileConfig.exportFile, lxnsConfig.chunithm)
 
     final val assetHost: String = lxnsConfig.assetHost
 

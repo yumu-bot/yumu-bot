@@ -10,10 +10,18 @@ import jakarta.persistence.Table
 
 @Entity @Table(name = "osu_bind_discord")
 class DiscordBindLite {
-    @Id var id: String? = null
+    @Id
+    var id: String? = null
 
-    @OneToOne(targetEntity = OsuBindUserLite::class, orphanRemoval = true) var osuUser: OsuBindUserLite? = null
+    @OneToOne(targetEntity = OsuBindUserLite::class, orphanRemoval = true)
+    var osuUser: OsuBindUserLite? = null
 
     val bindUser: BindUser?
         get() = fromLite(osuUser)
+
+    interface QQUser {
+        val qid: Long
+        val uid: Long
+        val name: String
+    }
 }

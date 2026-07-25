@@ -140,12 +140,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
         /**
          * @param compare 被比较的数据
          * @param to 输入的数据，这里认为你已经在外面 standardized 了，否则开销是 O(N^2)
-         * @param digit 需要比较的位数。比如星数，这里就需要输入 2，这样假设条件是 star=7.27，会返回 7.27 ..< 7.28 的谱面。
          * @param isRound 如果为真，则会按照四舍五入的方式处理 compare（比如表现分）。否则按照向下取整的方式处理 compare（比如星数或者准确率）。
-         * @param isInteger 如果为真，则会在 to 接近某位时，digit 按当前位数处理。
-         * 如果当前位数小于 digit，则 isRound 会设定为假（默认 floor）
-         * 此设置只会影响 EQ 运算符。假如 star=7.1，此时会返回 7.10 ..< 7.20 的谱面。XQ 不受影响。
-         * 如果您需要比较 0-1 之间的数据，这个最好设为假。
          */
         fun fit(
             operator: Operator,

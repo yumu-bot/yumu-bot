@@ -29,7 +29,11 @@ import kotlin.math.pow
 
 @Component
 @Configuration
-class RestClientConfig {
+class RestClientConfig(
+    osuConfig: OsuConfig
+) {
+
+    val useProxy = osuConfig.useProxy != false
 
     @Bean("osuApiRestClient")
     @Qualifier("osuApiRestClient")
@@ -54,7 +58,7 @@ class RestClientConfig {
             .setConnectionManager(connectionManager)
             .setDefaultRequestConfig(requestConfig)
 
-        if (hasProxy && USE_PROXY) {
+        if (hasProxy && useProxy) {
             val proxy = HttpHost(
                 config.proxyHost,
                 config.proxyPort
@@ -107,7 +111,7 @@ class RestClientConfig {
             .setConnectionManager(connectionManager)
             .setDefaultRequestConfig(requestConfig)
 
-        if (hasProxy && USE_PROXY) {
+        if (hasProxy && useProxy) {
             val proxy = HttpHost(
                 config.proxyHost,
                 config.proxyPort
@@ -206,7 +210,6 @@ class RestClientConfig {
         .build()
 
     companion object {
-        const val USE_PROXY = false
 
         val otherConnectionPoolManager = PoolingHttpClientConnectionManager().apply {
             maxTotal = 1000

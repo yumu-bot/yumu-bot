@@ -77,36 +77,35 @@ class OneBotListener(
     @GroupMessageHandler
     @Async
     fun handle(bot: Bot, groupEvent: GroupMessageEvent) {
-        val groupID = groupEvent.groupId
-        val messageID = "[${groupID}|${groupEvent.sender.userId}]${groupEvent.subType}(${groupEvent.time})"
-        if (!idempotentService.checkByMessageId(messageID)) {
-            return
-        }
-
-        // log.debug("收到消息 {}", messageID)
-
         var nowTime = System.currentTimeMillis()
+
         if (groupEvent.time < 1e10) {
             nowTime /= 1000
         }
 
-        // 对于超过 30秒 的消息直接舍弃, 解决重新登陆后疯狂刷命令
         if (nowTime - groupEvent.time > 30) return
 
-        val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, groupEvent)
+        val messageID = "[${groupEvent.groupId}|${groupEvent.sender.userId}]${groupEvent.subType}(${groupEvent.messageId})"
 
-        messageCacheProvider.putMessage(
-            message = groupEvent
-        )
+        // 3. 【幂等拦截 + 执行】
+        idempotentService.executeIdempotent(messageID) {
+            val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, groupEvent)
 
-        // if (event.getGroup().getId() != 746671531) return;
-        if (event.sender.contactID == 365246692L) {
-            ContextUtil.setContext("isTest", java.lang.Boolean.TRUE)
-        }
-        try {
-            PermissionImplement.onMessage(event) { event: MessageEvent, e: Throwable -> this.errorHandle(event, e) }
-        } finally {
-            ContextUtil.remove()
+            messageCacheProvider.putMessage(
+                message = groupEvent
+            )
+
+            if (event.sender.contactID == 365246692L) {
+                ContextUtil.setContext("isTest", java.lang.Boolean.TRUE)
+            }
+
+            try {
+                PermissionImplement.onMessage(event) { messageEvent: MessageEvent, e: Throwable ->
+                    this.errorHandle(messageEvent, e)
+                }
+            } finally {
+                ContextUtil.remove()
+            }
         }
     }
 

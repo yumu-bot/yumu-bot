@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.aop.support.AopUtils
 import org.springframework.stereotype.Component
 import java.util.concurrent.*
-import java.util.function.BiConsumer
-import java.util.function.Consumer
 
 @Component
 class PermissionImplement(
@@ -78,7 +76,7 @@ class PermissionImplement(
             return false
         }
 
-        fun onMessage(event: MessageEvent, errorHandle: BiConsumer<MessageEvent, Throwable>) {
+        fun onMessage(event: MessageEvent, errorHandle: (MessageEvent, Throwable) -> Unit) {
             AsyncMessageUtil.put(event)
             val textMessage = event.textMessage
 
@@ -108,35 +106,30 @@ class PermissionImplement(
                         break
                     }
                 } catch (e: Throwable) {
-                    errorHandle.accept(event, e)
+                    errorHandle(event, e)
                     // 处理完错误后也直接跳出循环
                     break
                 }
             }
         }
 
-        fun onTencentMessage(event: MessageEvent, onMessage: Consumer<MessageChain>) {
+        fun onTencentMessage(event: MessageEvent, onMessage: (MessageChain) -> Unit) {
             val textMessage = event.textMessage
 
             if (!filterMessage(textMessage)) {
                 return
             }
 
-            //log.info("DEBUG: 开始处理消息, 内容: [$textMessage]") // 确认函数进来了
-
             val trim = textMessage.trim()
 
             for ((name, service) in serviceMap4TX) {
                 try {
                     val data = service.accept(event, trim) ?: continue
-                    // log.info("DEBUG: 匹配到 Service: $name") // 确认哪个 Service 领了任务
 
                     val reply = service.reply(event, data) ?: MessageChain("服务 $name 无响应。")
 
-                    // 关键点：保护回调函数
                     try {
-                        onMessage.accept(reply)
-                        //log.info("DEBUG: 消息发送成功")
+                        onMessage(reply)
                     } catch (callbackEx: Throwable) {
                         log.error("腾讯消息类：回复失败", callbackEx)
                     }
@@ -146,19 +139,18 @@ class PermissionImplement(
                     val er = e.findCauseOfType<TipsRuntimeException>()
                     
                     if (ex != null) {
-                        onMessage.accept(MessageChain(ex))
+                        onMessage(MessageChain(ex))
                     } else if (er != null) {
-                        onMessage.accept(MessageChain(er))
+                        onMessage(MessageChain(er))
                     } else {
                         log.error("腾讯消息类：神秘错误", e)
-                        onMessage.accept(MessageChain("服务 $name 出现未识别的错误。"))
+                        onMessage(MessageChain("服务 $name 出现未识别的错误。"))
                     }
                     return
                 }
             }
 
-            // log.info("DEBUG: 循环结束，未匹配任何指令")
-            onMessage.accept(MessageChain(IllegalArgumentException.WrongException.Instruction(trim)))
+            onMessage(MessageChain(IllegalArgumentException.WrongException.Instruction(trim)))
         }
 
         private fun checkStopListener(): Boolean {

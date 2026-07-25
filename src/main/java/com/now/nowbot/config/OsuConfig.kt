@@ -26,4 +26,10 @@ class OsuConfig {
     var id: Int = 0
 
     var token: String = "*"
+
+    /**
+     * 如果未设置值，也视为 true。
+     * 必须显式设为 false 才能关闭
+     */
+    var useProxy: Boolean? = true
 }

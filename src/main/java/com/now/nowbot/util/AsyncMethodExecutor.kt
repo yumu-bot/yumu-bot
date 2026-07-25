@@ -54,7 +54,7 @@ object AsyncMethodExecutor {
     private val results = ConcurrentHashMap<Any, Any>()
 
     @Throws(Exception::class)
-    fun <T : Any> execute(supplier: Supplier<T>, key: Any, defaultValue: T?): T? {
+    fun <T : Any> execute(key: Any, defaultValue: T?, supplier: () -> T): T? {
         reentrantLock.lock()
         val hasLock = locks.containsKey(key)
         val lock = locks.computeIfAbsent(key) {
@@ -69,7 +69,7 @@ object AsyncMethodExecutor {
     }
 
     @Throws(Exception::class)
-    fun <T : Any> execute(supplier: Supplier<T>, key: Any, getDefault: Supplier<T?>): T? {
+    fun <T : Any> execute(key: Any, getDefault: () -> T? = { null }, supplier: () -> T): T? {
         reentrantLock.lock()
         val hasLock = locks.containsKey(key)
         val lock = locks.computeIfAbsent(key) { reentrantLock.newCondition() }
@@ -83,7 +83,7 @@ object AsyncMethodExecutor {
 
     @Throws(Exception::class)
     @Suppress("UNCHECKED_CAST")
-    private fun <T> waitForResult(lock: Condition, key: Any, getDefault: Supplier<T>): T {
+    private fun <T> waitForResult(lock: Condition, key: Any, getDefault: () -> T): T {
         var countDownLock: CountDownLatch? = null
         try {
             reentrantLock.lock()
@@ -97,16 +97,16 @@ object AsyncMethodExecutor {
             }
             return result as T
         } catch (_: InterruptedException) {
-            return getDefault.get()
+            return getDefault()
         } finally {
             countDownLock?.countDown()
         }
     }
 
     @Throws(Exception::class)
-    private fun <T : Any> getResult(lock: Condition, key: Any, supplier: Supplier<T>): T {
+    private fun <T : Any> getResult(lock: Condition, key: Any, supplier: () -> T): T {
         try {
-            val result = supplier.get()
+            val result = supplier()
             results[key] = result
             return result
         } catch (e: Exception) {
@@ -115,7 +115,7 @@ object AsyncMethodExecutor {
         } finally {
             reentrantLock.lock()
             val locksSum = Util.getAndRemove(lock)
-            log.debug("异步操作：${supplier.javaClass.simpleName} 剩余锁数量：${locksSum}")
+            log.debug("异步操作：{} 剩余锁数量：{}", supplier.javaClass.simpleName, locksSum)
             val count = countDownLocks.computeIfAbsent(key) {
                 CountDownLatch(locksSum)
             }
@@ -577,29 +577,29 @@ object AsyncMethodExecutor {
     @JvmStatic
     @Throws(Exception::class)
     fun <T> awaitSupplierExecuteThrows(
-        works: Collection<Supplier<T>>,
+        works: Collection<() -> T>,
         timeout: Duration = 30.seconds
     ): List<T> {
         val size = works.size
         val phaser = Phaser(1)
         val results: MutableMap<Int, T> = ConcurrentHashMap(size)
         val taskThreads = ConcurrentSkipListSet<Thread>()
-        var exception: Exception? = null
+        var throwable: Throwable? = null
 
-        works.mapIndexed { i: Int, w: Supplier<T> ->
+        works.mapIndexed { i: Int, w: () -> T ->
             phaser.register()
             Runnable {
                 try {
                     if (!phaser.isTerminated) {
-                        val result = w.get()
+                        val result = w()
                         results[i] = result
                     }
-                } catch (e: Exception) {
-                    exception = e
+                } catch (e: Throwable) {
+                    throwable = e
                     taskThreads .forEach {
                         try {
                             it.interrupt()
-                        } catch (_: Exception) {}
+                        } catch (_: Throwable) {}
                     }
                     phaser.forceTermination()
                 } finally {
@@ -622,14 +622,9 @@ object AsyncMethodExecutor {
             log.error("lock error", e)
         }
 
-        exception?.let { throw it }
+        throwable?.let { throw it }
 
         return results.values.toList()
-    }
-
-
-    fun interface Supplier<T> : java.util.function.Supplier<T> {
-        override fun get(): T
     }
 
     fun interface Runnable : java.lang.Runnable {

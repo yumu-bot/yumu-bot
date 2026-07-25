@@ -1,6 +1,7 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.config.DivingFishConfig
+import com.now.nowbot.config.FileConfig
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
@@ -10,19 +11,16 @@ import java.nio.file.Path
 @Service
 class DivingFishBaseService(
     @param:Qualifier("divingFishApiRestClient") val divingFishApiRestClient: RestClient,
-    fishConfig: DivingFishConfig
+    fishConfig: DivingFishConfig,
+    fileConfig: FileConfig
 ) {
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
-    // /home/spring/work/img/ExportFileV3/Maimai
-    final val maimaiPath: Path? = fishConfig.maimai
+    final val maimaiPath: Path? = Path.of(fileConfig.exportFile, fishConfig.maimai)
 
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Chunithm
-    // /home/spring/work/img/ExportFileV3/Chunithm
-    final val chunithmPath: Path? = fishConfig.chunithm
+    final val chunithmPath: Path? = Path.of(fileConfig.exportFile, fishConfig.chunithm)
 
     // 这里写 token 相关的
     init {
-        if (fishConfig.token.isNullOrBlank().not()) {
+        if (fishConfig.token.isNotBlank()) {
             accessToken = fishConfig.token
         }
     }

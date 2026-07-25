@@ -7,7 +7,7 @@ import java.nio.file.Path
 
 @Validated
 @ConfigurationProperties(prefix = "yumu.diving-fish", ignoreInvalidFields = true)
-class DivingFishConfig {
+class DivingFishConfig{
     /**
      * 接口路径, 一般不用改
      */
@@ -15,11 +15,7 @@ class DivingFishConfig {
 
     var token: String = ""
 
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
-    // /home/spring/work/img/ExportFileV3/Maimai
-    var maimai: Path? = Path.of("/home/spring/work/img/ExportFileV3/Maimai")
+    var maimai: String = "Maimai"
 
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Chunithm
-    // /home/spring/work/img/ExportFileV3/Chunithm
-    var chunithm: Path? = Path.of("/home/spring/work/img/ExportFileV3/Chunithm")
+    var chunithm: String = "Chunithm"
 }

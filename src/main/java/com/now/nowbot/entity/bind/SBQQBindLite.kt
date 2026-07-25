@@ -11,10 +11,10 @@ import jakarta.persistence.Table
 @Table(name = "sb_bind_qq")
 data class SBQQBindLite(
     @Id
-    val qq: Long,
+    var qq: Long,
 
     @OneToOne(targetEntity = SBBindUserLite::class, orphanRemoval = true)
-    val bindUserLite: SBBindUserLite,
+    var bindUserLite: SBBindUserLite,
 ) {
     val bindUser: SBBindUser
         get() = bindUserLite.toSBBindUser()
