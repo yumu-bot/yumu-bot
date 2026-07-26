@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuMode
@@ -30,7 +30,7 @@ import java.util.regex.Matcher
     private val beatmapApiService: OsuBeatmapApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
-    private val bindDao: BindDao
+    private val groupDao: GroupDao,
 ) : MessageService<QualifiedMapService.QualifiedMapParam> {
 
     data class QualifiedMapParam(
@@ -123,7 +123,7 @@ import java.util.regex.Matcher
             throw IllegalArgumentException.WrongException.Henan()
         }
 
-        val mode = matcher.group(FLAG_MODE).toOsuMode(bindDao.getGroupMode(event))
+        val mode = matcher.group(FLAG_MODE).toOsuMode(groupDao.getGroupMode(event))
         val status = DataUtil.getStatus(statusStr)
         val genre = OsuGenre.getByte(genreStr)
         val sort = DataUtil.getSort(sortStr ?: "ranked_asc")

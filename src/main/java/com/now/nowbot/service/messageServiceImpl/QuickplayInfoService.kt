@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
@@ -31,7 +31,7 @@ class QuickplayInfoService(
     private val userApiService: OsuUserApiService,
     private val matchApiService: OsuMatchApiService,
     private val imageService: ImageService,
-    private val bindDao: BindDao
+    private val groupDao: GroupDao,
 ): MessageService<QuickplayInfoService.QuickplayInfoParam> {
     override fun isHandle(
         event: MessageEvent,
@@ -60,7 +60,7 @@ class QuickplayInfoService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): QuickplayInfoParam {
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event))
+        val mode = InstructionUtil.getMode(matcher, groupDao.getGroupMode(event))
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
         val variant: Byte = when (mode.data) {

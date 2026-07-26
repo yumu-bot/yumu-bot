@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.GuessDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
@@ -56,11 +56,11 @@ class GuessService(
     private val imageService: ImageService,
     private val serviceCallStatisticsDao: ServiceCallStatisticsDao,
     private val calculateApiService: OsuCalculateApiService,
-    private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val guessDao: GuessDao,
 ): MessageService<GuessService.GuessParam>, TencentMessageService<GuessService.GuessParam> {
     companion object {
-        private val KALEIDXSCOPE = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        private val KALEI_DX_SCOPE = CoroutineScope(Dispatchers.IO + SupervisorJob())
         private val CURRENT_GAMES = ConcurrentHashMap<Long, GuessGame>()
 
         // 1. 括号匹配正则（支持圆括号、方括号、尖括号等）
@@ -1115,7 +1115,7 @@ class GuessService(
 
         event.replyGuess(game, reply.toString())
 
-        KALEIDXSCOPE.launch {
+        KALEI_DX_SCOPE.launch {
             delay(500.milliseconds)
             if (game.trySettle()) {
                 event.saveAndReplyDone(game, "猜歌结束。", noGuess = true)
@@ -1132,7 +1132,7 @@ class GuessService(
     }
 
     fun getStartParam(event: MessageEvent, matcher: Matcher): GuessParam {
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event))
+        val mode = InstructionUtil.getMode(matcher, groupDao.getGroupMode(event))
 
         val userID = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
@@ -1197,7 +1197,7 @@ class GuessService(
                 this.replyAsync(text)
             }
 
-            KALEIDXSCOPE.launch {
+            KALEI_DX_SCOPE.launch {
                 delay(500.milliseconds)
                 this@replyGuess.replyAsync(game.getTextMessage())
             }

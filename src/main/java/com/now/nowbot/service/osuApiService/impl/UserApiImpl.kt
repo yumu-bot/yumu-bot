@@ -109,7 +109,7 @@ import java.util.concurrent.CancellationException
             }
         }
 
-        val result = bindDao.getBindUser(user.userID)!!
+        val result = bindDao.getBindUserOrNull(user.userID)!!
 
         if (user.isTokenAvailable == null) {
             throw BindException.Oauth2Exception.NeedRefresh()

@@ -1,9 +1,10 @@
 package com.now.nowbot.dao
 
-import com.github.benmanes.caffeine.cache.Cache
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.RemovalCause
 import com.now.nowbot.entity.*
+import com.now.nowbot.entity.OsuBindUserLite.Companion.toEntity
+import com.now.nowbot.entity.OsuBindUserLite.Companion.toModel
+import com.now.nowbot.entity.SBBindUserLite.Companion.toEntity
+import com.now.nowbot.entity.SBBindUserLite.Companion.toModel
 import com.now.nowbot.entity.bind.DiscordBindLite
 import com.now.nowbot.entity.bind.QQBindLite
 import com.now.nowbot.entity.bind.SBQQBindLite
@@ -11,14 +12,9 @@ import com.now.nowbot.mapper.*
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
-import com.now.nowbot.qq.contact.Group
-import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botRuntimeException.BindException
-import com.now.nowbot.throwable.botRuntimeException.BindException.BindIllegalArgumentException.IllegalQQ
 import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.UserNotBind
 import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.YouNotBind
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -30,9 +26,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.ObjectUtils
 import org.springframework.web.client.HttpClientErrorException
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.jvm.optionals.getOrNull
 
@@ -45,123 +39,75 @@ class BindDao(
     private val bindQQMapper: BindQQMapper,
     private val sbQQBindMapper: SBQQBindMapper,
     private val bindDiscordMapper: BindDiscordMapper,
-    private val osuGroupConfigRepository: OsuGroupConfigRepository
 ) {
     private val updateUserSet = ConcurrentHashMap.newKeySet<Long>()
     private val nowUpdate = AtomicBoolean(false)
 
     var log: Logger = LoggerFactory.getLogger(BindDao::class.java)
 
-    private val indexCache: MutableMap<Long, String> = ConcurrentHashMap()
-    private val captchaCache: Cache<String, Long?> = Caffeine.newBuilder()
-        .expireAfterWrite(2, TimeUnit.MINUTES)
-        .removalListener { _: Any?, id: Any?, _: RemovalCause? -> indexCache.remove(id) }
-        .build()
-    private val random = Random()
-
-    private fun generateRandomCode(): String {
-        val code = 100000 + random.nextInt(900000) // 6位数
-        return code.toString()
-    }
-
-    fun generateCaptcha(userID: Long): String {
-        val oldCode = indexCache.remove(userID)
-        if (oldCode != null) {
-            captchaCache.invalidate(oldCode)
-        }
-
-        var code: String
-        do {
-            code = generateRandomCode()
-        } while (captchaCache.getIfPresent(code) != null)
-
-        captchaCache.put(code, userID)
-        indexCache[userID] = code
-        return code
-    }
-
     /**
-     * 获取绑定的玩家
-     *
-     * @param qq       qq
-     * @param isMyself 仅影响报错信息，不影响结果
-     * @return 绑定的玩家
-     */
-    fun getBindFromQQ(qq: Long, isMyself: Boolean = false): BindUser {
-        if (qq < 0) {
-            return try {
-                getBindUserFromOsuID(-qq)
-            } catch (_: BindException) {
-                BindUser(-qq, "unknown")
-            }
-        }
-        val liteData = bindQQMapper.findById(qq).getOrNull()
-            ?: if (isMyself) {
-                throw YouNotBind()
-            } else {
-                throw UserNotBind()
-            }
-
-        val u = liteData.osuUser
-        return fromLite(u)!!
-    }
-
-    /**
-     * 不报错的方法
+     * 查询绑定关系（找不到时返回 null，不抛异常）
      */
     fun getBindFromQQOrNull(qq: Long): BindUser? {
-        return try {
-            getBindFromQQ(qq, true)
-        } catch (_: BindException) {
-            null
+        if (qq < 0) {
+            return getBindUserFromOsuIDOrNull(-qq)
+                ?: BindUser(-qq, "unknown")
         }
+
+        return bindQQMapper.findById(qq).getOrNull()?.osuUser?.toModel()
+    }
+
+    /**
+     * 查询绑定关系（找不到时抛出 BindException）
+     */
+    fun getBindFromQQ(qq: Long, isMyself: Boolean = false): BindUser {
+        return getBindFromQQOrNull(qq).throwIfNull(isMyself)
     }
 
     fun getBindFromIDs(ids: Iterable<Long>): List<BindUser> {
         val lites = bindQQMapper.findAllByUserID(ids)
-        return lites.map { fromLite(it.osuUser)!! }
+
+        return lites.mapNotNull { it.osuUser?.toModel() }
     }
 
     fun getBindFromQQs(qqs: Iterable<Long>): List<BindUser> {
-        val lites = bindQQMapper.findAllByUserID(bindQQMapper.findAllUserByQQ(qqs).map {it.uid})
-        return lites.map { fromLite(it.osuUser)!! }
+        val userIDs = bindQQMapper.findAllUserByQQ(qqs).map {it.uid}
+        val lites = bindQQMapper.findAllByUserID(userIDs)
+
+        return lites.mapNotNull { it.osuUser?.toModel() }
     }
 
     fun saveBind(user: BindUser): BindUser {
-        var lite = OsuBindUserLite(user)
-        lite = bindUserMapper.save(lite)
-        return fromLite(lite)!!
+        val lite = bindUserMapper.save(user.toEntity())
+        return lite.toModel()
     }
 
     fun updateBind(user: BindUser): Boolean {
-        bindUserMapper.update(
-            fromModel(user) ?: return false
-        )
+        bindUserMapper.update(user.toEntity())
 
         return true
     }
 
-    fun getBindUserFromOsuID(userID: Long?): BindUser {
-        if (userID == null) throw IllegalQQ()
+    /**
+     * 根据 Osu ID 查询绑定用户（找不到或参数非法时返回 null）
+     */
+    fun getBindUserFromOsuIDOrNull(userID: Long): BindUser? {
 
-        var liteData: OsuBindUserLite?
-        try {
-            liteData = bindUserMapper.getByOsuID(userID)
+        val liteData = try {
+            bindUserMapper.getByOsuID(userID)
         } catch (_: IncorrectResultSizeDataAccessException) {
             bindUserMapper.deleteOutdatedByOsuID(userID)
-            liteData = bindUserMapper.getByOsuID(userID)
+            bindUserMapper.getByOsuID(userID)
         }
 
-        if (liteData == null) throw UserNotBind()
-        return fromLite(liteData)!!
+        return liteData?.toModel()
     }
 
-    fun getBindUserFromOsuIDOrNull(userID: Long?): BindUser? {
-        return try {
-            getBindUserFromOsuID(userID)
-        } catch (_: BindException) {
-            null
-        }
+    /**
+     * 根据 Osu ID 查询绑定用户（找不到或参数非法时抛出对应异常）
+     */
+    fun getBindUserFromOsuID(userID: Long): BindUser {
+        return getBindUserFromOsuIDOrNull(userID) ?: throw UserNotBind()
     }
 
     fun getAllBindUser(userIDs: Collection<Long>): List<OsuBindUserLite> {
@@ -174,13 +120,6 @@ class BindDao(
 
     fun getQQLiteFromQQ(qq: Long): QQBindLite? {
         return bindQQMapper.findById(qq).getOrNull()
-    }
-
-    fun verifyCaptcha(code: String): Long? {
-        return captchaCache.getIfPresent(code)?.apply {
-            captchaCache.invalidate(code)
-            indexCache.remove(this)
-        }
     }
 
     fun bindQQ(qq: Long?, user: OsuBindUserLite): QQBindLite {
@@ -221,14 +160,16 @@ class BindDao(
         return bindQQMapper.save(qqBind)
     }
 
-    fun bindDiscord(discordId: String?, user: BindUser?): DiscordBindLite {
-        return bindDiscord(discordId, fromModel(user))
+    fun bindDiscord(discordID: String, user: BindUser): DiscordBindLite {
+        return bindDiscord(discordID, user.toEntity())
     }
 
-    fun bindDiscord(discordId: String?, user: OsuBindUserLite?): DiscordBindLite {
-        val discordBind = DiscordBindLite()
-        discordBind.id = discordId
-        discordBind.osuUser = user
+    fun bindDiscord(discordID: String, user: OsuBindUserLite?): DiscordBindLite {
+        val discordBind = DiscordBindLite().apply {
+            this.id = discordID
+            this.osuUser = user
+        }
+
         return bindDiscordMapper.save(discordBind)
     }
 
@@ -237,24 +178,30 @@ class BindDao(
      */
     fun getBindUserFromConstructor(user: BindUser): BindUser? {
         val fromToken = if (user.refreshToken != null) {
-            fromLite(bindUserMapper.getByRefreshToken(user.refreshToken))
+            val lite = bindUserMapper.getByRefreshToken(user.refreshToken)
+
+            lite?.toModel()
         } else null
 
-        return fromToken ?: getBindUser(user.userID)
+        return fromToken ?: getBindUserOrNull(user.userID)
     }
 
-    fun getBindUser(name: String): BindUser? {
-        val id = getOsuID(name) ?: return null
-        return fromLite(bindUserMapper.getByOsuID(id))
+    fun getBindUserOrNull(name: String): BindUser? {
+        val userID = getOsuID(name) ?: return null
+
+        val lite = bindUserMapper.getByOsuID(userID)
+        return lite?.toModel()
     }
 
-    fun getBindUser(userID: Long?): BindUser? {
+    fun getBindUserOrNull(userID: Long?): BindUser? {
         if (userID == null) return null
-        return fromLite(bindUserMapper.getByOsuID(userID))
+
+        val lite = bindUserMapper.getByOsuID(userID)
+        return lite?.toModel()
     }
 
     fun getBindModeFromID(userID: Long): OsuMode? {
-        return getBindUser(userID)?.mode
+        return getBindUserOrNull(userID)?.mode
     }
 
     fun getSBQQLiteFromUserID(userID: Long): SBQQBindLite? {
@@ -265,59 +212,61 @@ class BindDao(
         return sbQQBindMapper.findById(qq).getOrNull()
     }
 
-    fun getSBBindUser(name: String): SBBindUser {
-        return getSBBindUser(getSBUserID(name))
+    fun getSBBindUserOrNull(name: String): SBBindUser? {
+        val userID = getSBUserID(name) ?: return null
+
+        return getSBBindUser(userID)
     }
 
-    fun getSBBindUser(userID: Long?): SBBindUser {
-        if (userID == null) throw YouNotBind()
-
-        var liteData: SBBindUserLite?
-
-        try {
-            liteData = sbBindUserMapper.getUser(userID)
+    /**
+     * 根据 User ID 查询 SB 绑定用户（找不到或参数非法时返回 null，不抛异常）
+     */
+    fun getSBBindUserOrNull(userID: Long): SBBindUser? {
+        val liteData = try {
+            sbBindUserMapper.getUser(userID)
         } catch (_: IncorrectResultSizeDataAccessException) {
             sbBindUserMapper.deleteOutdatedBind(userID)
-            liteData = sbBindUserMapper.getUser(userID)
+            sbBindUserMapper.getUser(userID)
         }
 
-        if (liteData == null) throw UserNotBind()
-        return liteData.toSBBindUser()
+        return liteData?.toModel()
     }
 
-    fun getSBBindFromQQ(qq: Long, isMyself: Boolean): SBBindUser {
+    /**
+     * 根据 User ID 查询 SB 绑定用户（找不到时抛出异常）
+     */
+    fun getSBBindUser(userID: Long, isMyself: Boolean = true): SBBindUser {
+        return getSBBindUserOrNull(userID).throwIfNull(isMyself)
+    }
+
+    /**
+     * 根据 QQ 查询 SB 绑定用户（找不到时返回 null 或 unknown 兜底对象，不抛异常）
+     */
+    fun getSBBindFromQQOrNull(qq: Long): SBBindUser? {
         if (qq < 0) {
-            return try {
-                getSBBindUser(-qq)
-            } catch (_: BindException) {
-                SBBindUser(-qq, "unknown")
-            }
-        }
-        val liteData = sbQQBindMapper.findById(qq)
-        if (liteData.isEmpty) {
-            if (isMyself) {
-                throw YouNotBind()
-            } else {
-                throw UserNotBind()
-            }
+            return getSBBindUserOrNull(-qq)
+                ?: SBBindUser(-qq, "unknown")
         }
 
-        return liteData.get().bindUser
+        return sbQQBindMapper.findById(qq).getOrNull()?.bindUser
     }
 
-    fun saveBind(user: SBBindUser?): SBBindUser? {
-        if (user == null) return null
+    /**
+     * 根据 QQ 查询 SB 绑定用户（找不到时抛出对应异常）
+     */
+    fun getSBBindFromQQ(qq: Long, isMyself: Boolean): SBBindUser {
+        return getSBBindFromQQOrNull(qq).throwIfNull(isMyself)
+    }
 
-
-        var lite = user.toSBBindUserLite()
-        lite = sbBindUserMapper.save(lite)
-        return lite.toSBBindUser()
+    fun saveBind(user: SBBindUser): SBBindUser? {
+        val lite = sbBindUserMapper.save(user.toEntity())
+        return lite.toModel()
     }
 
     fun bindSBQQ(qq: Long, user: SBBindUser): SBQQBindLite {
         val data = sbBindUserMapper.getUser(user.userID)
         if (data == null) {
-            return bindSBQQ(qq, user.toSBBindUserLite())
+            return bindSBQQ(qq, user.toEntity())
         } else {
             data.userID = user.userID
             data.username = user.username
@@ -366,7 +315,7 @@ class BindDao(
         val bindUserLite = bindUserMapper.getByOsuID(user.userID)
 
         if (bindUserLite == null) {
-            return bindQQ(qq, fromModel(user)!!)
+            return bindQQ(qq, user.toEntity())
         } else {
             bindUserLite.accessToken = user.accessToken
             bindUserLite.refreshToken = user.refreshToken
@@ -537,10 +486,10 @@ class BindDao(
         updateSBNameToID(user.userID, names)
     }
 
-    fun getBindUserByDbId(id: Long?): BindUser? {
+    fun getBindUserByDatabaseID(id: Long?): BindUser? {
         if (id == null) return null
         val data = bindUserMapper.findById(id)
-        return fromLite(data.getOrNull() ?: return null)
+        return data.getOrNull()?.toModel()
     }
 
     @Async fun refreshOldUserToken(userApiService: OsuUserApiService) {
@@ -674,7 +623,7 @@ class BindDao(
 
         while (true) {
             try {
-                userApiService.getUserTokenOrBotToken(fromLite(u)!!)
+                userApiService.getUserTokenOrBotToken(u.toModel())
                 return true
             } catch(ue: NetworkException.UserException) {
                 when(ue) {
@@ -711,30 +660,8 @@ class BindDao(
         }
     }
 
-    val allGroupMode: Map<Long, OsuMode>
-        get() = osuGroupConfigRepository
-            .findAll().associate { lite ->
-                (lite.groupId ?: -1) to (lite.mainMode ?: OsuMode.DEFAULT)
-            }
-
-    fun getGroupMode(event: MessageEvent?): OsuMode {
-        if (event == null || event.subject !is Group) {
-            return OsuMode.DEFAULT
-        }
-
-        return osuGroupConfigRepository.findById(event.subject.contactID).getOrNull()?.mainMode ?: OsuMode.DEFAULT
-    }
-
-    fun saveGroupMode(groupID: Long, mode: OsuMode?) {
-        if (mode.isDefaultOrNull()) {
-            osuGroupConfigRepository.deleteById(groupID)
-        } else {
-            osuGroupConfigRepository.save(OsuGroupConfigLite(groupID, mode))
-        }
-    }
-
     fun getBindUsersLimit50(offset: Int): List<BindUser> {
-        return bindUserMapper.getAllBindUserLimit50(offset).mapNotNull { fromLite(it) }
+        return bindUserMapper.getAllBindUserLimit50(offset).map { it.toModel() }
     }
 
     fun getBindUserCount(): Long {
@@ -748,18 +675,12 @@ class BindDao(
     private class RefreshException(var successCount: Int) : RuntimeException()
     companion object {
 
-        fun fromLite(buLite: OsuBindUserLite?): BindUser? {
-            if (buLite == null) return null
-
-            val bu = BindUser()
-            bu.baseID = buLite.id
-            bu.userID = buLite.userID
-            bu.username = buLite.username
-            bu.accessToken = buLite.accessToken
-            bu.refreshToken = buLite.refreshToken
-            bu.time = buLite.time
-            bu.mode = buLite.mode
-            return bu
+        fun <T: Any> T?.throwIfNull(isMyself: Boolean = true): T {
+            return this ?: if (isMyself) {
+                throw YouNotBind()
+            } else {
+                throw UserNotBind()
+            }
         }
 
         fun fromModel(user: BindUser?): OsuBindUserLite? {

@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.cache.CaptchaProvider
 import com.now.nowbot.config.Permission
 import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
@@ -29,6 +30,7 @@ import java.util.function.Predicate
 @Service("BIND") class BindService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
+    private val captchaProvider: CaptchaProvider,
     val yumuConfig: YumuConfig
 ) : MessageService<BindService.BindParam> {
 
@@ -284,8 +286,8 @@ import java.util.function.Predicate
 
         // 绑定先判断是否是传入验证码
         if (isCaptcha) {
-            val uid = bindDao.verifyCaptcha(name)
-            val bu = bindDao.getBindUser(uid)
+            val uid = captchaProvider.verifyCaptcha(name)
+            val bu = bindDao.getBindUserOrNull(uid)
 
             if (bu != null && bu.hasToken) {
                 val mode = userApiService.getOsuUser(bu.userID).mode

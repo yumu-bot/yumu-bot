@@ -1,6 +1,7 @@
 package com.now.nowbot.entity.bind
 
 import com.now.nowbot.entity.SBBindUserLite
+import com.now.nowbot.entity.SBBindUserLite.Companion.toModel
 import com.now.nowbot.model.SBBindUser
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -17,7 +18,7 @@ data class SBQQBindLite(
     var bindUserLite: SBBindUserLite,
 ) {
     val bindUser: SBBindUser
-        get() = bindUserLite.toSBBindUser()
+        get() = bindUserLite.toModel()
 
     interface QQUser {
         val qid: Long

@@ -1,6 +1,7 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
@@ -20,7 +21,8 @@ import java.util.regex.Matcher
  */
 @Component
 class UserIDUtil(
-    private val bindDao: BindDao
+    private val bindDao: BindDao,
+    private val groupDao: GroupDao,
 ) {
     @PostConstruct
     fun init() {
@@ -274,7 +276,7 @@ class UserIDUtil(
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
             if (range.first != null && range.second == null && range.first in 201..999) try {
-                val user = bindDao.getBindUser(range.first.toString())
+                val user = bindDao.getBindUserOrNull(range.first.toString())
 
                 return if (user != null) {
                     setMode(mode, event, user.mode)
@@ -304,7 +306,7 @@ class UserIDUtil(
             if (range.data == null) {
                 result = InstructionRange(null, range.start, range.end)
             } else {
-                val user = bindDao.getBindUser(range.data!!)
+                val user = bindDao.getBindUserOrNull(range.data!!)
 
                 if (user != null) {
                     setMode(mode, event, user.mode)
@@ -354,7 +356,7 @@ class UserIDUtil(
             // 特殊情况，前面是某个 201~999 范围内的玩家
             if (range.first != null && range.second == null && range.first in 201..999) try {
                 val user = try {
-                    bindDao.getSBBindUser(range.first.toString())
+                    bindDao.getSBBindUserOrNull(range.first.toString())
                 } catch (_: BindException) {
                     null
                 }
@@ -388,7 +390,7 @@ class UserIDUtil(
                 result = InstructionRange(null, range.start, range.end)
             } else {
                 val user = try {
-                    bindDao.getSBBindUser(range.data!!)
+                    bindDao.getSBBindUserOrNull(range.data!!)
                 } catch (_: BindException) {
                     null
                 }
@@ -578,7 +580,7 @@ class UserIDUtil(
      */
     private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent, selfMode: OsuMode) {
         if (mode.data.isDefaultOrNull()) {
-            mode.data = bindDao.getGroupMode(event).orElse(selfMode)
+            mode.data = groupDao.getGroupMode(event).orElse(selfMode)
         }
     }
 
@@ -589,7 +591,7 @@ class UserIDUtil(
      */
     private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent? = null) {
         if (mode.data.isDefaultOrNull()) {
-            mode.data = bindDao.getGroupMode(event)
+            mode.data = groupDao.getGroupMode(event)
         }
     }
 

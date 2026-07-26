@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.*
@@ -37,7 +38,8 @@ import java.util.regex.Matcher
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val calculateApiService: OsuCalculateApiService,
-    private val bindDao: BindDao
+    private val bindDao: BindDao,
+    private val groupDao: GroupDao
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
     data class BAParam(val user: OsuUser, val bests: List<LazerScore>, val isMyself: Boolean, val mappers: List<MicroUser>, val version: Int) {
@@ -287,7 +289,7 @@ import java.util.regex.Matcher
         // 1. 使用 if 表达式并结合解构声明，集中处理数据的获取逻辑
         val (user, bests) = if (id != null) {
             val m = mode.data
-                .orElse(bindDao.getGroupMode(event))
+                .orElse(groupDao.getGroupMode(event))
                 .orElse(bindDao.getBindModeFromID(id))
 
             if (m.isNotDefault) {

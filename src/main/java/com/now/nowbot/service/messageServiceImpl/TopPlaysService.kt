@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
@@ -25,6 +26,7 @@ import java.util.regex.Matcher
 class TopPlaysService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val imageService: ImageService,
     private val calculateApiService: OsuCalculateApiService,
 ): MessageService<TopPlaysService.TopPlaysParam> {
@@ -77,7 +79,7 @@ class TopPlaysService(
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull()?.coerceIn(1, 20) ?: 1
 
         val mode = matcher.group(FLAG_MODE).toOsuMode()
-            .orElse(bindDao.getGroupMode(event))
+            .orElse(groupDao.getGroupMode(event))
             .orElse(bindDao.getBindModeFromID(event.sender.contactID))
 
         val nonDefaultMode = if (mode == OsuMode.DEFAULT) OsuMode.OSU else mode

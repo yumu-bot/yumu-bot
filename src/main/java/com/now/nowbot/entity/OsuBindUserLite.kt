@@ -52,4 +52,24 @@ data class OsuBindUserLite(
     constructor(data: BindUser) : this(
         data.baseID, data.userID, data.username, data.accessToken, data.refreshToken, 0, data.time, LocalDateTime.now(), data.mode
     )
+
+    companion object {
+        fun OsuBindUserLite.toModel(): BindUser {
+            val lite = this
+
+            return BindUser().apply {
+                baseID = id
+                userID = lite.userID
+                username = lite.username
+                accessToken = lite.accessToken
+                refreshToken = lite.refreshToken
+                time = lite.time
+                mode = lite.mode
+            }
+        }
+
+        fun BindUser.toEntity(): OsuBindUserLite {
+            return OsuBindUserLite(this)
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
@@ -30,6 +31,7 @@ import kotlin.math.min
 @Component
 class InstructionUtil(
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val userApiService: OsuUserApiService,
     private val sbUserApiService: SBUserApiService,
 ) {
@@ -127,7 +129,7 @@ class InstructionUtil(
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
             if (range.first != null && range.second == null && range.first in 201..999) try {
-                val bindMode = bindDao.getBindUser(range.first.toString())?.mode ?: OsuMode.DEFAULT
+                val bindMode = bindDao.getBindUserOrNull(range.first.toString())?.mode ?: OsuMode.DEFAULT
 
                 val user = try {
                     getOsuUser(range.first.toString(), mode.data)
@@ -160,7 +162,7 @@ class InstructionUtil(
             if (range.data == null) {
                 result = InstructionRange(null, range.start, range.end)
             } else {
-                val bindMode = bindDao.getBindUser(range.data!!)?.mode ?: OsuMode.DEFAULT
+                val bindMode = bindDao.getBindUserOrNull(range.data!!)?.mode ?: OsuMode.DEFAULT
 
                 setMode(mode, event, bindMode)
                 val user = getOsuUser(range.data!!, mode.data)
@@ -270,11 +272,8 @@ class InstructionUtil(
             // 特殊情况，前面是某个 201~999 范围内的玩家
             if (range.first != null && range.second == null && range.first in 201..999) try {
 
-                val bindMode = try {
-                    bindDao.getSBBindUser(range.first.toString()).mode
-                } catch (_: Exception) {
-                    OsuMode.DEFAULT
-                }
+                val bindMode = bindDao.getSBBindUserOrNull(range.first.toString())?.mode
+                    .orElse(OsuMode.DEFAULT)
 
                 val user = sbUserApiService.getUser(username = range.first.toString())
 
@@ -303,7 +302,7 @@ class InstructionUtil(
             if (range.data == null) {
                 result = InstructionRange(null, range.start, range.end)
             } else {
-                val bindMode = bindDao.getBindUser(range.data!!)?.mode ?: OsuMode.DEFAULT
+                val bindMode = bindDao.getBindUserOrNull(range.data!!)?.mode ?: OsuMode.DEFAULT
 
                 setMode(mode, selfMode = bindMode)
                 val user = sbUserApiService.getUser(username = range.data!!)
@@ -580,7 +579,7 @@ class InstructionUtil(
      */
     private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent, selfMode: OsuMode) {
         if (mode.data.isDefaultOrNull()) {
-            mode.data = bindDao.getGroupMode(event).orElse(selfMode)
+            mode.data = groupDao.getGroupMode(event).orElse(selfMode)
         }
     }
 
@@ -591,7 +590,7 @@ class InstructionUtil(
      */
     private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent? = null) {
         if (mode.data.isDefaultOrNull()) {
-            mode.data = bindDao.getGroupMode(event)
+            mode.data = groupDao.getGroupMode(event)
         }
     }
 

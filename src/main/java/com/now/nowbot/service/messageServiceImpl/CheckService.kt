@@ -39,7 +39,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
                 if (name.isNullOrEmpty()) {
                     bindDao.getBindFromQQ(event.sender.contactID)
                 } else {
-                    bindDao.getBindUser(name)
+                    bindDao.getBindUserOrNull(name)
                 }
             }
         }

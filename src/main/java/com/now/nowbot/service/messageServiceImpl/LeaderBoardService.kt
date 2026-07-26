@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
@@ -40,6 +41,7 @@ import kotlin.collections.ifEmpty
 @Service("LEADER_BOARD")
 class LeaderBoardService(
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val beatmapApiService: OsuBeatmapApiService,
     private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
@@ -167,7 +169,7 @@ class LeaderBoardService(
         val isSSPanel: Boolean
         
         val mode = matcher.group(FLAG_MODE).toOsuMode()
-            .orElse(bindDao.getGroupMode(event))
+            .orElse(groupDao.getGroupMode(event))
             .takeIfConvertable(beatmap)
 
         calculateApiService.applyStarToBeatmap(beatmap, mode, mods)

@@ -1,5 +1,6 @@
 package com.now.nowbot.controller
 
+import com.now.nowbot.cache.CaptchaProvider
 import tools.jackson.databind.JsonNode
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindResponse
@@ -21,7 +22,11 @@ import org.springframework.web.client.HttpClientErrorException
 @RestController
 @RequestMapping(produces = ["application/json;charset=UTF-8"])
 @ConditionalOnProperty(value = ["yumu.osu.callbackPath"])
-class BindController @Autowired constructor(var userApiService: OsuUserApiService, var bindDao: BindDao) {
+class BindController @Autowired constructor(
+    var userApiService: OsuUserApiService,
+    var bindDao: BindDao,
+    var captchaProvider: CaptchaProvider
+) {
     @GetMapping("bindUrl")
     fun bindUrl(): String {
         return userApiService.getOauthUrl("yumu")
@@ -94,7 +99,7 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
     fun bindCode(@RequestParam("id") id: Long?, @RequestParam("di") di: Long): String {
         val user: BindUser?
         try {
-            user = bindDao.getBindUserByDbId(id)
+            user = bindDao.getBindUserByDatabaseID(id)
             if (user == null || di != user.userID) {
                 return "你不许绑定"
             }
@@ -102,7 +107,7 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
             log.error("绑定查找出错: ", e)
             return "人机不要来绑定!"
         }
-        return bindDao.generateCaptcha(user.userID)
+        return captchaProvider.generateCaptcha(user.userID)
     }
 
     @GetMapping("\${yumu.osu.callbackPath}")

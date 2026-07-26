@@ -172,7 +172,7 @@ class ServiceSwitchService(
             } else if (group != null) {
                 return Target.GROUP to group
             } else if (name.isNotBlank()) {
-                val user = bindDao.getBindUser(name.trim()) ?: throw TipsException("""
+                val user = bindDao.getBindUserOrNull(name.trim()) ?: throw TipsException("""
                 对方没有绑定。请使用 qq= 来确定对方的 QQ。
             """.trimIndent())
 

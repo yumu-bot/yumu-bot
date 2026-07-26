@@ -11,8 +11,8 @@ import jakarta.persistence.Table
 class OsuGroupConfigLite (
     @Id
     @Column(name = "group_id")
-    var groupId: Long? = null,
+    var groupID: Long? = null,
+
     @Column(name = "main_mode")
-    var mainMode: OsuMode? = null
-){
-}
+    var mode: OsuMode? = null
+)

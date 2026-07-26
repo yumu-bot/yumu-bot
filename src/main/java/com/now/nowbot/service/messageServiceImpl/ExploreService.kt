@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
@@ -40,6 +41,7 @@ class ExploreService(
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
 ): MessageService<ExploreService.ExploreParam>, TencentMessageService<ExploreService.ExploreParam> {
 
     abstract class ExploreParam
@@ -168,7 +170,7 @@ class ExploreService(
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
         val any = matcher.group(FLAG_ANY)?.trim() ?: ""
 
-        val user = InstructionUtil.getUserWithoutRange(event, matcher, InstructionObject(bindDao.getGroupMode(event)))
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, InstructionObject(groupDao.getGroupMode(event)))
 
         when(type) {
             BeatmapType.SEARCH -> {
@@ -341,7 +343,7 @@ class ExploreService(
                 "q" to any
             )
         } else {
-            val groupMode = bindDao.getGroupMode(event)
+            val groupMode = groupDao.getGroupMode(event)
 
             val overwritten = if (groupMode != OsuMode.DEFAULT) {
                 mapOf(

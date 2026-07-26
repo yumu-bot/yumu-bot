@@ -265,7 +265,7 @@ class FriendService(
             return FriendListParam(async.first, filteredFriends, sortParam.first)
         } else {
             // 亲密好友模式
-            val other = bindDao.getBindUser(id.data)
+            val other = bindDao.getBindUserOrNull(id.data)
 
             if (other != null && other.isTokenAvailable != true) {
                 val t = try {

@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.qq.event.MessageEvent
@@ -38,6 +39,7 @@ class UUBAService(
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
     @Throws(Throwable::class)
@@ -92,7 +94,7 @@ class UUBAService(
         // 1. 使用 if 表达式并结合解构声明，集中处理数据的获取逻辑
         val (user, bests) = if (id != null) {
             val m = mode.data
-                .orElse(bindDao.getGroupMode(event))
+                .orElse(groupDao.getGroupMode(event))
                 .orElse(bindDao.getBindModeFromID(id))
 
             if (m.isNotDefault) {

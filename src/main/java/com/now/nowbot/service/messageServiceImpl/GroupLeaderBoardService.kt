@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
@@ -49,6 +50,7 @@ class GroupLeaderBoardService(
     private val scoreDao: ScoreDao,
     private val dao: ServiceCallStatisticsDao,
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
 ): MessageService<GroupLeaderBoardService.GroupLeaderBoardParam> {
 
     private fun List<LazerScore>.applyMicroUser() {
@@ -127,7 +129,7 @@ class GroupLeaderBoardService(
 
         val beatmap = beatmapApiService.getBeatmapFromAnyID(matcher) { dao.getLastBeatmapID(event) }
 
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event)).data.takeIfConvertable(beatmap)
+        val mode = InstructionUtil.getMode(matcher, groupDao.getGroupMode(event)).data.takeIfConvertable(beatmap)
 
         val mods = InstructionUtil.getMod(matcher)
 

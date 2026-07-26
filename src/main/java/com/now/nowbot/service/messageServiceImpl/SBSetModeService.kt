@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service
 @Service("SB_SET_MODE")
 class SBSetModeService (
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val userApiService: SBUserApiService,
 ): MessageService<SBSetModeParam>, TencentMessageService<SBSetModeParam> {
 
@@ -87,7 +89,7 @@ class SBSetModeService (
     }
 
     private fun getReply(param: SBSetModeParam, event: MessageEvent): MessageChain {
-        val predeterminedMode = bindDao.getGroupMode(event)
+        val predeterminedMode = groupDao.getGroupMode(event)
         val mode = param.mode
         val user = param.user
 

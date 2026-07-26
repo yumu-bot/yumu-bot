@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -34,6 +35,7 @@ import kotlin.math.roundToInt
 @Service("POPULAR")
 class PopularService(
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
     private val userApiService: OsuUserApiService,
@@ -204,7 +206,7 @@ class PopularService(
 
     override fun handleMessage(event: MessageEvent, param: PopularParam): ServiceCallStatistic? {
         val mode = param.mode
-            .orElse(bindDao.getGroupMode(event))
+            .orElse(groupDao.getGroupMode(event))
             .orElse(bindDao.getBindModeFromID(event.sender.contactID))
 
         val bot = try {

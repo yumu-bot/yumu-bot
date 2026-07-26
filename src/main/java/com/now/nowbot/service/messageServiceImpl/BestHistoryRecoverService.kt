@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
-import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.UserSnapShotDao
 import com.now.nowbot.entity.ServiceCallStatistic
@@ -37,7 +37,7 @@ class BestHistoryRecoverService(
     private val imageService: ImageService,
     private val bestSnapShotDao: UserSnapShotDao,
     private val scoreDao: ScoreDao,
-    private val bindDao: BindDao
+    private val groupDao: GroupDao
 ): MessageService<BestHistoryRecoverService.BestHistoryParam> {
     override fun isHandle(
         event: MessageEvent,
@@ -73,7 +73,7 @@ class BestHistoryRecoverService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): BestHistoryParam {
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event))
+        val mode = InstructionUtil.getMode(matcher, groupDao.getGroupMode(event))
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
         val user: OsuUser

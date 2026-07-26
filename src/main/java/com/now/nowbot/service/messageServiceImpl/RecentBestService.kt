@@ -126,7 +126,7 @@ class RecentBestService(
         val scores = scoreDao.getUserRankedScore(user.userID, mode.modeValue, earlierDay, laterDay)
 
         if (scores.isEmpty()) {
-            if (bindDao.getBindUser(user.userID) == null) {
+            if (bindDao.getBindUserOrNull(user.userID) == null) {
                 throw NoSuchElementException.RecentBestNoRecorded(user.username)
             } else {
                 throw NoSuchElementException.RecentBest(user.username, mode)

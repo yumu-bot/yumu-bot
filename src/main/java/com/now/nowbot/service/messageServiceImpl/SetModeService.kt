@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service
 @Service("SET_MODE")
 class SetModeService (
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val userApiService: OsuUserApiService,
 ): MessageService<SetModeParam>, TencentMessageService<SetModeParam> {
 
@@ -49,7 +51,7 @@ class SetModeService (
         data.value = if (qq != null && isSuper) {
             SetModeParam(mode, bindDao.getBindFromQQ(qq, false))
         } else if (name.isNullOrBlank().not()) {
-            val user = bindDao.getBindUser(name.trim())
+            val user = bindDao.getBindUserOrNull(name.trim())
                 ?: throw IllegalArgumentException.WrongException.PlayerName()
             SetModeParam(mode, user)
         } else {
@@ -93,7 +95,7 @@ class SetModeService (
     }
 
     private fun getReply(param: SetModeParam, event: MessageEvent): MessageChain {
-        val predeterminedMode = bindDao.getGroupMode(event)
+        val predeterminedMode = groupDao.getGroupMode(event)
         val mode = param.mode
         val user = param.user
 

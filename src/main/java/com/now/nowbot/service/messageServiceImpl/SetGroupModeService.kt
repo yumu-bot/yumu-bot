@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.Permission
-import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
@@ -12,7 +12,6 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.DataUtil
@@ -25,7 +24,7 @@ import org.springframework.stereotype.Service
 
 @Service("SET_GROUP_MODE")
 class SetGroupModeService (
-    private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val imageService: ImageService,
 ): MessageService<SetGroupModeService.SetGroupParam>{
 
@@ -47,7 +46,7 @@ class SetGroupModeService (
     }
 
     private fun getGroupModeCharts(page: Int = 1): ByteArray {
-        val entries = bindDao.allGroupMode.entries
+        val entries = groupDao.allGroupMode.entries
 
         val supplier: (Map.Entry<Long, OsuMode>) -> List<String> = { entry ->
             listOf(entry.key.toString(), entry.value.fullName)
@@ -73,7 +72,7 @@ class SetGroupModeService (
 
         val mode: OsuMode = param.mode
 
-        val predeterminedMode = bindDao.getGroupMode(event)
+        val predeterminedMode = groupDao.getGroupMode(event)
 
         val isNotGroupAdmin = Permission.isGroupAdmin(event).not()
 
@@ -102,10 +101,10 @@ class SetGroupModeService (
             } else {
                 // 修改已有模式状态
                 if (mode.isNotDefault) {
-                    bindDao.saveGroupMode(group, mode)
+                    groupDao.saveGroupMode(group, mode)
                     "已将群聊绑定的游戏模式 ${predeterminedMode.fullName} 修改为：${mode.fullName}。"
                 } else {
-                    bindDao.saveGroupMode(group, OsuMode.DEFAULT)
+                    groupDao.saveGroupMode(group, OsuMode.DEFAULT)
                     "已移除群聊绑定的游戏模式 ${predeterminedMode.fullName}。"
                 }
             }
@@ -121,7 +120,7 @@ class SetGroupModeService (
             } else {
                 // 赋予新模式状态
                 if (mode.isNotDefault) {
-                    bindDao.saveGroupMode(group, mode)
+                    groupDao.saveGroupMode(group, mode)
                     "已将群聊绑定的游戏模式修改为：${mode.fullName}。"
                 } else {
                     "当前群聊没有已绑定的游戏模式。\n你可以输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群聊的绑定游戏模式。"

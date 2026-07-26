@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
@@ -41,6 +42,7 @@ class OldAvatarService(
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val imageService: ImageService,
 ) : MessageService<OAParam>, TencentMessageService<OAParam> {
 
@@ -135,7 +137,7 @@ class OldAvatarService(
         val qqStr: String = matcher.group(FLAG_QQ_ID) ?: ""
         val uidStr: String = matcher.group(FLAG_UID) ?: ""
         val name: String = matcher.group(FLAG_DATA) ?: ""
-        val mode = matcher.group(FLAG_MODE).toOsuMode(bindDao.getGroupMode(event))
+        val mode = matcher.group(FLAG_MODE).toOsuMode(groupDao.getGroupMode(event))
 
         return if (event.hasAt()) {
             OAParam(event.target, null, null, at = true, isMyself = false, mode = mode, version = version)

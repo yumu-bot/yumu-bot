@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.NowbotConfig
-import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -33,7 +33,7 @@ import kotlin.time.Duration.Companion.days
 class UUIService(
     private val userApiService: OsuUserApiService,
     private val infoDao: OsuUserInfoDao,
-    private val bindDao: BindDao,
+    private val groupDao: GroupDao,
 ) : MessageService<UUIParam> {
 
     @JvmRecord data class UUIParam(
@@ -53,7 +53,7 @@ class UUIService(
             return false
         }
 
-        val mode = InstructionUtil.getMode(matcher, bindDao.getGroupMode(event))
+        val mode = InstructionUtil.getMode(matcher, groupDao.getGroupMode(event))
         val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
