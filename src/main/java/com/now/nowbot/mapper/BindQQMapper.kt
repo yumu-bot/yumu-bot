@@ -23,8 +23,9 @@ interface BindQQMapper : JpaRepository<QQBindLite, Long>, JpaSpecificationExecut
     @Modifying @Transactional @Query("delete from QQBindLite qb where qb.osuUser.userID = :userID and qb.qq != :qq")
     fun deleteOutdatedBind(userID: Long, qq: Long): Int
 
-    @Modifying @Transactional @Query("delete from QQBindLite qb where qb.osuUser.userID = :userID")
-    fun unBind(userID: Long)
+    @Modifying(clearAutomatically = true)
+    @Transactional @Query("delete from QQBindLite qb where qb.osuUser.userID = :userID")
+    fun unBind(userID: Long): Int
 
     @Query("select qb.qq as qid, qb.osuUser.userID as uid, qb.osuUser.username as name from QQBindLite qb where qb.qq in (:qq)")
     fun findAllUserByQQ(qq: Iterable<Long>): List<QQBindLite.QQUser>

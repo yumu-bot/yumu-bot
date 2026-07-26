@@ -1568,7 +1568,7 @@ class BeatmapApiImpl(
         private val IMG_BUFFER_PATH: String = if (System.getenv("BUFFER_PATH").isNullOrBlank().not()) {
             System.getenv("BUFFER_PATH")
         } else {
-            System.getProperty("java.io.tmpdir") + "/n-bot/buffer"
+            Path.of(System.getProperty("java.io.tmpdir"), "n-bot", "buffer").toString()
         }
 
         private fun extend(lite: Beatmap, extended: Beatmap?): Beatmap {
@@ -1595,7 +1595,7 @@ class BeatmapApiImpl(
             } else {
                 extended.copy().apply {
                     mode = lite.mode
-                    convert = lite.modeInt != 0 && modeInt == 0
+                    convert = lite.modeInt != 0 && lite.modeInt == 0
                     modeInt = lite.modeInt
                 }
             }

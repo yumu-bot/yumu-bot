@@ -25,21 +25,15 @@ data class SBBindUserLite(
     @Column(name = "join_date")
     var joinDate: OffsetDateTime = OffsetDateTime.now(),
 
-    @Transient
-    private var currentOsuMode: OsuMode? = null
+    @Column(name = "main_mode")
+    var modeValue: Byte = -1
 ) {
 
     @get:Transient
-    val mode: OsuMode
-        get() = currentOsuMode ?: modeValue.toOsuMode()
-
-    //主模式
-    @Column(name = "main_mode")
-    private var modeValue: Byte = -1
-        get() = currentOsuMode?.modeValue ?: field
+    var mode: OsuMode
+        get() = modeValue.toOsuMode()
         set(value) {
-            field = value
-            currentOsuMode = value.toOsuMode()
+            modeValue = value.modeValue
         }
 
     override fun equals(other: Any?): Boolean {
@@ -61,7 +55,7 @@ data class SBBindUserLite(
         }
 
         fun SBBindUser.toEntity(): SBBindUserLite {
-            return SBBindUserLite(null, this.userID, this.username, System.currentTimeMillis(), OffsetDateTime.now(), mode)
+            return SBBindUserLite(null, this.userID, this.username, System.currentTimeMillis(), OffsetDateTime.now(), this.mode.modeValue)
         }
     }
 }

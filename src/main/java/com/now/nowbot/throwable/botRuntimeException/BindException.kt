@@ -41,7 +41,7 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
         class UnbindSuccess:
             UnBindException("您已成功解绑。TuT")
         class UnbindFailed:
-            UnBindException("该玩家没有绑定。")
+            UnBindException("解绑失败，可能是根本就没有绑定。")
     }
 
     open class BindReceiveException(message: String): BindException(message) {

@@ -272,6 +272,7 @@ class BindDao(
             data.userID = user.userID
             data.username = user.username
             data.time = user.time
+            data.mode = user.mode
 
             return bindSBQQ(qq, data)
         }
@@ -341,12 +342,7 @@ class BindDao(
     }
 
     fun unBindQQ(user: BindUser): Boolean {
-        try {
-            bindQQMapper.unBind(user.userID)
-            return true
-        } catch (_: Exception) {
-            return false
-        }
+        return bindQQMapper.unBind(user.userID) > 0
     }
 
     /**

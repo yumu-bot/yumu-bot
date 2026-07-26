@@ -129,7 +129,6 @@ class SBBindService(
 
         // 写入数据库
         bindDao.bindSBQQ(targetID, SBBindUser(user))
-        bindDao.updateSBMode(user.userID, user.mode)
 
         event.replyAsync(BindException.BindResultException.BindSuccess(targetID, user.userID, user.username, user.mode, PREFIX))
     }

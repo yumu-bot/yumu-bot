@@ -117,9 +117,7 @@ class ScorePRService(
         val isShow = matcher.group("w").isNullOrBlank().not()
 
         val isPass =
-            if (matcher.group("recent") != null) {
-                false
-            } else if (matcher.group("pass") != null) {
+            matcher.group("recent") == null && if (matcher.group("pass") != null) {
                 true
             } else {
                 log.error("最近成绩分类失败：")
@@ -504,7 +502,7 @@ class ScorePRService(
         fun getE5ParamForFilteredScore(user: OsuUser, history: OsuUser? = null, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score)
 
-            val original = score.beatmap.originalDetails?.toMap() ?: emptyMap()
+            val original = score.beatmap.originalDetails.toMap()
 
             calculateApiService.applyPPToScore(score)
 

@@ -63,14 +63,7 @@ class BindService(
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: BindParam): ServiceCallStatistic? {
-
-        // 1. 权限校验
-        val botID = event.bot?.botID
-        val rawSenderID = event.sender.contactID
-        val rawTargetID = param.targetID
-
-        // 1. 权限校验并获取处理后的账号 ID
-        val targetID = checkPermission(rawSenderID, rawTargetID, botID)
+        val targetID = checkPermission(event.sender.contactID, param.targetID, event.bot?.botID)
 
         // 2. 解绑流程
         if (param.isUnbind) {
@@ -114,7 +107,7 @@ class BindService(
             }
 
             // 验证码无效，尝试作为 Osu User ID 获取玩家
-            val osuUser = runCatching { userApiService.getOsuUser(input) }.getOrNull()
+            val user = runCatching { userApiService.getOsuUser(input) }.getOrNull()
                 ?: throw BindException.BindIllegalArgumentException.IllegalVerification()
 
             // 找到了玩家，二次询问确认
@@ -124,7 +117,7 @@ class BindService(
                 onCheck = {
                     // 发送确认提示消息并返回回执（用于后续自动撤回）
                     event.reply(
-                        BindException.BindConfirmException.Found(targetID, osuUser.username)
+                        BindException.BindConfirmException.Found(targetID, user.username)
                     )
                 },
                 onOverTime = {
@@ -134,7 +127,7 @@ class BindService(
                     throw BindException.BindReceiveException.ReceiveRefused()
                 },
                 onSuccess = { _ ->
-                    executeBind(event, targetID, BindUser(osuUser))
+                    executeBind(event, targetID, BindUser(user))
                 }
             )
         } else {
@@ -155,9 +148,9 @@ class BindService(
         val name = getValidNicknameOrNull(event)
 
         if (!name.isNullOrBlank()) {
-            val osuUser = runCatching { userApiService.getOsuUser(name) }.getOrNull()
-            if (osuUser != null) {
-                executeBind(event, targetID, BindUser(osuUser))
+            val user = runCatching { userApiService.getOsuUser(name) }.getOrNull()
+            if (user != null) {
+                executeBind(event, targetID, BindUser(user))
                 return
             }
         }
@@ -190,10 +183,10 @@ class BindService(
         event.replyAsync(BindException.BindResultException.BindSuccess(targetID, bindUser.userID, bindUser.username, bindUser.mode))
     }
 
-    private fun handleUnbind(event: MessageEvent, targetID: Long, name: String?): ServiceCallStatistic {
-        if (!name.isNullOrBlank()) {
-            val uid = bindDao.getOsuID(name) ?: throw BindException.NotBindException.UserNotBind()
-            val qq = bindDao.getQQ(uid)
+    private fun handleUnbind(event: MessageEvent, targetID: Long, input: String?): ServiceCallStatistic {
+        if (!input.isNullOrBlank()) {
+            val userID = bindDao.getOsuID(input) ?: throw BindException.NotBindException.UserNotBind()
+            val qq = bindDao.getQQ(userID)
             unbindQQ(qq)
         } else {
             unbindQQ(targetID)
@@ -210,8 +203,8 @@ class BindService(
     }
 
     private fun unbindQQ(qq: Long) {
-        val bind = bindDao.getQQLiteFromQQ(qq) ?: throw BindException.NotBindException.UserNotBind()
-        if (!bindDao.unBindQQ(bind.bindUser!!)) {
+        val bindUser = bindDao.getQQLiteFromQQ(qq)?.bindUser ?: throw BindException.NotBindException.UserNotBind()
+        if (! bindDao.unBindQQ(bindUser)) {
             throw BindException.UnBindException.UnbindFailed()
         }
         throw BindException.UnBindException.UnbindSuccess()
@@ -259,7 +252,7 @@ class BindService(
             bot.getStrangerInfo(event.sender.contactID, false)?.data?.nickname
         }?.trim() ?: return null
 
-        if (nickname.matches(osuUsernameRegex)) {
+        if (nickname.matches(usernameRegex)) {
             return nickname
         }
 
@@ -279,10 +272,9 @@ class BindService(
             onSuccess = { ev ->
                 val name = ev.rawMessage.trim()
 
-                val osuUser = runCatching { userApiService.getOsuUser(name) }.getOrNull()
-                    ?: throw BindException.BindIllegalArgumentException.IllegalVerification()
+                val user = userApiService.getOsuUser(name)
 
-                executeBind(event, targetID, BindUser(osuUser))
+                executeBind(event, targetID, BindUser(user))
             },
             onOverTime = {
                 throw BindException.BindReceiveException.ReceiveOverTime()
@@ -295,7 +287,7 @@ class BindService(
         private val log: Logger = LoggerFactory.getLogger(BindService::class.java)
 
         // 推荐的正确 Regex
-        private val osuUsernameRegex = Regex("^(?=.*[A-Za-z0-9])[A-Za-z0-9 _\\[\\].\\-]{3,15}$")
+        private val usernameRegex = Regex("^(?=.*[A-Za-z0-9])[A-Za-z0-9 _\\[\\].\\-]{3,15}$")
 
         private val captchaRegex = Regex("\\d{6}")
     }
