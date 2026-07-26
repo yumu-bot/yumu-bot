@@ -63,11 +63,14 @@ class BindService(
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: BindParam): ServiceCallStatistic? {
-        val senderID = event.sender.contactID
-        val targetID = param.targetID ?: senderID
 
         // 1. 权限校验
-        checkPermission(senderID, targetID)
+        val botID = event.bot?.botID
+        val rawSenderID = event.sender.contactID
+        val rawTargetID = param.targetID
+
+        // 1. 权限校验并获取处理后的账号 ID
+        val targetID = checkPermission(rawSenderID, rawTargetID, botID)
 
         // 2. 解绑流程
         if (param.isUnbind) {
@@ -218,11 +221,30 @@ class BindService(
 
     /**
      * 权限拦截校验
+     * 逻辑：
+     * 1. 超级管理员：拥有最高权限，跳过所有限制，直接返回 targetID（为空时兜底 senderID）。
+     * 2. 普通用户：
+     *    - 如果 targetID == botID，重定向返回 senderID；
+     *    - 如果 targetID 为 null，默认对自己操作返回 senderID；
+     *    - 如果 targetID 不是自己，抛出权限异常。
      */
-    private fun checkPermission(senderID: Long, targetID: Long) {
-        if (senderID != targetID && !Permission.isSuperAdmin(senderID)) {
+    private fun checkPermission(senderID: Long, targetID: Long?, botID: Long?): Long {
+        // 1. 超级管理员：直接忽视后续一切限制
+        if (Permission.isSuperAdmin(senderID)) {
+            return targetID ?: senderID
+        }
+
+        if (botID != null && targetID == botID) {
+            return senderID
+        }
+
+        val effectiveTargetID = targetID ?: senderID
+
+        if (senderID != effectiveTargetID) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
+
+        return effectiveTargetID
     }
 
     /**

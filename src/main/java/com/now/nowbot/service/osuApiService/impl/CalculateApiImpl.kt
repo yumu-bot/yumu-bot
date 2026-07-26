@@ -682,16 +682,16 @@ class CalculateApiImpl(
 
         fun customDifficultyRequest(mods: List<LazerMod>, isLazer: Boolean? = null, mode: OsuMode = OsuMode.DEFAULT, clockRate: Double? = null): DifficultyRequest {
             val client = if (mode.isDefault) {
-                ScoreMode.DEFAULT
+                null
             } else {
                 when(mode.safeModeValue) {
                     0.toByte(), 3.toByte() -> when(isLazer) {
                         true -> ScoreMode.LAZER
                         false -> ScoreMode.STABLE
-                        null -> ScoreMode.DEFAULT
+                        null -> null
                     }
 
-                    else -> ScoreMode.DEFAULT
+                    else -> null
                 }
             }
 
@@ -700,14 +700,14 @@ class CalculateApiImpl(
                 .modsJson(mods.toJson())
                 .clockRate(clockRate ?: mods.getClockRate().toDouble())
 
-            client.takeIf { it != ScoreMode.DEFAULT }?.let { builder.scoreMode(it) }
+            client?.let { builder.scoreMode(it) }
 
             return builder.build()
         }
 
         fun LazerScore.buildDifficultyRequest(): DifficultyRequest {
             val client = if (this.mode.isDefault) {
-                ScoreMode.DEFAULT
+                null
             } else {
                 when(this.mode.safeModeValue) {
                     0.toByte(), 3.toByte() -> when(this.isLazer) {
@@ -715,7 +715,7 @@ class CalculateApiImpl(
                         false -> ScoreMode.STABLE
                     }
 
-                    else -> ScoreMode.DEFAULT
+                    else -> null
                 }
             }
 
@@ -724,7 +724,7 @@ class CalculateApiImpl(
                 .modsJson(this.mods.toJson())
                 .clockRate(this.mods.getClockRate().toDouble())
 
-            client.takeIf { it != ScoreMode.DEFAULT }?.let { builder.scoreMode(it) }
+            client?.let { builder.scoreMode(it) }
 
             return builder.build()
         }
