@@ -21,6 +21,9 @@ object AsyncMessageUtil {
 
     // ========== 高层 API ==========
 
+    /**
+     * @param keyword 如果传入 ""，则能够保证无论如何都可以走 onSuccess，忽视 onWrong
+     */
     fun doubleCheck(
         event: MessageEvent,
         keyword: String = "OK",
@@ -28,7 +31,7 @@ object AsyncMessageUtil {
         onOverTime: () -> Unit = { throw TipsRuntimeException("超时了。") },
         onWrong: () -> Unit = { throw TipsRuntimeException("已取消操作。") },
         onSuccess: (MessageEvent) -> Unit = {},
-        timeout: Duration = 30.seconds,
+        timeout: Duration = 60.seconds,
         anyoneCanResponse: Boolean = false,
     ) {
         val lockKey = if (anyoneCanResponse) {
@@ -72,7 +75,7 @@ object AsyncMessageUtil {
             receipt.recallAndLog()
 
             // 处理响应
-            if (result.rawMessage.contains(keyword, ignoreCase = true)) {
+            if (keyword.isEmpty() || result.rawMessage.contains(keyword, ignoreCase = true)) {
                 onSuccess(result)
             } else {
                 onWrong()
@@ -101,7 +104,7 @@ object AsyncMessageUtil {
         onCheck: () -> MessageReceipt? = { event.reply("是否要执行操作？回复 $keyword 确认。") },
         onSuccess: (MessageEvent) -> T,
         defaultValue: T,
-        timeout: Duration = 30.seconds,
+        timeout: Duration = 60.seconds,
         anyoneCanResponse: Boolean = false,
     ): T {
         val latch = CountDownLatch(1)

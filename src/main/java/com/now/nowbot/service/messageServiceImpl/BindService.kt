@@ -241,7 +241,7 @@ class BindService(
     }
 
     /**
-     * 获取用户群名片（留坑）
+     * 获取用户群名片
      */
     private fun getValidNicknameOrNull(event: MessageEvent): String? {
         val bot = botContainer.robots[event.bot?.botID ?: return null] ?: return null
@@ -250,13 +250,14 @@ class BindService(
             bot.getGroupMemberInfo(event.subject.contactID, event.sender.contactID, false)?.data?.nickname
         } else {
             bot.getStrangerInfo(event.sender.contactID, false)?.data?.nickname
-        }?.trim() ?: return null
+        } ?: return null
 
-        if (nickname.matches(usernameRegex)) {
-            return nickname
-        }
-
-        return null
+        return usernameRegex.findAll(nickname)
+            .map { it.value.trim() }
+            .filter { candidate ->
+                candidate.length >= 3 && candidate.any { it.isLetterOrDigit() }
+            }
+            .maxByOrNull { it.length }
     }
 
     /**
@@ -279,15 +280,14 @@ class BindService(
             onOverTime = {
                 throw BindException.BindReceiveException.ReceiveOverTime()
             },
-            onWrong = {}
+            onWrong = {},
         )
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BindService::class.java)
 
-        // 推荐的正确 Regex
-        private val usernameRegex = Regex("^(?=.*[A-Za-z0-9])[A-Za-z0-9 _\\[\\].\\-]{3,15}$")
+        private val usernameRegex = Regex("""[A-Za-z0-9 _\[\].\-]{3,15}""")
 
         private val captchaRegex = Regex("\\d{6}")
     }
