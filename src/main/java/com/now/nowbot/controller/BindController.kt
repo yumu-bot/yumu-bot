@@ -5,9 +5,7 @@ import tools.jackson.databind.JsonNode
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindResponse
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.service.messageServiceImpl.BindService.BindData
-import com.now.nowbot.service.messageServiceImpl.BindService.Companion.getBind
-import com.now.nowbot.service.messageServiceImpl.BindService.Companion.removeBind
+import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import jakarta.annotation.Nullable
@@ -17,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.HttpClientErrorException
+import java.util.concurrent.ConcurrentHashMap
 
 @ResponseBody
 @RestController
@@ -110,7 +109,7 @@ class BindController @Autowired constructor(
         return captchaProvider.generateCaptcha(user.userID)
     }
 
-    @GetMapping("\${yumu.osu.callbackPath}")
+    @GetMapping($$"${yumu.osu.callbackPath}")
     fun bind(@RequestParam("code") code: String?, @RequestParam("state") stat: String): String? {
         val key = stat.split(REGEX_SPACE_MORE).dropLastWhile { it.isEmpty() }.toTypedArray()
             .getOrNull(1) ?: return "噶?"
@@ -228,8 +227,40 @@ class BindController @Autowired constructor(
         log.info("收到一条推送\n{}", body.toString())
     }
 
+    data class BindData(val key: Long, val receipt: MessageReceipt, val qq: Long)
+
     companion object {
         const val DEBUG: Boolean = false
         val log: Logger = LoggerFactory.getLogger(BindController::class.java)
+
+        private val BIND_MSG_MAP: MutableMap<Long, BindData> = ConcurrentHashMap()
+        private val BIND_CACHE: MutableMap<Long, MutableList<Long>> = ConcurrentHashMap()
+
+        fun contains(t: Long): Boolean {
+            return BIND_MSG_MAP.containsKey(t)
+        }
+
+        fun getBind(t: Long): BindData? {
+            BIND_MSG_MAP.keys.removeIf { k: Long -> (k + 120 * 1000) < System.currentTimeMillis() }
+
+            return BIND_MSG_MAP[t]
+        }
+
+        fun removeBind(t: Long) {
+            BIND_MSG_MAP.remove(t)
+        }
+
+        fun check(qq: Long): Boolean {
+            val check = { t: Long -> t + 1000 * 60 * 30 < System.currentTimeMillis() }
+            BIND_CACHE.entries.removeIf {
+                it.value.removeIf(check)
+                it.value.isEmpty()
+            }
+
+            val timeList = BIND_CACHE.computeIfAbsent(qq) { ArrayList() }
+            timeList.removeIf(check)
+            timeList.addLast(System.currentTimeMillis())
+            return timeList.size > 3
+        }
     }
 }

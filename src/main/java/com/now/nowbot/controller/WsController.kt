@@ -2,7 +2,6 @@ package com.now.nowbot.controller
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.now.nowbot.service.messageServiceImpl.BindService.Companion.contains
 import com.now.nowbot.util.command.REGEX_SPACE_MORE
 import okhttp3.*
 import org.slf4j.Logger
@@ -34,7 +33,7 @@ class WsController : WebSocketListener() {
             val echo = data.get("echo").asText()
             try {
                 val l = state[1]!!.toLong()
-                if (state.size != 2 || !contains(l)) {
+                if (state.size != 2 || ! BindController.contains(l)) {
                     // 不响应任何
                     log.error("no find key")
                     return
@@ -46,14 +45,14 @@ class WsController : WebSocketListener() {
             if (bindController != null) {
                 val resp: String = bindController!!.saveBind(code, state[1]!!)
                 val p = HashMap<String?, String?>()
-                p.put("response", resp)
-                p.put("echo", echo)
+                p["response"] = resp
+                p["echo"] = echo
                 webSocket.send(om.writeValueAsString(p))
                 log.info("bind over -> {}", resp)
             } else {
                 log.error("ws error:init")
             }
-        } catch (e: JsonProcessingException) {
+        } catch (_: JsonProcessingException) {
             log.error("ws error:not json")
         }
     }
@@ -82,8 +81,8 @@ class WsController : WebSocketListener() {
         client.newWebSocket(req, this)
     }
 
-    fun setMsgController(BindController: BindController?) {
-        this.bindController = BindController
+    fun setMsgController(controller: BindController?) {
+        this.bindController = controller
     }
 
     companion object {

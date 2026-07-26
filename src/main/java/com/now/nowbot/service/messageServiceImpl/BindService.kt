@@ -1,48 +1,40 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.cache.CaptchaProvider
 import com.now.nowbot.config.Permission
 import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMessageUtil
-import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Predicate
 
-@Service("BIND") class BindService(
+@Service("BIND")
+class BindService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
     private val captchaProvider: CaptchaProvider,
+    private val botContainer: BotContainer,
     val yumuConfig: YumuConfig
 ) : MessageService<BindService.BindParam> {
 
-    // full: 全绑定，只有 oauth 应用所有者可以这样做
     data class BindParam(
-        val qq: Long,
-        val name: String,
-        val at: Boolean,
-        val unbind: Boolean,
-        val isSuper: Boolean,
-        val isFull: Boolean,
-        val isCaptcha: Boolean = false,
+        val targetID: Long?,
+        val nameOrCaptcha: String?,
+        val isUnbind: Boolean
     )
 
     override fun isHandle(
@@ -51,323 +43,238 @@ import java.util.function.Predicate
         val m = Instruction.BIND.matcher(messageText)
         if (!m.find()) return false
 
-        val qq = m.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.contactID
+        // 获取可能的 @ 或 指定 QQ
+        val targetID = if (event.hasAt()) {
+            event.target
+        } else {
+            m.group(FLAG_QQ_ID)?.toLongOrNull()
+        }
 
         val nameStr = (m.group(FLAG_NAME) ?: "").trim()
-
-        val isCaptcha = nameStr.matches("\\d{6}".toRegex())
-
-        val isYmBot = messageText.take(3).contains("ym", ignoreCase = true) ||
-                m.group("bi") != null ||
-                m.group("un") != null ||
-                m.group("ub") != null
-
-        val name = if (!isYmBot && nameStr.isNotBlank() && !isCaptcha && nameStr.contains("osu")) {
-            if (userApiService.isPlayerExist(nameStr)) {
-                userApiService.getOsuUser(nameStr).username
-            } else {
-                log.info("绑定：退避成功：!bind $nameStr")
-                return false
-            }
-        } else {
-            nameStr
-        }
-
-
-        if (!isYmBot && !isCaptcha) {
-            // 提问
-            val receipt = event.reply(BindException.BindConfirmException.NeedConfirm())
-
-            val lock = AsyncMessageUtil.getLock(event, 30L * 1000)
-            val ev = lock.await()
-
-            if (ev == null || ev.rawMessage.uppercase().contains("OK").not()) {
-                return false
-            }
-
-            ev.subject.recall(receipt)
-        }
-
         val isUnbind = m.group("un") != null || m.group("ub") != null
-        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
-        val isFull = m.group("full") != null
 
-        val param = if (event.hasAt()) { // bi/ub @
-            BindParam(event.target, name, true, isUnbind, isSuper, isFull, isCaptcha)
-        } else { // bi
-            BindParam(qq, name, false, isUnbind, isSuper, isFull, isCaptcha)
-        }
-
-        data.value = param
+        data.value = BindParam(
+            targetID = targetID,
+            nameOrCaptcha = nameStr.ifBlank { null },
+            isUnbind = isUnbind
+        )
         return true
     }
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: BindParam): ServiceCallStatistic? {
-        val me = event.sender.contactID
+        val senderID = event.sender.contactID
+        val targetID = param.targetID ?: senderID
 
-        if (me == param.qq) {
-            if (param.unbind) {
-                unbindQQ(me)
-            } else if (param.name.isNotBlank()) {
-                bindQQName(event, param.name, me, param.isCaptcha)
-            } else {
-                bindQQ(event, me)
-            }
-            return ServiceCallStatistic.building(event) {
-                setParam(
-                    mapOf(
-                        "qqs" to listOf(me),
-                        "operate" to listOf(if (param.unbind) "u" else "b")
-                    )
-                )
-            }
+        // 1. 权限校验
+        checkPermission(senderID, targetID)
+
+        // 2. 解绑流程
+        if (param.isUnbind) {
+            return handleUnbind(event, targetID, param.nameOrCaptcha)
         }
 
-        // 超管使用量少, 所以相关分支靠后
-        // 超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
-        if (param.isSuper) {
-            if (param.unbind) {
-                if (param.name.isNotBlank()) {
-                    unbindName(param.name)
-                    return ServiceCallStatistic.building(event) {
-                        setParam(mapOf(
-                            "names" to listOf(param.name),
-                            "operate" to listOf("u")
-                            ))
-                    }
-                } else {
-                    unbindQQ(param.qq)
-                }
-            } else if (param.name.isNotBlank()) {
-                bindQQName(event, param.name, param.qq, param.isCaptcha)
-                return ServiceCallStatistic.building(event) {
-                    setParam(mapOf(
-                        "qqs" to listOf(param.qq),
-                        "names" to listOf(param.name),
-                        "operate" to listOf("b")
-                    ))
-                }
-            } else if (param.at) {
-                bindQQAt(event, param.qq)
-            }
-
-            return ServiceCallStatistic.building(event) {
-                setParam(
-                    mapOf(
-                        "qqs" to listOf(param.qq),
-                        "operate" to listOf(if (param.unbind) "u" else "b")
-                    )
-                )
-            }
-        }
-
-        // bi ub 但是不是自己, 也不是超管
-        throw PermissionException.DeniedException.BelowSuperAdministrator()
-    }
-
-    private fun unbindName(name: String) {
-        val uid = bindDao.getOsuID(name) ?: throw BindException.NotBindException.UserNotBind()
-        val qq = bindDao.getQQ(uid)
-
-        if (qq < 0L) throw BindException.NotBindException.UserNotBind()
-
-        unbindQQ(qq)
-    }
-
-    private fun unbindQQ(qq: Long?) {
-        if (qq == null) throw BindException.BindIllegalArgumentException.IllegalQQ()
-        val bind = bindDao.getQQLiteFromQQ(qq) ?: throw BindException.NotBindException.UserNotBind()
-
-        if (bindDao.unBindQQ(bind.bindUser!!)) {
-            throw BindException.UnBindException.UnbindSuccess()
+        // 3. 绑定流程
+        if (param.nameOrCaptcha != null) {
+            handleUsernameBinding(event, targetID, param.nameOrCaptcha)
         } else {
-            throw BindException.UnBindException.UnbindFailed()
-        }
-    }
-
-    private fun bindQQAt(event: MessageEvent, qq: Long) {
-
-        event.replyAsync(BindException.BindReceiveException.ReceiveNoName())
-
-        val lock = AsyncMessageUtil.getLock(event)
-        var ev: MessageEvent = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
-
-        val name = ev.rawMessage.trim()
-
-        val ou: OsuUser = userApiService.getOsuUser(name)
-
-        val qb = bindDao.getQQLiteFromUserID(ou.userID)
-
-        if (qb == null) {
-            bindDao.bindQQ(qq, BindUser(ou))
-            bindDao.updateMode(ou.userID, ou.defaultMode)
-            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultMode))
-            return
+            handleEmptyBinding(event, targetID)
         }
 
-        event.replyAsync(BindException.BindConfirmException.RecoverBind(ou.username, qb.bindUser!!.username, qq))
-
-        ev = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
-
-        if (ev.rawMessage.uppercase().startsWith("OK")) {
-            bindDao.bindQQ(qq, BindUser(ou))
-
-            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultMode))
-        } else {
-            event.replyAsync(BindException.BindReceiveException.ReceiveRefused())
-        }
-    }
-
-    @JvmRecord data class BindData(val key: Long, @JvmField val receipt: MessageReceipt, @JvmField val qq: Long)
-
-    //默认绑定路径
-    @Throws(BindException::class) private fun bindQQ(event: MessageEvent, qq: Long) {
-        val bindUser: BindUser
-        val osuUser: OsuUser?
-
-        //检查是否已经绑定
-        val qqBindLite = bindDao.getQQLiteFromQQ(qq)
-
-        if (qqBindLite != null && qqBindLite.bindUser!!.hasToken) {
-            bindUser = qqBindLite.bindUser!!
-
-            try {
-                osuUser = userApiService.getOsuUser(bindUser, OsuMode.DEFAULT)
-
-                if (osuUser.userID != bindUser.userID) {
-                    log.error("""
-                        绑定：玩家数据不匹配：
-                        绑定玩家：${bindUser.userID}，osu! 玩家：${osuUser.userID}
-                        """.trimIndent())
-                    throw RuntimeException()
-                }
-
-                event.replyAsync(
-                    when (bindUser.isTokenAvailable) {
-                        true -> BindException.BindConfirmException.StillAvailable(bindUser.userID, bindUser.username)
-                        false -> BindException.BindConfirmException.MaybeAvailable(bindUser.userID, bindUser.username)
-                        null -> BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username)
-                    }
+        return ServiceCallStatistic.building(event) {
+            setParam(
+                mapOf(
+                    "qqs" to listOf(targetID),
+                    "operate" to listOf("b")
                 )
-            } catch (e: Exception) {
-                if (e.findCauseOfType<HttpClientErrorException.Forbidden>() != null) {
-                    event.replyAsync(BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username))
-                }
-            }
-
-            try {
-                val lock = AsyncMessageUtil.getLock(event)
-                val ev = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
-                if (ev.rawMessage.uppercase().contains("OK").not()) {
-                    event.replyAsync(BindException.BindReceiveException.ReceiveRefused())
-                    return
-                }
-            } catch (_: Exception) { // 如果符合，直接允许绑定
-
-            }
-        }
-
-        // 需要绑定
-        bindUrl(event, qq)
-    }
-
-    private fun bindUrl(event: MessageEvent, qq: Long) { // 将当前毫秒时间戳作为 key
-        if (yumuConfig.bindDomain.contains("http")) {
-            event.replyAsync(BindException.BindResultException.BindUrl(yumuConfig.bindDomain))
-        } else {
-            bindQQAt(event, qq)
+            )
         }
     }
 
-    private fun bindQQName(event: MessageEvent, name: String, qq: Long, isCaptcha: Boolean) {
-        val ql = bindDao.getQQLiteFromQQ(qq)
-        val ou: OsuUser
+    // ================== 核心绑定流程 ==================
 
-        // 绑定先判断是否是传入验证码
-        if (isCaptcha) {
-            val uid = captchaProvider.verifyCaptcha(name)
-            val bu = bindDao.getBindUserOrNull(uid)
+    /**
+     * 处理带有 username 或 验证码 的绑定逻辑
+     */
+    private fun handleUsernameBinding(event: MessageEvent, targetID: Long, input: String) {
+        val maybeCaptcha = input.trim().matches(captchaRegex)
 
-            if (bu != null && bu.hasToken) {
-                val mode = userApiService.getOsuUser(bu.userID).mode
+        if (maybeCaptcha) {
+            // 优先尝试作为验证码
+            val uid = captchaProvider.verifyCaptcha(input)
+            val bindUser = uid?.let { bindDao.getBindUserOrNull(it) }
 
-                bindDao.bindQQ(qq, bu)
-                bindDao.updateMode(bu.userID, mode)
-
-                event.replyAsync(BindException.BindResultException.BindSuccessWithMode(mode))
+            if (bindUser != null && bindUser.hasToken) {
+                // 验证码验证成功
+                executeBind(event, targetID, bindUser)
                 return
             }
 
-            val oo = runCatching {
-                userApiService.getOsuUser(name)
-            }.getOrNull()
+            // 验证码无效，尝试作为 Osu User ID 获取玩家
+            val osuUser = runCatching { userApiService.getOsuUser(input) }.getOrNull()
+                ?: throw BindException.BindIllegalArgumentException.IllegalVerification()
 
-            if (ql != null || oo == null) {
-                throw BindException.BindIllegalArgumentException.IllegalVerification()
-            }
-
-            ou = oo
+            // 找到了玩家，二次询问确认
+            AsyncMessageUtil.doubleCheck(
+                event = event,
+                keyword = "OK",
+                onCheck = {
+                    // 发送确认提示消息并返回回执（用于后续自动撤回）
+                    event.reply(
+                        BindException.BindConfirmException.Found(targetID, osuUser.username)
+                    )
+                },
+                onOverTime = {
+                    throw BindException.BindReceiveException.ReceiveOverTime()
+                },
+                onWrong = {
+                    throw BindException.BindReceiveException.ReceiveRefused()
+                },
+                onSuccess = { _ ->
+                    executeBind(event, targetID, BindUser(osuUser))
+                }
+            )
         } else {
-            ou = userApiService.getOsuUser(name)
-        }
-
-        if (ql != null) {
-            if (ql.qq == event.sender.contactID) {
-                throw BindException.BoundException.YouBound()
-            } else {
-                throw BindException.BoundException.UserBound(name, ql.qq!!)
-            }
-        }
-
-        val qb = bindDao.getQQLiteFromUserID(ou.userID)
-
-        if (qb != null) {
-            if (qb.qq == event.sender.contactID) {
-                throw BindException.BoundException.YouBound()
-            } else {
-                throw BindException.BoundException.UserBound(name, qb.qq!!)
-            }
-        } else {
-            bindDao.bindQQ(qq, BindUser(ou))
-            bindDao.updateMode(ou.userID, ou.defaultMode)
-            event.replyAsync(BindException.BindResultException.BindSuccess(qq, ou.userID, name, ou.defaultMode))
+            val user = userApiService.getOsuUser(input)
+            executeBind(event, targetID, BindUser(user))
         }
     }
 
     /**
-     * 检查绑定次数
+     * 处理没有提供参数时的绑定逻辑
      */
-    fun check(qq: Long): Boolean {
-        val check = Predicate { t: Long -> t + 1000 * 60 * 30 < System.currentTimeMillis() }
-        BIND_CACHE.entries.removeIf {
-            it.value.removeIf(check)
-            it.value.isEmpty()
+    private fun handleEmptyBinding(event: MessageEvent, targetID: Long) {
+        if (yumuConfig.bindDomain.startsWith("http")) {
+            event.replyAsync(BindException.BindResultException.BindUrl(yumuConfig.bindDomain))
+            return
         }
 
-        val timeList = BIND_CACHE.computeIfAbsent(qq) { ArrayList() }
-        timeList.removeIf(check)
-        timeList.addLast(System.currentTimeMillis())
-        return timeList.size > 3
+        val name = getValidNicknameOrNull(event)
+
+        if (!name.isNullOrBlank()) {
+            val osuUser = runCatching { userApiService.getOsuUser(name) }.getOrNull()
+            if (osuUser != null) {
+                executeBind(event, targetID, BindUser(osuUser))
+                return
+            }
+        }
+
+        // 3. 都没有，进入一问一答流程
+        interactiveBind(event, targetID)
+    }
+
+    // ================== 数据库操作与验证层 ==================
+
+    /**
+     * 执行绑定入库逻辑（前置排查冲突）
+     */
+    private fun executeBind(event: MessageEvent, targetID: Long, bindUser: BindUser) {
+        val existQQ = bindDao.getQQLiteFromQQ(targetID)
+        if (existQQ != null) {
+            if (existQQ.qq == event.sender.contactID) throw BindException.BoundException.YouBound()
+            else throw BindException.BoundException.UserBound(bindUser.username, existQQ.qq)
+        }
+
+        // 检查该 Osu 账号是否已被绑定
+        val existQQLite = bindDao.getQQLiteFromUserID(bindUser.userID)
+        if (existQQLite != null) {
+            if (existQQLite.qq == event.sender.contactID) throw BindException.BoundException.YouBound()
+            else throw BindException.BoundException.UserBound(bindUser.username, existQQLite.qq)
+        }
+
+        // 执行绑定
+        bindDao.bindQQ(targetID, bindUser)
+        event.replyAsync(BindException.BindResultException.BindSuccess(targetID, bindUser.userID, bindUser.username, bindUser.mode))
+    }
+
+    private fun handleUnbind(event: MessageEvent, targetID: Long, name: String?): ServiceCallStatistic {
+        if (!name.isNullOrBlank()) {
+            val uid = bindDao.getOsuID(name) ?: throw BindException.NotBindException.UserNotBind()
+            val qq = bindDao.getQQ(uid)
+            unbindQQ(qq)
+        } else {
+            unbindQQ(targetID)
+        }
+
+        return ServiceCallStatistic.building(event) {
+            setParam(
+                mapOf(
+                    "qqs" to listOf(targetID),
+                    "operate" to listOf("u")
+                )
+            )
+        }
+    }
+
+    private fun unbindQQ(qq: Long) {
+        val bind = bindDao.getQQLiteFromQQ(qq) ?: throw BindException.NotBindException.UserNotBind()
+        if (!bindDao.unBindQQ(bind.bindUser!!)) {
+            throw BindException.UnBindException.UnbindFailed()
+        }
+        throw BindException.UnBindException.UnbindSuccess()
+    }
+
+    // ================== 辅助与工具方法 ==================
+
+    /**
+     * 权限拦截校验
+     */
+    private fun checkPermission(senderID: Long, targetID: Long) {
+        if (senderID != targetID && !Permission.isSuperAdmin(senderID)) {
+            throw PermissionException.DeniedException.BelowSuperAdministrator()
+        }
+    }
+
+    /**
+     * 获取用户群名片（留坑）
+     */
+    private fun getValidNicknameOrNull(event: MessageEvent): String? {
+        val bot = botContainer.robots[event.bot?.botID ?: return null] ?: return null
+
+        val nickname = if (event.subject is Group) {
+            bot.getGroupMemberInfo(event.subject.contactID, event.sender.contactID, false)?.data?.nickname
+        } else {
+            bot.getStrangerInfo(event.sender.contactID, false)?.data?.nickname
+        }?.trim() ?: return null
+
+        if (nickname.matches(osuUsernameRegex)) {
+            return nickname
+        }
+
+        return null
+    }
+
+    /**
+     * 一问一答交互获取玩家名并绑定
+     */
+    private fun interactiveBind(event: MessageEvent, targetID: Long) {
+        AsyncMessageUtil.doubleCheck(
+            event = event,
+            keyword = "",
+            onCheck = {
+                event.reply(BindException.BindReceiveException.ReceiveNoName())
+            },
+            onSuccess = { ev ->
+                val name = ev.rawMessage.trim()
+
+                val osuUser = runCatching { userApiService.getOsuUser(name) }.getOrNull()
+                    ?: throw BindException.BindIllegalArgumentException.IllegalVerification()
+
+                executeBind(event, targetID, BindUser(osuUser))
+            },
+            onOverTime = {
+                throw BindException.BindReceiveException.ReceiveOverTime()
+            },
+            onWrong = {}
+        )
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BindService::class.java)
-        private val BIND_MSG_MAP: MutableMap<Long, BindData> = ConcurrentHashMap()
-        private val BIND_CACHE: MutableMap<Long, MutableList<Long>> = ConcurrentHashMap()
 
-        fun contains(t: Long): Boolean {
-            return BIND_MSG_MAP.containsKey(t)
-        }
+        // 推荐的正确 Regex
+        private val osuUsernameRegex = Regex("^(?=.*[A-Za-z0-9])[A-Za-z0-9 _\\[\\].\\-]{3,15}$")
 
-        fun getBind(t: Long): BindData? {
-            BIND_MSG_MAP.keys.removeIf { k: Long -> (k + 120 * 1000) < System.currentTimeMillis() }
-
-            return BIND_MSG_MAP[t]
-        }
-
-        fun removeBind(t: Long) {
-            BIND_MSG_MAP.remove(t)
-        }
+        private val captchaRegex = Regex("\\d{6}")
     }
 }

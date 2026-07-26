@@ -62,9 +62,9 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
                 如果要更改绑定信息，请先输入 !ub 解除绑定关系。
                 """.trimIndent())
 
-        class UserBound(name: String, qq: Long):
+        class UserBound(name: String, qq: Long?):
             BoundException("""
-                $name 已绑定 $qq，并且令牌仍旧生效。
+                $name 已绑定 ${qq ?: -1L}，并且令牌仍旧生效。
                 如果想要更改绑定信息，请先使用原来的 QQ 账号，输入 !ub 解除绑定关系。
                 """.trimIndent())
     }
@@ -76,28 +76,34 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
                 如果并不是，请无视此条消息。
             """.trimIndent())
 
+        class Found(id: Long, name: String):
+            BindConfirmException("""
+                已经通过名片找到了您的信息：($id) $name，
+                如果这就是您，请回复 OK 完成绑定。
+            """.trimIndent())
+
         class MaybeAvailable(id: Long, name: String):
             BindConfirmException("""
-            您已绑定 ($id) $name，但是令牌可能还没有失效。
-            如果要改绑，请回复 OK。
+                您已绑定 ($id) $name，但是令牌可能还没有失效。
+                如果要改绑，请回复 OK。
             """.trimIndent())
 
         class StillAvailable(id: Long, name: String):
             BindConfirmException("""
-            您已绑定 ($id) $name，但是令牌依旧有效。
-            如果要改绑，请回复 OK。
+                您已绑定 ($id) $name，但是令牌依旧有效。
+                如果要改绑，请回复 OK。
             """.trimIndent())
 
         class Unavailable(id: Long, name: String):
             BindConfirmException("""
-            您已绑定 ($id) $name，但是没有有效的 Oauth2 绑定令牌，或是令牌已经失效。
-            如果要改绑，请回复 OK。
+                您已绑定 ($id) $name，但是没有有效的 Oauth2 绑定令牌，或是令牌已经失效。
+                如果要改绑，请回复 OK。
             """.trimIndent())
 
         class RecoverBind(name: String, name2: String, qq: Long):
             BindConfirmException("""
-            正在将 $name 替代 $name2 绑定在 $qq 上，是否覆盖？
-            如果要覆盖，请回复 OK。
+                正在将 $name 替代 $name2 绑定在 $qq 上，是否覆盖？
+                如果要覆盖，请回复 OK。
             """.trimIndent())
     }
 

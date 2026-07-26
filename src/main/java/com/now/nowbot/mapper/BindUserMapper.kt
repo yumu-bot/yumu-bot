@@ -57,46 +57,46 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     fun update(@Param("user") user: OsuBindUserLite)
 
     @Modifying @Transactional @Query("update OsuBindUserLite o set o.modeValue = :modeValue where o.userID = :userID ")
-    fun updateMode(userID: Long?, modeValue: Byte?)
+    fun updateMode(userID: Long, modeValue: Byte)
 
     @Modifying @Transactional @Query("delete OsuBindUserLite o where o.userID = :userID ") fun deleteByOsuID(userID: Long?)
 
     @Modifying @Transactional
-    @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null, o.updateCount = 0 where o.userID = :userID ")
-    fun downgradeBind(userID: Long?)
+    @Query("update OsuBindUserLite o set o.accessToken = null, o.refreshToken = null, o.time = null, o.updateCount = 0 where o.userID = :userID ")
+    fun downgradeBind(userID: Long)
 
     @Modifying @Transactional
-    @Query(value = "update osu_bind_user set update_count = update_count + 1 where id=:id", nativeQuery = true)
-    fun addUpdateCount(id: Long?)
+    @Query(value = "update osu_bind_user set update_count = update_count + 1 where osu_id = :userID", nativeQuery = true)
+    fun addUpdateCount(userID: Long)
 
     @Modifying @Transactional
-    @Query(value = "update osu_bind_user set update_count = 0 where id=:id", nativeQuery = true)
-    fun clearUpdateCount(id: Long?)
+    @Query(value = "update osu_bind_user set update_count = 0 where osu_id = :userID", nativeQuery = true)
+    fun clearUpdateCount(userID: Long)
 
     @Query("select u from OsuBindUserLite u where u.userID in (:userID)")
     fun getAllByOsuID(userID: Collection<Long>): List<OsuBindUserLite>
 
-    @Modifying @Transactional @Query("delete QQBindLite q where q.osuUser.userID = :userID ")
-    fun deleteQQByOsuID(userID: Long?)
+    @Modifying @Transactional @Query("delete QQBindLite q where q.osuUser.userID = :userID")
+    fun deleteQQByOsuID(userID: Long)
 
-    @Modifying @Transactional @Query("delete DiscordBindLite d where d.osuUser.userID = :userID ") fun deleteDCByOsuID(
+    @Modifying @Transactional @Query("delete DiscordBindLite d where d.osuUser.userID = :userID") fun deleteDCByOsuID(
         userID: Long?
     )
 
     @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now and u.updateCount = 0 order by u.time limit 50")
-    fun getOldBindUser(now: Long?): List<OsuBindUserLite>
+    fun getOldBindUser(now: Long): List<OsuBindUserLite>
 
     @Query("select u from OsuBindUserLite u where u.updateCount > 0 and u.time > 5000 order by u.time limit 50")
-    fun getOldBindUserHasWrong(now: Long?): List<OsuBindUserLite>
+    fun getOldBindUserHasWrong(now: Long): List<OsuBindUserLite>
 
     @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now and u.updateCount = 0 order by u.time limit 1")
-    fun getEarliestBindUser(now: Long?): OsuBindUserLite?
+    fun getEarliestBindUser(now: Long): OsuBindUserLite?
 
     @Query("select u from OsuBindUserLite u where u.updateCount > 0 and u.time > 5000 order by u.time limit 1")
-    fun getEarliestSuspiciousBindUser(now: Long?): OsuBindUserLite?
+    fun getEarliestSuspiciousBindUser(now: Long): OsuBindUserLite?
 
     @Transactional
-    fun deleteAllByUserID(userID: Long?) {
+    fun deleteAllByUserID(userID: Long) {
         deleteQQByOsuID(userID)
         deleteDCByOsuID(userID)
         deleteByOsuID(userID)

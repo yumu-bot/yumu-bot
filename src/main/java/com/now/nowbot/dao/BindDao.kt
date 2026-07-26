@@ -15,6 +15,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.UserNotBind
 import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.YouNotBind
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -57,9 +58,7 @@ class BindDao(
         return bindQQMapper.findById(qq).getOrNull()?.osuUser?.toModel()
     }
 
-    /**
-     * 查询绑定关系（找不到时抛出 BindException）
-     */
+    @Throws(BindException::class)
     fun getBindFromQQ(qq: Long, isMyself: Boolean = false): BindUser {
         return getBindFromQQOrNull(qq).throwIfNull(isMyself)
     }
@@ -153,10 +152,11 @@ class BindDao(
             }
         }
 
-        val qqBind = QQBindLite()
+        val qqBind = QQBindLite().apply {
+            this.qq = qq
+            this.osuUser = bindUserLite
+        }
 
-        qqBind.qq = qq
-        qqBind.osuUser = bindUserLite
         return bindQQMapper.save(qqBind)
     }
 
@@ -235,6 +235,7 @@ class BindDao(
     /**
      * 根据 User ID 查询 SB 绑定用户（找不到时抛出异常）
      */
+    @Throws(BindException::class)
     fun getSBBindUser(userID: Long, isMyself: Boolean = true): SBBindUser {
         return getSBBindUserOrNull(userID).throwIfNull(isMyself)
     }
@@ -314,14 +315,17 @@ class BindDao(
     fun bindQQ(qq: Long?, user: BindUser): QQBindLite {
         val bindUserLite = bindUserMapper.getByOsuID(user.userID)
 
-        if (bindUserLite == null) {
-            return bindQQ(qq, user.toEntity())
+        return if (bindUserLite == null) {
+            bindQQ(qq, user.toEntity())
         } else {
-            bindUserLite.accessToken = user.accessToken
-            bindUserLite.refreshToken = user.refreshToken
-            bindUserLite.time = user.time
-            bindUserLite.username = user.username
-            return bindQQ(qq, bindUserLite)
+            val updatedUser = bindUserLite.apply {
+                accessToken = user.accessToken
+                refreshToken = user.refreshToken
+                time = user.time
+                modeValue = user.mode.safeModeValue
+                username = user.username
+            }
+            bindQQ(qq, updatedUser)
         }
     }
 
@@ -332,8 +336,8 @@ class BindDao(
         bindUserMapper.updateToken(user.userID, user.accessToken, user.refreshToken, user.time)
     }
 
-    fun updateMode(uid: Long?, mode: OsuMode) {
-        bindUserMapper.updateMode(uid, mode.modeValue)
+    fun updateMode(userID: Long, mode: OsuMode) {
+        bindUserMapper.updateMode(userID, mode.modeValue)
     }
 
     fun unBindQQ(user: BindUser): Boolean {
@@ -346,23 +350,26 @@ class BindDao(
     }
 
     /**
-     * 高危权限
-     *
-     * @param user 绑定
-     * @return qq
+     * 需要前置权限来限制查询，否则会泄露隐私
      */
-    fun getQQ(user: BindUser): Long {
-        return getQQ(user.userID)
+    @Throws(BindException::class)
+    fun getQQ(user: BindUser, isMyself: Boolean = true): Long {
+        return getQQ(user.userID, isMyself)
     }
 
-    fun getQQ(osuID: Long): Long {
-        val qqBind = bindQQMapper.findByUserID(osuID)
+    /**
+     * 需要前置权限来限制查询，否则会泄露隐私
+     */
+    @Throws(BindException::class)
+    fun getQQ(userID: Long, isMyself: Boolean = true): Long {
+        return getQQOrNull(userID).throwIfNull(isMyself)
+    }
 
-        return if (qqBind?.qq != null) {
-            qqBind.qq!!
-        } else {
-            -1L
-        }
+    /**
+     * 需要前置权限来限制查询，否则会泄露隐私
+     */
+    fun getQQOrNull(userID: Long): Long? {
+        return bindQQMapper.findByUserID(userID)?.qq
     }
 
     fun getQQBindInfo(user: BindUser): QQBindLite? {
@@ -511,23 +518,22 @@ class BindDao(
         val now = System.currentTimeMillis()
         var user = bindUserMapper.getEarliestBindUser(now)
         if (user != null) {
-            val u = user
-            if (updateUserSet.remove(u.id)) return
+            if (updateUserSet.remove(user.userID)) return
 
-            if (u.refreshToken.isNullOrBlank()) {
-                bindUserMapper.downgradeBind(u.userID)
+            if (user.refreshToken.isNullOrBlank()) {
+                bindUserMapper.downgradeBind(user.userID)
                 return
             }
 
-            log.debug("更新用户: {}", u.username)
-            refreshOldUserToken(u, userApiService)
+            log.debug("更新用户: {}", user.username)
+            refreshOldUserToken(user, userApiService)
             return
         }
 
         user = bindUserMapper.getEarliestSuspiciousBindUser(now)
         if (user != null) {
             val u = user
-            if (updateUserSet.remove(u.id)) return
+            if (updateUserSet.remove(u.userID)) return
 
             if (u.refreshToken.isNullOrBlank()) {
                 bindUserMapper.downgradeBind(u.userID)
@@ -535,7 +541,7 @@ class BindDao(
             }
             // 出错超 5 次默认无法再次更新了
             if (u.updateCount > 5) {
-                bindUserMapper.downgradeBind(u.id)
+                bindUserMapper.downgradeBind(u.userID)
             }
 
             // log.info("更新用户: {}", u.getOsuName());
@@ -585,7 +591,7 @@ class BindDao(
         while (users.isNotEmpty()) {
             val u = users.removeLast()
 
-            if (updateUserSet.remove(u.id)) continue
+            if (updateUserSet.remove(u.userID)) continue
             if (ObjectUtils.isEmpty(u.refreshToken)) {
                 bindUserMapper.downgradeBind(u.userID)
                 continue
@@ -593,19 +599,19 @@ class BindDao(
             // 出错超 5 次默认无法再次更新了
             if (u.updateCount > 5) {
                 // 回退到用户名绑定
-                bindUserMapper.downgradeBind(u.id)
+                bindUserMapper.downgradeBind(u.userID)
             }
             // log.info("更新用户 {}", u.getOsuName());
             try {
                 refreshOldUserToken(u, osuGetService)
-                if (u.updateCount > 0) bindUserMapper.clearUpdateCount(u.id)
+                if (u.updateCount > 0) bindUserMapper.clearUpdateCount(u.userID)
                 errCount = 0
             } catch (_: HttpClientErrorException.Unauthorized) {
                 // 绑定被取消或者过期, 不再尝试
                 log.info("绑定 {} 失败：取消绑定", u.username)
-                bindUserMapper.downgradeBind(u.id)
+                bindUserMapper.downgradeBind(u.userID)
             } catch (e: Exception) {
-                bindUserMapper.addUpdateCount(u.id)
+                bindUserMapper.addUpdateCount(u.userID)
                 log.error("绑定 {} 第 {} 次失败：出现异常: ", u.username, errCount, e)
                 errCount++
             }
@@ -673,6 +679,7 @@ class BindDao(
     }
 
     private class RefreshException(var successCount: Int) : RuntimeException()
+
     companion object {
 
         fun <T: Any> T?.throwIfNull(isMyself: Boolean = true): T {
@@ -681,11 +688,6 @@ class BindDao(
             } else {
                 throw UserNotBind()
             }
-        }
-
-        fun fromModel(user: BindUser?): OsuBindUserLite? {
-            if (user == null) return null
-            return OsuBindUserLite(user)
         }
     }
 }

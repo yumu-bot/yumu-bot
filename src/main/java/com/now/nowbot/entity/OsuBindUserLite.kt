@@ -26,31 +26,19 @@ data class OsuBindUserLite(
     //创号时间
     @Column(name = "join_date") var joinDate: LocalDateTime = LocalDateTime.now(),
 
-    @Transient
-    private var currentOsuMode: OsuMode? = null
+    @Column(name = "main_mode")
+    var modeValue: Byte = -1
 ) {
 
     @get:Transient
-    val mode: OsuMode
-        get() = currentOsuMode ?: modeValue.toOsuMode()
-
-    //主模式
-    @Column(name = "main_mode")
-    private var modeValue: Byte = -1
-        get() {
-            if (currentOsuMode != null) {
-                field = currentOsuMode!!.modeValue
-            }
-
-            return field
-        }
+    var mode: OsuMode
+        get() = modeValue.toOsuMode()
         set(value) {
-            field = value
-            currentOsuMode = value.toOsuMode()
+            modeValue = value.modeValue
         }
 
     constructor(data: BindUser) : this(
-        data.baseID, data.userID, data.username, data.accessToken, data.refreshToken, 0, data.time, LocalDateTime.now(), data.mode
+        data.baseID, data.userID, data.username, data.accessToken, data.refreshToken, 0, data.time, LocalDateTime.now(), data.mode.safeModeValue
     )
 
     companion object {
