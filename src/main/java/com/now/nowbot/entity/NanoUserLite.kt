@@ -18,12 +18,12 @@ class NanoUserLite(
         return other is NanoUserLite && userID == other.userID
     }
 
-    fun toNanoUser(): NanoUser {
-        return NanoUser(userID, username)
-    }
-
     companion object {
-        fun NanoUser.toNanoUserLite(): NanoUserLite {
+        fun NanoUserLite.toModel(): NanoUser {
+            return NanoUser(userID, username)
+        }
+
+        fun NanoUser.toEntity(): NanoUserLite {
             return NanoUserLite(this.userID, this.username)
         }
     }

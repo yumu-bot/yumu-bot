@@ -2,11 +2,14 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.cache.BeatmapFileCacheProvider
+import com.now.nowbot.cache.BeatmapPathCacheProvider
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapCountLite
+import com.now.nowbot.entity.BeatmapLite.Companion.toModel
+import com.now.nowbot.entity.BeatmapsetLite.Companion.toModel
 import com.now.nowbot.mapper.BeatmapCountMapper
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.calculate.CosuRequest
@@ -21,20 +24,14 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.model.osu.LazerMod.Companion.toValue
-import com.now.nowbot.cache.BeatmapPathCacheProvider
 import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.*
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import com.now.nowbot.util.IntArrayCompressor
-import com.now.nowbot.util.JacksonUtil
-import com.now.nowbot.util.UUIDConverter
-import com.now.nowbot.util.toBody
-import com.now.nowbot.util.toBodyList
 import io.ktor.util.collections.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -154,7 +151,7 @@ class BeatmapApiImpl(
     }
 
 
-    override fun deleteBeatmapFileFromDirectory(beatmapID: Long): Boolean  {
+    override fun deleteBeatmapFileFromDirectory(beatmapID: Long): Boolean {
         val path = osuDir.resolve("$beatmapID.osu")
 
         return runCatching {
@@ -577,7 +574,7 @@ class BeatmapApiImpl(
     override fun getBeatmapFromDatabase(beatmapID: Long): Beatmap {
         try {
             val lite = beatmapDao.getBeatmapLite(beatmapID)
-            return BeatmapDao.fromBeatmapLite(lite!!)
+            return lite!!.toModel()
         } catch (_: Exception) {
             return getBeatmap(beatmapID)
         }
@@ -586,7 +583,7 @@ class BeatmapApiImpl(
     override fun getBeatmapsetFromDatabase(beatmapsetID: Long): Beatmapset {
         try {
             val lite = beatmapDao.getBeatmapsetLite(beatmapsetID)
-            return BeatmapDao.fromBeatmapsetLite(lite!!)
+            return lite!!.toModel()
         } catch (_: Exception) {
             return getBeatmapset(beatmapsetID)
         }
@@ -759,7 +756,7 @@ class BeatmapApiImpl(
             }
         }
     }
-    
+
     private fun getTimeStampByBeatmapIDAndIndex(beatmapID: Long, index: Int): Int? {
         val entity = beatmapCountMapper.findById(beatmapID).orElse(null) ?: return null
         val times = entity.readTimestamps() ?: return null
@@ -976,7 +973,12 @@ class BeatmapApiImpl(
     }
 
     @Throws(NoSuchElementException.Beatmap::class)
-    override fun getAttributesFromLocal(beatmapID: Long, mode: OsuMode, score: CosuScore?, isRetry: Boolean): CosuResponse {
+    override fun getAttributesFromLocal(
+        beatmapID: Long,
+        mode: OsuMode,
+        score: CosuScore?,
+        isRetry: Boolean
+    ): CosuResponse {
         val path = osuDir.resolve("${beatmapID}.osu")
 
         // 1. 检查本地文件是否存在
@@ -1008,12 +1010,12 @@ class BeatmapApiImpl(
 
     private fun getAttributesFromLocal(request: CosuRequest): CosuResponse {
         return base.noRetryRestClient.post().uri {
-                it.scheme("http")
-                    .host(calculateConfig.host)
-                    .port(calculateConfig.port)
-                    .replacePath("calculate")
-                    .build()
-            }
+            it.scheme("http")
+                .host(calculateConfig.host)
+                .port(calculateConfig.port)
+                .replacePath("calculate")
+                .build()
+        }
             .body(JacksonUtil.toJson(request))
             .toBody<CosuResponse>()
     }
@@ -1155,11 +1157,19 @@ class BeatmapApiImpl(
         val beatmapsPassed: List<Beatmap>
     )
 
-    override fun getBeatmapPassed(userID: Long, beatmapsetIDs: List<Long>, mode: OsuMode?, excludeConverts: Boolean?, isLegacy: Boolean?, noDiffReductionMods: Boolean?): List<Beatmap> {
+    override fun getBeatmapPassed(
+        userID: Long,
+        beatmapsetIDs: List<Long>,
+        mode: OsuMode?,
+        excludeConverts: Boolean?,
+        isLegacy: Boolean?,
+        noDiffReductionMods: Boolean?
+    ): List<Beatmap> {
 
         val resp = request { client ->
-            client.get().uri { uri -> uri.path("users/${userID}/beatmaps-passed")
-                .queryParam("beatmapset_ids[]", *beatmapsetIDs.toTypedArray())
+            client.get().uri { uri ->
+                uri.path("users/${userID}/beatmaps-passed")
+                    .queryParam("beatmapset_ids[]", *beatmapsetIDs.toTypedArray())
 
                 excludeConverts?.let { ex ->
                     uri.queryParam("exclude_converts", ex)
@@ -1454,7 +1464,11 @@ class BeatmapApiImpl(
         return beatmap
     }
 
-    override fun getBeatmapsetAndTopBeatmapFromAnyID(inputType: IDType, inputID: Long?, groupIDFn: () -> Long?): Pair<Beatmapset, Beatmap> {
+    override fun getBeatmapsetAndTopBeatmapFromAnyID(
+        inputType: IDType,
+        inputID: Long?,
+        groupIDFn: () -> Long?
+    ): Pair<Beatmapset, Beatmap> {
         val maybeID: Long
         val maybeType: IDType
 

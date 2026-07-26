@@ -1,5 +1,6 @@
 package com.now.nowbot.entity
 
+import com.now.nowbot.model.osu.Beatmapset
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
@@ -128,4 +129,62 @@ class BeatmapsetExtendLite (
 
     @Column(name = "updated_at")
     var updatedAt: LocalDateTime = LocalDateTime.now()
-)
+) {
+    companion object {
+        fun Beatmapset.toExtendEntity(): BeatmapsetExtendLite {
+            val set = this
+
+            val entity = BeatmapsetExtendLite(
+                beatmapsetID = set.beatmapsetID,
+                animeCover = set.animeCover,
+                artist = set.artist,
+                artistUnicode = set.artistUnicode,
+                coverID = set.covers.cover
+                    .split("?").getOrNull(1)?.toLongOrNull(),
+                creator = set.creator,
+                favouriteCount = set.favouriteCount,
+                genreID = set.genreID,
+                creatorID = set.creatorID,
+                languageID = set.languageID,
+                nsfw = set.nsfw,
+                recommendOffset = set.offset,
+                playCount = set.playCount,
+                source = set.source,
+                status = set.status,
+                spotlight = set.spotlight,
+                title = set.title,
+                titleUnicode = set.titleUnicode,
+                trackID = set.trackID,
+                video = set.video,
+                bpm = set.bpm,
+                discussionLocked = set.discussionLocked,
+                lastUpdated = set.lastUpdated.toLocalDateTime(),
+                threadID = set.legacyThreadUrl?.split("/")?.lastOrNull()?.toLongOrNull(),
+                nominationsCurrent = set.nominationsSummary?.current,
+                nominationsRulesets = set.nominationsSummary?.mode
+                    ?.map { mode ->
+                        when(mode) {
+                            "osu" -> 1
+                            "taiko" -> 2
+                            "catch", "fruits" -> 4
+                            "mania" -> 8
+                            else -> 0
+                        }
+                    }?.sum()?.toByte(),
+                nominationsRequiredMain = set.nominationsSummary?.required?.main,
+                nominationsRequiredSecondary = set.nominationsSummary?.required?.secondary,
+                ranked = set.ranked,
+                rankedDate = set.rankedDate?.toLocalDateTime(),
+                rating = set.rating,
+                storyboard = set.storyboard,
+                submittedDate = set.submittedDate.toLocalDateTime(),
+                tags = set.tags,
+                downloadDisabled = set.availability.downloadDisabled,
+                moreInformation = set.availability.moreInformation,
+                ratings = set.ratings.toTypedArray(),
+            )
+
+            return entity
+        }
+    }
+}

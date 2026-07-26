@@ -1,5 +1,7 @@
 package com.now.nowbot.entity
 
+import com.now.nowbot.model.osu.Beatmapset
+import com.now.nowbot.model.osu.Covers
 import jakarta.persistence.*
 
 @Entity
@@ -70,4 +72,59 @@ class BeatmapsetLite {
 
     @Column(name = "download_disabled")
     var availabilityDownloadDisabled: Boolean? = false
+
+    companion object {
+        fun BeatmapsetLite.toModel(): Beatmapset {
+            val set = this
+
+            return Beatmapset().apply {
+                beatmapsetID = set.beatmapsetID.toLong()
+                creatorID = set.mapperID.toLong()
+                creator = set.creator
+                covers = Covers(set.cover, set.cover, set.card, set.card, set.list, set.list, set.slimcover, set.slimcover)
+
+                nsfw = set.nsfw
+                storyboard = set.storyboard ?: false
+                source = set.source
+                status = set.status
+                playCount = set.playCount
+                favouriteCount = set.favourite.toLong()
+                title = set.title
+                titleUnicode = set.titleUnicode
+                artist = set.artist
+                artistUnicode = set.artistUnicode
+                legacyThreadUrl = set.legacyUrl
+
+                fromDatabase = false
+            }
+        }
+
+        fun Beatmapset.toEntity(): BeatmapsetLite {
+            val mapSet = this
+
+            return BeatmapsetLite().apply {
+                beatmapsetID = mapSet.beatmapsetID.toInt()
+                card = mapSet.covers.card2x
+                cover = mapSet.covers.cover2x
+                list = mapSet.covers.list2x
+                slimcover = mapSet.covers.slimcover2x
+
+                availabilityDownloadDisabled = mapSet.availability.downloadDisabled
+                nsfw = mapSet.nsfw
+                storyboard = mapSet.storyboard
+                legacyUrl = mapSet.legacyThreadUrl
+
+                mapperID = mapSet.creatorID.toInt()
+                creator = mapSet.creator
+                source = mapSet.source
+                status = mapSet.status
+                playCount = mapSet.playCount
+                favourite = mapSet.favouriteCount.toInt()
+                title = mapSet.title
+                titleUnicode = mapSet.titleUnicode
+                artist = mapSet.artist
+                artistUnicode = mapSet.artistUnicode
+            }
+        }
+    }
 }

@@ -1,7 +1,9 @@
 package com.now.nowbot.entity
 
+import com.now.nowbot.entity.NanoUserLite.Companion.toEntity
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.util.IntArrayCompressor
+import com.now.nowbot.util.JacksonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
@@ -14,42 +16,44 @@ import java.time.LocalDateTime
  */
 
 @Entity
-@Table(name = "osu_extend_beatmap", indexes = [
-    Index(name = "index_beatmapset_id", columnList = "beatmapset_id"),
-    Index(name = "index_updated_at", columnList = "updated_at")
-])
+@Table(
+    name = "osu_extend_beatmap",
+    indexes = [Index(name = "index_beatmapset_id", columnList = "beatmapset_id"), Index(
+        name = "index_updated_at",
+        columnList = "updated_at"
+    )]
+)
 class BeatmapExtendLite(
-    @Id
-    @Column(name = "beatmap_id")
-    var beatmapID: Long = -1,
+    @Id @Column(name = "beatmap_id") var beatmapID: Long = -1,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "beatmapset_id")
-    var beatmapset: BeatmapsetExtendLite,
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "beatmapset_id") var beatmapset: BeatmapsetExtendLite,
 
-    @Column(name = "lazer_only", nullable = false, updatable = true)
-    var lazerOnly: Boolean = false,
+    @Column(name = "lazer_only", nullable = false, updatable = true) var lazerOnly: Boolean = false,
 
-    @JdbcTypeCode(SqlTypes.VARBINARY)
-    @Column(name = "fails", nullable = true, updatable = true)
-    var fails: ByteArray? = null,
+    @JdbcTypeCode(SqlTypes.VARBINARY) @Column(
+        name = "fails",
+        nullable = true,
+        updatable = true
+    ) var fails: ByteArray? = null,
 
-    @JdbcTypeCode(SqlTypes.VARBINARY)
-    @Column(name = "exits", nullable = true, updatable = true)
-    var exits: ByteArray? = null,
+    @JdbcTypeCode(SqlTypes.VARBINARY) @Column(
+        name = "exits",
+        nullable = true,
+        updatable = true
+    ) var exits: ByteArray? = null,
 
-    @Column(name = "max_combo", nullable = false, updatable = true)
-    var maxCombo: Int = 0,
+    @Column(name = "max_combo", nullable = false, updatable = true) var maxCombo: Int = 0,
 
-    @Type(JsonBinaryType::class)
-    @Column(name = "owners", columnDefinition = "JSONB", nullable = true, updatable = true)
-    var owners: String? = null,
+    @Type(JsonBinaryType::class) @Column(
+        name = "owners",
+        columnDefinition = "JSONB",
+        nullable = true,
+        updatable = true
+    ) var owners: String? = null,
 
-    @Column(name = "created_at", updatable = false)
-    var createdAt: LocalDateTime = LocalDateTime.now(),
+    @Column(name = "created_at", updatable = false) var createdAt: LocalDateTime = LocalDateTime.now(),
 
-    @Column(name = "updated_at", nullable = false, updatable = true)
-    var updatedAt: LocalDateTime = LocalDateTime.now()
+    @Column(name = "updated_at", nullable = false, updatable = true) var updatedAt: LocalDateTime = LocalDateTime.now()
 ) {
 
     fun readFails(): IntArray? {
@@ -82,6 +86,28 @@ class BeatmapExtendLite(
 
         writeFails(data.retries)
         writeExits(data.fails)
+    }
+
+    companion object {
+        fun Beatmap.toExtendEntity(savedSet: BeatmapsetExtendLite): BeatmapExtendLite {
+            val beatmap = this
+
+            val now = LocalDateTime.now()
+
+            val lite = BeatmapExtendLite(
+                beatmapID = beatmap.beatmapID,
+                beatmapset = savedSet,
+                lazerOnly = beatmap.lazerOnly,
+                owners = beatmap.owners?.map { nu -> nu.toEntity() }?.let { JacksonUtil.toJson(it) },
+                maxCombo = beatmap.maxCombo ?: 0,
+                createdAt = now,
+                updatedAt = now
+            ).apply {
+                this.writeFailTimesFromData(beatmap.failTimes)
+            }
+
+            return lite
+        }
     }
 }
 

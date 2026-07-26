@@ -1,6 +1,8 @@
 package com.now.nowbot.entity
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.now.nowbot.entity.BeatmapsetLite.Companion.toEntity
+import com.now.nowbot.entity.BeatmapsetLite.Companion.toModel
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.Beatmap
@@ -48,8 +50,10 @@ class BeatmapLite {
 
     @Column(name = "difficulty_rating")
     var difficultyRating: Float = 0f
+
     @Column(name = "bpm")
     var bpm: Float = 0f
+
     @Column(name = "max_combo")
     var maxCombo: Int? = null
 
@@ -61,6 +65,7 @@ class BeatmapLite {
     //秒
     @Column(name = "total_length")
     var totalLength: Int = 0
+
     @Column(name = "hit_length")
     var hitLength: Int? = null
 
@@ -108,35 +113,57 @@ class BeatmapLite {
     val mode: OsuMode
         get() = modeInt.toOsuMode()
 
-    fun toBeatmap(): Beatmap {
-        val b = Beatmap()
-        b.beatmapID = this.beatmapID
-        b.beatmapsetID = this.beatmapsetID?.toLong() ?: -1L
-        b.convert = this.convert
-        b.difficultyName = this.difficultyName
-        b.playCount = this.playcount
-        b.passCount = this.passcount
-        b.od = this.od
-        b.cs = this.cs
-        b.ar = this.ar
-        b.hp = this.hp
-        b.starRating = this.difficultyRating.toDouble()
-        b.bpm = this.bpm
-        b.maxCombo = this.maxCombo
-        b.status = this.status
-        b.circles = this.circles
-        b.sliders = this.sliders
-        b.spinners = this.spinners
-        b.totalLength = this.totalLength
-        b.hitLength = this.hitLength
-        b.modeInt = this.modeInt
-        b.mapperID = this.mapperID
-        b.md5 = this.md5
-        return b
-    }
 
     interface BeatmapHitLengthResult {
         val id: Long
         val length: Int
+    }
+
+    companion object {
+        fun BeatmapLite.toModel(): Beatmap {
+            val lite = this
+
+            return Beatmap().apply {
+                this.beatmapID = lite.beatmapID
+                this.beatmapsetID = lite.beatmapsetID?.toLong() ?: -1L
+                this.convert = lite.convert
+                this.difficultyName = lite.difficultyName
+                this.playCount = lite.playcount
+                this.passCount = lite.passcount
+                this.od = lite.od
+                this.cs = lite.cs
+                this.ar = lite.ar
+                this.hp = lite.hp
+                this.starRating = lite.difficultyRating.toDouble()
+                this.bpm = lite.bpm
+                this.maxCombo = lite.maxCombo
+                this.status = lite.status
+                this.circles = lite.circles
+                this.sliders = lite.sliders
+                this.spinners = lite.spinners
+                this.totalLength = lite.totalLength
+                this.hitLength = lite.hitLength
+                this.modeInt = lite.modeInt
+                this.mapperID = lite.mapperID
+                this.md5 = lite.md5
+                this.beatmapset = lite.mapSet!!.toModel()
+            }
+        }
+
+        fun Beatmap.toEntity(): BeatmapLite {
+            val s = BeatmapLite(this)
+            val set = this.beatmapset
+
+            var mapSet: BeatmapsetLite? = null
+
+            if (set != null) {
+                mapSet = set.toEntity()
+                s.beatmapsetID = set.beatmapsetID.toInt()
+            }
+
+            s.mapSet = mapSet
+
+            return s
+        }
     }
 }

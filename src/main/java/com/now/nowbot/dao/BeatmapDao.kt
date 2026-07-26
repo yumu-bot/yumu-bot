@@ -1,24 +1,16 @@
 package com.now.nowbot.dao
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue
-import com.now.nowbot.entity.BeatmapExtendLite
-import com.now.nowbot.entity.BeatmapLite
+import com.now.nowbot.entity.*
+import com.now.nowbot.entity.BeatmapExtendLite.Companion.toExtendEntity
 import com.now.nowbot.entity.BeatmapLite.BeatmapHitLengthResult
-import com.now.nowbot.entity.BeatmapsetExtendLite
-import com.now.nowbot.entity.BeatmapsetLite
-import com.now.nowbot.entity.NanoUserLite
-import com.now.nowbot.entity.NanoUserLite.Companion.toNanoUserLite
-import com.now.nowbot.entity.TagLite
-import com.now.nowbot.mapper.BeatmapExtendRepository
-import com.now.nowbot.mapper.BeatmapRepository
-import com.now.nowbot.mapper.BeatmapsetExtendLiteRepository
-import com.now.nowbot.mapper.BeatmapsetRepository
-import com.now.nowbot.mapper.TagRepository
-import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.Beatmapset
-import com.now.nowbot.model.osu.Covers
-import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.Tag
+import com.now.nowbot.entity.BeatmapLite.Companion.toEntity
+import com.now.nowbot.entity.BeatmapsetExtendLite.Companion.toExtendEntity
+import com.now.nowbot.entity.BeatmapsetLite.Companion.toEntity
+import com.now.nowbot.entity.NanoUserLite.Companion.toEntity
+import com.now.nowbot.entity.NanoUserLite.Companion.toModel
+import com.now.nowbot.mapper.*
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.util.IntArrayCompressor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
@@ -29,7 +21,6 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import kotlin.collections.orEmpty
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -111,8 +102,8 @@ class BeatmapDao(
         val set = beatmap.beatmapset
 
         if (set != null && set.beatmapsetID > 0) {
-            beatmapsetRepository.save(fromBeatmapsetModel(set))
-            beatmapRepository.save(fromBeatmapModel(beatmap))
+            beatmapsetRepository.save(set.toEntity())
+            beatmapRepository.save(beatmap.toEntity())
         }
     }
 
@@ -123,7 +114,10 @@ class BeatmapDao(
                 saveBeatmaps(beatmaps)
             }.onFailure { e ->
                 if (e is DataIntegrityViolationException) return@onFailure
-                log.warn("谱面数据访问对象层：保存 ${beatmaps.joinToString(", ") { it.beatmapID.toString() }} 等谱面失败：", e)
+                log.warn(
+                    "谱面数据访问对象层：保存 ${beatmaps.joinToString(", ") { it.beatmapID.toString() }} 等谱面失败：",
+                    e
+                )
             }
         }
     }
@@ -131,19 +125,19 @@ class BeatmapDao(
     private fun saveBeatmaps(beatmaps: Collection<Beatmap>) {
         val exists = beatmapRepository.exists(beatmaps.map { it.beatmapID }).toSet()
 
-        val s = beatmaps.filterNot { it.beatmapID in exists }.map { fromBeatmapModel(it) }
+        val s = beatmaps.filterNot { it.beatmapID in exists }.map { it.toEntity() }
 
         beatmapRepository.saveAll(s)
     }
 
     fun saveBeatmapset(beatmapset: Beatmapset): BeatmapsetLite {
-        return beatmapsetRepository.saveAndFlush(fromBeatmapsetModel(beatmapset))
+        return beatmapsetRepository.saveAndFlush(beatmapset.toEntity())
     }
 
     fun saveBeatmapsets(beatmapsets: Collection<Beatmapset>) {
         val exists = beatmapsetRepository.exists(beatmapsets.map { it.beatmapsetID }).toSet()
 
-        val s = beatmapsets.filterNot { it.beatmapsetID in exists }.map { fromBeatmapsetModel(it) }
+        val s = beatmapsets.filterNot { it.beatmapsetID in exists }.map { it.toEntity() }
         beatmapsetRepository.saveAllAndFlush(s)
     }
 
@@ -167,16 +161,17 @@ class BeatmapDao(
         return tagRepository.findById(id).get().toModel()
     }
 
-    fun findSetByUpdateAtAscend(time: LocalDateTime, limit: Int = 500): List<BeatmapsetExtendLite> {
-        return extendBeatmapSetRepository.findByUpdateAtAscend(time, limit)
-    }
+//    fun findSetByUpdateAtAscend(time: LocalDateTime, limit: Int = 500): List<BeatmapsetExtendLite> {
+//        return extendBeatmapSetRepository.findByUpdateAtAscend(time, limit)
+//    }
 
     fun updateFailTimeByBeatmapsetID(s: Beatmapset): Int {
         return extendBeatmapSetRepository.updateFailTimeByBeatmapsetID(
             s.beatmapsetID, s.animeCover, s.favouriteCount,
             s.offset, s.playCount, s.spotlight,
             s.trackID, s.discussionLocked, s.rating,
-            s.ratings.toTypedArray())
+            s.ratings.toTypedArray()
+        )
     }
 
     fun findMapByUpdateAtAscend(time: LocalDateTime, limit: Int = 500): List<BeatmapExtendLite> {
@@ -189,7 +184,8 @@ class BeatmapDao(
             lazerOnly = beatmap.lazerOnly,
             fails = IntArrayCompressor.intArrayToByteArray(beatmap.retries),
             exits = IntArrayCompressor.intArrayToByteArray(beatmap.fails),
-            owners = beatmap.owners?.map { o -> o.toNanoUserLite() }?.let { owners -> JacksonUtil.objectToJson(owners)})
+            owners = beatmap.owners?.map { o -> o.toEntity() }
+                ?.let { owners -> JacksonUtil.objectToJson(owners) })
     }
 
     @Transactional
@@ -216,7 +212,7 @@ class BeatmapDao(
                 .forEach { s ->
                     val id = s.beatmapsetID
 
-                    val entity = s.toEntity()
+                    val entity = s.toExtendEntity()
 
                     extendBeatmapSetRepository.upsert(entity)
 
@@ -227,7 +223,7 @@ class BeatmapDao(
                 val associatedSet = savedSetMap[beatmap.beatmapsetID]
                 if (associatedSet != null) {
                     runCatching {
-                        val entity = beatmap.toEntity(associatedSet)
+                        val entity = beatmap.toExtendEntity(associatedSet)
 
                         extendBeatmapRepository.upsert(entity)
                     }.onFailure { e ->
@@ -263,87 +259,11 @@ class BeatmapDao(
             return
         }
 
-        val setEntity = set.toEntity()
-        val mapEntity = beatmap.toEntity(setEntity)
+        val setEntity = set.toExtendEntity()
+        val mapEntity = beatmap.toExtendEntity(setEntity)
 
         extendBeatmapSetRepository.upsert(setEntity)
         extendBeatmapRepository.upsert(mapEntity)
-    }
-
-    private fun Beatmap.toEntity(savedSet: BeatmapsetExtendLite): BeatmapExtendLite {
-        val beatmap = this
-
-        val now = LocalDateTime.now()
-
-        val lite = BeatmapExtendLite(
-            beatmapID = beatmap.beatmapID,
-            beatmapset = savedSet,
-            lazerOnly = beatmap.lazerOnly,
-            owners = beatmap.owners?.map { nu -> nu.toNanoUserLite() }?.let { JacksonUtil.toJson(it) },
-            maxCombo = beatmap.maxCombo ?: 0,
-            createdAt = now,
-            updatedAt = now
-        ).apply {
-            this.writeFailTimesFromData(beatmap.failTimes)
-        }
-
-        return lite
-    }
-
-    private fun Beatmapset.toEntity(): BeatmapsetExtendLite {
-        val set = this
-
-        val entity = BeatmapsetExtendLite(
-            beatmapsetID = set.beatmapsetID,
-            animeCover = set.animeCover,
-            artist = set.artist,
-            artistUnicode = set.artistUnicode,
-            coverID = set.covers.cover
-                .split("?").getOrNull(1)?.toLongOrNull(),
-            creator = set.creator,
-            favouriteCount = set.favouriteCount,
-            genreID = set.genreID,
-            creatorID = set.creatorID,
-            languageID = set.languageID,
-            nsfw = set.nsfw,
-            recommendOffset = set.offset,
-            playCount = set.playCount,
-            source = set.source,
-            status = set.status,
-            spotlight = set.spotlight,
-            title = set.title,
-            titleUnicode = set.titleUnicode,
-            trackID = set.trackID,
-            video = set.video,
-            bpm = set.bpm,
-            discussionLocked = set.discussionLocked,
-            lastUpdated = set.lastUpdated.toLocalDateTime(),
-            threadID = set.legacyThreadUrl?.split("/")?.lastOrNull()?.toLongOrNull(),
-            nominationsCurrent = set.nominationsSummary?.current,
-            nominationsRulesets = set.nominationsSummary?.mode
-                ?.map { mode ->
-                    when(mode) {
-                        "osu" -> 1
-                        "taiko" -> 2
-                        "catch", "fruits" -> 4
-                        "mania" -> 8
-                        else -> 0
-                    }
-                }?.sum()?.toByte(),
-            nominationsRequiredMain = set.nominationsSummary?.required?.main,
-            nominationsRequiredSecondary = set.nominationsSummary?.required?.secondary,
-            ranked = set.ranked,
-            rankedDate = set.rankedDate?.toLocalDateTime(),
-            rating = set.rating,
-            storyboard = set.storyboard,
-            submittedDate = set.submittedDate.toLocalDateTime(),
-            tags = set.tags,
-            downloadDisabled = set.availability.downloadDisabled,
-            moreInformation = set.availability.moreInformation,
-            ratings = set.ratings.toTypedArray(),
-        )
-
-        return entity
     }
 
     /**
@@ -425,7 +345,8 @@ class BeatmapDao(
             beatmapsetID = x.beatmapsetID
             lazerOnly = b.lazerOnly
             failTimes = b.readFailTimesAsData()
-            owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
+            owners =
+                b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toModel() }
             maxCombo = b.maxCombo
         }
 
@@ -478,7 +399,7 @@ class BeatmapDao(
         lazerOnly = b.lazerOnly
         failTimes = b.readFailTimesAsData()
         maxCombo = b.maxCombo
-        owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toNanoUser() }
+        owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toModel() }
 
         return this
     }
@@ -558,76 +479,6 @@ class BeatmapDao(
     }
 
     companion object {
-        fun fromBeatmapLite(bl: BeatmapLite): Beatmap {
-            val b = bl.toBeatmap()
-            b.beatmapset = fromBeatmapsetLite(bl.mapSet!!)
-            return b
-        }
-
-        fun fromBeatmapModel(b: Beatmap): BeatmapLite {
-            val s = BeatmapLite(b)
-            val set = b.beatmapset
-
-            var mapSet: BeatmapsetLite? = null
-
-            if (set != null) {
-                mapSet = fromBeatmapsetModel(set)
-                s.beatmapsetID = set.beatmapsetID.toInt()
-            }
-            s.mapSet = mapSet
-            return s
-        }
-
-        fun fromBeatmapsetLite(set: BeatmapsetLite): Beatmapset {
-            val s = Beatmapset()
-            s.beatmapsetID = set.beatmapsetID.toLong()
-            s.creatorID = set.mapperID.toLong()
-            s.creator = set.creator
-            s.covers = Covers(set.cover, set.cover, set.card, set.card, set.list, set.list, set.slimcover, set.slimcover)
-
-            s.nsfw = set.nsfw
-            s.storyboard = set.storyboard ?: false
-            s.source = set.source
-            s.status = set.status
-            s.playCount = set.playCount
-            s.favouriteCount = set.favourite.toLong()
-            s.title = set.title
-            s.titleUnicode = set.titleUnicode
-            s.artist = set.artist
-            s.artistUnicode = set.artistUnicode
-            s.legacyThreadUrl = set.legacyUrl
-
-            s.fromDatabase = false
-            return s
-        }
-
-        fun fromBeatmapsetModel(mapSet: Beatmapset): BeatmapsetLite {
-            val s = BeatmapsetLite()
-            s.beatmapsetID = mapSet.beatmapsetID.toInt()
-            s.card = mapSet.covers.card2x
-            s.cover = mapSet.covers.cover2x
-            s.list = mapSet.covers.list2x
-            s.slimcover = mapSet.covers.slimcover2x
-
-            s.availabilityDownloadDisabled = mapSet.availability.downloadDisabled
-            s.nsfw = mapSet.nsfw
-            s.storyboard = mapSet.storyboard
-            s.legacyUrl = mapSet.legacyThreadUrl
-
-            s.mapperID = mapSet.creatorID.toInt()
-            s.creator = mapSet.creator
-            s.source = mapSet.source
-            s.status = mapSet.status
-            s.playCount = mapSet.playCount
-            s.favourite = mapSet.favouriteCount.toInt()
-            s.title = mapSet.title
-            s.titleUnicode = mapSet.titleUnicode
-            s.artist = mapSet.artist
-            s.artistUnicode = mapSet.artistUnicode
-
-            return s
-        }
-
         private val log: Logger = LoggerFactory.getLogger(BeatmapDao::class.java)
     }
 }
