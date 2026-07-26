@@ -39,7 +39,7 @@ data class Beatmapset(
     var hype: Hype? = null, 
 
     @field:JsonProperty("id")
-    var beatmapsetID: Long = 0L, 
+    var beatmapsetID: Long = 0L,
 
     @field:JsonProperty("language_id")
     var languageID: Byte = 0, 

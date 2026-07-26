@@ -45,6 +45,8 @@ class BeatmapDao(
     }
 
     fun saveBeatmapsetAsync(beatmapset: Beatmapset) {
+        if (beatmapset.beatmapsetID <= 0) return
+
         Thread.startVirtualThread {
             saveBeatmapset(beatmapset)
         }
@@ -56,8 +58,7 @@ class BeatmapDao(
             val sets = beatmapsets.toSet()
             val beatmaps = sets.flatMap { it.beatmaps.orEmpty() }.toSet()
 
-            // 1. 保存 谱面集 (父表)
-            sets.forEach { set ->
+            sets.filter { it.beatmapsetID > 0 }.forEach { set ->
                 runCatching {
                     saveBeatmapset(set)
                 }.onFailure { e ->
