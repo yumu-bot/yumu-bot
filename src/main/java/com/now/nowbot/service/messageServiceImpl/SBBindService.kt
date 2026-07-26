@@ -3,13 +3,11 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.entity.bind.SBQQBindLite
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.sbApiService.SBUserApiService
-
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
@@ -23,15 +21,12 @@ import org.springframework.stereotype.Service
 class SBBindService(
     private val userApiService: SBUserApiService,
     private val bindDao: BindDao,
-    ) : MessageService<SBBindService.BindParam> {
+) : MessageService<SBBindService.BindParam> {
 
     data class BindParam(
-        val qq: Long,
-        val id: Long?,
-        val name: String?,
-        val at: Boolean,
-        val isUnbind: Boolean,
-        val isSuper: Boolean,
+        val targetID: Long?,
+        val input: String?,
+        val isUnbind: Boolean
     )
 
     override fun isHandle(
@@ -42,97 +37,135 @@ class SBBindService(
         val m = Instruction.SB_BIND.matcher(messageText)
         if (!m.find()) return false
 
-        val qq = m.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.contactID
+        // 获取可能的 @ 或者 指定 QQ
+        val targetID = if (event.hasAt()) {
+            event.target
+        } else {
+            m.group(FLAG_QQ_ID)?.toLongOrNull()
+        }
 
+        val inputStr = m.group(FLAG_NAME)?.trim()
         val isUnbind = m.group("un") != null || m.group("ub") != null
 
-        val nameStr = m.group(FLAG_NAME)
-        val id = nameStr?.toLongOrNull()
-        val name = if (id == null) nameStr else null
-
-        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
-
-        data.value = if (event.hasAt()) {
-            BindParam(event.target, id, name, true, isUnbind, isSuper)
-        } else {
-            BindParam(qq, id, name, false, isUnbind, isSuper)
-        }
+        data.value = BindParam(
+            targetID = targetID,
+            input = inputStr?.takeIf { it.isNotBlank() },
+            isUnbind = isUnbind
+        )
 
         return true
     }
 
     override fun handleMessage(event: MessageEvent, param: BindParam): ServiceCallStatistic? {
-        val me = event.sender.contactID
+        val senderID = event.sender.contactID
+        val targetID = param.targetID ?: senderID
 
-        if (me == param.qq) {
-            if (param.isUnbind) {
-                unbindQQ(me, isMyself = true)
-            } else {
-                bindQQ(event, param)
-            }
+        // 1. 权限校验
+        checkPermission(senderID, targetID)
+
+        // 2. 解绑流程
+        if (param.isUnbind) {
+            handleUnbind(senderID, targetID, param.input)
             return ServiceCallStatistic.building(event)
         }
 
-        // 超管使用量少, 所以相关分支靠后
-        // 超级管理员的专属权利：艾特绑定和全 QQ 移除绑定
-        if (param.isSuper) {
-            if (param.isUnbind) {
-                if (param.name.isNullOrEmpty()) {
-                    unbindQQ(param.qq, isMyself = false)
-                } else {
-                    unbindName(param.name)
-                }
-            } else {
-                bindQQ(event, param)
-            }
-            return ServiceCallStatistic.building(event)
-        }
-
-        // bi ub 但是不是自己, 也不是超管
-        throw PermissionException.DeniedException.BelowSuperAdministrator()
-    }
-
-
-    private fun bindQQ(event: MessageEvent, param: BindParam) {
-        val user = getSBUser(event, param)
-
-        val qb: SBQQBindLite? = bindDao.getSBQQLiteFromQQ(param.qq)
-
-        if (qb == null) {
-            bindDao.bindSBQQ(param.qq, SBBindUser(user))
-            bindDao.updateSBMode(user.userID, user.mode)
-
-            event.replyAsync(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username, user.mode))
-
-            return
-        }
-
-        // 已有绑定：覆盖绑定
-        event.replyAsync(BindException.BindConfirmException.RecoverBind(user.username, qb.bindUser.username, param.qq))
-
-        val lock = AsyncMessageUtil.getLock(event)
-        val ev = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
-
-        if (ev.rawMessage.uppercase().startsWith("OK")) {
-            bindDao.bindSBQQ(param.qq, SBBindUser(user))
-            bindDao.updateSBMode(user.userID, user.mode)
-
-            event.replyAsync(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username, user.mode))
+        // 3. 绑定流程
+        val sbUser = if (param.input != null) {
+            fetchSBUser(param.input)
         } else {
-            event.replyAsync(BindException.BindReceiveException.ReceiveRefused())
+            interactiveFetchUser(event)
+        }
+
+        executeBind(event, targetID, sbUser)
+
+        return ServiceCallStatistic.building(event)
+    }
+
+    // ================== 核心绑定/解绑流程 ==================
+
+    /**
+     * 处理解绑逻辑
+     */
+    private fun handleUnbind(senderID: Long, targetID: Long, input: String?) {
+        val isMyself = senderID == targetID
+
+        // 如果传入了名称且是超管，按名称解绑；否则按 QQ 解绑
+        if (input != null && Permission.isSuperAdmin(senderID)) {
+            unbindByInput(input)
+        } else {
+            unbindQQ(targetID, isMyself)
         }
     }
 
-    // TODO 这里应该查本地表并更新的
-    private fun unbindName(name: String) {
-        val userID = userApiService.getUserID(name) ?: throw NoSuchElementException.Player(name)
+    /**
+     * 执行绑定入库逻辑（含覆盖确认）
+     */
+    private fun executeBind(event: MessageEvent, targetID: Long, user: SBUser) {
+        val existingBind = bindDao.getSBQQLiteFromQQ(targetID)
 
-        val qb = bindDao.getSBQQLiteFromUserID(userID) ?: throw BindException.NotBindException.YouNotBind()
+        // 已有绑定：触发覆盖绑定二次确认
+        if (existingBind != null) {
+            AsyncMessageUtil.doubleCheck(
+                event = event,
+                keyword = "OK",
+                onCheck = {
+                    event.reply(
+                        BindException.BindConfirmException.RecoverBind(
+                            user.username,
+                            existingBind.bindUser.username,
+                            targetID
+                        )
+                    )
+                },
+                onOverTime = {
+                    throw BindException.BindReceiveException.ReceiveOverTime()
+                },
+                onWrong = {
+                    throw BindException.BindReceiveException.ReceiveRefused()
+                },
+                onSuccess = {}
+            )
+        }
 
-        unbindQQ(qb.qq)
+        // 写入数据库
+        bindDao.bindSBQQ(targetID, SBBindUser(user))
+        bindDao.updateSBMode(user.userID, user.mode)
+
+        event.replyAsync(BindException.BindResultException.BindSuccess(targetID, user.userID, user.username, user.mode, PREFIX))
     }
 
-    private fun unbindQQ(qq: Long, isMyself: Boolean = true) {
+    // ================== API 查询与数据库交互层 ==================
+
+    /**
+     * 根据输入获取 SBUser，自动判断是 ID 还是 Name
+     */
+    private fun fetchSBUser(input: String): SBUser {
+        val id = input.toLongOrNull()
+
+        val user = if (id != null) {
+            userApiService.getUser(id = id)
+        } else {
+            userApiService.getUser(username = input)
+        }
+
+        return user ?: throw NoSuchElementException.Player(input)
+    }
+
+    /**
+     * 按名称或 ID 查找到玩家后解除绑定
+     */
+    private fun unbindByInput(input: String) {
+        val user = fetchSBUser(input)
+        val qb = bindDao.getSBQQLiteFromUserID(user.userID)
+            ?: throw BindException.NotBindException.UserNotBind()
+
+        unbindQQ(qb.qq, isMyself = false)
+    }
+
+    /**
+     * 解除指定 QQ 的绑定
+     */
+    private fun unbindQQ(qq: Long, isMyself: Boolean) {
         val bind = bindDao.getSBQQLiteFromQQ(qq) ?: if (isMyself) {
             throw BindException.NotBindException.YouNotBind()
         } else {
@@ -146,38 +179,41 @@ class SBBindService(
         }
     }
 
+    // ================== 辅助与工具方法 ==================
 
-    private fun getSBUser(event: MessageEvent, param: BindParam): SBUser {
-        val name: String?
-        val id: Long?
-
-        if (param.name.isNullOrEmpty() && param.id == null) {
-            event.replyAsync(BindException.BindReceiveException.ReceiveNoName())
-
-            val lock = AsyncMessageUtil.getLock(event)
-            val ev: MessageEvent = lock.await() ?: throw BindException.BindReceiveException.ReceiveOverTime()
-
-            val maybeID = ev.rawMessage.trim().toLongOrNull()
-
-            if (maybeID == null) {
-                name = ev.rawMessage.trim()
-                id = null
-            }
-            else {
-                name = null
-                id = maybeID
-            }
-        } else {
-            name = param.name
-            id = param.id
+    /**
+     * 权限拦截校验
+     */
+    private fun checkPermission(senderID: Long, targetID: Long) {
+        if (senderID != targetID && !Permission.isSuperAdmin(senderID)) {
+            throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
+    }
 
-        val user = if (id == null) {
-            userApiService.getUser(username = name)
-        } else {
-            userApiService.getUser(id = id)
-        } ?: throw NoSuchElementException.Player(name)
+    /**
+     * 交互式一问一答获取玩家信息
+     */
+    private fun interactiveFetchUser(event: MessageEvent): SBUser {
+        var sbUser: SBUser? = null
 
-        return user
+        AsyncMessageUtil.doubleCheck(
+            event = event,
+            keyword = "",
+            onCheck = {
+                event.reply(BindException.BindReceiveException.ReceiveNoName())
+            },
+            onOverTime = { throw BindException.BindReceiveException.ReceiveOverTime() },
+            onWrong = {},
+            onSuccess = { result ->
+                val input = result.rawMessage.trim()
+                sbUser = fetchSBUser(input)
+            }
+        )
+
+        return sbUser!!
+    }
+
+    companion object {
+        private const val PREFIX = '?'
     }
 }

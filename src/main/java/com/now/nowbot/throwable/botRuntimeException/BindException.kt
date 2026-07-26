@@ -56,16 +56,16 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
 
     open class BoundException(message: String): BindException(message) {
 
-        class YouBound:
+        class YouBound(prefix: Char = '!'):
             BoundException("""
                 您已绑定，并且令牌仍旧生效。
-                如果要更改绑定信息，请先输入 !ub 解除绑定关系。
+                如果要更改绑定信息，请先输入 ${prefix}ub 解除绑定关系。
                 """.trimIndent())
 
-        class UserBound(name: String, qq: Long?):
+        class UserBound(name: String, qq: Long?, prefix: Char = '!'):
             BoundException("""
                 $name 已绑定 ${qq ?: -1L}，并且令牌仍旧生效。
-                如果想要更改绑定信息，请先使用原来的 QQ 账号，输入 !ub 解除绑定关系。
+                如果想要更改绑定信息，请先使用原来的 QQ 账号，输入 ${prefix}ub 解除绑定关系。
                 """.trimIndent())
     }
 
@@ -124,25 +124,25 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
 
     open class BindResultException(message: String): BindException(message) {
 
-        class BindUrl(url: String):
+        class BindUrl(url: String, prefix: Char = '!'):
             BindResultException("""
                 $url
-                请在获取六位数的验证码后，回来发送 !bi 验证码 完成绑定。
-                比如：!bi 123456。
+                请在获取六位数的验证码后，回来发送 ${prefix}bi 验证码 完成绑定。
+                比如：${prefix}bi 123456。
                 """.trimIndent())
 
-        class BindSuccess(qq: Long, id: Long, name: String, mode: OsuMode):
+        class BindSuccess(qq: Long, id: Long, name: String, mode: OsuMode, prefix: Char = '!'):
             BindResultException("""
                 已将 ($id) $name 绑定到 $qq 上！
                 当前绑定模式为：${mode.fullName}
-                您可以输入 !mode (mode) 来切换绑定的模式，输入 !help 获取简洁的帮助信息。
+                您可以输入 ${prefix}mode (mode) 来切换绑定的模式，输入 ${prefix}help 获取简洁的帮助信息。
             """.trimIndent())
 
-        class BindSuccessWithMode(mode: OsuMode):
+        class BindSuccessWithMode(mode: OsuMode, prefix: Char = '!'):
             BindResultException("""
                 已绑定成功！
                 当前绑定模式为：${mode.fullName}。
-                您可以输入 !mode (mode) 来切换绑定的模式，输入 !help 获取简洁的帮助信息。
+                您可以输入 ${prefix}mode (mode) 来切换绑定的模式，输入 ${prefix}help 获取简洁的帮助信息。
                 """.trimIndent())
     }
 }
