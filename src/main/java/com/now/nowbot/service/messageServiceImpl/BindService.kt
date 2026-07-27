@@ -122,9 +122,10 @@ class BindService(
             }
 
             // 验证码无效，尝试作为 Osu User ID 获取玩家
-            val user = runCatching { userApiService.getOsuUser(input) }.getOrNull()
-                ?: runCatching { userApiService.getOsuUser(userID) }.getOrNull()
-                ?: throw BindException.BindIllegalArgumentException.IllegalVerification()
+            val user = runCatching { userApiService.getOsuUser(input) }
+                .recoverCatching { userApiService.getOsuUser(userID) }.getOrElse {
+                    throw BindException.BindIllegalArgumentException.IllegalVerification()
+                }
 
             // 找到了玩家，二次询问确认
             AsyncMessageUtil.doubleCheck(

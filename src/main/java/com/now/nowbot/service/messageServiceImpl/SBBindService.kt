@@ -142,11 +142,11 @@ class SBBindService(
         val id = input.toLongOrNull()
 
         val user = if (id != null) {
-            runCatching { userApiService.getUser(id = id) }.getOrNull()
-                ?: runCatching { userApiService.getUser(username = input) }.getOrNull()
+            runCatching { userApiService.getUser(id = id) }
+                .recoverCatching { userApiService.getUser(username = input) }.getOrNull()
         } else {
-            runCatching { userApiService.getUser(username = input) }.getOrNull()
-                ?: runCatching { userApiService.getUser(id = id) }.getOrNull()
+            runCatching { userApiService.getUser(username = input) }
+                .recoverCatching { userApiService.getUser(id = id) }.getOrNull()
         }
 
         return user ?: throw NoSuchElementException.Player(input)
