@@ -85,11 +85,11 @@ class OneBotListener(
 
         if (nowTime - groupEvent.time > 30) return
 
-        val messageID = "[${groupEvent.groupId}|${groupEvent.sender.userId}]${groupEvent.subType}(${groupEvent.messageId})"
+        val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, groupEvent)
 
-        // 3. 【幂等拦截 + 执行】
+        val messageID = "group:${event.subject.contactID}|sender:${event.sender.contactID}|${event.rawMessage.hashCode()}"
+
         idempotentService.executeIdempotent(messageID) {
-            val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, groupEvent)
 
             messageCacheProvider.putMessage(
                 message = groupEvent
