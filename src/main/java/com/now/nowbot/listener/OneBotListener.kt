@@ -85,15 +85,14 @@ class OneBotListener(
 
         if (nowTime - groupEvent.time > 30) return
 
-        val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, groupEvent)
-
-        val messageID = "group:${event.subject.contactID}|sender:${event.sender.contactID}|${event.rawMessage.hashCode()}"
+        val messageID = "[${groupEvent.groupId}|${groupEvent.sender.userId}]${groupEvent.subType}(${groupEvent.time})"
 
         idempotentService.executeIdempotent(messageID) {
-
             messageCacheProvider.putMessage(
                 message = groupEvent
             )
+
+            val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, groupEvent)
 
             if (event.sender.contactID == 365246692L) {
                 ContextUtil.setContext("isTest", java.lang.Boolean.TRUE)
