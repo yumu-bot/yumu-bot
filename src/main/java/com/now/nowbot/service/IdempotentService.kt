@@ -12,7 +12,7 @@ class IdempotentService {
     private val log = LoggerFactory.getLogger(IdempotentService::class.java)
 
     companion object {
-        private const val EXPIRE_TIME_SECONDS = 15L
+        private const val EXPIRE_TIME_SECONDS = 10L
         private const val MAX_CACHE_SIZE = 100_000L
     }
 
