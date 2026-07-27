@@ -16,32 +16,39 @@ class IdempotentService {
         private const val MAX_CACHE_SIZE = 100_000L
     }
 
-    private val dummy = Any()
-
-    private val lockCache: Cache<String, Any> = Caffeine.newBuilder()
+    // 使用 Boolean 作为返回值占位
+    private val lockCache: Cache<String, Boolean> = Caffeine.newBuilder()
         .expireAfterWrite(EXPIRE_TIME_SECONDS, TimeUnit.SECONDS)
         .maximumSize(MAX_CACHE_SIZE)
         .build()
 
     /**
-     * 严格对标 Redis SETNX 语义的单机幂等控制
+     * 采用 Caffeine 原生键级独占锁机制，绝对防穿透
      */
     fun <T> executeIdempotent(messageID: String, action: () -> T): Boolean {
-        val isFirst = lockCache.asMap().putIfAbsent(messageID, dummy) == null
+        var executed = false
 
-        if (!isFirst) {
-            log.debug("消息 [{}] 重复或并发冲突，已被阻断", messageID)
+        log.debug("消息 [{}] 进入：", messageID)
+
+        // Caffeine 的 get 方法针对单个 Key 内部加锁：
+        // 1. 如果 key 不存在，会进入 lambda，此时其他并发线程会被挂起或直接返回
+        // 2. 如果 key 已存在，则直接返回已有值，不会重复进入 lambda
+        lockCache.get(messageID) {
+            executed = true
+            try {
+                action()
+            } catch (e: Exception) {
+                log.debug("消息 [{}] 处理异常：{}", messageID, e.message)
+                throw e
+            }
+            true // 存入缓存的值
+        }
+
+        if (!executed) {
+            log.debug("消息 [{}] 重复或并发冲突，已被 Caffeine 独占锁阻断", messageID)
             return false
         }
 
-        return try {
-            action()
-            true
-        } catch (e: Exception) {
-            log.error("消息 [$messageID] 处理异常", e)
-            // 注意：千万不要在这里 invalidate(messageID)！
-            // 保持 Key 在 30 秒内依然存在，强行封锁并发和短时间内的盲目重试
-            false
-        }
+        return true
     }
 }
