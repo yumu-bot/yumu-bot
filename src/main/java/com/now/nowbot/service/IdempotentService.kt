@@ -16,10 +16,9 @@ class IdempotentService {
         private const val MAX_CACHE_SIZE = 100_000L
     }
 
-    // 只需要一个 Dummy 值占位即可
-    private val dummy = true
+    private val dummy = Any()
 
-    private val lockCache: Cache<String, Boolean> = Caffeine.newBuilder()
+    private val lockCache: Cache<String, Any> = Caffeine.newBuilder()
         .expireAfterWrite(EXPIRE_TIME_SECONDS, TimeUnit.SECONDS)
         .maximumSize(MAX_CACHE_SIZE)
         .build()
