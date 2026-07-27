@@ -43,7 +43,7 @@ open class NetworkException(message: String?
 
         class NotFound:
             RenderModuleException("""
-                404 Not Found
+                404 Not FoundFromNickname
                 没有找到渲染模块面板。
             """.trimIndent()) {
             override val code = 404
@@ -127,7 +127,7 @@ open class NetworkException(message: String?
 
         class NotFound:
             UserException("""
-                404 Not Found
+                404 Not FoundFromNickname
                 找不到玩家。
             """.trimIndent()) {
             override val code = 404
@@ -239,7 +239,7 @@ open class NetworkException(message: String?
 
         class NotFound:
             BeatmapException("""
-                404 Not Found
+                404 Not FoundFromNickname
                 找不到谱面。
             """.trimIndent()) {
             override val code = 404
@@ -339,7 +339,7 @@ open class NetworkException(message: String?
 
         class NotFound:
             ScoreException("""
-                404 Not Found
+                404 Not FoundFromNickname
                 找不到成绩。
             """.trimIndent()) {
             override val code = 404
@@ -439,7 +439,7 @@ open class NetworkException(message: String?
 
         class NotFound:
             MatchException("""
-                404 Not Found
+                404 Not FoundFromNickname
                 找不到比赛。
             """.trimIndent()) {
             override val code = 404
@@ -531,7 +531,7 @@ open class NetworkException(message: String?
 
         class NotFound:
             DivingFishException("""
-                404 Not Found
+                404 Not FoundFromNickname
                 找不到水鱼用户。
             """.trimIndent()) {
             override val code = 404
@@ -607,7 +607,7 @@ open class NetworkException(message: String?
 
         class NotFound:
             LxnsException("""
-                404 Not Found
+                404 Not FoundFromNickname
                 找不到落雪用户。
             """.trimIndent()) {
             override val code = 404

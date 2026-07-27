@@ -93,7 +93,22 @@ class BindService(
      * 处理带有 username 或 验证码 的绑定逻辑
      */
     private fun handleUsernameBinding(event: MessageEvent, targetID: Long, input: String) {
-        val maybeCaptcha = input.trim().matches(captchaRegex)
+        val userID = input.trim().toLongOrNull()
+
+        val maybeUserID = userID != null && userID !in 100000L .. 999999L
+
+        val maybeCaptcha = userID != null && userID in 100000L .. 999999L
+
+        if (maybeUserID) {
+            val user = runCatching {
+                userApiService.getOsuUser(userID)
+            }.getOrNull()
+
+            if (user != null) {
+                executeBind(event, targetID, BindUser(user))
+                return
+            }
+        }
 
         if (maybeCaptcha) {
             // 优先尝试作为验证码
@@ -108,6 +123,7 @@ class BindService(
 
             // 验证码无效，尝试作为 Osu User ID 获取玩家
             val user = runCatching { userApiService.getOsuUser(input) }.getOrNull()
+                ?: runCatching { userApiService.getOsuUser(userID) }.getOrNull()
                 ?: throw BindException.BindIllegalArgumentException.IllegalVerification()
 
             // 找到了玩家，二次询问确认
@@ -115,10 +131,7 @@ class BindService(
                 event = event,
                 keyword = "OK",
                 onCheck = {
-                    // 发送确认提示消息并返回回执（用于后续自动撤回）
-                    event.reply(
-                        BindException.BindConfirmException.Found(targetID, user.username)
-                    )
+                    event.reply(BindException.BindConfirmException.Found(targetID, user.username))
                 },
                 onOverTime = {
                     throw BindException.BindReceiveException.ReceiveOverTime()
@@ -288,6 +301,8 @@ class BindService(
         private val log: Logger = LoggerFactory.getLogger(BindService::class.java)
 
         private val usernameRegex = Regex("""[A-Za-z0-9 _\[\].\-]{3,15}""")
+
+        private val userIDRegex = Regex("\\d{7,10}|\\d{1,5}")
 
         private val captchaRegex = Regex("\\d{6}")
     }

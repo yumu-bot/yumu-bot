@@ -92,14 +92,15 @@ class PermissionImplement(
                         break
                     }
 
-                    if (!isSuper(event.sender.contactID) && isBlock(name, event)) {
-                        log.debug("黑名单禁止，请求功能: {}，请求人: {}", name, event.sender.contactID)
-                        continue
-                    }
-
                     val data = MessageService.DataValue<Any>()
 
                     if (service.isHandle(event, messageText, data)) {
+
+                        if (!isSuper(event.sender.contactID) && isBlock(name, event)) {
+                            log.debug("黑名单禁止，请求功能: {}，请求人: {}", name, event.sender.contactID)
+                            continue
+                        }
+
                         service.handleMessage(event, data.value!!)
                         // 触发后，直接跳出循环
 

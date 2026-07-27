@@ -78,7 +78,7 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
 
         class Found(id: Long, name: String):
             BindConfirmException("""
-                已经通过名片找到了您的信息：($id) $name，
+                已经找到了可能是您的信息：($id) $name，
                 如果这就是您，请回复 OK 完成绑定。
             """.trimIndent())
 

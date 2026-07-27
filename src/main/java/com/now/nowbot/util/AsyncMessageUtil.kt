@@ -237,10 +237,7 @@ object AsyncMessageUtil {
         val key = generateKey(message)
         // 检查是否有自定义的检查函数
         val check = lockManager.getCheck(key)
-        if (check != null && !check(message)) {
-            return false
-        }
-        return lockManager.completeFuture(key, message)
+        return !(check != null && !check(message)) && lockManager.completeFuture(key, message)
     }
 
     /**
@@ -262,10 +259,9 @@ object AsyncMessageUtil {
             3 if parts[0] == "group" -> {
                 val groupId = parts[1].toLongOrNull()
                 val senderId = parts[2].toLongOrNull()
-                if (message is GroupMessageEvent) {
-                    (groupId == null || message.group.contactID == groupId) &&
-                            (senderId == null || message.sender.contactID == senderId)
-                } else false
+                message is GroupMessageEvent &&
+                        (groupId == null || message.group.contactID == groupId) &&
+                        (senderId == null || message.sender.contactID == senderId)
             }
             2 if parts[0] == "sender" -> {
                 val senderId = parts[1].toLongOrNull()
@@ -375,11 +371,7 @@ object AsyncMessageUtil {
 
         fun completeFuture(key: String, message: MessageEvent): Boolean {
             val future = futures[key] ?: return false
-            return if (!future.isDone) {
-                future.complete(message)
-            } else {
-                false
-            }
+            return !future.isDone && future.complete(message)
         }
 
         fun setCheck(key: String, check: (MessageEvent?) -> Boolean) {

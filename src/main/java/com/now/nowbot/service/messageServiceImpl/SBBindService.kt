@@ -142,9 +142,11 @@ class SBBindService(
         val id = input.toLongOrNull()
 
         val user = if (id != null) {
-            userApiService.getUser(id = id)
+            runCatching { userApiService.getUser(id = id) }.getOrNull()
+                ?: runCatching { userApiService.getUser(username = input) }.getOrNull()
         } else {
-            userApiService.getUser(username = input)
+            runCatching { userApiService.getUser(username = input) }.getOrNull()
+                ?: runCatching { userApiService.getUser(id = id) }.getOrNull()
         }
 
         return user ?: throw NoSuchElementException.Player(input)
@@ -156,7 +158,7 @@ class SBBindService(
     private fun unbindByInput(input: String) {
         val user = fetchSBUser(input)
         val qb = bindDao.getSBQQLiteFromUserID(user.userID)
-            ?: throw BindException.NotBindException.UserNotBind()
+            ?: throw BindException.UnBindException.UnbindFailed()
 
         unbindQQ(qb.qq, isMyself = false)
     }
