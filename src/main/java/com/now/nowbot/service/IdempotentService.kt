@@ -12,55 +12,36 @@ class IdempotentService {
     private val log = LoggerFactory.getLogger(IdempotentService::class.java)
 
     companion object {
-        private const val EXPIRE_TIME_SECONDS = 60L
+        private const val EXPIRE_TIME_SECONDS = 30L
         private const val MAX_CACHE_SIZE = 100_000L
     }
 
-    // 内部状态枚举，复用单例，零 GC 开销
-    private enum class State {
-        PROCESSING, // 正在处理中（阻断并发）
-        DONE        // 已处理完成（阻断重试）
-    }
+    // 只需要一个 Dummy 值占位即可
+    private val dummy = true
 
-    private val stateCache: Cache<String, State> = Caffeine.newBuilder()
+    private val lockCache: Cache<String, Boolean> = Caffeine.newBuilder()
         .expireAfterWrite(EXPIRE_TIME_SECONDS, TimeUnit.SECONDS)
         .maximumSize(MAX_CACHE_SIZE)
         .build()
 
     /**
-     * 极速防穿透幂等控制
-     * 哪怕并发请求到达间隔仅有 10us，也能确保只有一个线程执行 action()
+     * 严格对标 Redis SETNX 语义的单机幂等控制
      */
     fun <T> executeIdempotent(messageID: String, action: () -> T): Boolean {
-        // 利用线程本地栈变量隔离状态
-        var isFirstIn = false
+        val isFirst = lockCache.asMap().putIfAbsent(messageID, dummy) == null
 
-        val currentState = stateCache.get(messageID) {
-            isFirstIn = true
-            State.PROCESSING // 将状态初始化为处理中
-        }
-
-        if (!isFirstIn) {
-            if (currentState == State.DONE) {
-                log.debug("消息 [{}] 之前已处理完成，直接阻断", messageID)
-            } else {
-                log.debug("消息 [{}] 并发冲突(已有线程抢占)，快速失败", messageID)
-            }
+        if (!isFirst) {
+            log.debug("消息 [{}] 重复或并发冲突，已被阻断", messageID)
             return false
         }
 
-        // 抢占成功的线程执行核心业务
         return try {
             action()
-
-            // 业务执行成功，状态变更为 DONE
-            stateCache.put(messageID, State.DONE)
             true
         } catch (e: Exception) {
-            log.error("消息 [$messageID] 处理异常，释放锁允许下一次重试", e)
-
-            // 业务抛错，清理缓存槽位，给后续重试留出机会
-            stateCache.invalidate(messageID)
+            log.error("消息 [$messageID] 处理异常", e)
+            // 注意：千万不要在这里 invalidate(messageID)！
+            // 保持 Key 在 30 秒内依然存在，强行封锁并发和短时间内的盲目重试
             false
         }
     }
