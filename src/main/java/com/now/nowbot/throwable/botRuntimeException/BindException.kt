@@ -52,6 +52,11 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
             BindReceiveException("绑定超时！请重试。OwOb")
         class ReceiveRefused:
             BindReceiveException("您已撤回本次绑定授权。OwOb")
+        class ReceiveQuestion:
+            BindReceiveException("""
+                您已撤回本次绑定授权。OwOb
+                如果您的用户名刚好是 6 位数，此时最好输入您的 uid。
+            """.trimIndent())
     }
 
     open class BoundException(message: String): BindException(message) {

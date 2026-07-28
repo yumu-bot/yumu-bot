@@ -121,6 +121,10 @@ class BindService(
                 return
             }
 
+            if (bindUser != null) {
+                throw BindException.BindIllegalArgumentException.IllegalVerification()
+            }
+
             // 验证码无效，尝试作为 Osu User ID 获取玩家
             val user = runCatching { userApiService.getOsuUser(input) }
                 .recoverCatching { userApiService.getOsuUser(userID) }.getOrElse {
@@ -132,13 +136,13 @@ class BindService(
                 event = event,
                 keyword = "OK",
                 onCheck = {
-                    event.reply(BindException.BindConfirmException.Found(targetID, user.username))
+                    event.reply(BindException.BindConfirmException.Found(user.userID, user.username))
                 },
                 onOverTime = {
                     throw BindException.BindReceiveException.ReceiveOverTime()
                 },
                 onWrong = {
-                    throw BindException.BindReceiveException.ReceiveRefused()
+                    throw BindException.BindReceiveException.ReceiveQuestion()
                 },
                 onSuccess = { _ ->
                     executeBind(event, targetID, BindUser(user))

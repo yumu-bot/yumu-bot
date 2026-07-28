@@ -2,7 +2,6 @@ package com.now.nowbot.cache
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.RemovalCause
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
@@ -42,8 +41,8 @@ class CaptchaCacheManager {
     private val indexCache = ConcurrentHashMap<Long, String>()
     private val captchaCache: Cache<String, Long> = Caffeine.newBuilder()
         .expireAfterWrite(2, TimeUnit.MINUTES)
-        .removalListener { _: Any?, id: Any?, _: RemovalCause? ->
-            indexCache.remove(id)
+        .removalListener<String, Long> { _, userID, _ ->
+            userID?.let { indexCache.remove(it) }
         }
         .build()
 

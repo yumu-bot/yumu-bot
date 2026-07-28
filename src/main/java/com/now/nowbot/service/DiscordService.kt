@@ -30,6 +30,8 @@ import java.net.InetSocketAddress
 import java.net.Proxy
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Component
 @DependsOn("discordConfig")
@@ -94,7 +96,9 @@ class DiscordService(
         log.info("🔄 尝试连接 Discord...")
 
         return try {
-            val factory = WebSocketFactory()
+            val factory = WebSocketFactory().apply {
+                connectionTimeout = 10.seconds.inWholeMilliseconds.toInt()
+            }
 
             // 代理配置
             if (config.proxyPort != 0) {
@@ -110,6 +114,8 @@ class DiscordService(
 
             log.info("🔄 创建 JDA 实例...")
             val jda = JDABuilder.createDefault(discordConfig.token)
+                .setAutoReconnect(true)
+                .setMaxReconnectDelay(10.minutes.inWholeSeconds.toInt())
                 .setHttpClient(createHttpClientWithExplicitProxy())
                 .setWebsocketFactory(factory)
                 .addEventListeners(*listenerAdapters.toTypedArray())
