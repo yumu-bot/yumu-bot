@@ -43,16 +43,9 @@ class DiscordService(
 ) {
 
     private fun createHttpClientWithExplicitProxy(): OkHttpClient {
-        // 创建明确的代理对象
+        // 明确使用 HTTP 代理
         val proxy = if (config.proxyPort != 0) {
-
-            val type = if (config.proxyType == "HTTP") {
-                Proxy.Type.HTTP
-            } else {
-                Proxy.Type.SOCKS
-            }
-
-            Proxy(type, InetSocketAddress(config.proxyHost, config.proxyPort))
+            Proxy(Proxy.Type.HTTP, InetSocketAddress(config.proxyHost, config.proxyPort))
         } else {
             Proxy.NO_PROXY
         }
@@ -61,7 +54,9 @@ class DiscordService(
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
+            .protocols(listOf(okhttp3.Protocol.HTTP_1_1))
             .proxy(proxy)
+            .retryOnConnectionFailure(true)
             .build()
     }
 
@@ -98,12 +93,12 @@ class DiscordService(
         return try {
             val factory = WebSocketFactory().apply {
                 connectionTimeout = 10.seconds.inWholeMilliseconds.toInt()
+                serverNames = arrayOf("gateway.discord.gg")
             }
 
-            // 代理配置
+            // 统一且干净的 HTTP 代理配置
             if (config.proxyPort != 0) {
-                log.info("🔌 使用代理: ${config.proxyHost}:${config.proxyPort}")
-
+                log.info("🔌 使用 HTTP 代理: ${config.proxyHost}:${config.proxyPort}")
                 factory.proxySettings.apply {
                     host = config.proxyHost
                     port = config.proxyPort
@@ -135,14 +130,9 @@ class DiscordService(
 
             log.info("⏳ JDA 连接中...")
             jda.awaitReady()
-
             log.info("✅ JDA 连接成功！用户: ${jda.selfUser.name}")
 
-            log.info("⏳ 注册命令...")
             registerCommands(jda)
-            log.info("✅ 命令注册完成")
-
-            // 生成邀请链接
             val inviteHelper = BotInviteHelper()
             val inviteLink = inviteHelper.generateInviteLink(jda)
             log.info("📧 请使用此链接邀请 Bot 到服务器: $inviteLink")

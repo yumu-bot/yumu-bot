@@ -1,7 +1,5 @@
 package com.now.nowbot.controller
 
-import tools.jackson.core.type.TypeReference
-import tools.jackson.databind.JsonNode
 import com.now.nowbot.qq.tencent.TencentAdapter
 import com.now.nowbot.qq.tencent.YumuServer
 import com.yumu.Listener
@@ -11,6 +9,7 @@ import com.yumu.core.extensions.toJson
 import com.yumu.model.WebsocketPackage
 import jakarta.annotation.PostConstruct
 import jakarta.websocket.OnClose
+import jakarta.websocket.OnError
 import jakarta.websocket.OnOpen
 import jakarta.websocket.Session
 import jakarta.websocket.server.ServerEndpoint
@@ -18,7 +17,11 @@ import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.RestController
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.JsonNode
+import java.io.EOFException
 import java.util.concurrent.ConcurrentHashMap
+
 
 @RestController
 @Suppress("unused")
@@ -46,6 +49,16 @@ class QQBotWebsocket {
     @OnClose
     fun onClose(session: Session) {
         websockets.remove(session)
+    }
+
+    @OnError
+    fun onError(session: Session, error: Throwable?) {
+        if (error is EOFException) {
+            // 属于正常/非正常断开，记录日志即可，无需抛出堆栈
+            log.warn("QQBot 客户端连接意外断开 (EOF): {}", session.id)
+        } else {
+            log.error("QQBot WebSocket 发生错误, Session ID: {}", session.id, error)
+        }
     }
 
     var on: Boolean = true
