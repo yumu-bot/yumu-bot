@@ -63,21 +63,41 @@ class DiscordService(
     private var jdaInstance: JDA? = null
 
     @PostConstruct
-    @Suppress("UNUSED")
     fun initialize() {
         log.info("开始异步初始化 Discord Bot 连接...")
 
-        // 异步初始化，避免阻塞应用启动
         botAsyncExecutor.execute {
-            try {
-                jdaInstance = createJDA()
-                if (jdaInstance != null) {
-                    log.info("✅ Discord Bot 连接成功！")
-                } else {
-                    log.warn("⚠️ Discord Bot 连接失败，但应用继续运行")
+            var isConnected = false
+            var retryCount = 0
+            val maxRetries = 10 // 最大尝试 10 次
+
+            while (!isConnected && retryCount < maxRetries) {
+                try {
+                    jdaInstance = createJDA()
+                    if (jdaInstance != null) {
+                        isConnected = true
+                        log.info("✅ Discord Bot 连接成功！")
+                    } else {
+                        // Token 未配置等无法恢复的错误，直接中断重试
+                        log.warn("⚠️ Discord Bot 配置无效，停止自动重试")
+                        break
+                    }
+                } catch (e: Exception) {
+                    retryCount++
+                    log.error("❌ Discord Bot 连接失败 (尝试 $retryCount/$maxRetries): ${e.message}")
+
+                    if (retryCount < maxRetries) {
+                        log.info("⏳ 10 秒后将尝试重新连接...")
+                        try {
+                            Thread.sleep(30.seconds.inWholeMilliseconds) // 等待 10 秒后再试
+                        } catch (_: InterruptedException) {
+                            Thread.currentThread().interrupt()
+                            break
+                        }
+                    } else {
+                        log.error("💥 已达到最大重试次数，Discord Bot 放弃初始化！")
+                    }
                 }
-            } catch (e: Exception) {
-                log.error("❌ Discord Bot 初始化异常: ${e.message}")
             }
         }
     }
