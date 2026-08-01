@@ -10,7 +10,7 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.StringUtil.compareSimilarity
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
@@ -54,7 +54,7 @@ import kotlin.text.Charsets.UTF_8
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .toBody<MaiBestScore>()
+                .exchangeToBody<MaiBestScore>()
         }
     }
 
@@ -65,7 +65,7 @@ import kotlin.text.Charsets.UTF_8
             client.post().uri("api/maimaidxprober/query/player")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
-                .toBody<MaiBestScore>()
+                .exchangeToBody<MaiBestScore>()
         }
     }
 
@@ -79,7 +79,7 @@ import kotlin.text.Charsets.UTF_8
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .toBody<MaiVersionScore>()
+                .exchangeToBody<MaiVersionScore>()
         }
     }
 
@@ -93,7 +93,7 @@ import kotlin.text.Charsets.UTF_8
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .toBody<MaiVersionScore>()
+                .exchangeToBody<MaiVersionScore>()
         }
     }
 
@@ -131,13 +131,13 @@ import kotlin.text.Charsets.UTF_8
         val cover = try {
             request { client ->
                 client.get().uri("covers/$song.png")
-                    .toBody<ByteArray>()
+                    .exchangeToBody<ByteArray>()
             }
         } catch (e: HttpClientErrorException) {
             if (e.statusCode.value() == 404) {
                 request { client ->
                     client.get().uri("covers/00000.png")
-                        .toBody<ByteArray>()
+                        .exchangeToBody<ByteArray>()
                 }
             } else {
                 throw e
@@ -380,9 +380,12 @@ import kotlin.text.Charsets.UTF_8
         HttpClientErrorException::class
     ) override fun getMaimaiFullScores(qq: Long): MaiBestScore {
         return request { client ->
-            client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("qq", qq).build() }
+            client.get().uri { it.path("api/maimaidxprober/dev/player/records")
+                .queryParam("qq", qq)
+                .build()
+            }
                 .headers(base::insertDeveloperHeader)
-                .toBody<MaiBestScore>()
+                .exchangeToBody<MaiBestScore>()
         }
     }
 
@@ -390,9 +393,12 @@ import kotlin.text.Charsets.UTF_8
         HttpClientErrorException::class
     ) override fun getMaimaiFullScores(username: String): MaiBestScore {
         return request { client ->
-            client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build() }
+            client.get().uri { it.path("api/maimaidxprober/dev/player/records")
+                .queryParam("username", username)
+                .build()
+            }
                 .headers(base::insertDeveloperHeader)
-                .toBody<MaiBestScore>()
+                .exchangeToBody<MaiBestScore>()
         }
     }
 
@@ -419,18 +425,18 @@ import kotlin.text.Charsets.UTF_8
         val aliases = getMaimaiAliasLibrary()
         val result = mutableListOf<Triple<MaiSong, Int, Double>>()
 
-        search@ for (e in aliases.entries) {
-            for (alias in e.value) {
+        search@ for ((id, value) in aliases) {
+            for (alias in value) {
 
                 val y = text.compareSimilarity(alias)
 
                 if (y >= 0.5) {
-                    val s = maiDao.findMaiSongByID(e.key)
-                        ?: maiDao.findMaiSongByID(e.key + 10000)
+                    val s = maiDao.findMaiSongByID(id)
+                        ?: maiDao.findMaiSongByID(id + 10000)
 
                     if (s != null) {
-                        s.aliases = e.value
-                        s.alias = e.value.minByOrNull { it.length }
+                        s.aliases = value
+                        s.alias = value.minByOrNull { it.length }
 
                         result.add(Triple(s, s.songID, y))
                         continue@search
@@ -452,25 +458,25 @@ import kotlin.text.Charsets.UTF_8
     private val maimaiSongLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/maimaidxprober/music_data")
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
 
     private val maimaiRankLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/maimaidxprober/rating_ranking")
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
 
     private val maimaiFitLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/maimaidxprober/chart_stats")
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
 
     private val maimaiAliasLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("https://maimai.lxns.net/api/v0/maimai/alias/list")
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
 
     private inline fun <reified T> parseFile(fileName: String): T? {

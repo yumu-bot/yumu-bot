@@ -19,7 +19,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -158,7 +158,7 @@ class CustomService(
         val imgBytes: ByteArray = if (param.url != null) try {
             restClient
                 .get()
-                .uri(param.url).toBody<ByteArray>()
+                .uri(param.url).exchangeToBody<ByteArray>()
 
         } catch (_: Exception) {
             throw IllegalStateException.Fetch("自定义图片")

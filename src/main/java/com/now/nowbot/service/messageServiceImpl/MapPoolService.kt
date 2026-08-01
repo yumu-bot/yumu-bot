@@ -19,7 +19,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -122,7 +122,7 @@ class MapPoolService(
                 .toUri()
         }.headers {
             it.add("AuthorizationX", token)
-        }.toBody<JsonNode>()
+        }.exchangeToBody<JsonNode>()
 
         return JacksonUtil.parseObjectList(node["data"], Pool::class.java)
     }
@@ -144,7 +144,7 @@ class MapPoolService(
                 .headers {
                     it.add("AuthorizationX", token)
                 }
-                .toBody<JsonNode>()
+                .exchangeToBody<JsonNode>()
             return if (json.has("data")) {
                 JacksonUtil.parseObject<Pool>(json["data"])
             } else {

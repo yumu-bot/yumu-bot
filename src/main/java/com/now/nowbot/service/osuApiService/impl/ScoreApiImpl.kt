@@ -15,8 +15,8 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import com.now.nowbot.util.toBody
-import com.now.nowbot.util.toBodyList
+import com.now.nowbot.util.exchangeToBody
+import com.now.nowbot.util.exchangeToBodies
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -96,7 +96,7 @@ class ScoreApiImpl(
             try {
                 val image = base.osuApiRestClient.get()
                     .uri(url)
-                    .toBody<ByteArray>()
+                    .exchangeToBody<ByteArray>()
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
@@ -177,7 +177,7 @@ class ScoreApiImpl(
         val score = request { client ->
             client.get().uri {
                 it.path("scores/{scoreID}").build(scoreID)
-            }.headers(base::insertHeader).toBody<LazerScore>()
+            }.headers(base::insertHeader).exchangeToBody<LazerScore>()
         }
 
         scoreDao.saveScoreAsync(listOf(score))
@@ -385,7 +385,7 @@ class ScoreApiImpl(
                     base.insertHeader(headers)
                 }
             }
-            .toBody<BeatmapScoreResponse>()
+            .exchangeToBody<BeatmapScoreResponse>()
         }.scores
     }
 
@@ -440,7 +440,7 @@ class ScoreApiImpl(
                                         .build()
                                 }
                                 .headers(base::insertHeader)
-                                .toBody<ByteArray>()
+                                .exchangeToBody<ByteArray>()
                         }
                     } catch (e: Exception) {
                         log.error("异步下载谱面图片：任务失败\n", e)
@@ -470,7 +470,7 @@ class ScoreApiImpl(
                                 .build(score.scoreID)
                         }
                         .headers(base::insertHeader)
-                        .toBody<ByteBuffer>()
+                        .exchangeToBody<ByteBuffer>()
                     Replay(buf)
                 }
             } catch (_: Exception) {
@@ -498,7 +498,7 @@ class ScoreApiImpl(
                         .build(id)
                 }
                 .headers(base::insertHeader)
-                .toBodyList<LazerScore>()
+                .exchangeToBodies<LazerScore>()
         }
 
         scoreDao.saveScoreAsync(bests)
@@ -528,7 +528,7 @@ class ScoreApiImpl(
                 .headers { headers ->
                     base.insertHeader(headers, user)
                 }
-                .toBodyList<LazerScore>()
+                .exchangeToBodies<LazerScore>()
         }
 
         scoreDao.saveScoreAsync(recents)
@@ -557,7 +557,7 @@ class ScoreApiImpl(
                         .build(uid)
                 }
                 .headers(base::insertHeader)
-                .toBodyList<LazerScore>()
+                .exchangeToBodies<LazerScore>()
         }
 
         scoreDao.saveScoreAsync(recents)
@@ -627,7 +627,7 @@ class ScoreApiImpl(
                 client.get()
                     .uri(target)
                     .headers { h -> headers(h) }
-                    .toBody<T>()
+                    .exchangeToBody<T>()
             }
         }
 

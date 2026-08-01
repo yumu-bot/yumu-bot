@@ -2,7 +2,7 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.now.nowbot.model.osu.Discussion
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriBuilder
 import java.util.*
@@ -68,7 +68,7 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
                     .build()
             }
             .headers(base::insertHeader)
-            .toBody<Discussion>()
+            .exchangeToBody<Discussion>()
     }
 
     enum class BeatmapSetStatus {

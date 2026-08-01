@@ -79,7 +79,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         val paramNoQuote = param.replace(PATTERN_QUOTATION.toRegex(), "")
 
         for (std in nameMap.keys) {
-            val y = paramNoQuote.compareSimilarity(std, standardised = false)
+            val y = paramNoQuote.compareSimilarity(std, standardisedTo = false)
 
             if (y >= 0.4) {
                 similarities.add(Pair(std, y))

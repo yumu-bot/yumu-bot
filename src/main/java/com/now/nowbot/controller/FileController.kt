@@ -2,7 +2,7 @@ package com.now.nowbot.controller
 
 import tools.jackson.databind.JsonNode
 import com.now.nowbot.config.BeatmapMirrorConfig
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -33,7 +33,7 @@ class FileController(
                         .get()
                         .uri("${url}/api/map/getBeatMapInfo/${bid}")
                         .headers { it.add("AuthorizationX", token) }
-                        .toBody<JsonNode>()
+                        .exchangeToBody<JsonNode>()
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
                         .body(mapOf("code" to 400, "message" to e.message))
@@ -48,7 +48,7 @@ class FileController(
                         .get()
                         .uri("${url}/api/file/map/bg/${bid}")
                         .headers { it.add("AuthorizationX", token) }
-                        .toBody<ByteArray>()
+                        .exchangeToBody<ByteArray>()
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
                         .body(mapOf("code" to 400, "message" to e.message))

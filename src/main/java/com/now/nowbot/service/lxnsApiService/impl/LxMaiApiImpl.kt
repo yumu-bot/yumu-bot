@@ -13,7 +13,7 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.StringUtil.compareSimilarity
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -35,7 +35,7 @@ class LxMaiApiImpl(
                         .build()
                 }
                 .headers(base::insertDeveloperHeader)
-                .toBody<ByteArray>()
+                .exchangeToBody<ByteArray>()
         }
     }
 
@@ -48,7 +48,7 @@ class LxMaiApiImpl(
                         .build()
                 }
                 .headers(base::insertDeveloperHeader)
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
         val node = JacksonUtil.toNode(jsonString)
 
@@ -59,8 +59,9 @@ class LxMaiApiImpl(
         val convertedID = LxMaiApiService.convertToLxMaiSongID(songID)
 
         val cabinet = when(songID) {
-            in 10000..19999 -> MaiCabinet.DX
-            in 0..9999 -> MaiCabinet.SD
+            in 0..< 10000 -> MaiCabinet.SD
+            in 10000..< 100000 -> MaiCabinet.DX
+            in 100000..< Int.MAX_VALUE -> MaiCabinet.UTAGE
             else -> MaiCabinet.ANY
         }
 
@@ -220,7 +221,7 @@ class LxMaiApiImpl(
                         .build()
                 }
                 .headers(base::insertDeveloperHeader)
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
         val node = JacksonUtil.toNode(jsonString)
 

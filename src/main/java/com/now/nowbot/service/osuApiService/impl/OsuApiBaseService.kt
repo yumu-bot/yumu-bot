@@ -8,7 +8,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -173,7 +173,7 @@ class OsuApiBaseService(
             .accept(MediaType.APPLICATION_JSON)
             .contentType(MediaType.APPLICATION_FORM_URLENCODED)
             .body(body)
-            .toBody<TokenResponse>()
+            .exchangeToBody<TokenResponse>()
 
         botAccessToken = result.accessToken
         tokenExpiresAt = System.currentTimeMillis() + result.expiresInSecond * 1000L
@@ -664,7 +664,7 @@ class OsuApiBaseService(
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(rawFormString)
-                .toBody<OauthTokenResponse>()
+                .exchangeToBody<OauthTokenResponse>()
         } catch (e: Exception) {
             val ex = e.findCauseOfType<HttpClientErrorException>()
 

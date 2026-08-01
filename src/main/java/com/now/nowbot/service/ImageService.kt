@@ -221,7 +221,7 @@ class ImageService(
         }
 
         try {
-            val b = request.toBody<ByteArray>()
+            val b = request.exchangeToBody<ByteArray>()
 
             if (b.isEmpty()) {
                 throw NetworkException.RenderModuleException.NoContent()

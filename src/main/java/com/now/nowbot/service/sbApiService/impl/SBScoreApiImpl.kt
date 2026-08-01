@@ -10,7 +10,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -60,7 +60,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                 }
 
                 it.build()
-            }.toBody<JsonNode>().let {
+            }.exchangeToBody<JsonNode>().let {
                 parseList<SBScore>(it, "scores", "玩家成绩")
             }
         }.drop(off)
@@ -100,7 +100,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                 }
 
                 it.build()
-            }.toBody<JsonNode>().let {
+            }.exchangeToBody<JsonNode>().let {
                 parseList<SBScore>(it, "scores", "谱面成绩")
             }
         }.drop(off)

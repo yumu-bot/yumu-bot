@@ -141,7 +141,7 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
                         else -> double
                     } // 0-1
 
-                    fit(operator, it.statistics?.accuracy, acc, isRound = false)
+                    fit(operator, it.statistics?.accuracy, acc)
                 }
 
                 COMBO -> fit(operator, it.statistics?.maxCombo?.toLong(), long)

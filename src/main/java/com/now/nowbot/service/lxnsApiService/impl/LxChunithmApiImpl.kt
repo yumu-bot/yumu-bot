@@ -7,7 +7,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -25,7 +25,7 @@ class LxChunithmApiImpl(
             val jsonString = client.get()
                 .uri("api/v0/chunithm/player/${friendCode}/bests")
                 .headers(base::insertDeveloperHeader)
-                .toBody<String>()
+                .exchangeToBody<String>()
             val node = JacksonUtil.toNode(jsonString)
             parse<LxChuBestScore>(node, "data", "玩家中二节奏最好成绩")
         }
@@ -36,7 +36,7 @@ class LxChunithmApiImpl(
             val jsonString = client.get()
                 .uri("api/v0/chunithm/player/qq/${qq}")
                 .headers(base::insertDeveloperHeader)
-                .toBody<String>()
+                .exchangeToBody<String>()
             val node = JacksonUtil.toNode(jsonString)
             parse<LxChuUser>(node, "data", "玩家中二节奏信息")
         }

@@ -15,7 +15,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.JacksonUtil.toTypedObject
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -46,7 +46,7 @@ class GroupStatisticsService(
         val json = try {
             osuApiRestClient.get()
                 .uri(GET_BINDING, qq)
-                .toBody<JsonNode>()
+                .exchangeToBody<JsonNode>()
         } catch (_: Exception) {
             null
         }
@@ -65,7 +65,7 @@ class GroupStatisticsService(
         val json = try {
             osuApiRestClient.get()
                 .uri(GET_BP_URL, osuId)
-                .toBody<JsonNode>()
+                .exchangeToBody<JsonNode>()
         } catch (_: Exception) {
             null
         }

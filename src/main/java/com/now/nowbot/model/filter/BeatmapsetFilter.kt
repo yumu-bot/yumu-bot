@@ -64,7 +64,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     SPINNER("(spin(ner)?s?|rattle|sp|转盘|[转盘])(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    TOTAL("(total|all|ttl|(hit)?objects?|tt|物件数?|总数?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
+    TOTAL("(notes?|total|all|ttl|(hit)?objects?|tt|n|(物件|音符)数?|总数?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
     CREATED_TIME("((created)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|创建(时间)?|ct|ca)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
 
@@ -144,7 +144,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.difficultyName, str)
                 }.contains(true)
                 STAR -> bs.map {
-                    fit(operator, it.starRating, double, isRound = false)
+                    fit(operator, it.starRating, double)
                 }.contains(true)
                 MODE -> bs.map {
                     fit(operator, it.modeInt!!, str.toOsuMode().modeValue)
@@ -153,16 +153,16 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.ranked, DataUtil.getStatusByte(str) ?: return false)
                 }.contains(true)
                 AR -> bs.map {
-                    fit(operator, it.ar, double, isRound = true)
+                    fit(operator, it.ar, double)
                 }.contains(true)
                 CS -> bs.map {
-                    fit(operator, it.cs, double, isRound = true)
+                    fit(operator, it.cs, double)
                 }.contains(true)
                 OD -> bs.map {
-                    fit(operator, it.od, double, isRound = true)
+                    fit(operator, it.od, double)
                 }.contains(true)
                 HP -> bs.map {
-                    fit(operator, it.hp, double, isRound = true)
+                    fit(operator, it.hp, double)
                 }.contains(true)
                 LENGTH -> {
                     val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
@@ -172,16 +172,16 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     }.contains(true)
                 }
                 BPM -> bs.map {
-                    fit(operator, it.bpm.toDouble(), double, isRound = true)
+                    fit(operator, it.bpm.toDouble(), double)
                 }.contains(true)
                 CIRCLE -> bs.map {
-                    fit(operator, it.circles!!.toLong(), long, isRound = true)
+                    fit(operator, it.circles!!.toLong(), long)
                 }.contains(true)
                 SLIDER -> bs.map {
-                    fit(operator, it.sliders!!.toLong(), long, isRound = true)
+                    fit(operator, it.sliders!!.toLong(), long)
                 }.contains(true)
                 SPINNER -> bs.map {
-                    fit(operator, it.spinners!!.toLong(), long, isRound = true)
+                    fit(operator, it.spinners!!.toLong(), long)
                 }.contains(true)
                 TOTAL -> {
                     bs.map {

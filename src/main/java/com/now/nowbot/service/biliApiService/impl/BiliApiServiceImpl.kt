@@ -6,7 +6,7 @@ import com.now.nowbot.model.bili.BiliUser
 import com.now.nowbot.service.biliApiService.BiliApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.JacksonUtil
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -26,7 +26,7 @@ class BiliApiServiceImpl(
             .build()
         }
             .headers(base::insertJSONHeader)
-            .toBody<JsonNode>()
+            .exchangeToBody<JsonNode>()
 
         return parse(node, id, "直播主")
     }
@@ -41,7 +41,7 @@ class BiliApiServiceImpl(
             .build()
         }
             .headers(base::insertJSONHeader)
-            .toBody<JsonNode>()
+            .exchangeToBody<JsonNode>()
 
         return parse(node, id, "账号信息")
     }
@@ -56,7 +56,7 @@ class BiliApiServiceImpl(
             .build()
         }
             .headers(base::insertJSONHeader)
-            .toBody<JsonNode>()
+            .exchangeToBody<JsonNode>()
 
         return parse(node, roomID, "直播间最近弹幕")
     }
@@ -65,7 +65,7 @@ class BiliApiServiceImpl(
         val avatar: ByteArray = runCatching {
             base.biliApiWebClient.get()
                 .uri(url)
-                .toBody<ByteArray>()
+                .exchangeToBody<ByteArray>()
         }.onFailure {
             throw TipsException("获取图片失败。")
         }.getOrThrow()

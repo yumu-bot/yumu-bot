@@ -5,7 +5,7 @@ import com.now.nowbot.util.DataUtil.isCauseOfType
 import org.springframework.web.client.HttpClientErrorException
 import java.io.IOException
 
-inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBody(): T {
+inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.exchangeToBody(): T {
     if (T::class == ByteArray::class) {
         return exchange { _, response ->
             if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {
@@ -57,7 +57,7 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
     return JacksonUtil.parseObject(jsonString)!!
 }
 
-inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.toBodyList(): List<T> {
+inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHeadersSpec<*>.exchangeToBodies(): List<T> {
 
     val jsonString = try {
         exchange { _, response ->

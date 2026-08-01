@@ -1,7 +1,7 @@
 package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.config.BeatmapMirrorConfig
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -36,7 +36,7 @@ class OsuBeatmapMirrorApiService(
             noRetryRestClient.get()
                 .uri(url) { it.path("/api/mirror/beatmap/osufile/{bid}").build(bid) }
                 .header("X-TOKEN", token)
-                .toBody<String>()
+                .exchangeToBody<String>()
         } catch (e: Exception) {
             log.warn("谱面镜像站：请求谱面 $bid 失败：${e.message}")
             return null
@@ -67,7 +67,7 @@ class OsuBeatmapMirrorApiService(
                             .build(bid)
                     }
                     .header("X-TOKEN", token)
-                    .toBody<String>()
+                    .exchangeToBody<String>()
             }.getOrNull()
 
             if (localPath == null) {

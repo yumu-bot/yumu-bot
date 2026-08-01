@@ -85,7 +85,7 @@ class CalculateApiImpl(
     private fun getScorePerfectPPFromCosu(score: LazerScore): CosuPerformance? {
         val cs = score.toCosuScore(CosuScore.ScoreType.PERFECT)
 
-        return beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs).performance
+        return beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs)?.performance
     }
 
     private fun getScorePerfectPPFromRosu(score: LazerScore): RosuPerformance? {
@@ -144,7 +144,7 @@ class CalculateApiImpl(
     private fun getScoreFullComboPPFromCosu(score: LazerScore): CosuPerformance? {
         val cs = score.toCosuScore(CosuScore.ScoreType.FULL_COMBO)
 
-        return beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs).performance
+        return beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs)?.performance
     }
 
     override fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): FullCalculatePerformance? {
@@ -177,13 +177,13 @@ class CalculateApiImpl(
         // 将 runBlocking 的结果直接返回给外部
         return runBlocking(Dispatchers.IO) {
             val performanceDeferred = async {
-                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs).performance
+                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs)?.performance
             }
             val fcPPDeferred = async {
-                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, fc).performance?.pp
+                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, fc)?.performance?.pp
             }
             val pfPPDeferred = async {
-                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, pf).performance?.pp
+                beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, pf)?.performance?.pp
             }
 
             val perf = performanceDeferred.await() ?: return@runBlocking null
@@ -318,7 +318,7 @@ class CalculateApiImpl(
         if (score.pp > 1e-4) {
             return -1.0
         } else {
-            val pp = beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, score.toCosuScore()).performance?.pp
+            val pp = beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, score.toCosuScore())?.performance?.pp
 
             pp?.let { score.pp = it }
 
@@ -364,7 +364,7 @@ class CalculateApiImpl(
     private fun getScoresPPWithSameBeatmapFromCosu(scores: Collection<LazerScore>): Map<Long, CosuPerformance> {
         return scores.mapNotNull { score ->
             val cs = score.toCosuScore()
-            val pp = beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs).performance
+            val pp = beatmapApiService.getAttributesFromLocal(score.beatmapID, score.mode, cs)?.performance
 
             pp?.let { score.scoreID to pp }
         }.toMap()
@@ -622,13 +622,11 @@ class CalculateApiImpl(
                             nd.beatmapID, nd.mode,
                             CosuScore(mods = nd.mods)
                         )
-                        val star = attr.difficulty.starRating
 
-                        if (star > 1e-4) {
-                            nd to star
-                        } else {
-                            null
-                        }
+                        attr?.difficulty?.starRating
+                            ?.takeIf { it > 1e-4 }
+                            ?.let { nd to it }
+
                     }.getOrNull()
                 }
             }

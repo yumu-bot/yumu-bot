@@ -165,19 +165,21 @@ class MaiChartLite(
 
     companion object {
         fun from(id: Int, chart: MaiSong.MaiChart): MaiChartLite {
-            val notes = if (chart.maiNote.touch == 0) with(IntArray(4)) {
-                this[0] = chart.maiNote.tap
-                this[1] = chart.maiNote.hold
-                this[2] = chart.maiNote.slide
-                this[3] = chart.maiNote.`break`
-                this
-            } else with(IntArray(5)) {
-                this[0] = chart.maiNote.tap
-                this[1] = chart.maiNote.hold
-                this[2] = chart.maiNote.slide
-                this[3] = chart.maiNote.touch
-                this[4] = chart.maiNote.`break`
-                this
+            val notes = if (chart.maiNote.touch == 0) {
+                IntArray(4).apply {
+                    this[0] = chart.maiNote.tap
+                    this[1] = chart.maiNote.hold
+                    this[2] = chart.maiNote.slide
+                    this[3] = chart.maiNote.`break`
+                }
+            } else {
+                IntArray(5).apply {
+                    this[0] = chart.maiNote.tap
+                    this[1] = chart.maiNote.hold
+                    this[2] = chart.maiNote.slide
+                    this[3] = chart.maiNote.touch
+                    this[4] = chart.maiNote.`break`
+                }
             }
 
             return MaiChartLite(
@@ -604,7 +606,7 @@ class LxMaiSongLite {
 class LxMaiDifficultyLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0
+    var id: Long = 0
 
     // 谱面类型：standard, deluxe, utage
     @Column(name = "chart_type", columnDefinition = "VARCHAR(10)")
@@ -690,13 +692,13 @@ class LxMaiDifficultyLite {
 }
 
 data class LxMaiCollectionID(
-    val type: String = "",
-    val collectionID: Int = 0
+    var type: String = "",
+    var collectionID: Int = 0
 ) : Serializable
 
 data class LxMaiCollectionRequiredSongID(
-    val songID: Int = 0,
-    val type: String = ""
+    var songID: Int = 0,
+    var type: String = ""
 ) : Serializable
 
 @Entity

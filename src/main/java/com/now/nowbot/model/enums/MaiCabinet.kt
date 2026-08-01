@@ -35,5 +35,19 @@ enum class MaiCabinet {
                 SD
             }
         }
+
+        fun Int.toMaiSongID(cabinet: MaiCabinet = DX): Int {
+            return if (cabinet == DX) {
+                (this % 100000).let {
+                    if (it < 10000) {
+                        it + 10000
+                    } else {
+                        it
+                    }
+                }
+            } else {
+                this
+            }
+        }
     }
 }

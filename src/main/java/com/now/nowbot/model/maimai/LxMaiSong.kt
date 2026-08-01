@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.enums.MaiCabinet
+import com.now.nowbot.model.enums.MaiCabinet.Companion.toMaiSongID
 import com.now.nowbot.model.enums.MaiVersion
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
@@ -47,57 +48,43 @@ data class LxMaiSong(
         val hasSD = difficulties.standard.isNotEmpty()
         val hasUtage = difficulties.utage.isNotEmpty()
 
-        val isDeluxe = (cabinet == MaiCabinet.DX || cabinet == MaiCabinet.ANY) && hasDX
+        return when (cabinet) {
+            MaiCabinet.DX if !hasDX -> null
+            MaiCabinet.SD if !hasSD -> null
+            MaiCabinet.UTAGE if !hasUtage -> null
 
-        val isUtage = cabinet == MaiCabinet.UTAGE && hasUtage
+            else -> {
+                val selected = when {
+                    cabinet == MaiCabinet.UTAGE -> difficulties.utage
+                    cabinet == MaiCabinet.DX || (cabinet == MaiCabinet.ANY && hasDX) -> difficulties.deluxe
+                    else -> difficulties.standard
+                }
 
-        if (cabinet == MaiCabinet.DX && !hasDX) {
-            return null
-        }
+                val value = selected.maxOf { it.version }
 
-        if (cabinet == MaiCabinet.SD && !hasSD) {
-            return null
-        }
+                MaiSong().apply {
+                    songID = lx.songID.toMaiSongID(cabinet)
 
-        if (cabinet == MaiCabinet.UTAGE && !hasUtage) {
-            return null
-        }
+                    title = lx.title
+                    alias = lx.alias
+                    aliases = lx.aliases
+                    this.type = if (isDeluxe) "DX" else "SD"
+                    star = selected.map { it.levelValue }
+                    level = selected.map { it.level }
+                    charts = selected.map { it.toMaiChart() }
+                    info = MaiSong.SongInfo().apply {
+                        title = lx.title
+                        artist = lx.artist
+                        genre = lx.genre
+                        bpm = lx.bpm
+                        version = MaiVersion.getVersionFromValue(value).full
+                        versionInt = value
+                        current = value >= MaiVersion.newestVersion.value
+                    }
 
-        val difficulties = if (isUtage) {
-            difficulties.utage
-        } else if (isDeluxe) {
-            difficulties.deluxe
-        } else {
-            difficulties.standard
-        }
-
-        val value = difficulties.maxOf { it.version }
-
-        return MaiSong().apply {
-            songID = if (isDeluxe) {
-                lx.songID + 10000
-            } else {
-                lx.songID
+                    doubleCabinet = hasDX && hasSD
+                }
             }
-
-            title = lx.title
-            alias = lx.alias
-            aliases = lx.aliases
-            this.type = if (isDeluxe) "DX" else "SD"
-            star = difficulties.map { it.levelValue }
-            level = difficulties.map { it.level }
-            charts = difficulties.map { it.toMaiChart() }
-            info = MaiSong.SongInfo().apply {
-                title = lx.title
-                artist = lx.artist
-                genre = lx.genre
-                bpm = lx.bpm
-                version = MaiVersion.getVersionFromValue(value).full
-                versionInt = value
-                current = value >= MaiVersion.newestVersion.value
-            }
-
-            doubleCabinet = hasDX && hasSD
         }
     }
 }

@@ -185,7 +185,8 @@ object StringUtil {
      *
      * @param stringLength 需要分割的字符串宽度。默认为 2
      * @param caseSensitive 大小写敏感。默认不敏感
-     * @param standardised 是否标准化字符串。默认标准化。
+     * @param standardised 是否标准化 this 字符串。默认标准化。
+     * @param standardisedTo 是否标准化 to 字符串。默认标准化。
      * @return 0-1 之间的相似度
      */
     fun String?.compareSimilarity(
@@ -193,6 +194,7 @@ object StringUtil {
         stringLength: Int = 2,
         caseSensitive: Boolean = false,
         standardised: Boolean = true,
+        standardisedTo: Boolean = true,
     ): Double {
         val compare = this
 
@@ -203,13 +205,13 @@ object StringUtil {
             .let { if (caseSensitive) it else it.lowercase() }
 
         val ts = to
-            .let { if (standardised) it.standardised() else it }
+            .let { if (standardisedTo) it.standardised() else it }
             .let { if (caseSensitive) it else it.lowercase() }
 
         if (cs.length < stringLength || ts.length < stringLength) {
             return if (stringLength > 1) {
                 // 增强短字符串下的辨识性，此时只看包含单字符的比例
-                compare.compareSimilarity(to, 1, caseSensitive, standardised)
+                compare.compareSimilarity(to, 1, caseSensitive, standardised, standardisedTo)
             } else {
                 0.0
             }

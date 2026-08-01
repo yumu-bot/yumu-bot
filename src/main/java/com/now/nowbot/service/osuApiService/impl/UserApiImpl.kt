@@ -23,8 +23,8 @@ import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationExceptio
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import com.now.nowbot.util.toBody
-import com.now.nowbot.util.toBodyList
+import com.now.nowbot.util.exchangeToBody
+import com.now.nowbot.util.exchangeToBodies
 import kotlinx.io.IOException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -44,13 +44,13 @@ import java.util.concurrent.CancellationException
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
             request { client ->
-                client.get().uri(user.avatarUrl).toBody<ByteArray>()
+                client.get().uri(user.avatarUrl).exchangeToBody<ByteArray>()
             }
         } catch (_: Exception) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             request { client ->
-                client.get().uri("https://a.ppy.sh/").toBody<ByteArray>()
+                client.get().uri("https://a.ppy.sh/").exchangeToBody<ByteArray>()
             }
         }
     }
@@ -146,7 +146,7 @@ import java.util.concurrent.CancellationException
             .get().uri("me/{mode}", mode.shortName)
             .headers { headers ->
                 base.insertHeader(headers, bindUser)
-            }.toBody<OsuUser>()
+            }.exchangeToBody<OsuUser>()
         }
 
         bindUser.userID = user.userID
@@ -165,7 +165,7 @@ import java.util.concurrent.CancellationException
         val user = request { client ->
             client.get().uri {
                     it.path("users/{data}/{mode}").build("@$name", mode.shortName)
-            }.headers(base::insertHeader).toBody<OsuUser>()
+            }.headers(base::insertHeader).exchangeToBody<OsuUser>()
         }
 
         user.mode = mode.orElse(user.defaultMode)
@@ -181,7 +181,7 @@ import java.util.concurrent.CancellationException
             client.get().uri {
                 it.path("users/{id}/{mode}").build(id, mode.shortName)
             }.headers(base::insertHeader)
-                .toBody<OsuUser>()
+                .exchangeToBody<OsuUser>()
         }
 
         user.mode = mode.orElse(user.defaultMode)
@@ -267,7 +267,7 @@ import java.util.concurrent.CancellationException
                         .queryParam("ids[]", *ids.toTypedArray())
                         .queryParam("include_variant_statistics", isVariant)
                         .build()
-            }.headers(base::insertHeader).toBody<BatchUsers>()
+            }.headers(base::insertHeader).exchangeToBody<BatchUsers>()
         }
 
         val users = data.users
@@ -295,7 +295,7 @@ import java.util.concurrent.CancellationException
                 .headers { headers ->
                     base.insertHeader(headers, user)
                 }
-                .toBodyList<LazerFriend>()
+                .exchangeToBodies<LazerFriend>()
         }
 
         userInfoDao.saveUsersTodayAsync(
@@ -310,7 +310,7 @@ import java.util.concurrent.CancellationException
             client.get().uri {
                     it.path("users/{userId}/recent_activity").queryParam("offset", offset).queryParam("limit", limit)
                         .build(id)
-            }.headers(base::insertHeader).toBodyList<ActivityEvent>()
+            }.headers(base::insertHeader).exchangeToBodies<ActivityEvent>()
         }
     }
 
@@ -318,7 +318,7 @@ import java.util.concurrent.CancellationException
         return request { client ->
             client.get().uri("users/{uid}/kudosu").headers { headers ->
                 base.insertHeader(headers, user)
-            }.toBody<KudosuHistory>()
+            }.exchangeToBody<KudosuHistory>()
         }
     }
 
@@ -327,7 +327,7 @@ import java.util.concurrent.CancellationException
         return request { client ->
             client.post().uri("chat/new").headers { headers ->
                 base.insertHeader(headers, sender)
-            }.body(body).toBody<JsonNode>()
+            }.body(body).exchangeToBody<JsonNode>()
         }
     }
 
@@ -337,7 +337,7 @@ import java.util.concurrent.CancellationException
                     it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
                 }.headers { headers ->
                 base.insertHeader(headers, user)
-            }.toBody<JsonNode>()
+            }.exchangeToBody<JsonNode>()
         }
     }
 
@@ -346,7 +346,7 @@ import java.util.concurrent.CancellationException
             client.get().uri("chat/channels/{channel}/messages?since={since}", channel, since)
                 .headers { headers ->
                     base.insertHeader(headers, sender)
-                }.toBody<JsonNode>()
+                }.exchangeToBody<JsonNode>()
         }
     }
 
@@ -381,7 +381,7 @@ import java.util.concurrent.CancellationException
                 .headers { headers ->
                     base.insertHeader(headers)
                 }
-                .toBody<Team>()
+                .exchangeToBody<Team>()
         }.onFailure { e ->
             if (e is HttpClientErrorException) {
                 throw NoSuchElementException.TeamID(teamID)
@@ -395,7 +395,7 @@ import java.util.concurrent.CancellationException
                 .uri("https://www.eliteronix.de/elitebotix/api/player-duelrating?u=${userID}")
                 .headers { headers ->
                 base.insertHeader(headers)
-            }.toBody<String>()
+            }.exchangeToBody<String>()
         }
 
         if (response.isBlank() || !response.trimStart().startsWith("{")) {
@@ -452,7 +452,7 @@ import java.util.concurrent.CancellationException
 
     override fun getTopPlays(page: Int, mode: OsuMode): TopPlays? {
         val html = base.osuApiRestClient
-            .get().uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").toBody<String>()
+            .get().uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").exchangeToBody<String>()
 
         return parseTopPlays(html)
     }
@@ -495,7 +495,7 @@ import java.util.concurrent.CancellationException
                     .build()
             }
             .headers { headers -> base.insertHeader(headers) }
-            .toBody<Quickplay>()
+            .exchangeToBody<Quickplay>()
 
         return resp
     }
@@ -503,7 +503,7 @@ import java.util.concurrent.CancellationException
     override fun getQuickplayLeaderboard(page: Int, mode: OsuMode, season: Int): Pair<Int, List<QuickplayLeaderboardItem>> {
         val html = base.osuApiRestClient
             .get().uri("https://osu.ppy.sh/rankings/ranked-play/${mode.shortName}/${season}?page=${page}#scores")
-            .toBody<String>()
+            .exchangeToBody<String>()
 
         return parseQuickplayLeaderboard(html, page)
     }
@@ -540,7 +540,7 @@ import java.util.concurrent.CancellationException
                     val image = try {
                         base.osuApiRestClient.get().uri {
                                 it.scheme("https").host("a.ppy.sh").replacePath(replacePath).build()
-                        }.headers(base::insertHeader).toBody<ByteArray>()
+                        }.headers(base::insertHeader).exchangeToBody<ByteArray>()
                     } catch (e: Exception) {
                         log.error("异步下载头像：任务失败\n", e)
                         return@Runnable
@@ -591,7 +591,7 @@ import java.util.concurrent.CancellationException
                     val image = try {
                         base.osuApiRestClient.get().uri {
                                 it.scheme("https").host("assets.ppy.sh").replacePath(replacePath).build()
-                        }.headers(base::insertHeader).toBody<ByteArray>()
+                        }.headers(base::insertHeader).exchangeToBody<ByteArray>()
                     } catch (e: Exception) {
                         log.error("异步下载背景：任务失败\n", e)
                         return@Runnable

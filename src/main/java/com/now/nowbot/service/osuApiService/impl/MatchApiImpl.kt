@@ -9,7 +9,7 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -33,7 +33,7 @@ class MatchApiImpl(
                     it.build()
                 }
                 .headers(base::insertHeader)
-                .toBody<MatchLobby>()
+                .exchangeToBody<MatchLobby>()
         }
     }
 
@@ -80,7 +80,7 @@ class MatchApiImpl(
             client.get()
                 .uri("rooms/${roomID}/events")
                 .headers(base::insertHeader)
-                .toBody<Room>()
+                .exchangeToBody<Room>()
         }
     }
 
@@ -89,7 +89,7 @@ class MatchApiImpl(
             client.get()
                 .uri("rooms/${roomID}")
                 .headers(base::insertHeader)
-                .toBody<RoomInfo>()
+                .exchangeToBody<RoomInfo>()
         }
     }
 
@@ -98,7 +98,7 @@ class MatchApiImpl(
             client.get()
                 .uri("rooms/${roomID}/leaderboard")
                 .headers(base::insertHeader)
-                .toBody<RoomLeaderBoard>()
+                .exchangeToBody<RoomLeaderBoard>()
         }
     }
 
@@ -119,7 +119,7 @@ class MatchApiImpl(
             client.get()
                 .uri("matches/${matchID}")
                 .headers(base::insertHeader)
-                .toBody<Match>()
+                .exchangeToBody<Match>()
         }
     }
 
@@ -134,7 +134,7 @@ class MatchApiImpl(
                     it.build()
                 }
                 .headers(base::insertHeader)
-                .toBody<Match>()
+                .exchangeToBody<Match>()
         }
     }
 

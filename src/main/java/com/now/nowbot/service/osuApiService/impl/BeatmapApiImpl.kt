@@ -84,7 +84,7 @@ class BeatmapApiImpl(
         val url = "https://b.ppy.sh/preview/${beatmapsetID}.mp3"
 
         return runCatching {
-            base.osuApiRestClient.get().uri(url).toBody<ByteArray>()
+            base.osuApiRestClient.get().uri(url).exchangeToBody<ByteArray>()
         }.getOrNull()
     }
 
@@ -137,7 +137,7 @@ class BeatmapApiImpl(
             try {
                 val image = base.osuApiRestClient.get()
                     .uri(url)
-                    .toBody<ByteArray>()
+                    .exchangeToBody<ByteArray>()
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
@@ -207,7 +207,7 @@ class BeatmapApiImpl(
             return request { client ->
                 client.get()
                     .uri("https://osu.ppy.sh/osu/{bid}", bid)
-                    .toBody<String>()
+                    .exchangeToBody<String>()
             }
         } catch (e: HttpClientErrorException) {
             log.error("osu 谱面 API：请求官网谱面失败: ", e)
@@ -374,7 +374,7 @@ class BeatmapApiImpl(
             client.get()
                 .uri("beatmaps/{bid}", beatmapID)
                 .headers(base::insertHeader)
-                .toBody<Beatmap>()
+                .exchangeToBody<Beatmap>()
         }
 
         beatmapDao.saveBeatmapAndSaveExtendAsync(beatmap)
@@ -411,7 +411,7 @@ class BeatmapApiImpl(
                     it.build()
                 }
                 .headers(base::insertHeader)
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
         val json = JacksonUtil.toNode(jsonString)
         return JacksonUtil.parseObjectList(json["beatmaps"], Beatmap::class.java)
@@ -451,7 +451,7 @@ class BeatmapApiImpl(
                         .build()
                 }
                 .headers(base::insertHeader)
-                .toBodyList<Beatmapset>()
+                .exchangeToBodies<Beatmapset>()
         }
 
         beatmapDao.saveBeatmapsetsAsync(sets)
@@ -505,7 +505,7 @@ class BeatmapApiImpl(
                         .build()
                 }
                 .headers(base::insertHeader)
-                .toBodyList<MostPlayed>()
+                .exchangeToBodies<MostPlayed>()
         }
 
         return most.map { mp ->
@@ -563,7 +563,7 @@ class BeatmapApiImpl(
             client.get()
                 .uri("beatmapsets/{sid}", beatmapsetID)
                 .headers(base::insertHeader)
-                .toBody<Beatmapset>()
+                .exchangeToBody<Beatmapset>()
         }
 
         beatmapDao.saveBeatmapsetAsync(beatmapset)
@@ -955,7 +955,7 @@ class BeatmapApiImpl(
                     .uri("beatmaps/{id}/attributes", id)
                     .headers(base::insertHeader)
                     .body(body)
-                    .toBody<AttributesResponse>().attributes
+                    .exchangeToBody<AttributesResponse>().attributes
             }
         } catch (_: NetworkException.BeatmapException.UnprocessableEntity) {
             log.error("谱面请求：遇到了无法处理的属性：${id}: ${JacksonUtil.objectToJsonPretty(body)}}")
@@ -967,7 +967,7 @@ class BeatmapApiImpl(
                     .uri("beatmaps/{id}/attributes", id)
                     .headers(base::insertHeader)
                     .body(body)
-                    .toBody<AttributesResponse>().attributes
+                    .exchangeToBody<AttributesResponse>().attributes
             }
         }
     }
@@ -978,7 +978,7 @@ class BeatmapApiImpl(
         mode: OsuMode,
         score: CosuScore?,
         isRetry: Boolean
-    ): CosuResponse {
+    ): CosuResponse? {
         val path = osuDir.resolve("${beatmapID}.osu")
 
         // 1. 检查本地文件是否存在
@@ -1003,7 +1003,8 @@ class BeatmapApiImpl(
 
                 return getAttributesFromLocal(beatmapID, mode, score, true)
             } else {
-                throw NoSuchElementException.Beatmap(beatmapID)
+                return null
+                // throw NoSuchElementException.Beatmap(beatmapID)
             }
         }
     }
@@ -1017,7 +1018,7 @@ class BeatmapApiImpl(
                 .build()
         }
             .body(JacksonUtil.toJson(request))
-            .toBody<CosuResponse>()
+            .exchangeToBody<CosuResponse>()
     }
 
     override fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode? {
@@ -1030,7 +1031,7 @@ class BeatmapApiImpl(
                         .queryParamIfPresent("id", Optional.ofNullable(id)).build()
                 }
                     .headers(base::insertHeader)
-                    .toBody<String>()
+                    .exchangeToBody<String>()
             }
             JacksonUtil.toNode(jsonString)
         } catch (e: Exception) {
@@ -1061,7 +1062,7 @@ class BeatmapApiImpl(
                     base.insertHeader(header)
                 }
             }
-                .toBody<BeatmapsetSearch>()
+                .exchangeToBody<BeatmapsetSearch>()
         }
     }
 
@@ -1190,7 +1191,7 @@ class BeatmapApiImpl(
                 uri.build()
             }
                 .headers(base::insertHeader)
-                .toBody<BeatmapPassedResponse>()
+                .exchangeToBody<BeatmapPassedResponse>()
         }
 
         return resp.beatmapsPassed
@@ -1348,7 +1349,7 @@ class BeatmapApiImpl(
                     .uri {
                         it.path("tags").build()
                     }.headers(base::insertHeader)
-                    .toBody<String>()
+                    .exchangeToBody<String>()
             }
             return JacksonUtil.toNode(jsonString)
         }
@@ -1422,7 +1423,7 @@ class BeatmapApiImpl(
     private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {
         val jsonString = proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets")
-            .toBody<String>()
+            .exchangeToBody<String>()
         val json = JacksonUtil.toNode(jsonString)
         return JacksonUtil.parseObjectList(json, BeatmapsetWithRankTime::class.java)
     }
@@ -1431,7 +1432,7 @@ class BeatmapApiImpl(
     fun getBeatmapSetWithRankedTime(beatmapsetID: Long): BeatmapsetWithRankTime {
         return proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets/{sid}", beatmapsetID)
-            .toBody<BeatmapsetWithRankTime>()
+            .exchangeToBody<BeatmapsetWithRankTime>()
     }
 
     override fun getBeatmapsetIDFromBeatmapIDByExtend(beatmapID: Long): Long? {

@@ -10,7 +10,7 @@ import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
-import com.now.nowbot.util.toBody
+import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
@@ -52,7 +52,7 @@ class ChunithmApiImpl(
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .toBody<ChuBestScore>()
+                .exchangeToBody<ChuBestScore>()
         }
     }
 
@@ -64,7 +64,7 @@ class ChunithmApiImpl(
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(b)
                 .headers(base::insertJSONHeader)
-                .toBody<ChuBestScore>()
+                .exchangeToBody<ChuBestScore>()
         }
     }
 
@@ -100,7 +100,7 @@ class ChunithmApiImpl(
         val cover = try {
             request { client ->
                 client.get().uri("https://assets2.lxns.net/chunithm/jacket/${song}.png")
-                    .toBody<ByteArray>()
+                    .exchangeToBody<ByteArray>()
             }
         } catch (_: Exception) {
             val path = path.resolve("Cover").resolve("0.png")
@@ -250,13 +250,13 @@ class ChunithmApiImpl(
     private val chunithmSongLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("api/chunithmprober/music_data")
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
 
     private val chunithmAliasLibraryFromAPI: String
         get() = request { client ->
             client.get().uri("https://maimai.lxns.net/api/v0/chunithm/alias/list")
-                .toBody<String>()
+                .exchangeToBody<String>()
         }
 
     private inline fun <reified T> parseFile(fileName: String): T? {

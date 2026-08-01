@@ -175,7 +175,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         else -> double * 100.0
                     }
 
-                    fit(operator, it.achievements, acc, isRound = true)
+                    fit(operator, it.achievements, acc)
                 }
                 TAP -> fitCountOrPercent(operator, it.notes[0], double, it.notes.sum(), hasDecimal)
                 HOLD -> fitCountOrPercent(operator, it.notes[1], double, it.notes.sum(), hasDecimal)
