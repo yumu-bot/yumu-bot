@@ -106,7 +106,27 @@ class DiscordListener(private val botWebApi: BotWebApi) : ListenerAdapter() {
                 @Suppress("UNCHECKED_CAST")
                 val response = result as ResponseEntity<ByteArray>
                 if (response.body != null) {
-                    val fileUpload = FileUpload.fromData(response.body!!, "${event.name}.png")
+                    val headers = response.headers
+
+                    // 获取文件名
+                    var fileName = headers.contentDisposition.filename
+
+                    if (fileName == null) {
+                        // 根据 Content-Type 推断扩展名
+                        val contentType = headers.contentType?.toString() ?: ""
+                        val extension = when {
+                            contentType.contains("csv") -> ".csv"
+                            contentType.contains("webp") -> ".webp"
+                            contentType.contains("png") -> ".png"
+                            contentType.contains("jpg") -> ".jpg"
+                            contentType.contains("jpeg") -> ".jpg"
+                            contentType.contains("json") -> ".json"
+                            else -> ".txt"
+                        }
+                        fileName = "${event.name}$extension"
+                    }
+
+                    val fileUpload = FileUpload.fromData(response.body!!, fileName)
                     event.hook.sendFiles(fileUpload).queue()
                 } else {
                     event.hook.sendMessage("❌ 响应内容为空").queue()
