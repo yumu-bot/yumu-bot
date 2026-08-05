@@ -193,8 +193,7 @@ public class CheckAspect {
 //        workList.remove(event);
 //    }
 
-    Set<Contact> sended;
-
+    Set<Contact> sent;
 
     @Around("imageService()")
     public Object beforeGetImage(ProceedingJoinPoint point) throws Throwable {
@@ -249,34 +248,42 @@ public class CheckAspect {
         return score.getUserID() == MY_ID;
     }
 
-    private IDUser getUser(OsuUser user) {
-        if (user.getUserID() == 0L) return user;
+    private IDUser getUser(IDUser user) {
+        if (user == null || user.getUserID() == 0L) {
+            return user;
+        }
+
         var profile = userProfileRepository.findTopById(user.getUserID());
 
         if (profile == null) {
             return user;
-        } else {
-            return new OsuUserPlus(user, profile);
         }
+
+        OsuUser rawOsuUser = null;
+
+        if (user instanceof OsuUser osuUser) {
+            rawOsuUser = osuUser;
+        } else if (user instanceof OsuUserPlus plus) {
+            rawOsuUser = plus.getUser();
+        }
+
+        if (rawOsuUser != null) {
+            return new OsuUserPlus(rawOsuUser, profile);
+        }
+
+        return user;
     }
 
     private Object parse(Object param) {
-        if (param instanceof OsuUser user) {
+        if (param instanceof IDUser user) {
             return getUser(user);
-        } else if (
-                param instanceof Optional<?> opt
-                        && opt.isPresent()
-                        && opt.get() instanceof OsuUser user
-        ) {
+        } else if (param instanceof Optional<?> opt && opt.isPresent() && opt.get() instanceof IDUser user) {
             return Optional.of(getUser(user));
         }
+
         if (param instanceof LazerScore score) {
             return getScore(score);
-        } else if (
-                param instanceof Optional<?> opt
-                        && opt.isPresent()
-                        && opt.get() instanceof LazerScore score
-        ) {
+        } else if (param instanceof Optional<?> opt && opt.isPresent() && opt.get() instanceof LazerScore score) {
             return Optional.ofNullable(getScore(score));
         }
 

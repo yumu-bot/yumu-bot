@@ -1,6 +1,7 @@
 package com.now.nowbot.service
 
 import com.now.nowbot.controller.RenderWebSocketHandler
+import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
@@ -153,10 +154,10 @@ class ImageService(
         return doPost("panel_Gamma", httpEntity)
     }
 
-    fun getPanelGamma(osuUser: OsuUser): ByteArray {
+    fun getPanelGamma(user: IDUser): ByteArray {
         val headers = defaultHeader
         val body: MutableMap<String, Any> = HashMap()
-        body["user"] = osuUser
+        body["user"] = user
         body["panel"] = "info"
         val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
         return doPost("panel_Gamma", httpEntity)
