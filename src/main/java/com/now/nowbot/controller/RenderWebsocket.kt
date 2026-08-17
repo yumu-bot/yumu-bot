@@ -1,11 +1,13 @@
 package com.now.nowbot.controller
 
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.KB
 import com.now.nowbot.util.MB
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import org.springframework.web.socket.BinaryMessage
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
@@ -27,6 +29,95 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
     private val sessionActiveTasks = ConcurrentHashMap<String, AtomicInteger>()
 
     private val pendingRequests = ConcurrentHashMap<String, CompletableFuture<ByteArray>>()
+
+    override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
+        try {
+            val response = objectMapper.readTree(message.payload)
+
+            if (response.has("type") && response.get("type").asString() == "HEARTBEAT") {
+                return
+            }
+
+            if (response.has("type") && response.get("type").asString() == "AUTH") {
+                // ... 保持你原有的 AUTH 处理逻辑不变 ...
+                val pid = response.get("pid").asInt()
+
+                if (session.attributes["PID"] == null) {
+                    anonymousConnectionCount.decrementAndGet()
+                }
+
+                // 记录 PID
+                session.attributes["PID"] = pid
+
+                activeSessions.compute(pid) { _, existingSession ->
+                    if (existingSession != null && existingSession.id != session.id) {
+                        log.info("渲染服务器：检测到重复连接 [PID: $pid]，正在关闭旧连接 ${existingSession.id}")
+                        try {
+                            if (existingSession.isOpen) {
+                                existingSession.close(CloseStatus(4001, "Replaced by new process connection"))
+                            }
+                        } catch (e: Exception) {
+                            log.error("关闭旧 Session 失败", e)
+                        }
+                    }
+                    session
+                }
+
+                log.info("渲染服务器：进程验证成功 [PID: $pid, Session: ${session.id}]")
+                return
+            }
+
+            val messageId = response.get("messageId")?.asString()
+            val status = response.get("status")?.asString()
+
+            if (messageId != null) {
+                if (status == "success") {
+                    val dataNode = response.get("data")
+
+                    val bytes: ByteArray = when {
+                        dataNode.isString -> Base64.getDecoder().decode(dataNode.asString())
+                        dataNode.isObject && dataNode.has("data") -> {
+                            val dataField = dataNode.get("data")
+                            when {
+                                dataField.isString -> Base64.getDecoder().decode(dataField.asString())
+                                dataField.isBinary -> dataField.binaryValue()
+                                else -> throw IllegalArgumentException("无法识别的 data 内部格式")
+                            }
+                        }
+                        else -> throw IllegalArgumentException("无法识别的 data 结构")
+                    }
+
+                    pendingRequests.remove(messageId)?.complete(bytes)
+
+                } else if (status == "error") {
+                    val errorMessage = response.get("error")?.asString() ?: "Node.js 端发生未知异常"
+                    log.error("渲染服务器：收到 JS 进程错误响应 [ID: {}]: {}", messageId, errorMessage)
+
+                    pendingRequests.remove(messageId)?.completeExceptionally(NetworkException.RenderModuleException.InternalServerError())
+                }
+            }
+        } catch (e: Exception) {
+            log.error("渲染服务器：解析 JS 返回消息失败", e)
+        }
+    }
+
+    override fun handleBinaryMessage(session: WebSocketSession, message: BinaryMessage) {
+        val payload = message.payload
+        val bytes = ByteArray(payload.remaining())
+        payload.get(bytes)
+
+        // 1. 分离头部 (前 36 字节是 UUID)
+        val idLength = 36
+        if (bytes.size <= idLength) return
+
+        val messageId = String(bytes.copyOfRange(0, idLength), Charsets.UTF_8)
+
+        // 2. 提取剩余的 PNG 数据
+        val imageData = bytes.copyOfRange(idLength, bytes.size)
+
+        // 3. 完成请求
+        pendingRequests.remove(messageId)?.complete(imageData)
+    }
 
     fun sendTask(path: String, payload: Any?, timeoutSeconds: Long = 30): CompletableFuture<ByteArray> {
         // 1. 过滤出依然开启的 Session
