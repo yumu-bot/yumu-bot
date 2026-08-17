@@ -6,6 +6,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
+import com.now.nowbot.entity.IDUser
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
@@ -13,7 +14,6 @@ import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -66,7 +66,7 @@ class GroupLeaderBoardService(
     }
 
     data class GroupLeaderBoardParam(
-        val user: OsuUser?,
+        val user: IDUser?,
         val beatmap: Beatmap,
         val mode: OsuMode,
         val scores: List<LazerScore>,
@@ -198,18 +198,14 @@ class GroupLeaderBoardService(
                             bStats.compareTo(aStats)
                         }
 
-                        else -> b.pp.compareTo(a.pp)
+                        else -> b.accuracy.compareTo(a.accuracy)
                     }
                 }
             }
 
-            val userDeferred = async {
-                runCatching {
-                    userApiService.getOsuUser(bindDao.getBindFromQQOrNull(event.sender.contactID) ?: return@runCatching null, mode)
-                }.getOrNull()
-            }
+            val userDeferred = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
-            scoresDeferred.await() to userDeferred.await()
+            scoresDeferred.await() to userDeferred
         }
 
         val (split, currentPage, maxPage) = DataUtil.splitPage(ss, page, 50)

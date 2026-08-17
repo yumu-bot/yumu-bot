@@ -1,5 +1,6 @@
 package com.now.nowbot.model
 
+import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
 import tools.jackson.databind.PropertyNamingStrategies
@@ -11,7 +12,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.days
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
-class BindUser {
+class BindUser: IDUser {
     /**
      * 记录在数据库中的 id, 非 uid
      *
@@ -19,9 +20,9 @@ class BindUser {
      */
     var baseID: Long? = null
 
-    var username: String = ""
+    override var username: String = ""
 
-    var userID: Long = 0
+    override var userID: Long = 0
 
     /**
      * 当前令牌

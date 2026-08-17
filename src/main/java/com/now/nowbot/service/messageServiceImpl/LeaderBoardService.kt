@@ -5,8 +5,8 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
+import com.now.nowbot.entity.IDUser
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
@@ -53,7 +53,7 @@ class LeaderBoardService(
 ) : MessageService<LeaderBoardParam> {
 
     data class LeaderBoardParam(
-        val bindUser: BindUser?,
+        val user: IDUser?,
         val beatmap: Beatmap,
         val scores: List<LazerScore>,
         val mode: OsuMode,
@@ -93,7 +93,7 @@ class LeaderBoardService(
             throw IllegalArgumentException.WrongException.Range()
         } else if (param.isSSPanel) {
 
-            val user = userApiService.getOsuUser(param.bindUser!!.userID, param.mode)
+            val user = userApiService.getOsuUser(param.user!!.userID, param.mode)
 
             val body = mapOf(
                 "user" to user,
@@ -118,7 +118,7 @@ class LeaderBoardService(
             // 多成绩模式
 
             val body = mapOf(
-                "user" to param.bindUser,
+                "user" to param.user,
                 "beatmap" to param.beatmap,
                 "scores" to param.scores,
                 "start" to (param.scores.firstOrNull()?.ranking ?: 1),

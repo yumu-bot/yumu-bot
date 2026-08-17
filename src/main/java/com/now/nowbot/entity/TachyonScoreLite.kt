@@ -21,7 +21,10 @@ import java.time.OffsetDateTime
 @Table(name = "tachyon_score",
     indexes = [
         Index(name = "idx_tachyon_user_time", columnList = "user_id, mode, time DESC"),
-        Index(name = "idx_tachyon_score_beatmap_user_best", columnList = "beatmap_id, mode, user_id, pp DESC, accuracy DESC")
+        Index(
+            name = "idx_tachyon_score_beatmap_best",
+            columnList = "beatmap_id, mode, user_id, rank DESC, accuracy DESC"
+        )
     ],
 )
 class TachyonScoreLite(

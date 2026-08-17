@@ -44,7 +44,7 @@ interface TachyonScoreRepository: JpaRepository<TachyonScoreLite, Long> {
         where s.user_id = :userID
         and s.time between :start and :end
         and s.mode = :mode
-        and s.pp > 0
+        and s.rank > 0
         """, nativeQuery = true)
     fun getUserRankedScore(userID: Long, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<TachyonScoreLite>
 
@@ -53,7 +53,7 @@ interface TachyonScoreRepository: JpaRepository<TachyonScoreLite, Long> {
         where s.user_id in (:userIDs)
         and s.time between :start and :end
         and s.mode = :mode
-        and s.pp > 0
+        and s.rank > 0
         """, nativeQuery = true)
     fun getUsersRankedScore(userIDs: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<TachyonScoreLite>
 
@@ -63,7 +63,7 @@ interface TachyonScoreRepository: JpaRepository<TachyonScoreLite, Long> {
     WHERE s.user_id IN (:userIDs)
       AND s.beatmap_id = :beatmapID
       AND s.mode = :mode
-    ORDER BY s.user_id, s.pp DESC, s.accuracy DESC
+    ORDER BY s.user_id, s.rank DESC, s.accuracy DESC
 """, nativeQuery = true)
     fun getUsersBestScore(userIDs: Collection<Long>, beatmapID: Long, mode: Byte): List<TachyonScoreLite>
 

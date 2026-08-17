@@ -50,19 +50,22 @@
 简称你必然会踩到的坑
 
 - [Yumu 绘图模块](https://github.com/yumu-bot/yumu-image) 
-  - 用于将获取的数据绘制成可视化图片。
-  - 如果不运行，则主程序只会以最低的形式返回文字信息。
-  - 注意保证 8388 端口可用（你可以自行修改，记得同步修改。）
-- Redis 数据库
-  - 如果你是开发者（想在 IDE 里运行这个项目）
-    - 如果你没（或没法）装 Redis，请注释掉所有 @Cacheable（因为 application.yaml 配置项没有用）
-    - 将 IdempotentService 基本都注释掉，改成简单的 Caffeine 实现
-  - 如果你是用户（想使用 .jar 运行代码）
-    - 查看[Redis 连接问题解决](#redis-连接问题解决)
+  - 用于将获取的数据绘制成可视化图片
+  - 如果不运行，则主程序只会以最低的形式返回文字信息
+  - 注意保证 8388 端口可用（你可以自行修改，记得同步修改）
+- ~~Redis 数据库~~
+  - 草你妈，redis 被我干掉了
+  - 你可以不用了
+  - ~~如果你是开发者（想在 IDE 里运行这个项目）~~
+    - ~~如果你没（或没法）装 Redis，请注释掉所有 @Cacheable（因为 application.yaml 配置项没有用）~~
+    - ~~将 IdempotentService 基本都注释掉，改成简单的 Caffeine 实现~~
+  - ~~如果你是用户（想使用 .jar 运行代码）~~
+    - ~~查看[Redis 连接问题解决](#redis-连接问题解决)~~
 - rosu-pp 本地计算
   - [项目地址](https://github.com/MaxOhn/rosu-pp)
   - 访问[这个分支编译](https://github.com/Apeuriox/rosu-pp-java/actions/runs/29825729363)来获取并安装 rosu-pp-java.jar
-  - 如果你不想启用 rosu，可以去 application.yaml，将 rosu 移出 yumu.osu.priority
+    - 暂时只支持 linux 和 windows，macos 和 ios 不行
+  - ~~如果你不想启用 rosu，可以去 application.yaml，将 rosu 移出 yumu.osu.priority~~
 - cosu 本地计算
   - 访问[项目 OsuApiWrap](https://github.com/yumu-bot/OsuApiWrap)
   - 注意保证 23316 端口可用（你可以自行修改）
@@ -220,62 +223,9 @@ spring:
 QQ Bot 客户端（NapCat/Lagrange 等）应连接到：`ws://主机地址:server.port/shiro.ws.server.url`
 例如：`ws://localhost:20009/pub/onebotSocket`
 
-## Redis 连接问题解决
+## ~~Redis 连接问题解决~~
 
-### 问题现象
-
-启动时出现以下错误之一：
-```
-Unable to connect to localhost/<unresolved>:6379
-NOAUTH HELLO must be called with the client already authenticated
-WRONGPASS invalid username-password pair or user is disabled
-```
-
-### 根本原因
-
-程序内部使用了 Spring Data Redis + Lettuce 客户端，**无法通过配置文件完全禁用**。当环境中存在 Redis 服务时，程序会尝试连接它。
-
-### 解决方案：Redis 不设置密码（唯一有效方法）
-
-#### 非 Docker 方式
-
-编辑 Redis 配置文件（通常位于 `/etc/redis/redis.conf`），找到并注释掉密码行：
-
-```conf
-# requirepass 你的旧密码
-```
-
-然后重启 Redis：
-
-```bash
-sudo systemctl restart redis
-```
-
-#### Docker 方式
-
-停止并删除现有带密码的容器，重新启动一个无密码的容器：
-
-```bash
-# 查看当前 Redis 容器名称
-docker ps | grep redis
-
-# 停止并删除现有容器
-docker stop <redis-container-name>
-docker rm <redis-container-name>
-
-# 启动新的无密码 Redis 容器
-docker run -d \
-  --name redis \
-  --restart unless-stopped \
-  -p 6379:6379 \
-  redis:latest
-```
-
-
-> **常见错误排查**:
-> - `NOAUTH ... must be authenticated` → Redis 有密码但程序默认无密码连接 → **去掉 Redis 密码**
-> - `WRONGPASS invalid username-password pair` → 配置里的密码和 Redis 实际密码不匹配 → **统一密码或去掉密码**
-> - `Unable to connect to localhost:6379` → Redis 未启动 → 启动 Redis 或**停止/卸载 Redis**
+解决了，不用管 Redis
 
 # 附属项目
 
