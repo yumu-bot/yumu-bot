@@ -5,6 +5,7 @@ import com.now.nowbot.dao.ServiceCallStatisticsDao;
 import com.now.nowbot.entity.IDUser;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.entity.ServiceCallStatistic;
+import com.now.nowbot.entity.UserProfileLite;
 import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.mapper.UserProfileRepository;
 import com.now.nowbot.model.osu.LazerScore;
@@ -195,18 +196,34 @@ public class CheckAspect {
 
     Set<Contact> sent;
 
+    public static class UserProfileContext {
+        private static final ThreadLocal<UserProfileLite> HOLDER = new ThreadLocal<>();
+
+        public static void set(UserProfileLite profile) { HOLDER.set(profile); }
+        public static UserProfileLite get() { return HOLDER.get(); }
+        public static void remove() { HOLDER.remove(); }
+    }
+
     @Around("imageService()")
     public Object beforeGetImage(ProceedingJoinPoint point) throws Throwable {
         var args = point.getArgs();
-        for (int i = 0; i < args.length; i++) {
-            var param = parse(args[i]);
-            if (Objects.nonNull(param)) {
-                args[i] = param;
+        for (Object arg : args) {
+            if (arg instanceof LazerScore score) {
+                if (score.getUser().getUserID() != 0L) {
+                    var profile = userProfileRepository.findTopById(score.getUser().getUserID());
+                    if (profile != null) {
+                        UserProfileContext.set(profile);
+                    }
+                }
             }
         }
-        return point.proceed(args);
-    }
 
+        try {
+            return point.proceed();
+        } finally {
+            UserProfileContext.remove();
+        }
+    }
 
     //    @Around(value = "execution (public * com.now.nowbot..*(..))", argNames = "pjp,point")
     @Around(value = "servicePoint()", argNames = "pjp")
