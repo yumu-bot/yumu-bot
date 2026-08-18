@@ -75,6 +75,7 @@ class GroupLeaderBoardService(
         val scores: List<LazerScore>,
 
         val group: Long,
+        val type: String,
         val page: Int = 1,
 
         @field:JsonProperty("max_page")
@@ -202,7 +203,7 @@ class GroupLeaderBoardService(
 
         split.applyMicroUser()
 
-        return GroupLeaderBoardParam(user, beatmap, mode, split, event.subject.contactID, currentPage, maxPage)
+        return GroupLeaderBoardParam(user, beatmap, mode, split, event.subject.contactID, sort.name.lowercase(), currentPage, maxPage)
     }
     
     companion object {
