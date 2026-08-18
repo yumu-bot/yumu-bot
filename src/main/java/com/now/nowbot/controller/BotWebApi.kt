@@ -7,6 +7,7 @@ import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.IDType
+import com.now.nowbot.model.enums.LeaderBoardType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
@@ -851,7 +852,7 @@ import kotlin.time.Duration.Companion.days
                 bid = bid,
                 mode = mode,
                 mods = mods,
-                type = "global",
+                type = LeaderBoardType.GLOBAL,
                 legacy = legacy
             )
 

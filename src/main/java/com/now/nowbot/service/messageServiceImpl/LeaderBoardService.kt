@@ -7,6 +7,7 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.IDUser
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.LeaderBoardType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
@@ -160,7 +161,7 @@ class LeaderBoardService(
             1..50
         }
 
-        val type = getType(matcher.group(FLAG_TYPE2))
+        val type = LeaderBoardType.getType(matcher.group(FLAG_TYPE2))
 
         val mods = matcher.group(FLAG_MOD).toLazerMods()
 
@@ -241,7 +242,7 @@ class LeaderBoardService(
         } else {
             isSSPanel = false
 
-            if (bindUser?.isTokenAvailable == null && (mods.isNotEmpty() || type != "global")) {
+            if (bindUser?.isTokenAvailable == null && (mods.isNotEmpty() || type != LeaderBoardType.GLOBAL)) {
                 if (bindUser?.hasToken == true) {
                     throw UnsupportedOperationException.ExpiredOauthBind()
                 } else {
@@ -289,10 +290,10 @@ class LeaderBoardService(
         }
 
         if (scores.isEmpty()) {
-            if (type == "global") {
+            if (type == LeaderBoardType.GLOBAL) {
                 throw NoSuchElementException.LeaderboardScore()
             } else {
-                throw NoSuchElementException.LeaderboardScoreType(type)
+                throw NoSuchElementException.LeaderboardScoreType(type.value)
             }
         }
 
@@ -306,14 +307,5 @@ class LeaderBoardService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(LeaderBoardService::class.java)
-
-        private fun getType(string: String?): String {
-            return when(string?.lowercase()) {
-                "country", "countries", "c" -> "country"
-                "friend", "friends", "f" -> "friend"
-                "team", "clan", "t" -> "team"
-                else -> "global"
-            }
-        }
     }
 }

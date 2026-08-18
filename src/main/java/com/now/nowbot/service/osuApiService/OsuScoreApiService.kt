@@ -1,6 +1,7 @@
 package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.enums.LeaderBoardType
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Replay
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
@@ -133,7 +134,7 @@ interface OsuScoreApiService {
         bid: Long,
         mode: OsuMode?,
         mods: Collection<LazerMod>?,
-        type: String?,
+        type: LeaderBoardType?,
         legacy: Boolean = false
     ): List<LazerScore>
 

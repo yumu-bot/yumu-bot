@@ -8,6 +8,8 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.IDUser
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.GroupLeaderBoardType
+import com.now.nowbot.model.enums.GroupLeaderBoardType.Companion.getComparator
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.filter.ScoreFilter
@@ -32,6 +34,7 @@ import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_PAGE
+import com.now.nowbot.util.command.FLAG_TYPE2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -112,6 +115,8 @@ class GroupLeaderBoardService(
             throw UnsupportedOperationException.NotGroup()
         }
 
+        val sort = GroupLeaderBoardType.getType(matcher.group(FLAG_TYPE2))
+
         val any = matcher.group(FLAG_ANY) ?: ""
 
         val conditions = any.asConditions(ScoreFilter.regexes)
@@ -185,22 +190,7 @@ class GroupLeaderBoardService(
                     throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
                 }
 
-                filtered.sortedWith { a, b ->
-                    val aIsF = a.rank == "F"
-                    val bIsF = b.rank == "F"
-
-                    when {
-                        aIsF != bIsF -> if (aIsF) 1 else -1
-
-                        aIsF -> {
-                            val aStats = if (a.mode.safeModeValue == 3.toByte()) a.statistics.perfect else a.statistics.great
-                            val bStats = if (b.mode.safeModeValue == 3.toByte()) b.statistics.perfect else b.statistics.great
-                            bStats.compareTo(aStats)
-                        }
-
-                        else -> b.accuracy.compareTo(a.accuracy)
-                    }
-                }
+                filtered.sortedWith(sort.getComparator())
             }
 
             val userDeferred = bindDao.getBindFromQQOrNull(event.sender.contactID)

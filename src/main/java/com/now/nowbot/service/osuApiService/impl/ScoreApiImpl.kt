@@ -4,6 +4,7 @@ import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.UserSnapShotDao
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.enums.LeaderBoardType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getQuery
 import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
@@ -365,7 +366,7 @@ class ScoreApiImpl(
         bid: Long,
         mode: OsuMode?,
         mods: Collection<LazerMod>?,
-        type: String?,
+        type: LeaderBoardType?,
         legacy: Boolean
     ): List<LazerScore> {
         return request { client -> client.get()
@@ -373,7 +374,7 @@ class ScoreApiImpl(
                 it.path("beatmaps/{bid}/scores")
                     .queryParam("legacy_only", if (legacy) 1 else 0)
                     .queryParamIfPresent("mode", mode.getQuery())
-                    .queryParamIfPresent("type", Optional.ofNullable(type))
+                    .queryParamIfPresent("type", Optional.ofNullable(type?.value))
 
                 LazerMod.setMods(it, mods)
 

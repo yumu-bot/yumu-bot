@@ -285,7 +285,7 @@ object RankConverter {
     fun byteToRank(byte: Byte): String {
         val index = byte.toInt()
         // 边界检查：确保索引在 0..8 之间
-        if (index in 0..8) {
+        if (index in 0..byteToRankTable.size) {
             return byteToRankTable[index]
         }
         return "F"

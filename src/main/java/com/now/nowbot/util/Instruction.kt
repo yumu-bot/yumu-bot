@@ -500,6 +500,7 @@ enum class Instruction(val pattern: Pattern) {
         appendBIDOrSID()
         appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
         appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER_1_100, MAYBE)
+        appendStarCaptureGroup(FLAG_TYPE2, PATTERN_WORD, MORE)
         appendMod()
     }),
 
