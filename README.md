@@ -37,10 +37,10 @@
 - Java Runtime Environment (JRE，JDK 包含它)
   - 没它你没办法运行 jar
   - 最低 [22](https://www.oracle.com/java/technologies/downloads/)，或者支持虚拟线程、[FFM API](https://inside.java/2025/06/14/javaone-ffm/) 的更高正式版本
-  - 代码 Kotlin 版本是 2.3
-  - 在 260228 (v0.7.6) 之前的提交，使用的 Kotlin 是 2.0
-  - 在 260723 (v0.8.3) 之前的提交，使用的 JRE 21 Preview
-  - 如果你想测试并运行一个较早版本的实例，可能需要 JRE 17（不需要 Kotlin）
+  - 代码目标 Kotlin 版本是 2.3
+  - 在 260228 (v0.7.6) 之前的提交，使用的目标 Kotlin 是 2.0
+  - 在 260723 (v0.8.3) 之前的提交，使用的 JRE 是 21 Preview
+  - 如果你想测试并运行一个较早版本的实例（比如 legacy 分支），可能需要 JRE 17（没有目标 Kotlin）
 - PostgreSQL 数据库
   - 记录存储各种信息，避免鸿儒 ppy 的 api
   - 最低 15，越新越好
@@ -49,6 +49,20 @@
 
 简称你必然会踩到的坑
 
+- pom
+  - com.mikuac.shiro 2.5.3
+    - 项目里有一个只有服务器上才有的的 2.5.3-beta 包
+    - 如果您需要运行，请将它改成 2.5.3
+    - 未来修改
+  - com.yumu.yumu-lib 0.0.4
+    - 去 [release](https://github.com/yumu-bot/yumu-bot/releases/download/v0.8.3/yumu-client-0.0.4.jar) 里直接下载即可
+    - 这个依赖只负责官方 qq 机器人部分的代码。
+    - 您也可以尝试直接移除这个依赖以及依赖相关的代码（双击 shift，并搜索 com.yumu 相关的代码类，直接删除即可）
+  - me.aloic.rosu-pp-java 0.0.1
+    - [原项目地址](https://github.com/MaxOhn/rosu-pp)
+    - 访问[这个分支编译](https://github.com/YumeMuzi/rosu-pp-java-mac-support/actions/runs/32563760333/artifacts/9473546796)来获取并安装 rosu-pp-java.jar
+    - 暂时只支持 linux-x86-64、windows-x86-64、macos-arm64。
+    - ios、macos-x86-64 不行。
 - [Yumu 绘图模块](https://github.com/yumu-bot/yumu-image) 
   - 用于将获取的数据绘制成可视化图片
   - 如果不运行，则主程序只会以最低的形式返回文字信息
@@ -62,10 +76,6 @@
   - ~~如果你是用户（想使用 .jar 运行代码）~~
     - ~~查看[Redis 连接问题解决](#redis-连接问题解决)~~
 - rosu-pp 本地计算
-  - [项目地址](https://github.com/MaxOhn/rosu-pp)
-  - 访问[这个分支编译](https://github.com/Apeuriox/rosu-pp-java/actions/runs/29825729363)来获取并安装 rosu-pp-java.jar
-    - 暂时只支持 linux 和 windows，macos 和 ios 不行
-  - ~~如果你不想启用 rosu，可以去 application.yaml，将 rosu 移出 yumu.osu.priority~~
 - cosu 本地计算
   - 访问[项目 OsuApiWrap](https://github.com/yumu-bot/OsuApiWrap)
   - 注意保证 23316 端口可用（你可以自行修改）
