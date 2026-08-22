@@ -12,9 +12,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.time.Instant
 import java.util.concurrent.*
-import java.util.concurrent.StructuredTaskScope.ShutdownOnFailure
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.random.Random
@@ -233,72 +231,6 @@ object AsyncMethodExecutor {
         lock.await(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     }
 
-    fun <T> awaitCallableExecute(
-        work: Callable<out T>,
-        timeout: Duration = 30.seconds
-    ): T {
-        ShutdownOnFailure().use { virtualPool ->
-            val r = virtualPool.fork(work)
-            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
-            virtualPool.throwIfFailed()
-            return r.get()
-        }
-    }
-
-    /**
-     * 分批执行，避免 ppy API 限制
-     */
-    fun <T> awaitBatchCallableExecute(
-        works: List<Callable<out T>>,
-        batchSize: Int = 60,
-        latency: Duration = 60.seconds,
-        timeout: Duration = 30.seconds
-    ): List<T> {
-        val batches = works.chunked(batchSize)
-        val allResults = mutableListOf<T>()
-
-        ShutdownOnFailure().use { scope ->
-            val batchFutures = batches.mapIndexed { batchIndex, batch ->
-                scope.fork {
-                    // 批次间延迟（第一批不延迟）
-                    if (batchIndex > 0) {
-                        Thread.sleep(latency.inWholeMilliseconds)
-                    }
-
-                    // 处理当前批次
-                    val batchResults = processBatch(batch, timeout)
-                    batchResults
-                }
-            }
-
-            scope.join() // 等待所有批次完成
-            scope.throwIfFailed() // 如果有异常则抛出
-
-            // 收集所有结果
-            batchFutures.forEach { future ->
-                allResults.addAll(future.get())
-            }
-        }
-
-        return allResults
-    }
-
-    private fun <T> processBatch(
-        batch: List<Callable<out T>>,
-        timeout: Duration
-    ): List<T> {
-        return ShutdownOnFailure().use { innerScope ->
-            val futures = batch.map { work ->
-                innerScope.fork(work)
-            }
-
-            innerScope.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
-            innerScope.throwIfFailed()
-
-            futures.map { it.get() }
-        }
-    }
-
     /* 以下是协程代码 */
 
     val vDispatcher = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
@@ -502,71 +434,6 @@ object AsyncMethodExecutor {
             }.onFailure {
                 it.wrapTimeout()
             }.getOrThrow()
-        }
-    }
-
-    /* 以下是 java 原生的 ShutdownOnFailure */
-
-    fun <T, U> awaitPairCallableExecute(
-        work: Callable<out T>,
-        work2: Callable<out U>,
-        timeout: Duration = 30.seconds
-    ): Pair<T, U> {
-        ShutdownOnFailure().use { virtualPool ->
-            val r1 = virtualPool.fork(work)
-            val r2 = virtualPool.fork(work2)
-            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
-            virtualPool.throwIfFailed()
-            return Pair(r1.get(), r2.get())
-        }
-    }
-
-    fun <T, U, V> awaitTripleCallableExecute(
-        work: Callable<out T>,
-        work2: Callable<out U>,
-        work3: Callable<out V>,
-        timeout: Duration = 30.seconds
-    ): Triple<T, U, V> {
-        ShutdownOnFailure().use { virtualPool ->
-            val r1 = virtualPool.fork(work)
-            val r2 = virtualPool.fork(work2)
-            val r3 = virtualPool.fork(work3)
-            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
-            virtualPool.throwIfFailed()
-            return Triple(r1.get(), r2.get(), r3.get())
-        }
-    }
-
-    fun <T, U, V, W> awaitQuadCallableExecute(
-        work: Callable<out T>,
-        work2: Callable<out U>,
-        work3: Callable<out V>,
-        work4: Callable<out W>,
-        timeout: Duration = 30.seconds
-    ): Pair<Pair<T, U>, Pair<V, W>> {
-        ShutdownOnFailure().use { virtualPool ->
-            val r1 = virtualPool.fork(work)
-            val r2 = virtualPool.fork(work2)
-            val r3 = virtualPool.fork(work3)
-            val r4 = virtualPool.fork(work4)
-            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
-            virtualPool.throwIfFailed()
-            return (r1.get() to r2.get()) to (r3.get() to r4.get())
-        }
-    }
-
-    fun <X> awaitCallableExecute(works: List<Callable<out X>>, timeout: Duration = 30.seconds): List<X> {
-        if (works.isEmpty()) return emptyList()
-
-        ShutdownOnFailure().use { virtualPool ->
-            val forks = works.map { work ->
-                virtualPool.fork(work)
-            }
-
-            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
-            virtualPool.throwIfFailed()
-
-            return forks.map { task -> task.get() }
         }
     }
 

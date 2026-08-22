@@ -25,12 +25,12 @@ import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.exchangeToBody
 import com.now.nowbot.util.exchangeToBodies
-import kotlinx.io.IOException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.util.UriComponentsBuilder
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -207,7 +207,7 @@ import java.util.concurrent.CancellationException
             }
         }
 
-        val results = AsyncMethodExecutor.awaitBatchCallableExecute(actions)
+        val results = AsyncMethodExecutor.awaitBatch(actions)
             .filter { it.second.userID > 0 }
             .toMap()
 

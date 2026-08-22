@@ -32,7 +32,6 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import io.ktor.util.collections.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -273,7 +272,7 @@ class BeatmapApiImpl(
         val exists = beatmapIDs.filter { hasBeatmapFileFromDirectory(it) }.toSet()
         val notExists = beatmapIDs.minus(exists)
 
-        val downloaded = ConcurrentSet<Long>()
+        val downloaded: MutableSet<Long> = ConcurrentHashMap.newKeySet()
 
         // 2. 分批下载缺失的谱面
         notExists.chunked(15).forEach { ids ->
