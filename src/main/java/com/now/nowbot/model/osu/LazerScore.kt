@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.enums.OsuGrade
+import com.now.nowbot.model.osu.LazerMod.Companion.contains
 import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
 import com.now.nowbot.util.FastPower095
 import java.time.OffsetDateTime
@@ -510,7 +511,7 @@ data class LazerScore(
                 OSU, OSU_RELAX, OSU_AUTOPILOT -> s.great + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
                 TAIKO, TAIKO_RELAX -> s.great + 1.0 / 2 * s.ok
                 CATCH, CATCH_RELAX -> (s.great + s.largeTickHit + s.smallTickHit) * 1.0
-                MANIA -> if (score.isLazer) {
+                MANIA -> if (score.isLazer || score.mods.contains(LazerMod.ScoreV2)) {
                     s.perfect + 300.0 / 305.0 * s.great + 200.0 / 305.0 * s.good + 100.0 / 305.0 * s.ok + 50.0 / 305.0 * s.meh
                 } else {
                     s.perfect + s.great + 2.0 / 3 * s.good + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh

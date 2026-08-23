@@ -1,7 +1,6 @@
 package com.now.nowbot.model.enums
 
 import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.LazerMod.Companion.contains
 import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
 import com.now.nowbot.model.osu.LazerScore
 
@@ -30,7 +29,7 @@ enum class OsuGrade {
                         val total = t.great + t.ok + t.meh + t.miss
                         val noMiss = t.miss == 0
 
-                        val accuracy = (t.great * 300 + t.ok * 100 + t.meh * 50) * 100.0 / total * 300
+                        val accuracy = score.accuracy * 100.0
 
                         when {
                             total == t.great -> if (h) SSH else SS
@@ -51,7 +50,7 @@ enum class OsuGrade {
                         val total = t.great + t.ok + t.miss
                         val noMiss = t.miss == 0
 
-                        val accuracy = (t.great * 300 + t.ok * 150) * 100.0 / total * 300
+                        val accuracy = score.accuracy * 100.0
 
                         when {
                             total == t.great -> if (h) SSH else SS
@@ -68,11 +67,9 @@ enum class OsuGrade {
                     }
 
                     2.toByte() -> {
-                        val hit = t.great + t.largeTickHit + t.smallTickHit
                         val miss = t.largeTickMiss + t.smallTickMiss + t.miss
 
-                        val total = hit + miss
-                        val accuracy = hit * 100.0 / total
+                        val accuracy = score.accuracy * 100.0
 
                         when {
                             miss == 0 -> if (h) SSH else SS
@@ -87,7 +84,7 @@ enum class OsuGrade {
                     3.toByte() -> {
                         val total = t.perfect + t.great + t.good + t.ok + t.meh + t.miss
 
-                        val accuracy = (t.perfect * 305 + t.great * 300 + t.good * 200 + t.ok * 100 + t.meh * 50) * 100.0 / total * 305
+                        val accuracy = score.accuracy * 100.0
 
                         when {
                             total == (t.perfect + t.great) -> if (h) SSH else SS
@@ -156,11 +153,9 @@ enum class OsuGrade {
 
                     // 必须是大于，而不能等于
                     2.toByte() -> {
-                        val hit = t.great + t.largeTickHit + t.smallTickHit
                         val miss = t.largeTickMiss + t.smallTickMiss + t.miss
 
-                        val total = hit + miss
-                        val accuracy = hit * 100.0 / total
+                        val accuracy = score.accuracy * 100.0
 
                         when {
                             miss == 0 -> if (h) SSH else SS
@@ -173,12 +168,9 @@ enum class OsuGrade {
                     }
 
                     3.toByte() -> {
-                        val v2 = score.mods.contains(LazerMod.ScoreV2)
-
                         val total = t.perfect + t.great + t.good + t.ok + t.meh + t.miss
-                        val index = if (v2) 305 else 300
 
-                        val accuracy = (t.perfect * index + t.great * 300 + t.good * 200 + t.ok * 100 + t.meh * 50) * 100.0 / total * index
+                        val accuracy = score.accuracy * 100.0
 
                         when {
                             total == t.perfect -> if (h) SSH else SS
