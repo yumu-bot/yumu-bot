@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
+import com.now.nowbot.model.enums.OsuGrade
 import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
 import com.now.nowbot.util.FastPower095
 import java.time.OffsetDateTime
@@ -171,8 +172,11 @@ data class LazerScore(
 
     @get:JsonProperty("is_lazer")
     val isLazer: Boolean
-        // 使用 get() 确保它是动态计算的
-        get() = buildID != null && buildID!! > 0L
+        get() {
+            val id = buildID
+
+            return id != null && id > 0L
+        }
 
     @field:JsonProperty("mods")
     @get:JsonIgnore
@@ -301,6 +305,17 @@ data class LazerScore(
             }
         }
 
+    @get:JsonProperty("approximate_rank")
+    val approximateRank: String?
+        get() = if (!this.passed && this.scoreHit > 0) {
+            val ar = OsuGrade.getApproximateRank(this)
+
+            if (ar != OsuGrade.F) ar.name else null
+        } else {
+            null
+        }
+
+    @JsonIgnore
     fun getWeightedPP(index: Int): Double {
         return this.weight?.pp
             ?: (FastPower095.pow(index) * this.pp)
@@ -324,7 +339,6 @@ data class LazerScore(
     }
 
     companion object {
-
         private val formatter: DateTimeFormatter =
             DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd").appendLiteral("T").appendPattern("HH:mm:ss")
                 .toFormatter()
