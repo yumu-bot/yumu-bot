@@ -2986,7 +2986,7 @@ sealed class LazerMod {
         private fun getInitialRate(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
-                is Daycore -> mod.speedChange ?: 0.7f
+                is Daycore -> mod.speedChange ?: 0.75f
                 is DoubleTime -> mod.speedChange ?: 1.5f
                 is Nightcore -> mod.speedChange ?: 1.5f
                 is WindUp -> mod.initialRate ?: 1f
@@ -3002,7 +3002,7 @@ sealed class LazerMod {
         private fun getFinalRate(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
-                is Daycore -> mod.speedChange ?: 0.7f
+                is Daycore -> mod.speedChange ?: 0.75f
                 is DoubleTime -> mod.speedChange ?: 1.5f
                 is Nightcore -> mod.speedChange ?: 1.5f
                 is WindUp -> mod.finalRate ?: 1.5f

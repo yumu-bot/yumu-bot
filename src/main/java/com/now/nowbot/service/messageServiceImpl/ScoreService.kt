@@ -275,6 +275,8 @@ import kotlin.time.Duration.Companion.seconds
             scores = scoreApiService.getBeatmapScores(beatmapID, user.userID, mode)
         }
 
+        calculateApiService.applyPPToScores(scores)
+
         return ScoreData(user, map, scores, mode)
     }
 
@@ -292,6 +294,8 @@ import kotlin.time.Duration.Companion.seconds
         val scores = listOf(score)
         val mode = score.mode
         val mods = score.mods
+
+        calculateApiService.applyPPToScores(scores)
 
         return ScoreData(user, map, scores, mode, mods)
     }
@@ -333,6 +337,8 @@ import kotlin.time.Duration.Companion.seconds
         }
 
         val scores = scoreApiService.getBeatmapScores(recent.beatmapID, user.userID, mode)
+
+        calculateApiService.applyPPToScores(scores)
 
         return ScoreData(user, map, scores, mode)
     }
