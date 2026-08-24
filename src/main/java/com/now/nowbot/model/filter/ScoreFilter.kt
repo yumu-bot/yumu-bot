@@ -14,6 +14,8 @@ import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 
 import org.intellij.lang.annotations.Language
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -240,39 +242,22 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             to: Double,
             isRound: Boolean = false
         ): Boolean {
-            // 1. 【探针】：通过 to 自动识别小数位数 dig (例如 0.99 -> dig = 2; 0.991 -> dig = 3)
-            val bdTo = to.toBigDecimal().stripTrailingZeros()
+            val bdTo = BigDecimal.valueOf(to).stripTrailingZeros()
             val dig = maxOf(0, bdTo.scale())
 
-            val scale = 10.0.pow(dig)
-            val eps = 1e-7 // 消除浮点数存储误差微小量
+            val normCompare = BigDecimal.valueOf(compare).setScale(dig, if (isRound) RoundingMode.HALF_UP else RoundingMode.FLOOR)
+            val normTo = bdTo.setScale(dig, RoundingMode.HALF_UP)
 
             return when (operator) {
                 Operator.XQ -> abs(compare - to) <= 1e-4
 
-                // 大小比较：直接拿原始 compare 比较，保留所有微小尾数 (如 0.9910 > 0.99)
-                Operator.GT -> (compare - to) > eps
-                Operator.GE -> (compare - to) >= -eps
-                Operator.LT -> (to - compare) > eps
-                Operator.LE -> (to - compare) >= -eps
+                Operator.GT -> compare > to
+                Operator.GE -> compare >= to
+                Operator.LT -> compare < to
+                Operator.LE -> compare <= to
 
-                // 等于 / 不等于：按照探针识别的 dig 精度做归一化 (匹配整个 0.990 ~ 0.999 档位)
-                Operator.EQ, Operator.NE -> {
-                    val normCompare = if (isRound) {
-                        round((compare + eps) * scale) / scale
-                    } else {
-                        floor((compare + eps) * scale) / scale
-                    }
-
-                    val normTo = if (isRound) {
-                        round((to + eps) * scale) / scale
-                    } else {
-                        floor((to + eps) * scale) / scale
-                    }
-
-                    val diff = normCompare - normTo
-                    if (operator == Operator.EQ) abs(diff) <= 1e-4 else abs(diff) > 1e-4
-                }
+                Operator.EQ -> normCompare.compareTo(normTo) == 0
+                Operator.NE -> normCompare.compareTo(normTo) != 0
             }
         }
 

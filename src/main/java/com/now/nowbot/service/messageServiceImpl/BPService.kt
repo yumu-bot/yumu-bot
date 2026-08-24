@@ -222,6 +222,7 @@ import java.util.regex.Matcher
         }
 
         beatmapApiService.applyBeatmapExtend(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
@@ -279,7 +280,6 @@ import java.util.regex.Matcher
         }
 
         calculateApiService.applyStarToScores(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -307,10 +307,7 @@ import java.util.regex.Matcher
             }
         }
 
-        AsyncMethodExecutor.awaitPair(
-            { calculateApiService.applyStarToScores(scores) },
-                { BeatmapUtil.applyBeatmapChanges(scores) }
-        )
+        calculateApiService.applyStarToScores(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
