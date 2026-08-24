@@ -230,15 +230,13 @@ class LeaderBoardService(
             beatmapApiService.applyBeatmapExtendForSameScore(specials, beatmap)
             calculateApiService.applyPPToScoresWithSameBeatmap(specials)
 
-            val filteredScores = ScoreFilter.filterScores(
-                List(specials.size) { it + 1 }.zip(specials).onEach {
-                        (i, score) -> score.ranking = i + 1
-                }.toMap(),
-                conditions).values.toList().ifEmpty {
-                throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
-            }
+            val filteredScores = ScoreFilter.filterScores(specials, conditions)
+                .ifEmpty { throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName) }
 
-            filteredScores
+            // 筛选后再添加顺序
+            filteredScores.sortedByDescending { it.pp }
+                .distinctBy { it.userID }
+                .onEachIndexed { index, score -> score.ranking = index + 1 }
         } else {
             isSSPanel = false
 

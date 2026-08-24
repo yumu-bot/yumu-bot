@@ -176,22 +176,17 @@ class GroupLeaderBoardService(
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, beatmap)
                 calculateApiService.applyPPToScoresWithSameBeatmap(scores)
 
-                val filteredScores = ScoreFilter.filterScores(List(scores.size) { it + 1 }
-                    .zip(scores)
-                    .onEach { (i, score) ->
-                        score.ranking = i + 1
-                    }.toMap()
-                    , conditions
-                ).values.toList()
-                    .ifEmpty {
-                    throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
-                }
+                val filteredScores = ScoreFilter.filterScores(scores, conditions)
+                    .ifEmpty { throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName) }
 
                 val filtered = filteredScores.filterMod(mods) {
                     throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName)
                 }
 
+                // 筛选后再添加顺序
                 filtered.sortedWith(sort.getComparator())
+                    .distinctBy { it.userID }
+                    .onEachIndexed { index, score -> score.ranking = index + 1 }
             }
 
             val userDeferred = bindDao.getBindFromQQOrNull(event.sender.contactID)

@@ -113,28 +113,31 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
     companion object {
         val regexes: List<Regex> by lazy { entries.map { it.regex } }
 
-        fun filterScores(scores: Map<Int, LazerScore>, conditions: List<List<String>>): Map<Int, LazerScore> {
-            val s = scores.toMutableMap()
+        fun filterScores(scores: List<LazerScore>, conditions: List<List<String>>): List<LazerScore> {
+            val result = scores.toMutableList()
 
-            // 最后一个筛选条件无需匹配
-            conditions
-                .dropLast(1)
-                .forEachIndexed { index, strings ->
+            conditions.dropLast(1).forEachIndexed { index, strings ->
                 if (strings.isNotEmpty()) {
-                    filterConditions(s, entries[index], strings)
+                    filterConditions(result, entries[index], strings)
                 }
             }
 
-            return s.toMap()
+            return result
         }
 
-        private fun filterConditions(scores: MutableMap<Int, LazerScore>, filter: ScoreFilter, conditions: List<String>) {
+        private fun filterConditions(scores: MutableList<LazerScore>, filter: ScoreFilter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = Operator.getOperator(c)
-                val condition = Condition((c.split(REGEX_OPERATOR_WITH_SPACE).lastOrNull() ?: ""))
+                val condition = Condition(c.split(REGEX_OPERATOR_WITH_SPACE).lastOrNull() ?: "")
 
-                scores.entries.removeIf { fitScore(it.value, operator, filter, condition).not() }
+                scores.removeIf { score -> fitScore(score, operator, filter, condition).not() }
             }
+        }
+
+        fun <K> filterScores(scores: Map<K, LazerScore>, conditions: List<List<String>>): Map<K, LazerScore> {
+            val filteredSet = filterScores(scores.values.toList(), conditions).toSet()
+
+            return scores.filterValues { it in filteredSet }
         }
 
         /**
