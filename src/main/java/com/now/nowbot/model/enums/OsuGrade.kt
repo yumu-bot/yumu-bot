@@ -46,7 +46,6 @@ enum class OsuGrade {
                     }
 
                     1.toByte() -> {
-
                         val total = t.great + t.ok + t.miss
                         val noMiss = t.miss == 0
 
@@ -139,13 +138,13 @@ enum class OsuGrade {
                         when {
                             t.great == total -> if (h) SSH else SS
 
-                            p300 > 90.0 && noMiss -> if (h) SH else S
+                            p300 >= 90.0 && noMiss -> if (h) SH else S
 
-                            (p300 > 80.0 && noMiss) || (p300 > 90.0) -> A
+                            (p300 >= 80.0 && noMiss) || (p300 >= 90.0) -> A
 
-                            (p300 > 70.0 && noMiss) || (p300 > 80.0) -> B
+                            (p300 >= 70.0 && noMiss) || (p300 >= 80.0) -> B
 
-                            p300 > 60.0 -> C
+                            p300 >= 60.0 -> C
 
                             else -> D
                         }
