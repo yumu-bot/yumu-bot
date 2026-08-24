@@ -196,12 +196,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.spring</groupId>
-            <artifactId>osu-extended</artifactId>
-            <version>0.0.2</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.yumu</groupId>
             <artifactId>yumu-lib</artifactId>
             <version>0.0.4</version>

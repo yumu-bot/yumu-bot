@@ -25,10 +25,11 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
 
     private val activeSessions = ConcurrentHashMap<Int, WebSocketSession>()
     private val sessionLocks = ConcurrentHashMap<String, ReentrantLock>()
-
     private val sessionActiveTasks = ConcurrentHashMap<String, AtomicInteger>()
-
     private val pendingRequests = ConcurrentHashMap<String, CompletableFuture<ByteArray>>()
+
+    // 记录正在进行 AUTH 鉴权的未认证连接数
+    private val anonymousConnectionCount = AtomicInteger(0)
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         try {
@@ -39,28 +40,28 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             }
 
             if (response.has("type") && response.get("type").asString() == "AUTH") {
-                // ... 保持你原有的 AUTH 处理逻辑不变 ...
                 val pid = response.get("pid").asInt()
 
-                if (session.attributes["PID"] == null) {
+                // 标记该 session 已通过验证，防止后续释放重复扣减计数器
+                if (session.attributes.putIfAbsent("AUTHENTICATED", true) == null) {
                     anonymousConnectionCount.decrementAndGet()
                 }
 
-                // 记录 PID
                 session.attributes["PID"] = pid
 
-                activeSessions.compute(pid) { _, existingSession ->
-                    if (existingSession != null && existingSession.id != session.id) {
-                        log.info("渲染服务器：检测到重复连接 [PID: $pid]，正在关闭旧连接 ${existingSession.id}")
+                // 修复：先剔除旧 Session，在 ConcurrentHashMap 锁外部执行 close() 避免死锁
+                val oldSession = activeSessions.put(pid, session)
+                if (oldSession != null && oldSession.id != session.id) {
+                    log.info("渲染服务器：检测到重复连接 [PID: $pid]，正在关闭旧连接 ${oldSession.id}")
+                    CompletableFuture.runAsync {
                         try {
-                            if (existingSession.isOpen) {
-                                existingSession.close(CloseStatus(4001, "Replaced by new process connection"))
+                            if (oldSession.isOpen) {
+                                oldSession.close(CloseStatus(4001, "Replaced by new process connection"))
                             }
                         } catch (e: Exception) {
                             log.error("关闭旧 Session 失败", e)
                         }
                     }
-                    session
                 }
 
                 log.info("渲染服务器：进程验证成功 [PID: $pid, Session: ${session.id}]")
@@ -73,7 +74,6 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             if (messageId != null) {
                 if (status == "success") {
                     val dataNode = response.get("data")
-
                     val bytes: ByteArray = when {
                         dataNode.isString -> Base64.getDecoder().decode(dataNode.asString())
                         dataNode.isObject && dataNode.has("data") -> {
@@ -92,7 +92,6 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
                 } else if (status == "error") {
                     val errorMessage = response.get("error")?.asString() ?: "Node.js 端发生未知异常"
                     log.error("渲染服务器：收到 JS 进程错误响应 [ID: {}]: {}", messageId, errorMessage)
-
                     pendingRequests.remove(messageId)?.completeExceptionally(NetworkException.RenderModuleException.InternalServerError())
                 }
             }
@@ -106,29 +105,23 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
         val bytes = ByteArray(payload.remaining())
         payload.get(bytes)
 
-        // 1. 分离头部 (前 36 字节是 UUID)
         val idLength = 36
         if (bytes.size <= idLength) return
 
         val messageId = String(bytes.copyOfRange(0, idLength), Charsets.UTF_8)
-
-        // 2. 提取剩余的 PNG 数据
         val imageData = bytes.copyOfRange(idLength, bytes.size)
 
-        // 3. 完成请求
         pendingRequests.remove(messageId)?.complete(imageData)
     }
 
     fun sendTask(path: String, payload: Any?, timeoutSeconds: Long = 30): CompletableFuture<ByteArray> {
-        // 1. 过滤出依然开启的 Session
         val available = activeSessions.values.filter { it.isOpen }
         if (available.isEmpty()) {
             throw IllegalStateException("渲染服务器：当前没有活跃的 JS 渲染进程")
         }
 
-        // 2. 改进负载均衡：优先挑选当前“挂起任务最少”的 Session (Least Connections)
-        val session = available.minByOrNull { session ->
-            sessionActiveTasks.computeIfAbsent(session.id) { AtomicInteger(0) }.get()
+        val session = available.minByOrNull { s ->
+            sessionActiveTasks.computeIfAbsent(s.id) { AtomicInteger(0) }.get()
         } ?: throw IllegalStateException("渲染服务器：没有可用的渲染进程连接")
 
         val messageId = UUID.randomUUID().toString()
@@ -139,7 +132,6 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
 
         pendingRequests[messageId] = future
 
-        // 3. 超时定时任务
         val timeoutTask = scheduler.schedule({
             if (pendingRequests.remove(messageId) != null) {
                 log.warn("渲染服务器：请求超时 [ID: $messageId, Session: ${session.id}]，已从等待队列清理")
@@ -147,7 +139,6 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             }
         }, timeoutSeconds, TimeUnit.SECONDS)
 
-        // 4. 完成时计数器减一 & 取消定时器
         future.whenComplete { _: ByteArray, _: Throwable ->
             timeoutTask.cancel(false)
             taskCounter.decrementAndGet()
@@ -162,9 +153,8 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             val jsonString = objectMapper.writeValueAsString(requestMap)
 
             val lock = sessionLocks.computeIfAbsent(session.id) { ReentrantLock() }
-
-            // 尝试非阻塞拿锁，若拿不到或发送异常，迅速跳过并标记失败
             val acquired = lock.tryLock(5, TimeUnit.SECONDS)
+
             if (acquired) {
                 try {
                     if (session.isOpen) {
@@ -180,18 +170,16 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
             }
         } catch (e: Exception) {
             pendingRequests.remove(messageId)
-            taskCounter.decrementAndGet()
             future.completeExceptionally(e)
         }
 
         return future
     }
 
-    private val anonymousConnectionCount = AtomicInteger(0)
-
     override fun afterConnectionEstablished(session: WebSocketSession) {
         if (anonymousConnectionCount.incrementAndGet() > 10) {
             anonymousConnectionCount.decrementAndGet()
+            log.warn("渲染服务器：未认证连接过多，拒绝新连接 ${session.id}")
             session.close(CloseStatus.POLICY_VIOLATION)
             return
         }
@@ -201,15 +189,21 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
+        // 清理锁和计数器
         sessionLocks.remove(session.id)
         sessionActiveTasks.remove(session.id)
+
+        // 如果连接关闭时仍未 AUTH 成功，扣减未认证计数
+        if (session.attributes.remove("AUTHENTICATED") != null) {
+            // 已验证过，不做 anonymous 扣减
+        } else {
+            anonymousConnectionCount.decrementAndGet()
+        }
 
         val pid = session.attributes["PID"] as? Int
         if (pid != null) {
             activeSessions.remove(pid, session)
             log.info("渲染服务器：连接已关闭 [PID: $pid, Session: ${session.id}]")
-        } else {
-            anonymousConnectionCount.decrementAndGet()
         }
     }
 
