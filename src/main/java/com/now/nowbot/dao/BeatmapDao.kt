@@ -159,7 +159,7 @@ class BeatmapDao(
     }
 
     fun getTag(id: Int): Tag? {
-        return tagRepository.findById(id).get().toModel()
+        return tagRepository.findById(id).getOrNull()?.toModel()
     }
 
 //    fun findSetByUpdateAtAscend(time: LocalDateTime, limit: Int = 500): List<BeatmapsetExtendLite> {

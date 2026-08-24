@@ -35,7 +35,7 @@ class UpdateTriggerService(
 ) : MessageService<Pair<UpdateTriggerService.UpdateType, String?>> {
 
     enum class UpdateType {
-        DIVING_FISH, LXNS, OSU_PERCENT, OSU_DAILY, OSU_TTH_INIT, OSU_STAR_RATING, OSU_EXTEND;
+        DIVING_FISH, LXNS, OSU_PERCENT, OSU_DAILY, OSU_TTH_INIT, OSU_STAR_RATING, OSU_EXTEND, OSU_BEATMAP_TAG;
 
         companion object {
             fun getType(string: String?): UpdateType {
@@ -47,6 +47,7 @@ class UpdateTriggerService(
                     "d", "daily" -> OSU_DAILY
                     "s", "r", "star", "sr", "rating" -> OSU_STAR_RATING
                     "i", "tth", "init" -> OSU_TTH_INIT
+                    "t", "tag" -> OSU_BEATMAP_TAG
                     else -> throw UnsupportedOperationException("""
                         请输入需要更新的种类：
                         
@@ -57,7 +58,7 @@ class UpdateTriggerService(
                         p -> osu percent
                         d -> osu daily
                         r -> flush osu star rating
-                        t -> repair osu statistics missing
+                        t -> update beatmap tags
                     """.trimIndent())
                 }
             }
@@ -217,6 +218,11 @@ class UpdateTriggerService(
                 } else {
                     event.replyAsync("已更新 $count($count2) 条扩展谱面数据。")
                 }
+            }
+
+            OSU_BEATMAP_TAG -> {
+                event.replyAsync("正在尝试更新谱面标签！")
+                beatmapApiService.updateBeatmapTagLibraryDatabase()
             }
         }
 
