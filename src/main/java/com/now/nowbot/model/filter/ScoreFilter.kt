@@ -377,7 +377,15 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 MISS -> fitCountOrPercent(operator, it.statistics.miss, double, it.maximumStatistics.miss, dec)
 
-                MISSED_FRUIT -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && fitCountOrPercent(operator, it.statistics.miss - it.statistics.largeTickMiss, double, it.maximumStatistics.great, dec)
+                MISSED_FRUIT -> {
+                    val compare = if (it.isLazer) {
+                        it.statistics.miss
+                    } else {
+                        it.statistics.miss - it.statistics.largeTickMiss
+                    }
+
+                    (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && fitCountOrPercent(operator, compare, double, it.maximumStatistics.great, dec)
+                }
 
                 MISSED_DROP -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.largeTickHit > 0 &&
                         fitCountOrPercent(operator, it.statistics.largeTickMiss, double, it.maximumStatistics.largeTickHit, dec)
