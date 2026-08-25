@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -16,7 +17,10 @@ import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
 @Service("GET_NAME")
-class GetNameService(private val userApiService: OsuUserApiService) : MessageService<Matcher> {
+class GetNameService(
+    private val userApiService: OsuUserApiService,
+    private val bindDao: BindDao
+) : MessageService<Matcher> {
 
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent,
@@ -35,13 +39,16 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }
 
-        val idStr: List<String>? = splitString(param.group("data"), splitSpace = true)
-        if (idStr.isNullOrEmpty()) throw IllegalStateException.Fetch("玩家编号")
-
         val sb = StringBuilder()
 
         // 使用批量获取
-        val ids = idStr.mapNotNull { it.toLongOrNull() }
+        val ids = if (event.hasAt()) {
+            bindDao.getBindFromQQs(event.targets).map { it.userID }
+        } else {
+            splitString(param.group("data"), splitSpace = true)?.mapNotNull { it.toLongOrNull() }
+        }
+
+        if (ids.isNullOrEmpty()) throw IllegalStateException.Fetch("玩家编号")
 
         val nameMap: Map<Long, MicroUser> = userApiService.getMicroUsers(ids)
             .associateBy { it.userID }

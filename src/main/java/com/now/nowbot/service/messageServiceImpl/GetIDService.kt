@@ -31,9 +31,9 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
             val str: String? = m.group("data")
 
             val names = if (event.hasAt()) {
-                val b = bindDao.getQQLiteFromQQ(event.target) ?: throw BindException.NotBindException.UserNotBind()
+                val bs = bindDao.getBindFromQQs(event.targets).ifEmpty { throw BindException.NotBindException.UserNotBind() }
 
-                event.replyAsync(b.osuUser!!.userID.toString())
+                event.replyAsync(bs.joinToString(",") { it.userID.toString() })
                 return false
             } else {
                 splitString(str)
