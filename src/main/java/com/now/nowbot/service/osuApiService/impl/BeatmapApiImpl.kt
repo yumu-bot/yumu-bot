@@ -172,6 +172,8 @@ class BeatmapApiImpl(
                 if (Files.size(path) < 100) {
                     log.info("谱面实现：检查到僵尸文件 $beatmapID.osu，删除中...")
                     deleteBeatmapFileFromDirectory(beatmapID)
+                    beatmapPathCacheProvider.remove(beatmapID)
+                    beatmapFileCacheProvider.remove(beatmapID)
                     false
                 } else {
                     true

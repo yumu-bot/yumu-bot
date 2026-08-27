@@ -115,6 +115,8 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
     }
 
     fun sendTask(path: String, payload: Any?, timeoutSeconds: Long = 30): CompletableFuture<ByteArray> {
+        activeSessions.entries.removeIf { (_, session) -> !session.isOpen }
+
         val available = activeSessions.values.filter { it.isOpen }
         if (available.isEmpty()) {
             throw IllegalStateException("渲染服务器：当前没有活跃的 JS 渲染进程")
@@ -189,20 +191,19 @@ class RenderWebSocketHandler : TextWebSocketHandler() {
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
-        // 清理锁和计数器
         sessionLocks.remove(session.id)
         sessionActiveTasks.remove(session.id)
 
-        // 如果连接关闭时仍未 AUTH 成功，扣减未认证计数
-        if (session.attributes.remove("AUTHENTICATED") != null) {
-            // 已验证过，不做 anonymous 扣减
-        } else {
+        if (session.attributes.remove("AUTHENTICATED") == null) {
             anonymousConnectionCount.decrementAndGet()
         }
 
         val pid = session.attributes["PID"] as? Int
         if (pid != null) {
-            activeSessions.remove(pid, session)
+            // 如果 activeSessions 里的 session 已经关闭，或者就是当前 session，强行移除！
+            activeSessions.compute(pid) { _, current ->
+                if (current == null || current.id == session.id || !current.isOpen) null else current
+            }
             log.info("渲染服务器：连接已关闭 [PID: $pid, Session: ${session.id}]")
         }
     }
