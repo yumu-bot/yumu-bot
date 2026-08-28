@@ -7,7 +7,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
-import kotlinx.serialization.Serializable
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 
@@ -34,7 +33,6 @@ class CosuResponse(
     val performance: CosuPerformance? = null,
 )
 
-@Serializable
 class CosuDifficulty(
     @field:JsonProperty("star_rating")
     val starRating: Double,
@@ -79,7 +77,6 @@ class CosuDifficulty(
     val maximumLegacyComboScore: Long
 )
 
-@Serializable
 open class CosuPerformance(
     @field:JsonProperty("aim")
     val aim: Double,
@@ -265,7 +262,6 @@ data class CosuScore(
     }
 }
 
-@Serializable
 class FullCosuPerformance(
     @field:JsonUnwrapped
     base: CosuPerformance,
