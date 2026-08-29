@@ -2,7 +2,7 @@ package com.now.nowbot.cache
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.now.nowbot.util.MB
+import com.now.nowbot.util.KB
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit
 class BeatmapFileCacheProvider {
 
     companion object {
-        private const val EXPIRE_DURATION = 7L
-        private const val MAX_CACHE_SIZE = 10_000L
-        private val MAX_FILE_SIZE = 1.MB.bytes
+        private const val EXPIRE_DURATION = 3L
+        private const val MAX_CACHE_SIZE = 5_000L
+        private val MAX_FILE_SIZE = 256.KB.bytes
 
         private const val NOT_FOUND = ""
     }
