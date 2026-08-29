@@ -121,13 +121,19 @@ class PermissionImplement(
                 return
             }
 
+            log.debug("腾讯消息类：确认请求，参数：{}", textMessage.take(300))
+
             val trim = textMessage.trim()
 
             for ((name, service) in serviceMap4TX) {
                 try {
                     val data = service.accept(event, trim) ?: continue
 
+                    log.debug("腾讯消息类：已接受，参数：{}", data.toString().take(300))
+
                     val reply = service.reply(event, data) ?: MessageChain("服务 $name 无响应。")
+
+                    log.debug("腾讯消息类：已回应，参数：{}", reply.toString().take(300))
 
                     try {
                         onMessage(reply)
@@ -141,8 +147,10 @@ class PermissionImplement(
                     
                     if (ex != null) {
                         onMessage(MessageChain(ex))
+                        log.debug("腾讯消息类：出现错误：{}", e.message?.take(300))
                     } else if (er != null) {
                         onMessage(MessageChain(er))
+                        log.debug("腾讯消息类：出现运行时错误：{}", e.message?.take(300))
                     } else {
                         log.error("腾讯消息类：神秘错误", e)
                         onMessage(MessageChain("服务 $name 出现未识别的错误。"))
