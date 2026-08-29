@@ -117,11 +117,13 @@ class PermissionImplement(
         fun onTencentMessage(event: MessageEvent, onMessage: (MessageChain) -> Unit) {
             val textMessage = event.textMessage
 
+            log.debug("腾讯消息类：疑似请求，参数：{}", textMessage.take(300))
+
             if (!filterMessage(textMessage)) {
                 return
             }
 
-            log.debug("腾讯消息类：确认请求，参数：{}", textMessage.take(300))
+            log.debug("腾讯消息类：确认请求")
 
             val trim = textMessage.trim()
 
