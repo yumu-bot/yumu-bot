@@ -28,11 +28,11 @@ class IdempotentService {
         val alreadyExists = lockCache.asMap().putIfAbsent(messageID, true)
 
         if (alreadyExists != null) {
-            log.debug("消息 [{}] 重复或并发冲突，已被阻断", messageID)
+            //log.debug("消息 [{}] 重复或并发冲突，已被阻断", messageID)
             return false
         }
 
-        log.debug("消息 [{}] 进入处理：", messageID)
+        //log.debug("消息 [{}] 进入处理：", messageID)
         try {
             action()
             return true
