@@ -1,11 +1,14 @@
 package com.now.nowbot.controller
 
 import com.now.nowbot.qq.tencent.TencentAdapter
+import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.yumu.Listener
 import com.yumu.WebsocketAdapter
+import com.yumu.Yumu
 import com.yumu.core.extensions.toJson
 import com.yumu.model.WebsocketPackage
+import jakarta.annotation.PostConstruct
 import jakarta.websocket.OnClose
 import jakarta.websocket.OnError
 import jakarta.websocket.OnOpen
@@ -25,6 +28,11 @@ import java.util.concurrent.ConcurrentHashMap
 @ServerEndpoint("/qq-ws")
 class QQBotWebsocket {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    @PostConstruct
+    fun init() {
+        Yumu.registerServer(TencentAdapter, YumuServer)
+    }
 
     @OnOpen
     fun onOpen(session: Session) {
@@ -53,7 +61,7 @@ class QQBotWebsocket {
         val io = error?.findCauseOfType<IOException>()
 
         if (eof != null || io != null && io.message?.contains("EOF") == true) {
-            // log.warn("QQBot 客户端连接意外断开 (EOF): {}", session.id)
+            log.warn("QQBot 客户端连接意外断开 (EOF): {}", session.id)
         } else {
             log.error("QQBot WebSocket 发生错误, Session ID: ${session.id}", error)
         }
