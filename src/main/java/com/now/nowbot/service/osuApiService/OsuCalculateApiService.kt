@@ -30,7 +30,7 @@ interface OsuCalculateApiService {
 
     fun applyPPToScoresWithSameBeatmap(scores: Collection<LazerScore>)
 
-    fun getAccPPList(
+    fun getPPFromAccuracies(
         beatmapID: Long,
         mode: OsuMode,
         mods: List<LazerMod>,
@@ -41,7 +41,7 @@ interface OsuCalculateApiService {
         clockRate: Double? = null,
     ): List<Double>
 
-    fun getAccPP(
+    fun getPPFromAccuracy(
         beatmapID: Long,
         mode: OsuMode,
         mods: List<LazerMod>,
@@ -51,6 +51,17 @@ interface OsuCalculateApiService {
         accuracy: Double,
         clockRate: Double? = null,
     ): Double
+
+    fun getPerformanceFromAccuracy(
+        beatmapID: Long,
+        mode: OsuMode,
+        mods: List<LazerMod>,
+        combo: Int?,
+        misses: Int?,
+        isLazer: Boolean,
+        accuracy: Double,
+        clockRate: Double?
+    ): CalculatePerformance
 
     fun getBeatmapStar(
         beatmapID: Long,

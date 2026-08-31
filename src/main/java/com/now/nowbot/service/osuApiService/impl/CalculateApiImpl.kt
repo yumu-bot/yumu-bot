@@ -392,7 +392,7 @@ class CalculateApiImpl(
         }
     }
 
-    override fun getAccPPList(
+    override fun getPPFromAccuracies(
         beatmapID: Long,
         mode: OsuMode,
         mods: List<LazerMod>,
@@ -419,7 +419,32 @@ class CalculateApiImpl(
         }
     }
 
-    override fun getAccPP(
+    override fun getPerformanceFromAccuracy(
+        beatmapID: Long,
+        mode: OsuMode,
+        mods: List<LazerMod>,
+        combo: Int?,
+        misses: Int?,
+        isLazer: Boolean,
+        accuracy: Double,
+        clockRate: Double?
+    ): CalculatePerformance {
+        if (rosu == null) return EmptyPerformance
+
+        val bytes = beatmapApiService.getBeatmapFileByte(beatmapID) ?: return EmptyPerformance
+
+        return rosu.let { r ->
+            r.loadBeatmap(bytes).use { beatmap ->
+                val difficulty = customDifficultyRequest(mods, isLazer, mode, clockRate)
+                val performance = difficulty.customPerformanceRequest(accuracy, combo, misses)
+                val result = r.calculatePerformance(beatmap, performance)
+
+                RosuPerformance(result)
+            }
+        }
+    }
+
+    override fun getPPFromAccuracy(
         beatmapID: Long,
         mode: OsuMode,
         mods: List<LazerMod>,

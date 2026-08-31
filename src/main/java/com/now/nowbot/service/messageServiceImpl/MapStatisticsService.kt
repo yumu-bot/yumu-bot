@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.calculate.CalculatePerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
@@ -224,6 +225,7 @@ class MapStatisticsService(
 
     fun MapStatisticsParam.getPanelRParam(): PanelRParam {
         val ppList = getPPList(beatmap, expected, calculateApiService)
+        val ppDistribution = getPPDistribution(beatmap, expected, calculateApiService)
 
         beatmapset.beatmaps = beatmapset.beatmaps?.let { fullList ->
             val sortedList = fullList.sortedWith(
@@ -263,7 +265,7 @@ class MapStatisticsService(
 
         // BeatmapUtil.applyBeatmapChanges(beatmap, expected.mods)
 
-        return PanelRParam(beatmapset, beatmap, expected, ppList, beatmap.originalDetails.toMap())
+        return PanelRParam(beatmapset, beatmap, expected, ppList, ppDistribution, beatmap.originalDetails.toMap())
     }
 
     data class MapStatisticsParam(val beatmapset: Beatmapset, val beatmap: Beatmap, val expected: Expected)
@@ -275,6 +277,9 @@ class MapStatisticsService(
 
         @field:JsonProperty("pp_list")
         val ppList: List<Double>,
+
+        @field:JsonProperty("pp_distribution")
+        val ppDistribution: CalculatePerformance,
 
         val original: Map<String, Any>,
     )
@@ -296,6 +301,28 @@ class MapStatisticsService(
     companion object {
         private val kvRegex = "\\w+${PATTERN_EQUAL}\\S+".toRegex()
 
+        fun getPPDistribution(
+            beatmap: Beatmap,
+            expected: Expected,
+            calculateApiService: OsuCalculateApiService
+        ): CalculatePerformance {
+            val combo = expected.combo
+            val mode = expected.mode
+            val mods = expected.mods
+            val isLazer = expected.isLazer
+
+            return calculateApiService.getPerformanceFromAccuracy(
+                beatmapID = beatmap.beatmapID,
+                mode = mode,
+                mods = mods,
+                combo = combo,
+                misses = expected.misses.takeIf { it > 0 },
+                isLazer = isLazer,
+                accuracy = expected.accuracy,
+                clockRate = expected.clockRate,
+            )
+        }
+
         // 等于绘图模块的 calcMap
         // 注意，0 是 if fc，1-6是 fc，7-12是 nc，acc 分别是100 99 98 96 94 92
         fun getPPList(
@@ -312,7 +339,7 @@ class MapStatisticsService(
             val isLazer = expected.isLazer
 
             result.add(
-                calculateApiService.getAccPP(
+                calculateApiService.getPPFromAccuracy(
                     beatmapID = beatmap.beatmapID,
                     mode = mode,
                     mods = mods,
@@ -324,7 +351,7 @@ class MapStatisticsService(
                 )
             )
 
-            val fcPP = calculateApiService.getAccPPList(
+            val fcPP = calculateApiService.getPPFromAccuracies(
                 beatmapID = beatmap.beatmapID,
                 mode = mode,
                 mods = mods,
@@ -337,7 +364,7 @@ class MapStatisticsService(
             result.addAll(fcPP)
             if (expected.misses > 0) {
                 result.addAll(
-                    calculateApiService.getAccPPList(
+                    calculateApiService.getPPFromAccuracies(
                         beatmapID = beatmap.beatmapID,
                         mode = mode,
                         mods = mods,
