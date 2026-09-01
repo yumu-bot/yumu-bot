@@ -38,8 +38,8 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
             if (event.hasAt()) {
                 event.targets.map { qq2Mutual(it) }
             } else if (name.isNotBlank()) {
-                name.split(REGEX_SEPARATOR).dropLastWhile { it.isEmpty() }
-                    .map { this.name2Mutual(name) }
+                name.split(REGEX_SEPARATOR).filter { it.isNotBlank() }
+                    .map { this.name2Mutual(it.trim()) }
             } else {
                 mutableListOf(qq2Mutual(event.sender.contactID))
             }
