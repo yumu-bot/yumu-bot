@@ -2085,7 +2085,7 @@ sealed class LazerMod {
         }
     }
 
-    class ScoreV2 : LazerMod(), Mod by Companion, ValueMod by Companion {
+    class ScoreV2 : LazerMod(), Mod by Companion, ValueMod by Companion, UncalculableMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 

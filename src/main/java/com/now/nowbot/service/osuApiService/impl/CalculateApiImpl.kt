@@ -522,7 +522,7 @@ class CalculateApiImpl(
 
             // 2. 根据策略动态准备输入数据
             val input = when (strategy) {
-                CalculateStrategy.C_OSU, CalculateStrategy.R_OSU -> remaining.values.toList()
+                CalculateStrategy.C_OSU, CalculateStrategy.R_OSU -> remaining.values
 
                 else -> remaining.values.filter { it.mods.isOfficialCalculateAbleMod() }
             }
@@ -540,7 +540,7 @@ class CalculateApiImpl(
                 }
 
                 CalculateStrategy.R_OSU -> {
-                    getBeatmapStarFromLocal(input)
+                    getBeatmapStarFromRosu(input)
                 }
 
                 CalculateStrategy.OFFICIAL_API -> {
@@ -564,7 +564,7 @@ class CalculateApiImpl(
     }
 
 
-    private fun getBeatmapStarFromLocal(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
+    private fun getBeatmapStarFromRosu(details: Collection<BeatmapDetails>): Map<BeatmapDetails, Double> {
         if (rosu == null) return emptyMap()
 
         val starMap = mutableMapOf<BeatmapDetails, Double>()
@@ -598,7 +598,7 @@ class CalculateApiImpl(
         return starMap
     }
 
-    private fun getBeatmapStarFromOfficial(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
+    private fun getBeatmapStarFromOfficial(details: Collection<BeatmapDetails>): Map<BeatmapDetails, Double> {
         val resultMap = ConcurrentHashMap<BeatmapDetails, Double>()
 
         details.chunked(15).forEach { batch ->
@@ -633,7 +633,7 @@ class CalculateApiImpl(
         return sortedStarMap
     }
 
-    private fun getBeatmapStarFromCosu(details: List<BeatmapDetails>): Map<BeatmapDetails, Double> {
+    private fun getBeatmapStarFromCosu(details: Collection<BeatmapDetails>): Map<BeatmapDetails, Double> {
         val resultMap = ConcurrentHashMap<BeatmapDetails, Double>()
 
         details.chunked(15).forEach { batch ->
