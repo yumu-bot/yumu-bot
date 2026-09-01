@@ -14,6 +14,7 @@ import com.now.nowbot.model.calculate.RosuPerformance
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.toRosuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.osu.LazerMod.Companion.filterByMode
 import com.now.nowbot.model.osu.LazerMod.Companion.getClockRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.osu.LazerMod.Companion.isOfficialCalculateAbleMod
@@ -56,8 +57,6 @@ class CalculateApiImpl(
     val calculatePriority = config.priority.ifEmpty {
         listOf(CalculateStrategy.LOCAL_DATABASE, CalculateStrategy.OFFICIAL_API)
     }
-
-    private val enableRosu = config.rosu
 
     override fun getScorePerfectPP(
         score: LazerScore
@@ -541,9 +540,7 @@ class CalculateApiImpl(
                 }
 
                 CalculateStrategy.R_OSU -> {
-                    if (enableRosu) {
-                        getBeatmapStarFromLocal(input)
-                    } else emptyMap()
+                    getBeatmapStarFromLocal(input)
                 }
 
                 CalculateStrategy.OFFICIAL_API -> {
@@ -578,7 +575,7 @@ class CalculateApiImpl(
             if (bytes != null) {
                 rosu.let { r ->
                     r.loadBeatmap(bytes).use { beatmap ->
-                        val difficulty = customDifficultyRequest(nd.mods, null, nd.mode)
+                        val difficulty = customDifficultyRequest(nd.mods.filterByMode(nd.mode), null, nd.mode)
                         val result = r.calculateDifficulty(beatmap, difficulty)
 
                         val star = result.stars

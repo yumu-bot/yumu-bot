@@ -12,11 +12,13 @@ import kotlin.reflect.full.companionObjectInstance
 import kotlin.text.isNullOrEmpty
 
 sealed interface Mod {
+    @get:JsonIgnore
     val type: String
 
     /**
      * mode 跟 incompatible 不知道用不用得到, 用不到就删了
      */
+    @get:JsonIgnore
     val mode: Set<OsuMode>
 
     @get:JsonIgnore
@@ -24,6 +26,7 @@ sealed interface Mod {
 }
 
 sealed interface ValueMod {
+    @get:JsonIgnore
     val value: Int
 
     operator fun plus(other: ValueMod): Int {
@@ -34,6 +37,14 @@ sealed interface ValueMod {
         return this or other.value
     }
 }
+
+sealed interface KeyMod
+
+sealed interface VisualImpairmentMod
+
+sealed interface UncalculableMod
+
+sealed interface StarRatingAffectingMod
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "acronym")
 @JsonSubTypes(
@@ -137,7 +148,7 @@ sealed class LazerMod {
 
     class Easy(
         retries: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -177,7 +188,7 @@ sealed class LazerMod {
         }
     }
 
-    class NoFail : LazerMod() {
+    class NoFail : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -198,7 +209,7 @@ sealed class LazerMod {
     class HalfTime(
         speedChange: Float? = null,
         adjustPitch: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -252,7 +263,7 @@ sealed class LazerMod {
 
     class Daycore(
         speedChange: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -293,7 +304,7 @@ sealed class LazerMod {
         }
     }
 
-    class HardRock : LazerMod() {
+    class HardRock : LazerMod(), Mod by Companion, ValueMod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -313,7 +324,7 @@ sealed class LazerMod {
 
     class SuddenDeath(
         restart: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -355,7 +366,7 @@ sealed class LazerMod {
 
     class Perfect(
         restart: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -398,7 +409,7 @@ sealed class LazerMod {
     class DoubleTime(
         speedChange: Float? = null,
         adjustPitch: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -452,7 +463,7 @@ sealed class LazerMod {
 
     class Nightcore(
         speedChange: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -495,7 +506,7 @@ sealed class LazerMod {
 
     class Hidden(
         onlyFadeApproachCircles: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion, VisualImpairmentMod, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -531,7 +542,7 @@ sealed class LazerMod {
             override val type: String = "HD"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> =
-                setOf(SpinIn, Traceable, ApproachDifferent, Depth, FadeIn, Cover, Flashlight)
+                setOf(SpinIn, Traceable, ApproachDifferent, Depth, FadeIn, Cover)
             override val value: Int = 8
         }
     }
@@ -540,7 +551,7 @@ sealed class LazerMod {
         followDelay: Float? = null,
         sizeMultiplier: Float? = null,
         comboBasedSize: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion, VisualImpairmentMod, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -597,12 +608,12 @@ sealed class LazerMod {
         companion object : Mod, ValueMod {
             override val type: String = "FL"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
-            override val incompatible: Set<Mod> = setOf(Blinds, FadeIn, Hidden, Cover)
+            override val incompatible: Set<Mod> = setOf(Blinds, FadeIn, Cover)
             override val value: Int = 1024
         }
     }
 
-    class Blinds : LazerMod() {
+    class Blinds : LazerMod(), Mod by Companion, VisualImpairmentMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -620,7 +631,7 @@ sealed class LazerMod {
         }
     }
 
-    class StrictTracking : LazerMod() {
+    class StrictTracking : LazerMod(), Mod by Autoplay.Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -642,7 +653,7 @@ sealed class LazerMod {
         minimumAccuracy: Float? = null,
         accuracyJudgeMode: String? = null,
         restart: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -707,7 +718,7 @@ sealed class LazerMod {
     class TargetPractice(
         seed: Float? = null,
         metronome: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -750,12 +761,13 @@ sealed class LazerMod {
             metronome?.let { this.metronome = it }
         }
 
-        companion object : Mod {
+        companion object : Mod, ValueMod {
             override val type: String = "TP"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> =
                 setOf(SuddenDeath, StrictTracking, Random, SpunOut, Traceable, ApproachDifferent, Depth)
 
+            override val value: Int = 8388608
         }
     }
 
@@ -767,7 +779,7 @@ sealed class LazerMod {
         extendedLimits: Boolean? = null,
         scrollSpeed: Float? = null,
         hardRockOffsets: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -879,7 +891,7 @@ sealed class LazerMod {
         alwaysPlayTailSample: Boolean? = null,
         fadeHitCircleEarly: Boolean? = null,
         classicHealth: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -966,7 +978,7 @@ sealed class LazerMod {
     class Random(
         angleSharpness: Float? = null,
         seed: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1019,7 +1031,7 @@ sealed class LazerMod {
 
     class Mirror(
         reflection: String? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1059,7 +1071,7 @@ sealed class LazerMod {
         }
     }
 
-    class Alternate : LazerMod() {
+    class Alternate : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1077,7 +1089,7 @@ sealed class LazerMod {
         }
     }
 
-    class SingleTap : LazerMod() {
+    class SingleTap : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1095,7 +1107,7 @@ sealed class LazerMod {
         }
     }
 
-    class Autoplay : LazerMod() {
+    class Autoplay : LazerMod(), Mod by Companion, ValueMod by Companion, UncalculableMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1116,7 +1128,7 @@ sealed class LazerMod {
         }
     }
 
-    class Cinema : LazerMod() {
+    class Cinema : LazerMod(), Mod by Companion, ValueMod by Companion, UncalculableMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1151,7 +1163,7 @@ sealed class LazerMod {
         }
     }
 
-    class Relax : LazerMod() {
+    class Relax : LazerMod(), Mod by Companion, ValueMod by Companion, UncalculableMod, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1169,7 +1181,7 @@ sealed class LazerMod {
         }
     }
 
-    class Autopilot : LazerMod() {
+    class Autopilot : LazerMod(), Mod by Companion, ValueMod by Companion, UncalculableMod, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1188,7 +1200,7 @@ sealed class LazerMod {
         }
     }
 
-    class SpunOut : LazerMod() {
+    class SpunOut : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1206,7 +1218,7 @@ sealed class LazerMod {
         }
     }
 
-    class Transform : LazerMod() {
+    class Transform : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1226,7 +1238,7 @@ sealed class LazerMod {
 
     class Wiggle(
         strength: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1266,7 +1278,7 @@ sealed class LazerMod {
         }
     }
 
-    class SpinIn : LazerMod() {
+    class SpinIn : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1286,7 +1298,7 @@ sealed class LazerMod {
 
     class Grow(
         startScale: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1328,7 +1340,7 @@ sealed class LazerMod {
 
     class Deflate(
         startScale: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1372,7 +1384,7 @@ sealed class LazerMod {
         initialRate: Float? = null,
         finalRate: Float? = null,
         adjustPitch: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1439,7 +1451,7 @@ sealed class LazerMod {
         initialRate: Float? = null,
         finalRate: Float? = null,
         adjustPitch: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1501,7 +1513,7 @@ sealed class LazerMod {
         }
     }
 
-    class Traceable : LazerMod() {
+    class Traceable : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1522,7 +1534,7 @@ sealed class LazerMod {
     class BarrelRoll(
         spinSpeed: Float? = null,
         direction: String? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1576,7 +1588,7 @@ sealed class LazerMod {
     class ApproachDifferent(
         scale: Float? = null,
         style: String? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1632,7 +1644,7 @@ sealed class LazerMod {
         enableMetronome: Boolean? = null,
         muteComboCount: Float? = null,
         affectsHitSounds: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1749,7 +1761,7 @@ sealed class LazerMod {
 
     class Magnetised(
         attractionStrength: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1792,7 +1804,7 @@ sealed class LazerMod {
 
     class Repel(
         repulsionStrength: Float? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1836,7 +1848,7 @@ sealed class LazerMod {
     class AdaptiveSpeed(
         initialRate: Float? = null,
         adjustPitch: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1888,7 +1900,7 @@ sealed class LazerMod {
         }
     }
 
-    class FreezeFrame : LazerMod() {
+    class FreezeFrame : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1906,7 +1918,7 @@ sealed class LazerMod {
         }
     }
 
-    class Bubbles : LazerMod() {
+    class Bubbles : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1924,7 +1936,7 @@ sealed class LazerMod {
         }
     }
 
-    class Synesthesia : LazerMod() {
+    class Synesthesia : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -1945,7 +1957,7 @@ sealed class LazerMod {
     class Depth(
         maxDepth: Float? = null,
         showApproachCircles: Boolean? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2009,7 +2021,7 @@ sealed class LazerMod {
         }
     }
 
-    class TouchDevice : LazerMod() {
+    class TouchDevice : LazerMod(), Mod by Companion, ValueMod by Companion, StarRatingAffectingMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2027,7 +2039,7 @@ sealed class LazerMod {
         }
     }
 
-    class Bloom : LazerMod() {
+    class Bloom : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2073,7 +2085,7 @@ sealed class LazerMod {
         }
     }
 
-    class ScoreV2 : LazerMod() {
+    class ScoreV2 : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2091,7 +2103,7 @@ sealed class LazerMod {
         }
     }
 
-    class Swap : LazerMod() {
+    class Swap : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2109,7 +2121,7 @@ sealed class LazerMod {
         }
     }
 
-    class ConstantSpeed : LazerMod() {
+    class ConstantSpeed : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2127,7 +2139,7 @@ sealed class LazerMod {
         }
     }
 
-    class FloatingFruits : LazerMod() {
+    class FloatingFruits : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2149,7 +2161,7 @@ sealed class LazerMod {
         oneThird: Boolean = false,
         oneSixth: Boolean = true,
         oneEighth: Boolean = false,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2211,7 +2223,7 @@ sealed class LazerMod {
         }
     }
 
-    class MovingFast : LazerMod() {
+    class MovingFast : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2229,7 +2241,7 @@ sealed class LazerMod {
         }
     }
 
-    class NoRelease : LazerMod() {
+    class NoRelease : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2247,7 +2259,7 @@ sealed class LazerMod {
         }
     }
 
-    class FadeIn : LazerMod() {
+    class FadeIn : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2268,7 +2280,7 @@ sealed class LazerMod {
     class Cover(
         coverage: Float? = null,
         direction: String? = null,
-    ) : LazerMod() {
+    ) : LazerMod(), Mod by Companion, VisualImpairmentMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2319,7 +2331,7 @@ sealed class LazerMod {
         }
     }
 
-    class DualStages : LazerMod() {
+    class DualStages : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2337,7 +2349,7 @@ sealed class LazerMod {
         }
     }
 
-    class Invert : LazerMod() {
+    class Invert : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2356,7 +2368,7 @@ sealed class LazerMod {
         }
     }
 
-    class HoldOff : LazerMod() {
+    class HoldOff : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2374,7 +2386,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key1 : LazerMod() {
+    class Key1 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2392,7 +2404,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key2 : LazerMod() {
+    class Key2 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2410,7 +2422,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key3 : LazerMod() {
+    class Key3 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2428,7 +2440,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key4 : LazerMod() {
+    class Key4 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2446,7 +2458,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key5 : LazerMod() {
+    class Key5 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2464,7 +2476,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key6 : LazerMod() {
+    class Key6 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2482,7 +2494,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key7 : LazerMod() {
+    class Key7 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2500,7 +2512,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key8 : LazerMod() {
+    class Key8 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2518,7 +2530,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key9 : LazerMod() {
+    class Key9 : LazerMod(), Mod by Companion, ValueMod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2536,7 +2548,7 @@ sealed class LazerMod {
         }
     }
 
-    class Key10 : LazerMod() {
+    class Key10 : LazerMod(), Mod by Companion, KeyMod {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2554,7 +2566,7 @@ sealed class LazerMod {
         }
     }
 
-    class None : LazerMod() {
+    class None : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2572,7 +2584,7 @@ sealed class LazerMod {
         }
     }
 
-    class NoMod : LazerMod() {
+    class NoMod : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2589,7 +2601,7 @@ sealed class LazerMod {
         }
     }
 
-    class Extra : LazerMod() {
+    class Extra : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2607,7 +2619,7 @@ sealed class LazerMod {
         }
     }
 
-    class FreeMod : LazerMod() {
+    class FreeMod : LazerMod(), Mod by Companion, ValueMod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2625,7 +2637,7 @@ sealed class LazerMod {
         }
     }
 
-    class Tiebreaker : LazerMod() {
+    class Tiebreaker : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2648,130 +2660,67 @@ sealed class LazerMod {
         const val FUN_MOD_COLOR = "#EA68A2"
         const val KEY_MOD_COLOR = "#616161"
 
-        val affectingClasses = setOf(
-            Easy::class, HardRock::class,
-            DoubleTime::class, Daycore::class, HalfTime::class, Nightcore::class,
-            WindUp::class, WindDown::class,
-            Hidden::class, Flashlight::class,
-            TouchDevice::class, DifficultyAdjust::class, AdaptiveSpeed::class, Magnetised::class,
-            Relax::class, Autopilot::class
-        )
-
-        val unsupportedClasses = setOf(
-            Relax::class, Autopilot::class, Autoplay::class
-        )
-
-        val hiddenSet by lazy {
-            setOf(
-                Hidden.type,
-                Flashlight.type,
-                Blinds.type,
-                FadeIn.type,
-            )
+        val hiddenAcronymSet: Set<String> by lazy {
+            VisualImpairmentMod::class.sealedSubclasses
+                .mapNotNull { kClass ->
+                    (kClass.companionObjectInstance as? Mod)?.type
+                }
+                .toSet()
         }
 
-        val keyClasses = setOf(
-            Key1::class,
-            Key2::class,
-            Key3::class,
-            Key4::class,
-            Key5::class,
-            Key6::class,
-            Key7::class,
-            Key8::class,
-            Key9::class,
-            Key10::class,
-        )
-
-        inline fun <reified T: LazerMod> List<T>.isValueMod(): Boolean {
-            return this.all { it.settings == null && it::class.companionObjectInstance is ValueMod }
-        }
+        fun List<LazerMod>.isValueMod(): Boolean =
+            isNotEmpty() && all { it.settings == null && it is ValueMod }
 
         /**
          * 注意，OFFICIAL_API 是不支持 Relax 星数计算的
          */
-        inline fun <reified T: LazerMod> List<T>.isOfficialCalculateAbleMod(): Boolean {
-            return this.isValueMod() && this.none { it::class in unsupportedClasses }
-        }
+        fun List<LazerMod>.isOfficialCalculateAbleMod(): Boolean =
+            isValueMod() && none { it is UncalculableMod }
 
         /**
          * 老 stable 会改变星数的模组
          */
-        inline fun <reified T : LazerMod> List<T>.isAffectStarRating(): Boolean {
-            return any { it::class in affectingClasses }
+        fun List<LazerMod>.isAffectStarRating(): Boolean =
+            any { it is StarRatingAffectingMod }
+
+        fun List<LazerMod>.isNotAffectStarRating(): Boolean =
+            !isAffectStarRating()
+
+
+        fun List<LazerMod>.contains(target: Mod): Boolean =
+            any { it == target || it.acronym == target.type }
+
+        fun List<LazerMod>.containsAny(targets: Collection<Mod>): Boolean {
+            if (targets.isEmpty()) return false
+
+            val targetTypes = targets.mapTo(HashSet(targets.size)) { it.type }
+            return any { it.acronym in targetTypes }
         }
 
-        inline fun <reified T: LazerMod> List<T>.isNotAffectStarRating(): Boolean {
-            return !this.isAffectStarRating()
-        }
+        fun List<String>?.containsHiddenAcronym(): Boolean =
+            this?.any { it in hiddenAcronymSet } == true
 
-
-        inline fun <reified T : Mod> hasMod(mods: List<LazerMod>, type: Collection<T>): Boolean {
-            val set = type.map { it.type }.toSet()
-            return mods.any {
-                set.contains(it.acronym)
-            }
-        }
-
-        inline fun <reified T : Mod> hasMod(mods: List<LazerMod>, type: T): Boolean {
-            return mods.any {
-                it.acronym == type.type
-            }
-        }
-
-        inline fun <reified T : Mod> List<LazerMod>.contains(type: T): Boolean {
-            return this.any {
-                it.acronym == type.type
-            }
-        }
-
-        inline fun <reified T : Mod> List<LazerMod>.contains(types: Collection<T>): Boolean {
-            val set = types.map { it.type }.toSet()
-            return this.any {
-                set.contains(it.acronym)
-            }
-        }
-
-        /**
-         * to 内完全含有 compare 的 mod
-         */
-        inline fun <reified T : LazerMod> hasMod(compare: Collection<T>, to: Collection<T>): Boolean {
-            if (compare.isEmpty() || to.isEmpty()) return false
-
-            val compareSet = compare.map { it.acronym }.filter { it != Classic.type || it.isNotEmpty() }.toSet()
-            val toSet = to.map { it.acronym }.filter { it != Classic.type || it.isNotEmpty() }.toSet()
-            val intersectSet = compareSet.intersect(toSet)
-            return intersectSet.size == compareSet.size
-        }
-
-        inline fun <reified T : LazerMod> hasMod(mods: List<LazerMod>): Boolean {
-            return mods.any {
-                it is T
-            }
-        }
-
-        fun List<String>?.containsHiddenAcronym(): Boolean {
-            return !this.isNullOrEmpty() && this.any { hiddenSet.contains(it) }
-        }
-
-        fun List<LazerMod>?.containsHidden(): Boolean {
-            return !this.isNullOrEmpty() && this.any { hiddenSet.contains(it.acronym) }
-        }
+        fun List<LazerMod>?.containsHidden(): Boolean =
+            this?.any { it is VisualImpairmentMod } == true
 
         fun List<LazerMod>.getKey(cs: Float): Float {
-            val index = indexOfFirst { it::class in keyClasses }
+            var keyIndex = -1
+            var hasDualStages = false
 
-            val c = if (index != -1) {
-                (index + 1).toFloat()
-            } else {
-                cs
+            // 单次遍历完成所有判断
+            for (i in indices) {
+                val mod = this[i]
+
+                if (keyIndex == -1 && mod is KeyMod) {
+                    keyIndex = i
+                }
+                if (mod is DualStages) {
+                    hasDualStages = true
+                }
             }
 
-            return if (this.any { it::class == DualStages::class }) {
-                c * 2.0f
-            } else {
-                c
-            }
+            val c = if (keyIndex != -1) (keyIndex + 1).toFloat() else cs
+            return if (hasDualStages) c * 2.0f else c
         }
 
         fun List<LazerMod>.toJson(): String {
@@ -2968,16 +2917,14 @@ sealed class LazerMod {
         fun List<LazerMod>?.toValue(): Int {
             if (this.isNullOrEmpty()) return 0
 
-            return this.mapNotNull {
-                val klass = it::class.companionObjectInstance
-                return@mapNotNull if (klass is ValueMod) {
-                    klass.value
-                } else if (it is Daycore) {
-                    HalfTime.value
-                } else {
-                    null
+            return this.fold(0) { acc, mod ->
+                val modValue = when (mod) {
+                    is ValueMod -> mod.value
+                    is Daycore -> HalfTime.value
+                    else -> 0
                 }
-            }.reduceOrNull { sum, i -> sum or i } ?: 0
+                acc or modValue
+            }
         }
 
         /**
@@ -3051,24 +2998,39 @@ sealed class LazerMod {
         ): List<LazerScore> {
             if (mods.isEmpty()) return this
 
-            val isNoMod = mods.any { it.acronym == NoMod.type }
-            val isFreeMod = mods.any { it.acronym  == FreeMod.type }
+            // 1. 使用 is 类型判断替代字符串比对
+            val isNoMod = mods.any { it is NoMod }
+            val isFreeMod = mods.any { it is FreeMod }
 
-            val filtered = if (isNoMod) {
-                this.filter { it.mods.isEmpty() }
-            } else if (isFreeMod) {
-                this.filter { it.mods.isNotEmpty() }
-            } else {
-                val preSelectAcronymSet = mods.map { it.acronym }.toSet()
-                this.filter { score ->
-                    val scoreAcronymSet = score.mods.map { it.acronym }.toSet()
-                    scoreAcronymSet.containsAll(preSelectAcronymSet)
+            val filtered = when {
+                isNoMod -> filter { it.mods.isEmpty() }
+                isFreeMod -> filter { it.mods.isNotEmpty() }
+                else -> {
+                    val targetAcronyms = mods.mapNotNullTo(HashSet(mods.size)) {
+                        it.acronym.ifEmpty { null }
+                    }
+
+                    filter { score ->
+                        if (score.mods.size < targetAcronyms.size) return@filter false
+
+                        targetAcronyms.all { target ->
+                            score.mods.any { it.acronym == target }
+                        }
+                    }
                 }
             }
 
             return filtered.ifEmpty {
                 onEmpty()
                 emptyList()
+            }
+        }
+
+        fun List<LazerMod>?.filterByMode(mode: OsuMode?): List<LazerMod> {
+            return if (mode == null || mode == OsuMode.DEFAULT || mode.safeModeValue == 0.toByte()) {
+                this ?: emptyList()
+            } else {
+                this?.filter { mode in ((it as? Mod)?.mode ?: emptySet()) } ?: emptyList()
             }
         }
     }
