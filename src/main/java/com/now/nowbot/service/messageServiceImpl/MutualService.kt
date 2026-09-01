@@ -10,6 +10,8 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MutualService.MutualParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.REGEX_SEPARATOR
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -30,13 +32,13 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
         val m = Instruction.MUTUAL.matcher(messageText)
         if (!m.find()) return false
 
-        val name = m.group("names") ?: ""
+        val name = m.group(FLAG_NAME) ?: ""
 
         val users =
             if (event.hasAt()) {
                 event.targets.map { qq2Mutual(it) }
             } else if (name.isNotBlank()) {
-                name.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                name.split(REGEX_SEPARATOR).dropLastWhile { it.isEmpty() }
                     .map { this.name2Mutual(name) }
             } else {
                 mutableListOf(qq2Mutual(event.sender.contactID))

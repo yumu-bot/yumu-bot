@@ -342,7 +342,7 @@ enum class Instruction(val pattern: Pattern) {
 
     MUTUAL(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mutual", "mua?", "亲亲", "主页链接|主页|链接")
-        appendCaptureGroup("names", PATTERN_USERNAME_SEPARATOR, ANY)
+        appendCaptureGroup(FLAG_NAME, PATTERN_USERNAME_SEPARATOR, ANY)
     }),
 
     PP_MINUS(CommandPatternBuilder.create {
