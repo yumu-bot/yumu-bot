@@ -21,12 +21,12 @@ interface RestrictRecordRepository: JpaRepository<RestrictRecordEntity, Long> {
         SELECT b FROM RestrictRecordEntity b 
         WHERE b.enabled = true 
         AND b.targetType = :targetType 
-        AND b.targetID = :targetId 
+        AND b.targetID = :targetID
         AND b.service IN (:service, 'GLOBAL')
     """)
     fun findActiveRules(
         targetType: Byte,
-        targetId: Long,
+        targetID: Long,
         service: String
     ): List<RestrictRecordEntity>
 
@@ -34,13 +34,13 @@ interface RestrictRecordRepository: JpaRepository<RestrictRecordEntity, Long> {
     SELECT r FROM RestrictRecordEntity r 
     WHERE r.enabled = true 
     AND r.targetType = :targetType 
-    AND r.targetID = :targetId 
+    AND r.targetID = :targetID 
     AND r.service = :service
     AND r.sourceType = :sourceType
 """)
     fun findActiveRulesExact(
         targetType: Byte,
-        targetId: Long,
+        targetID: Long,
         service: String,
         sourceType: Byte
     ): List<RestrictRecordEntity>
@@ -54,7 +54,7 @@ interface RestrictRecordRepository: JpaRepository<RestrictRecordEntity, Long> {
         UPDATE RestrictRecordEntity b 
         SET b.enabled = false 
         WHERE b.targetType = :targetType 
-        AND b.targetID = :targetId 
+        AND b.targetID = :targetID 
         AND b.service = :service
         AND b.sourceType = :sourceType 
         AND b.enabled = true

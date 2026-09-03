@@ -185,8 +185,13 @@ class RestrictImplement(
                     break
                 }
             } catch (e: Throwable) {
-                errorHandle(event, e)
-                break
+                if (isBlocked(uid, gid, name)) {
+                    log.debug("错误信息或提示被权限拦截: 服务名={}, 用户={}, 群组={}", name, uid, gid)
+                    break
+                } else {
+                    errorHandle(event, e)
+                    break
+                }
             }
         }
     }
@@ -199,23 +204,23 @@ class RestrictImplement(
         if (!filterMessage(textMessage)) return
 
         val trim = textMessage.trim()
-        val uid = event.sender.contactID
-        val gid = (event as? GroupMessageEvent)?.group?.contactID
+//        val uid = event.sender.contactID
+//        val gid = (event as? GroupMessageEvent)?.group?.contactID
 
         for ((name, service) in serviceMap4TX) {
             try {
                 val data = service.accept(event, trim) ?: continue
 
-                if (isBlocked(uid, gid, name)) {
-                    log.debug("腾讯消息请求被权限拦截: 服务名={}, 用户={}", name, uid)
-                    onMessage(MessageChain("您或当前群聊已被限制使用 $name 服务。"))
-                    return
-                }
+//                if (isBlocked(uid, gid, name)) {
+//                    log.debug("腾讯消息请求被权限拦截: 服务名={}, 用户={}", name, uid)
+//                    onMessage(MessageChain("您或当前群聊已被限制使用 $name 服务。"))
+//                    return
+//                }
 
                 val reply = service.reply(event, data) ?: MessageChain("服务 $name 无响应。")
                 onMessage(reply)
                 return
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 // 异常处理逻辑同原有保持一致
                 onMessage(MessageChain("服务 $name 运行出现异常。"))
                 return
