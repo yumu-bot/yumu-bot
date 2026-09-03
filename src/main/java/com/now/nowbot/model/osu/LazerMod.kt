@@ -631,7 +631,7 @@ sealed class LazerMod {
         }
     }
 
-    class StrictTracking : LazerMod(), Mod by Autoplay.Companion {
+    class StrictTracking : LazerMod(), Mod by Companion {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
