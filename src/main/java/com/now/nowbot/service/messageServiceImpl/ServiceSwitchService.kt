@@ -377,12 +377,12 @@ class ServiceSwitchService(
     private fun SwitchParam.handleOff(): MessageChain {
         if (this.services.isEmpty()) {
             controller.block(this.target, this.targetID, "GLOBAL",
-                this.source, this.sourceID, null, Clock.System.now(), null
+                this.source, this.sourceID, null, Clock.System.now(), this.reason
             )
         } else {
             this.services.forEach { service ->
                 controller.block(this.target, this.targetID, service,
-                    this.source, this.sourceID, null, Clock.System.now(), null
+                    this.source, this.sourceID, null, Clock.System.now(), this.reason
                 )
             }
         }
