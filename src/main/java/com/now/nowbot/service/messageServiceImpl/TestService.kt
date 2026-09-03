@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.TipsException
@@ -21,7 +21,7 @@ class TestService(
         messageText: String,
         data: MessageService.DataValue<String>
     ): Boolean {
-        if (messageText.contains("!yuumu") && Permission.isSuperAdmin(event.sender.contactID)) {
+        if (messageText.contains("!yuumu") && event.isSuperAdmin()) {
             data.value = messageText.replaceFirst("!yuumu", "")
             return true
         } else {

@@ -4,7 +4,6 @@ import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.aop.ServiceLimit
 import com.now.nowbot.config.NewbieConfig
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.contact.Contact
 import com.now.nowbot.qq.event.MessageEvent
@@ -12,6 +11,7 @@ import com.now.nowbot.qq.event.getMessageFromStringOrArray
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.onebot.contact.Friend
 import com.now.nowbot.qq.onebot.contact.Group
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
@@ -87,7 +87,7 @@ class EchoService(
             return false
         }
 
-        if (!Permission.isSuperAdmin(event)) {
+        if (event.isSuperAdmin()) {
             return false
         }
 

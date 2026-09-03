@@ -1,10 +1,10 @@
 package com.now.nowbot.config
 
-import com.now.nowbot.listener.LocalCommandListener
-import com.now.nowbot.permission.PermissionImplement
-import com.now.nowbot.qq.tencent.YumuServer
-import com.now.nowbot.service.MessageService
 import com.now.nowbot.cache.PercentileCacheProvider
+import com.now.nowbot.listener.LocalCommandListener
+import com.now.nowbot.qq.tencent.YumuServer
+import com.now.nowbot.restrict.RestrictImplement
+import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.JacksonUtil
@@ -23,8 +23,7 @@ import java.util.concurrent.Executor
 @Component
 class IocAllReadyRunner(
     private val applicationContext: ApplicationContext,
-    private val permission: Permission,
-    private val permissionImplement: PermissionImplement,
+    private val restrictImplement: RestrictImplement,
     private val messageServices: Map<String, MessageService<*>>,
     private val percentileCacheProvider: PercentileCacheProvider,
 ) : CommandLineRunner {
@@ -53,12 +52,8 @@ class IocAllReadyRunner(
      */
     override fun run(vararg args: String) {
         QQMsgUtil.init(applicationContext.getBean(YumuConfig::class.java))
-        //val services = applicationContext.getBeansOfType(MessageService::class.java)
 
-        permissionImplement.init(messageServices)
-        permission.init(applicationContext)
-
-        //        initFountWidth()
+        restrictImplement.init(messageServices)
 
         Runtime.getRuntime().addShutdownHook(Thread({
             APP_ALIVE = false

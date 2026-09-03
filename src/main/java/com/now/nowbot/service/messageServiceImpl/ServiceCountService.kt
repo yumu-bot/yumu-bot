@@ -1,12 +1,12 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallLite.Companion.toStatistic
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.mapper.ServiceCallRepository
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -45,7 +45,7 @@ class ServiceCountService(
         val matcher = Instruction.SERVICE_COUNT.matcher(messageText)
         if (!matcher.find()) return false
 
-        if (!Permission.isSuperAdmin(event.sender.contactID)) {
+        if (event.isNotSuperAdmin()) {
             return false
         }
 

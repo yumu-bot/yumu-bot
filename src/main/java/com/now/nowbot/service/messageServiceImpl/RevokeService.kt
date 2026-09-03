@@ -3,12 +3,12 @@ package com.now.nowbot.service.messageServiceImpl
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.cache.QQMessageCacheProvider
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.enums.Role
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.event.getResponseFromStringOrArray
+import com.now.nowbot.restrict.RestrictUtils.isCommonUser
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
@@ -148,7 +148,7 @@ class RevokeService(
 
         if (executorID != executedID) {
             // 只有管理员及以上才有权撤回他人消息
-            if (!Permission.isGroupAdmin(event) && requestID != executedID) {
+            if (event.isCommonUser() && requestID != executedID) {
                 throw PermissionException.GroupException.BelowGroupOwner()
             }
 

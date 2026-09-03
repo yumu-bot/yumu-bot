@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.MaiSong
-import com.now.nowbot.permission.TokenBucketRateLimiter
+import com.now.nowbot.controller.TokenBucketRateLimiter
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService

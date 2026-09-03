@@ -47,17 +47,21 @@ enum class Instruction(val pattern: Pattern) {
     SERVICE_SWITCH_ON(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(switch|service)\\s*on", "so", "服务开启", "服务打开", "服务启用")
         appendQQOrQQGroup()
-        appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃]", MORE)
+        appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃☆✪★*⋆]", MORE)
         appendSpace()
-        appendHashCaptureGroup(FLAG_NAME, PATTERN_ANYTHING, MORE)
+        appendHashCaptureGroup(FLAG_NAME, PATTERN_ANYTHING_BUT_NO_STARS, MORE)
+        appendSpace()
+        appendStarCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
     SERVICE_SWITCH_OFF(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(switch|service)\\s*off", "sf", "服务关闭", "服务禁用")
         appendQQOrQQGroup()
-        appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃]", MORE)
+        appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃☆✪★*⋆]", MORE)
         appendSpace()
-        appendHashCaptureGroup(FLAG_NAME, PATTERN_ANYTHING, MORE)
+        appendHashCaptureGroup(FLAG_NAME, PATTERN_ANYTHING_BUT_NO_STARS, MORE)
+        appendSpace()
+        appendStarCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
     SERVICE_SWITCH_LIST(CommandPatternBuilder.create {
@@ -65,7 +69,9 @@ enum class Instruction(val pattern: Pattern) {
         appendQQOrQQGroup()
         appendCaptureGroup(FLAG_SERVICE, "\\D", MORE)
         appendSpace()
-        appendHashCaptureGroup(FLAG_NAME, PATTERN_ANYTHING, MORE)
+        appendHashCaptureGroup(FLAG_NAME, PATTERN_ANYTHING_BUT_NO_STARS, MORE)
+        appendSpace()
+        appendStarCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
     ECHO(CommandPatternBuilder.create {

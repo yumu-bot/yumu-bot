@@ -3,13 +3,13 @@ package com.now.nowbot.service
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.NewbieConfig
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.NewbieDao
 import com.now.nowbot.model.osu.LazerMod.Companion.isNotAffectStarRating
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.onebot.contact.Group
+import com.now.nowbot.restrict.RestrictUtils.isGroupAdmin
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -163,7 +163,7 @@ class NewbieRestrictService(
             executorBot.groupList.data?.any { it.groupId == killerGroupID }
         }.getOrNull() == true
 
-        if (Permission.isGroupAdmin(event)) {
+        if (event.isGroupAdmin()) {
             report(isReportable, executorBot, sb.append("但是对方是管理员或群主，无法执行禁言任务。").toString())
             return
         }

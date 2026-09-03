@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -9,6 +8,7 @@ import com.now.nowbot.model.osu.LazerMod.Companion.contains
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -43,7 +43,7 @@ class TestHiddenPPService(
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
-        if (Permission.isCommonUser(event)) {
+        if (event.isNotSuperAdmin()) {
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }
 

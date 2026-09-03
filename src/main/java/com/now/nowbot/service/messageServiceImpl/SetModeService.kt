@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
@@ -10,6 +9,7 @@ import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.SetModeService.SetModeParam
@@ -46,7 +46,7 @@ class SetModeService (
         val qq = m.group(FLAG_QQ_ID)?.toLongOrNull()
         val name = m.group(FLAG_NAME)?.trim()
 
-        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
+        val isSuper = event.isSuperAdmin()
 
         data.value = if (qq != null && isSuper) {
             SetModeParam(mode, bindDao.getBindFromQQ(qq, false))

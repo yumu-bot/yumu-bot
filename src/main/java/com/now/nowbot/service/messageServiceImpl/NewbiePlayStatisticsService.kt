@@ -1,12 +1,12 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.NewbieConfig
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.NewbieService
 import com.now.nowbot.throwable.TipsException
@@ -53,7 +53,7 @@ class NewbiePlayStatisticsService(
         val type = SearchType.fromString(messageText) ?: return false
 
         // 活动已停止
-        if (Permission.isSuperAdmin(event.sender.contactID).not()) {
+        if (event.isNotSuperAdmin()) {
             val endTime = OffsetDateTime.of(2025, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8))
             val now = OffsetDateTime.now()
 

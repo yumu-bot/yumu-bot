@@ -1,11 +1,11 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
@@ -90,7 +90,7 @@ class SBBindService(
         val isMyself = senderID == targetID
 
         // 如果传入了名称且是超管，按名称解绑；否则按 QQ 解绑
-        if (input != null && Permission.isSuperAdmin(senderID)) {
+        if (input != null && RestrictUtils.isSuperAdmin(senderID)) {
             unbindByInput(input)
         } else {
             unbindQQ(targetID, isMyself)
@@ -186,7 +186,7 @@ class SBBindService(
      * 权限拦截校验
      */
     private fun checkPermission(senderID: Long, targetID: Long) {
-        if (senderID != targetID && !Permission.isSuperAdmin(senderID)) {
+        if (senderID != targetID && RestrictUtils.isNotSuperAdmin(senderID)) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
     }

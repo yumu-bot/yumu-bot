@@ -1,21 +1,29 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.permission.PermissionController
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.restrict.RestrictImplement
+import com.now.nowbot.restrict.RestrictRecordEntity
+import com.now.nowbot.restrict.RestrictSourceType
+import com.now.nowbot.restrict.RestrictTargetType
+import com.now.nowbot.restrict.RestrictTargetType.*
+import com.now.nowbot.restrict.RestrictUtils.isGroupAdmin
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
+import com.now.nowbot.restrict.RestrictionController
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService.Operate.*
+import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService.ServiceType.Companion.serviceList
 import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService.SwitchParam
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_QQ_ID
@@ -26,12 +34,14 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.regex.Matcher
+import kotlin.time.Clock
 
 @Service("SWITCH")
 class ServiceSwitchService(
-    val controller: PermissionController,
+    val controller: RestrictionController,
     val bindDao: BindDao,
     val imageService: ImageService,
+    val restrictImplement: RestrictImplement,
 ) : MessageService<SwitchParam> {
 
     enum class ServiceType(private val typeAlias: List<String>, val services: List<String>) {
@@ -95,67 +105,63 @@ class ServiceSwitchService(
 
                 return null
             }
+
+            val serviceList = entries
+                .flatMap { it.services }
+                .mapTo(sortedSetOf()) { it.uppercase() }
+                .toList()
         }
     }
-
-    private val full = controller.queryAllBlock().map { it.name }
 
     enum class Operate {
         ON, OFF, LIST
     }
 
-    enum class Target {
-        QQ, GROUP
-    }
-
-    enum class Level {
-        SUPER, GROUP, USER
-    }
-
     data class SwitchParam(
         val services: List<String>,
         val operate: Operate,
-        val target: Target?,
-        val id: Long?
+        val target: RestrictTargetType,
+        val source: RestrictSourceType,
+        val targetID: Long,
+        val sourceID: Long,
+        val reason: String = "",
     )
 
-    private fun getLevel(event: MessageEvent): Level {
-        return if (Permission.isSuperAdmin(event)) {
-            Level.SUPER
-        } else if (Permission.isGroupAdmin(event)) {
-            Level.GROUP
-        } else Level.USER
+    private fun getSourceType(event: MessageEvent): RestrictSourceType {
+        return if (event.isSuperAdmin()) {
+            RestrictSourceType.ADMIN
+        } else if (event.isGroupAdmin()) {
+            RestrictSourceType.GROUP
+        } else RestrictSourceType.USER
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, operate: Operate): SwitchParam {
-        val level = getLevel(event)
+        val sourceType = getSourceType(event)
 
-        if (operate == LIST && level != Level.SUPER) {
+        val reason = matcher.group(FLAG_DATA) ?: ""
+
+        if (operate == LIST && sourceType != RestrictSourceType.ADMIN) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 
-        val target = getTarget(event, matcher, level)
+        val (targetType, targetID) = getTarget(event, matcher, sourceType)
 
-        val targetStr = if (target == null) {
+        val targetStr = if (targetType == ALL) {
             "所有人"
         } else {
-            when (target.first) {
-                Target.QQ -> "qq 用户："
-                Target.GROUP -> "qq 群组："
-            } + target.second
+            when (targetType) {
+                USER -> "qq 用户："
+                GROUP -> "qq 群组："
+            } + targetID
         }
 
         val services = getServices(event, targetStr, matcher.group(FLAG_SERVICE), operate)
             .get(60, TimeUnit.SECONDS)
 
-        if (operate == LIST) {
-            return SwitchParam(services, LIST, target?.first, target?.second)
-        }
-
-        return SwitchParam(services, operate, target?.first, target?.second)
+        return SwitchParam(services.filterNot { it == "GLOBAL" || it.isBlank() }, operate, targetType, sourceType, targetID, event.sender.contactID, reason)
     }
 
-    private fun getTarget(event: MessageEvent, matcher: Matcher, level: Level): Pair<Target, Long>? {
+    private fun getTarget(event: MessageEvent, matcher: Matcher, sourceType: RestrictSourceType): Pair<RestrictTargetType, Long> {
         val qq: Long? = if (event.hasAt()) {
             event.target
         } else {
@@ -166,19 +172,19 @@ class ServiceSwitchService(
 
         val name: String = matcher.group(FLAG_NAME) ?: ""
 
-        if (level == Level.SUPER) {
+        if (sourceType == RestrictSourceType.ADMIN) {
             if (qq != null) {
-                return Target.QQ to qq
+                return USER to qq
             } else if (group != null) {
-                return Target.GROUP to group
+                return GROUP to group
             } else if (name.isNotBlank()) {
                 val user = bindDao.getBindUserOrNull(name.trim()) ?: throw TipsException("""
                 对方没有绑定。请使用 qq= 来确定对方的 QQ。
             """.trimIndent())
 
-                return Target.QQ to bindDao.getQQ(user)
+                return USER to bindDao.getQQ(user)
             } else {
-                return null
+                return ALL to 0L
             }
         } else {
             if (qq != null && qq != event.sender.contactID) {
@@ -196,20 +202,20 @@ class ServiceSwitchService(
             } else {
                 // 选择操作模式
 
-                if (level == Level.USER) {
+                if (sourceType == RestrictSourceType.USER) {
                     // 普通用户只能控制自己
-                    return Target.QQ to event.sender.contactID
+                    return USER to event.sender.contactID
                 } else {
                     if (qq == event.sender.contactID) {
-                        return Target.QQ to qq
+                        return USER to qq
                     } else if (group == event.subject.contactID) {
-                        return Target.GROUP to group
+                        return GROUP to group
                     }
 
                     // 这里必定是群聊管理员
                     // 群聊管理员可以控制群聊的开关，所以在模棱两可的时候，需要询问。
 
-                    val future = CompletableFuture<Pair<Target, Long>>()
+                    val future = CompletableFuture<Pair<RestrictTargetType, Long>>()
 
                     AsyncMessageUtil.doubleCheck(
                         event = event,
@@ -230,9 +236,9 @@ class ServiceSwitchService(
 
                         onSuccess = { ev ->
                             if (ev.rawMessage.contains("1", ignoreCase = true)) {
-                                future.complete(Target.GROUP to event.subject.contactID)
+                                future.complete(GROUP to event.subject.contactID)
                             } else if (ev.rawMessage.contains("2", ignoreCase = true)) {
-                                future.complete(Target.QQ to event.subject.contactID)
+                                future.complete(USER to event.subject.contactID)
                             } else {
                                 future.completeExceptionally(TipsException("操作已中止。"))
                             }
@@ -252,7 +258,7 @@ class ServiceSwitchService(
 
         val future = CompletableFuture<List<String>>()
 
-        val ii = (input ?: "").trim().replace(REGEX_SPACE_MORE, "_").uppercase()
+        val ii = (input ?: "GLOBAL").trim().replace(REGEX_SPACE_MORE, "_").uppercase()
 
         val type = ServiceType.getTypeFromInput(ii)
 
@@ -262,7 +268,7 @@ class ServiceSwitchService(
             // else -> "查看"
         }
 
-        if (ii.isEmpty()) {
+        if (ii.isEmpty() || ii == "GLOBAL") {
             // 全局操作模式
 
             AsyncMessageUtil.doubleCheck(
@@ -289,18 +295,16 @@ class ServiceSwitchService(
                     future.complete(emptyList())
                 }
             )
+
+            return CompletableFuture.completedFuture(emptyList())
         }
 
         if (type == null) {
-            val service = try {
-                controller.queryBlock(ii)
-            } catch (_: RuntimeException) {
-                null
-            }
+            val service = serviceList.firstOrNull { it == ii }
 
             if (service != null) {
                 // 单服务操作模式
-                return CompletableFuture.completedFuture(listOf(service.name))
+                return CompletableFuture.completedFuture(listOf(ii))
             }
 
             // 重复确认模式
@@ -347,92 +351,62 @@ class ServiceSwitchService(
     }
 
     private fun SwitchParam.handleOn(): MessageChain {
-        return when(this.target) {
-            Target.QQ -> if (this.services.isEmpty()) {
-                controller.clearUser(this.id!!)
-
-                MessageChain("操作已完成：开启用户 ${this.id} 的所有服务")
-            } else {
-                this.services.forEach { serv ->
-                    controller.unblockUser(serv, this.id!!)
-                }
-
-                MessageChain("操作已完成：开启用户 ${this.id} 的 ${services.joinToString(", ")} 服务")
-            }
-            Target.GROUP -> if (this.services.isEmpty()) {
-                controller.clearGroup(this.id!!)
-
-                MessageChain("操作已完成：开启群聊 ${this.id} 的所有服务")
-            } else {
-                this.services.forEach { serv ->
-                    controller.unblockGroup(serv, this.id!!)
-                }
-
-                MessageChain("操作已完成：开启群聊 ${this.id} 的 ${services.joinToString(", ")} 服务")
-            }
-            null -> if (this.services.isEmpty()) {
-                full.forEach { serv ->
-                    controller.serviceSwitch(serv, true)
-                }
-
-                MessageChain("操作已完成：开启所有服务")
-            } else {
-                this.services.forEach { serv ->
-                    controller.serviceSwitch(serv, true)
-                }
-
-                MessageChain("操作已完成：开启 ${services.joinToString(", ")} 服务")
+        if (this.services.isEmpty()) {
+            controller.unblock(this.target, this.targetID, "GLOBAL", this.source)
+        } else {
+            this.services.forEach { service ->
+                controller.unblock(this.target, this.targetID, service, this.source)
             }
         }
+
+        val targetStr = when(this.target) {
+            ALL -> ""
+            USER -> "用户 ${this.targetID} 的 "
+            GROUP -> "群聊 ${this.targetID} 的 "
+        }
+
+        val serviceStr = if (this.services.isEmpty()) {
+            "所有服务"
+        } else {
+            "${services.joinToString(", ")} 服务"
+        }
+
+        return MessageChain("操作已完成：开启${targetStr}${serviceStr}")
     }
+
     private fun SwitchParam.handleOff(): MessageChain {
-        return when(this.target) {
-            Target.QQ -> if (this.services.isEmpty()) {
-                controller.blockUser(this.id!!)
-
-                MessageChain("操作已完成：关闭用户 ${this.id} 的所有服务")
-            } else {
-                this.services.forEach { serv ->
-                    controller.blockUser(serv, this.id!!)
-                }
-
-                MessageChain("操作已完成：关闭用户 ${this.id} 的 ${services.joinToString(", ")} 服务")
-            }
-            Target.GROUP -> if (this.services.isEmpty()) {
-                controller.blockGroup(this.id!!)
-
-                MessageChain("操作已完成：关闭群聊 ${this.id} 的所有服务")
-            } else {
-                this.services.forEach { serv ->
-                    controller.blockGroup(serv, this.id!!)
-                }
-
-                MessageChain("操作已完成：关闭群聊 ${this.id} 的 ${services.joinToString(", ")} 服务")
-            }
-            null -> if (this.services.isEmpty()) {
-                full.forEach { serv ->
-                    controller.serviceSwitch(serv, false)
-                }
-
-                MessageChain("操作已完成：关闭所有服务")
-            } else {
-                this.services.forEach { serv ->
-                    controller.serviceSwitch(serv, false)
-                }
-
-                MessageChain("操作已完成：关闭 ${services.joinToString(", ")} 服务")
+        if (this.services.isEmpty()) {
+            controller.block(this.target, this.targetID, "GLOBAL",
+                this.source, this.sourceID, null, Clock.System.now(), null
+            )
+        } else {
+            this.services.forEach { service ->
+                controller.block(this.target, this.targetID, service,
+                    this.source, this.sourceID, null, Clock.System.now(), null
+                )
             }
         }
+
+        val targetStr = when(this.target) {
+            ALL -> ""
+            USER -> "用户 ${this.targetID} 的"
+            GROUP -> "群聊 ${this.targetID} 的"
+        }
+
+        val serviceStr = if (this.services.isEmpty()) {
+            "所有服务"
+        } else {
+            " ${services.joinToString(", ")} 服务"
+        }
+
+        return MessageChain("操作已完成：关闭${targetStr}${serviceStr}")
     }
-    private fun SwitchParam.handleList(): MessageChain {
-        val global = controller.queryGlobal()
-        val all = controller.queryAllBlock()
 
-        val filtered = when (this.target) {
-            Target.QQ -> all.filter { it.enable && it.users.isNotEmpty() }.sortedByDescending { it.users.size }
-            Target.GROUP -> all.filter { it.enable && it.groups.isNotEmpty() }.sortedByDescending { it.groups.size }
-            null -> all.sortedBy { it.name }.sortedBy { it.enable }
-        }
+    private fun handleList(): MessageChain {
+        val restricted = controller.findAllRestricting()
+
+        val global = RestrictView.fromEntities(restricted.filter { it.service == "GLOBAL" })
+        val filtered = RestrictView.fromEntities(restricted.filter { it.service != "GLOBAL" })
 
         val markdown = getStatisticsList(filtered, global)
 
@@ -448,52 +422,46 @@ class ServiceSwitchService(
 
     private fun SwitchParam.handle(): MessageChain {
 
-        return when(this.operate) {
-            ON -> this.handleOn()
-            OFF -> this.handleOff()
-            LIST -> this.handleList()
+        return try {
+            when(this.operate) {
+                ON -> this.handleOn()
+                OFF -> this.handleOff()
+                LIST -> handleList()
+            }
+        } finally {
+            restrictImplement.refreshCache()
         }
     }
 
-    private fun getStatisticsList(list: List<PermissionController.LockRecord>, global: PermissionController.LockRecord): String {
+    private fun getStatisticsList(list: List<RestrictView>, global: List<RestrictView>): String {
         val sb = StringBuilder()
 
-        sb.append("## 服务列表\n")
+        sb.append("## 服务列表\n\n")
+        sb.append("| 状态 | 服务名 | 无法使用的群聊 | 无法使用的用户 |\n")
+        sb.append("| :-: | :-- | :-- | :-- |\n")
 
-        sb.append("""
-            
-            | 状态 | 服务名 | 无法使用的群聊 | 无法使用的用户
-            | :-: | :-- | :-- | :-- |
-            
-            """.trimIndent()
-        )
+        // 格式化辅助函数：截取前 5 项，无限制则显示 "-"
+        fun formatIds(ids: Collection<Long>): String =
+            if (ids.isEmpty()) "-" else ids.take(5).joinToString(", ")
 
-        val gs = global.groups.take(5).joinToString(", ")
-        val us = global.users.take(5).joinToString(", ")
+        // 1. 优先渲染 GLOBAL 顶级行（如果存在）
+        if (global.isNotEmpty()) {
+            val mergedGroups = global.flatMap { it.groups }.toSet()
+            val mergedUsers = global.flatMap { it.users }.toSet()
 
-        sb.append("| ")
-            .append("*")
-            .append(" | ")
-            .append("GLOBAL")
-            .append(" | ")
-            .append(gs)
-            .append(" | ")
-            .append(us)
-            .append(" |\n")
+            val gs = formatIds(mergedGroups)
+            val us = formatIds(mergedUsers)
 
-        list.forEach {
-            val gss = it.groups.take(5).joinToString(", ")
-            val uss = it.users.take(5).joinToString(", ")
+            sb.append("| * | GLOBAL | $gs | $us |\n")
+        }
 
-            sb.append("| ")
-                .append(if (it.enable) "ON" else "OFF")
-                .append(" | ")
-                .append(it.name)
-                .append(" | ")
-                .append(gss)
-                .append(" | ")
-                .append(uss)
-                .append(" |\n")
+        // 2. 渲染各服务列表
+        list.forEach { view ->
+            val status = if (view.enabled) "ON" else "OFF"
+            val gs = formatIds(view.groups)
+            val us = formatIds(view.users)
+
+            sb.append("| $status | ${view.name} | $gs | $us |\n")
         }
 
         return sb.toString()
@@ -530,5 +498,50 @@ class ServiceSwitchService(
 
     companion object {
         private val log = LoggerFactory.getLogger(ServiceCallStatistic::class.java)
+    }
+}
+
+data class RestrictView(
+    val name: String,
+    val enabled: Boolean = true,
+    val groups: Set<Long> = emptySet(),
+    val users: Set<Long> = emptySet()
+) {
+    companion object {
+        /**
+         * 将实体列表（可能包含重名 service 的多条记录）按 service 聚合为 View 列表
+         */
+        fun fromEntities(
+            entities: List<RestrictRecordEntity>
+        ): List<RestrictView> {
+            val now = Clock.System.now()
+
+            // 1. 按 service 分组聚合有效记录
+            val aggregated = entities
+                .filter { it.isCurrentlyActive(now) }
+                .groupBy { it.service }
+                .mapValues { (serviceName, records) ->
+                    val groups = mutableSetOf<Long>()
+                    val users = mutableSetOf<Long>()
+
+                    for (record in records) {
+                        when (record.targetType) {
+                            USER.byte -> users.add(record.targetID)
+                            GROUP.byte -> groups.add(record.targetID)
+                        }
+                    }
+                    RestrictView(
+                        name = serviceName,
+                        enabled = true,
+                        groups = groups,
+                        users = users
+                    )
+                }
+
+            // 2. 依照 serviceList 顺序构建结果
+            return serviceList.map { serviceName ->
+                aggregated[serviceName] ?: RestrictView(name = serviceName)
+            } + aggregated.filterKeys { it !in serviceList.toSet() }.values
+        }
     }
 }

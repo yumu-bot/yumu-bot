@@ -1,11 +1,11 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.cache.ImageCacheProvider
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -52,7 +52,7 @@ class HelpService(
         val m2 = Instruction.SIMPLIFIED_HELP.matcher(messageText)
         val mr = Instruction.REFRESH_HELP.matcher(messageText)
 
-        if (mr.find() && Permission.isSuperAdmin(event.sender.contactID)) {
+        if (mr.find() && event.isSuperAdmin()) {
             imageCacheProvider.clear()
             event.replyAsync("已清除所有帮助文档的图片缓存。")
             return false

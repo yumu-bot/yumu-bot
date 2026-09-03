@@ -1,12 +1,13 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.DailyStatisticsService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
@@ -75,7 +76,7 @@ class UpdateTriggerService(
             return false
         }
 
-        if (Permission.isSuperAdmin(event.sender.contactID)) {
+        if (event.isSuperAdmin()) {
             val any: String? = matcher.group(FLAG_MODE)
 
             data.value = UpdateType.getType(any) to matcher.group(FLAG_ANY)
@@ -146,7 +147,7 @@ class UpdateTriggerService(
             }
 
             OSU_DAILY -> {
-                if (!Permission.isSuperAdmin(event.sender.contactID)) {
+                if (event.isNotSuperAdmin()) {
                     throw BelowSuperAdministrator()
                 }
 

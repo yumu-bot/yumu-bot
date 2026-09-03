@@ -37,22 +37,31 @@ open class PermissionException(message: String?): TipsRuntimeException(message),
     }
 
     open class WhiteListException(message: String?): PermissionException(message) {
-        class UserFilter(service: String, qq: Long):
-            WhiteListException("用户 $qq 白名单过滤：$service")
+        class On(service: String):
+            BlackListException("功能 $service 已经开启，无需重复操作。")
 
-        class GroupFilter(service: String, qq: Long):
-            WhiteListException("群聊 $qq 白名单过滤：$service")
+        class Failed(service: String):
+            BlackListException("功能 $service 已经尝试开启，但该功能目前仍被管理员关闭，无法使用。")
+
+        class Other(service: String):
+            BlackListException("功能 $service 已清除当前级别的设置，但该功能仍处于其他限制状态。")
+
+        class Banned(qq: Long):
+            BlackListException("已清除 $qq 的设置，但该功能目前仍被管理员封禁，无法使用。")
+
+        class BannedGroup(group: Long):
+            BlackListException("已清除群组 $group 的设置，但该功能目前仍被管理员封禁，无法使用。")
     }
 
     open class BlackListException(message: String?): PermissionException(message) {
-        class UserFilter(service: String, qq: Long):
-            BlackListException("用户 $qq 黑名单过滤：$service")
+        class Off(service: String):
+            BlackListException("功能 $service 已经关闭，无需重复操作。")
 
-        class GroupFilter(service: String, qq: Long):
-            BlackListException("群聊 $qq 黑名单过滤：$service")
+        class Duplicate(qq: Long):
+            BlackListException("$qq 已被封禁，无需重复操作。")
 
-        class Blocked(service: String, qq: Long):
-            BlackListException("$qq 权限不足，禁止使用：$service")
+        class DuplicateGroup(group: Long):
+            BlackListException("群组 $group 已被封禁，无需重复操作。")
     }
 
     open class TokenBucketException(message: String?): PermissionException(message) {

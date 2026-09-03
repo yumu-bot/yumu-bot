@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -9,6 +8,8 @@ import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isGroupAdmin
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -63,7 +64,7 @@ class SetGroupModeService (
     @Throws(Throwable::class)
     @CheckPermission(isSuperAdmin = true)
     override fun handleMessage(event: MessageEvent, param: SetGroupParam): ServiceCallStatistic? {
-        val isSuperAdmin = Permission.isSuperAdmin(event)
+        val isSuperAdmin = event.isSuperAdmin()
 
         if (param.group != null && param.group < 0L && isSuperAdmin) {
             event.replyAsync(getGroupModeCharts(0 - param.group.toInt()))
@@ -74,7 +75,7 @@ class SetGroupModeService (
 
         val predeterminedMode = groupDao.getGroupMode(event)
 
-        val isNotGroupAdmin = Permission.isGroupAdmin(event).not()
+        val isNotGroupAdmin = event.isGroupAdmin().not()
 
         val group = if (param.group != null) {
             if (isSuperAdmin || param.group == event.subject.contactID) {

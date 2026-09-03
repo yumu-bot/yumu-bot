@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.UserSnapShotDao
@@ -10,6 +9,7 @@ import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -50,7 +50,7 @@ class BestHistoryRecoverService(
             return false
         }
 
-        if (!Permission.isSuperAdmin(event)) {
+        if (event.isNotSuperAdmin()) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 

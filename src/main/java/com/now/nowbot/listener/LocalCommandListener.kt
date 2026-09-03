@@ -1,9 +1,9 @@
 package com.now.nowbot.listener
 
-import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.local.Bot
 import com.now.nowbot.qq.local.Event
 import com.now.nowbot.qq.local.contact.LocalGroup
+import com.now.nowbot.restrict.RestrictImplement
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.TipsRuntimeException
@@ -21,7 +21,7 @@ class LocalCommandListener {
         val event = Event.GroupMessageEvent(bot, group, message ?: return)
 
         try {
-            PermissionImplement.onMessage(event, ({ _, x ->
+            RestrictImplement.onMessage(event, ({ _, x ->
                 when (x) {
                     is TipsException -> {
                         log.info("捕捉到异常提示：{}", x.message)
@@ -54,7 +54,7 @@ class LocalCommandListener {
 
         if (message.startsWith("/") || message.startsWith("\\")) {
             try {
-                PermissionImplement.onTencentMessage(event, (event::replyAsync))
+                RestrictImplement.onTencentMessage(event, (event::replyAsync))
             } catch (e: Exception) {
                 log.info("捕捉到腾讯异常：{}", e.message)
                 log.debug("异常详细信息:", e)

@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isCommonUser
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -45,7 +45,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: List<String>): ServiceCallStatistic? {
-        if (Permission.isCommonUser(event)) {
+        if (event.isCommonUser()) {
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }
 

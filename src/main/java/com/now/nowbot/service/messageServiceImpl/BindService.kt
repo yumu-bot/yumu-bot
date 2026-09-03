@@ -2,13 +2,13 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.cache.CaptchaProvider
-import com.now.nowbot.config.Permission
 import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -241,7 +241,7 @@ class BindService(
      */
     private fun checkPermission(senderID: Long, targetID: Long?, botID: Long?): Long {
         // 1. 超级管理员：直接忽视后续一切限制
-        if (Permission.isSuperAdmin(senderID)) {
+        if (RestrictUtils.isSuperAdmin(senderID)) {
             return targetID ?: senderID
         }
 

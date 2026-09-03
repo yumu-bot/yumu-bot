@@ -1,256 +1,159 @@
-package com.now.nowbot.aop;
+package com.now.nowbot.aop
 
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.dao.ServiceCallStatisticsDao;
-import com.now.nowbot.entity.IDUser;
-import com.now.nowbot.entity.OsuBindUserLite;
-import com.now.nowbot.entity.ServiceCallStatistic;
-import com.now.nowbot.entity.UserProfileLite;
-import com.now.nowbot.mapper.ServiceCallRepository;
-import com.now.nowbot.mapper.UserProfileRepository;
-import com.now.nowbot.model.osu.LazerScore;
-import com.now.nowbot.model.osu.OsuUser;
-import com.now.nowbot.model.osu.OsuUserPlus;
-import com.now.nowbot.model.osu.ScoreWithUserProfile;
-import com.now.nowbot.qq.contact.Contact;
-import com.now.nowbot.qq.enums.Role;
-import com.now.nowbot.qq.event.GroupMessageEvent;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.onebot.contact.GroupContact;
-import com.now.nowbot.throwable.botRuntimeException.PermissionException;
-import com.now.nowbot.util.ContextUtil;
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import com.now.nowbot.dao.ServiceCallStatisticsDao
+import com.now.nowbot.entity.OsuBindUserLite
+import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.entity.UserProfileLite
+import com.now.nowbot.mapper.UserProfileRepository
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
+import org.aspectj.lang.JoinPoint
+import org.aspectj.lang.ProceedingJoinPoint
+import org.aspectj.lang.annotation.Around
+import org.aspectj.lang.annotation.Aspect
+import org.aspectj.lang.annotation.Before
+import org.aspectj.lang.annotation.Pointcut
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
+import java.util.concurrent.ConcurrentHashMap
 
 @Aspect
 @Component
-public class CheckAspect {
-    private static final Logger log              = LoggerFactory.getLogger(CheckAspect.class);
-    private static final String USER_PROFILE_KEY = "#user_profile";
-    Permission            permission;
-    ServiceCallRepository serviceCall;
-    ServiceCallStatisticsDao serviceCallStatisticsDao;
-    UserProfileRepository    userProfileRepository;
-
-    @Autowired
-    public CheckAspect(Permission permission,
-                       ServiceCallRepository serviceCallRepository,
-                       ServiceCallStatisticsDao serviceCallStatisticsDao,
-                       UserProfileRepository userProfileRepository) {
-        this.permission = permission;
-        this.serviceCallStatisticsDao = serviceCallStatisticsDao;
-        this.userProfileRepository = userProfileRepository;
-        serviceCall = serviceCallRepository;
-    }
-
+class CheckAspect(
+    // private val serviceCall: ServiceCallRepository?,
+    private val serviceCallStatisticsDao: ServiceCallStatisticsDao,
+    private val userProfileRepository: UserProfileRepository
+) {
     //所有实现 MessageService 的 HandMessage 方法切入点
     @Pointcut("within(com.now.nowbot.service.MessageService+) &&  execution(* handleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
-    public void servicePoint() {
+    fun servicePoint() {
     }
 
     @Pointcut("within(org.springframework.web.client.RestTemplate) && !execution(void *(..))")
-    public void restTemplate() {
+    fun restTemplate() {
     }
 
     @Pointcut("execution(* com.now.nowbot.mapper.BindUserMapper.save(..))")
-    public void userSave() {
+    fun userSave() {
     }
 
-    @Pointcut("execution(* com.now.nowbot.service.osuApiService.OsuBeatmapApiService.*(..)) ||" +
-            "execution(* com.now.nowbot.service.osuApiService.OsuUserApiService.*(..)) ||" +
-            "execution(* com.now.nowbot.service.osuApiService.OsuMatchApiService.*(..)) ||" +
-            "execution(* com.now.nowbot.service.osuApiService.OsuDiscussionApiService.*(..)) ||" +
-            "execution(* com.now.nowbot.service.osuApiService.OsuScoreApiService.*(..))")
-    public void apiService() {
+    @Pointcut(
+        ("execution(* com.now.nowbot.service.osuApiService.OsuBeatmapApiService.*(..)) ||" +
+                "execution(* com.now.nowbot.service.osuApiService.OsuUserApiService.*(..)) ||" +
+                "execution(* com.now.nowbot.service.osuApiService.OsuMatchApiService.*(..)) ||" +
+                "execution(* com.now.nowbot.service.osuApiService.OsuDiscussionApiService.*(..)) ||" +
+                "execution(* com.now.nowbot.service.osuApiService.OsuScoreApiService.*(..))")
+    )
+    fun apiService() {
     }
 
     @Pointcut("execution(* com.now.nowbot.service.ImageService.get*(..))")
-    public void imageService() {
+    fun imageService() {
     }
 
 
     @Before(value = "userSave()")
-    public Object userSaveLogger(JoinPoint point) {
-        Object[] args = point.getArgs();
-        if (args.length > 0 && args[0] instanceof OsuBindUserLite u) {
-            if (u.getUserID() != 0) {
-                log.info("新增用户：{} ({})", u.getUserID(), u.getUsername());
+    fun userSaveLogger(point: JoinPoint): Array<Any> {
+        val args = point.args
+
+        val u = args.firstOrNull()
+
+        if (u is OsuBindUserLite) {
+            if (u.userID != 0L) {
+                log.info("新增用户：{} ({})", u.userID, u.username)
             } else {
-                log.info("新增绑定关系 ({})", Objects.requireNonNullElse(u.getAccessToken(), "null").substring(0, 10));
+                log.info(
+                    "新增绑定关系 ({})",
+                    u.accessToken?.take(15) ?: "null"
+                )
             }
         }
-        return args;
+        return args
     }
-
-    private static final Map<ServiceLimit, Long> SERVICE_LIMIT_MAP = new ConcurrentHashMap<>();
 
     @Before("servicePoint() && @annotation(ServiceLimit)")
-    public Object serviceLimit(JoinPoint point, ServiceLimit ServiceLimit) {
-        var limit = ServiceLimit.cooldownMillis();
-        if (limit == 0) return point.getArgs();
-        var now = System.currentTimeMillis();
-        var time = SERVICE_LIMIT_MAP.getOrDefault(ServiceLimit, 0L);
+    fun serviceLimit(point: JoinPoint, serviceLimit: ServiceLimit): Any {
+        val limit = serviceLimit.cooldownMillis
+        if (limit == 0L) return point.args
+        val now = System.currentTimeMillis()
+        val time = SERVICE_LIMIT_MAP.getOrDefault(serviceLimit, 0L)
         if (now - time > limit) {
-            SERVICE_LIMIT_MAP.put(ServiceLimit, now);
-            return point.getArgs();
+            SERVICE_LIMIT_MAP[serviceLimit] = now
+            return point.args
         }
-        throw new PermissionException("请求过于频繁");
+        throw PermissionException("请求过于频繁")
     }
 
-    /***
-     * 注解权限切点
-     * 加了@CheckPermission注解的
-     */
-//    @Before(value = "@annotation(CheckPermission) && @target(Service)", argNames = "point,CheckPermission,Service")
-    public Object checkPermission(JoinPoint point, CheckPermission CheckPermission, Service Service) {
-        if (ContextUtil.isBreakAop()) {
-            return point.getArgs();
-        }
-        var args = point.getArgs();
-        var event = (MessageEvent) args[0];
-        var name = Service.value();
+    object UserProfileContext {
+        private val HOLDER = ThreadLocal<UserProfileLite?>()
 
-        var qq = event.getSender().getContactID();
-
-        if (Permission.isSuperAdmin(qq)) {
-            //超管无视任何限制
-            return args;
+        fun set(profile: UserProfileLite?) {
+            HOLDER.set(profile)
         }
-        //超管权限判断
-        if (CheckPermission.isGroupAdmin()) {
-            if (event.getSender() instanceof GroupContact groupUser && !(Objects.equals(groupUser.getRole(), Role.ADMIN) || Objects.equals(groupUser.getRole(), Role.OWNER))) {
-                throw new PermissionException.RoleException.NormalUserUseAdminService(name, qq);
-            }
-        }
-        if (CheckPermission.isSuperAdmin()) {
-            throw new PermissionException.RoleException.AdminUseAdminService(name, qq);
-        }
-        // test 功能
-        if (CheckPermission.test() && !Permission.isTester(qq)) {
-            throw new PermissionException.RoleException.SomebodyUseTestService(name, qq);
-        }
-        //服务权限判断
-        //白/黑名单
-        if (CheckPermission.isWhite()) {
-            if (CheckPermission.friend() && !permission.hasUser(name, qq)) {
-                throw new PermissionException.WhiteListException.UserFilter(name, qq);
-            }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.hasGroup(name, g.getGroup().getContactID())) {
-                throw new PermissionException.WhiteListException.GroupFilter(name, qq);
-            }
-        } else {
-            if (CheckPermission.friend() && permission.hasUser(name, qq)) {
-                throw new PermissionException.BlackListException.UserFilter(name, qq);
-            }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.hasGroup(name, g.getGroup().getContactID())) {
-                throw new PermissionException.BlackListException.GroupFilter(name, qq);
-            }
-        }
-        return args;
-    }
 
-    //    @Before("servicePoint() && @target(Service)")
-    public Object[] checkRepeat(JoinPoint point, Service Service) {
-        if (ContextUtil.isBreakAop()) {
-            return point.getArgs();
+        fun get(): UserProfileLite? {
+            return HOLDER.get()
         }
-        var args = point.getArgs();
-        var event = (MessageEvent) args[0];
 
-        var name = Service.value();
-        var qq = event.getSender().getContactID();
-//        var name = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
-
-        if (Permission.isSuperAdmin(qq)) {
-            //超管无视任何限制
-            return args;
+        fun remove() {
+            HOLDER.remove()
         }
-        if (permission.isAllWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getContactID() : null)) {
-            return args;
-        }
-        // 群跟人的id进行全局黑名单校验
-        else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getContactID() : null, qq)) {
-            return args;
-        }
-        throw new PermissionException.BlackListException.Blocked(name, qq);
-
-    }
-
-//    @After("servicePoint() && @target(Service)")
-//    public void endRepeat(JoinPoint point, Service Service){
-//        var event = (MessageEvent) point.getArgs()[0];
-//        workList.remove(event);
-//    }
-
-    Set<Contact> sent;
-
-    public static class UserProfileContext {
-        private static final ThreadLocal<UserProfileLite> HOLDER = new ThreadLocal<>();
-
-        public static void set(UserProfileLite profile) { HOLDER.set(profile); }
-        public static UserProfileLite get() { return HOLDER.get(); }
-        public static void remove() { HOLDER.remove(); }
     }
 
     @Around("imageService()")
-    public Object beforeGetImage(ProceedingJoinPoint point) throws Throwable {
-        var args = point.getArgs();
-        for (Object arg : args) {
-            if (arg instanceof LazerScore score) {
-                if (score.getUser().getUserID() != 0L) {
-                    var profile = userProfileRepository.findTopById(score.getUser().getUserID());
+    @Throws(Throwable::class)
+    fun beforeGetImage(point: ProceedingJoinPoint): Any? {
+        val args = point.args
+        for (arg in args) {
+            if (arg is LazerScore) {
+                if (arg.user.userID != 0L) {
+                    val profile = userProfileRepository.findTopById(arg.user.userID)
                     if (profile != null) {
-                        UserProfileContext.set(profile);
+                        UserProfileContext.set(profile)
                     }
                 }
             }
         }
 
         try {
-            return point.proceed();
+            return point.proceed()
         } finally {
-            UserProfileContext.remove();
+            UserProfileContext.remove()
         }
     }
 
-    //    @Around(value = "execution (public * com.now.nowbot..*(..))", argNames = "pjp,point")
     @Around(value = "servicePoint()", argNames = "pjp")
-    public void setContext(ProceedingJoinPoint pjp) throws Throwable {
-        var ser = pjp.getTarget().getClass().getAnnotation(Service.class);
-        String name = "unknown";
+    @Throws(Throwable::class)
+    fun setContext(pjp: ProceedingJoinPoint) {
+        val ser = pjp.target.javaClass.getAnnotation<Service?>(Service::class.java)
+        var name = "unknown"
         if (ser != null) {
-            name = ser.value();
+            name = ser.value
         }
-        if (pjp.getArgs()[0] instanceof MessageEvent e) {
-            if (e.getSubject().getContactID() < 0) {
-                log.debug("官方bot [uid {}] 调用 -> {}", -e.getSender().getContactID(), name);
+
+        val e = pjp.args.firstOrNull()
+
+        if (e is MessageEvent) {
+            if (e.subject.contactID < 0) {
+                log.debug("官方bot [uid {}] 调用 -> {}", -e.sender.contactID, name)
             } else {
-                log.debug("{} 调用 -> {}", e.getSender().getContactID(), name);
+                log.debug("{} 调用 -> {}", e.sender.contactID, name)
             }
         }
-        Object result = null;
-        long start = System.currentTimeMillis();
+        var result: Any? = null
+        val start = System.currentTimeMillis()
         try {
-            result = pjp.proceed(pjp.getArgs());
+            result = pjp.proceed(pjp.getArgs())
         } finally {
-            long end = System.currentTimeMillis();
-            long duration = end - start;
-            if (result instanceof ServiceCallStatistic call) {
+            val end = System.currentTimeMillis()
+            val duration = end - start
+            if (result is ServiceCallStatistic) {
                 // 新版的统计
-                call.setOther(name, start, duration);
-                serviceCallStatisticsDao.saveService(call);
+                result.setOther(name, start, duration)
+                serviceCallStatisticsDao.saveService(result)
             }
 
             // 原来的可以下线了
@@ -258,82 +161,8 @@ public class CheckAspect {
         }
     }
 
-
-    static final long MY_ID = 17064371L;
-
-    private static boolean isMyScore(LazerScore score) {
-        return score.getUserID() == MY_ID;
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(CheckAspect::class.java)
+        private val SERVICE_LIMIT_MAP: MutableMap<ServiceLimit, Long> = ConcurrentHashMap<ServiceLimit, Long>()
     }
-
-    private IDUser getUser(IDUser user) {
-        if (user == null || user.getUserID() == 0L) {
-            return user;
-        }
-
-        var profile = userProfileRepository.findTopById(user.getUserID());
-
-        if (profile == null) {
-            return user;
-        }
-
-        OsuUser rawOsuUser = null;
-
-        if (user instanceof OsuUser osuUser) {
-            rawOsuUser = osuUser;
-        } else if (user instanceof OsuUserPlus plus) {
-            rawOsuUser = plus.getUser();
-        }
-
-        if (rawOsuUser != null) {
-            return new OsuUserPlus(rawOsuUser, profile);
-        }
-
-        return user;
-    }
-
-    private Object parse(Object param) {
-        if (param instanceof IDUser user) {
-            return getUser(user);
-        } else if (param instanceof Optional<?> opt && opt.isPresent() && opt.get() instanceof IDUser user) {
-            return Optional.of(getUser(user));
-        }
-
-        if (param instanceof LazerScore score) {
-            return getScore(score);
-        } else if (param instanceof Optional<?> opt && opt.isPresent() && opt.get() instanceof LazerScore score) {
-            return Optional.ofNullable(getScore(score));
-        }
-
-        return null;
-    }
-
-    private Object getScore(LazerScore score) {
-        if (score == null || score.getUser().getUserID() == 0L) return score;
-        var profile = userProfileRepository.findTopById(score.getUser().getUserID());
-
-        if (profile == null) {
-            return score;
-        } else {
-            return new ScoreWithUserProfile(score, profile);
-        }
-    }
-
-    @Pointcut("execution(* com.now.nowbot.service.osuApiService.OsuScoreApiService.*(..))")
-    public void scoreApi() {
-    }
-/*
-    @AfterReturning(value = "scoreApi()", returning = "result")
-    public void afterApiService(Object result) {
-        if (result instanceof BeatmapUserScore s && isMyScore(s.score)) {
-            s.score.setRank("X");
-        } else if (result instanceof List<?> l) {
-            if (l.isEmpty()) return;
-            if (l.getFirst() instanceof LazerScore s && isMyScore(s)) {
-                for (var i : l) {
-                    ((LazerScore)i).setRank("X");
-                }
-            }
-        }
-    }
-*/
 }

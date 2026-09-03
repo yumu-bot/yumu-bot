@@ -1,11 +1,11 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.*
-import com.now.nowbot.permission.TokenBucketRateLimiter
+import com.now.nowbot.controller.TokenBucketRateLimiter
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isGroupAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
@@ -53,7 +53,7 @@ class FetchService(
 
         val any: String? = matcher.group(FLAG_ANY)
 
-        if (Permission.isGroupAdmin(event)) {
+        if (event.isGroupAdmin()) {
             val type = FetchType.getType(any)
 
             data.value = type

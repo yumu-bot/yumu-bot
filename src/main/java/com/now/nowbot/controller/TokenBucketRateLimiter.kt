@@ -1,4 +1,4 @@
-package com.now.nowbot.permission
+package com.now.nowbot.controller
 
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import java.util.concurrent.ConcurrentHashMap

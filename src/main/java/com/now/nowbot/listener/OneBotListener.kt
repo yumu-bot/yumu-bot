@@ -5,10 +5,10 @@ import com.mikuac.shiro.annotation.common.Shiro
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent
 import com.now.nowbot.cache.QQMessageCacheProvider
-import com.now.nowbot.config.Permission
-import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.restrict.RestrictImplement
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.IdempotentService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.BotException
@@ -99,7 +99,7 @@ class OneBotListener(
             }
 
             try {
-                PermissionImplement.onMessage(event) { messageEvent: MessageEvent, e: Throwable ->
+                RestrictImplement.onMessage(event) { messageEvent: MessageEvent, e: Throwable ->
                     this.errorHandle(messageEvent, e)
                 }
             } finally {
@@ -139,7 +139,7 @@ class OneBotListener(
     }
 
     private fun handleOtherException(event: MessageEvent, e: Throwable) {
-        if (Permission.isSuperAdmin(event.sender.contactID)) {
+        if (event.isSuperAdmin()) {
             event.replyAndRecallAsync(e, RECALL_TIME)
         }
         log.error("捕捉其他异常：", e)

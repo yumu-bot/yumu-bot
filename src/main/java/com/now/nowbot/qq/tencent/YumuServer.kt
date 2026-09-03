@@ -1,9 +1,9 @@
 package com.now.nowbot.qq.tencent
 
-import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.message.ImageMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.TextMessage
+import com.now.nowbot.restrict.RestrictImplement
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.QQMsgUtil
@@ -30,7 +30,7 @@ object YumuServer : YumuService {
         }
         val df = CompletableDeferred<MessageChain>()
         val event = Event(contact, param.command)
-        PermissionImplement.onTencentMessage(event) {
+        RestrictImplement.onTencentMessage(event) {
             df.complete(it)
         }
         val response = withTimeoutOrNull(10.seconds) {

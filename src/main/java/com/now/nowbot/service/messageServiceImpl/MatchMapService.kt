@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -13,6 +12,7 @@ import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -62,7 +62,7 @@ class MatchMapService(
         val matcher = Instruction.TEST_MATCH_START.matcher(messageText)
         if (!matcher.find()) return false
 
-        if (!Permission.isSuperAdmin(event.sender.contactID)) {
+        if (event.isNotSuperAdmin()) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 

@@ -1,10 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.Instruction
@@ -20,7 +20,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
         val matcher = Instruction.CHECK.matcher(messageText)
         if (!matcher.find()) return false
 
-        if (!Permission.isSuperAdmin(event)) return false
+        if (event.isNotSuperAdmin()) return false
 
         val bindUser = run {
             val qq = if (event.hasAt()) {

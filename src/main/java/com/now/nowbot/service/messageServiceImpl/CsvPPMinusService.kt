@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
@@ -9,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isGroupAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -38,7 +38,7 @@ class CsvPPMinusService(
         data: DataValue<CSVPPMinusParam>,
     ): Boolean {
         val matcher = Instruction.CSV_PPM.matcher(messageText)
-        if (matcher.find() && Permission.isGroupAdmin(event)) {
+        if (matcher.find() && event.isGroupAdmin()) {
             val names = splitString(matcher.group("data"))
 
             if (names.isNullOrEmpty()) {

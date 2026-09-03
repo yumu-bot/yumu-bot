@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchAdapter
@@ -10,6 +9,7 @@ import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.MatchMapService.PanelE7Param
@@ -100,7 +100,7 @@ class MatchListenerService(
         val idStr = matcher.group(FLAG_MATCH_ID) ?: ""
         val id = idStr.toLongOrNull() ?: 0L
         val skip = matcher.group(FLAG_SKIP)?.toIntOrNull() ?: 0
-        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
+        val isSuper = event.isSuperAdmin()
 
         return when {
             operate == Operation.STOP && id == 0L -> {
@@ -159,7 +159,7 @@ class MatchListenerService(
             }
 
             Operation.STOP -> {
-                cancelListener(event.group.contactID, param.id, Permission.isSuperAdmin(event.sender.contactID))
+                cancelListener(event.group.contactID, param.id, event.isSuperAdmin())
             }
 
             else -> {}

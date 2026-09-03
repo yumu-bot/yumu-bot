@@ -26,7 +26,7 @@ class ExtendCompressService(
         /*
         val fix = "!" + "es"
 
-        if (messageText.contains(fix) && Permission.isSuperAdmin(event.sender.contactID)) {
+        if (messageText.contains(fix) && event.isSuperAdmin()) {
             data.value = true
             return true
         }
