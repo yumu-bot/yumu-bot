@@ -134,8 +134,9 @@ class RestrictImplement(
         // 2. 极速前置过滤：如果用户和群聊都不在受限名单中，说明没有任何拦截规则，直接放行
         val isUserPossiblyRestricted = userID in restrictedUsers
         val isGroupPossiblyRestricted = groupID != null && groupID in restrictedGroups
+        val isServicePossiblyRestricted = service in restrictedServices
 
-        if (!isUserPossiblyRestricted && !isGroupPossiblyRestricted) {
+        if (!isUserPossiblyRestricted && !isGroupPossiblyRestricted && !isServicePossiblyRestricted) {
             return false
         }
 
@@ -150,6 +151,11 @@ class RestrictImplement(
         if (isGroupPossiblyRestricted) {
             val groupRules = restrictRecordRepository.findActiveRules(GROUP.byte, groupID, service)
             if (groupRules.any { it.isCurrentlyActive(now) }) return true
+        }
+
+        if (isServicePossiblyRestricted) {
+            val serviceRoles = restrictRecordRepository.findActiveRules(ALL.byte, 0L, service)
+            if (serviceRoles.any { it.isCurrentlyActive(now) }) return true
         }
 
         return false

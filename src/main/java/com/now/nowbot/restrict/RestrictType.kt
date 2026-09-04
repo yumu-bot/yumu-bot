@@ -5,7 +5,12 @@ enum class RestrictTargetType(val byte: Byte) {
 
     companion object {
         fun getByIndex(index: Byte): RestrictTargetType {
-            return entries.first { it.byte == index }
+            return when (index.toInt()) {
+                1 -> ALL
+                2 -> USER
+                4 -> GROUP
+                else -> throw IllegalArgumentException("限制目标类型：非法下标：$index")
+            }
         }
     }
 }
@@ -13,10 +18,14 @@ enum class RestrictTargetType(val byte: Byte) {
 enum class RestrictSourceType(val byte: Byte) {
     ADMIN(1), USER(2), GROUP(4);
 
-
     companion object {
         fun getByIndex(index: Byte): RestrictSourceType {
-            return entries.first { it.byte == index }
+            return when (index.toInt()) {
+                1 -> ADMIN
+                2 -> USER
+                4 -> GROUP
+                else -> throw IllegalArgumentException("限制来源类型：非法下标：$index")
+            }
         }
     }
 }
