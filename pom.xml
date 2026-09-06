@@ -19,6 +19,7 @@
             <activation>
                 <os>
                     <family>windows</family>
+                    <arch>amd64</arch>
                 </os>
             </activation>
             <properties>
@@ -30,17 +31,42 @@
             <activation>
                 <os>
                     <family>unix</family>
+                    <arch>amd64</arch>
                 </os>
             </activation>
             <properties>
                 <run.os>linux</run.os>
             </properties>
         </profile>
+        <profile>
+            <id>linux-arm64</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <run.os>linux</run.os>
+            </properties>
+        </profile>
+        <profile>
+            <id>macos-arm64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <run.os>macos</run.os>
+            </properties>
+        </profile>
     </profiles>
     <properties>
-        <java.version>21</java.version>
+        <java.version>22</java.version>
         <skipTests>false</skipTests>
-        <kotlin.version>2.3.0</kotlin.version>
+        <kotlin.version>2.4.10</kotlin.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -102,7 +128,7 @@
         <dependency>
             <groupId>com.mikuac</groupId>
             <artifactId>shiro</artifactId>
-            <version>2.5.3-beta</version>
+            <version>2.5.3</version>
             <!-- 排除引入的版本冲突-->
             <exclusions>
                 <exclusion>
@@ -159,12 +185,6 @@
             <groupId>org.codehaus.janino</groupId>
             <artifactId>janino</artifactId>
             <version>3.1.6</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.github.humbleui</groupId>
-            <artifactId>skija-${run.os}-x64</artifactId>
-            <version>0.116.2</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -268,7 +288,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <reuseForks>true</reuseForks>
-                    <argLine>--enable-preview</argLine>
+<!--                    <argLine>&#45;&#45;enable-preview</argLine>-->
                 </configuration>
             </plugin>
             <plugin>
@@ -314,7 +334,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <jvmTarget>21</jvmTarget>
+                    <jvmTarget>22</jvmTarget>
                     <args>
                         <arg>-Xjsr305=strict</arg>
                     </args>
@@ -385,10 +405,10 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <compilerArgs>--enable-preview</compilerArgs>
-                    <source>21</source>
-                    <target>21</target>
-                    <release>21</release>
+<!--                    <compilerArgs>&#45;&#45;enable-preview</compilerArgs>-->
+                    <source>22</source>
+                    <target>22</target>
+                    <release>22</release>
                 </configuration>
             </plugin>
         </plugins>

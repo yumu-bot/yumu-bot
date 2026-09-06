@@ -10,13 +10,15 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.util.DataUtil.TORUS_REGULAR
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import io.github.humbleui.skija.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.awt.Color
+import java.awt.RenderingHints
+import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
+import javax.imageio.ImageIO
 
 @Service("PING") class PingService : MessageService<Unit>, TencentMessageService<Unit> {
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Unit>): Boolean {
@@ -48,45 +50,59 @@ import java.nio.file.Path
     }
 
     fun getMessageChain(): MessageChain {
-        Surface.makeRaster(ImageInfo.makeN32Premul(648, 648)).use {
-            val canvas = it.canvas
-            val path = Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png")
+        val path = Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png")
 
-            try {
-                val file = Files.readAllBytes(path)
-                val background = Image.makeDeferredFromEncodedBytes(file)
-                canvas.drawImage(background, 0f, 0f)
-            } catch (_: IOException) {
-                log.error("""
-                    没有 Ping 底图呢...
-                    请确保你拥有 $path 这张底图！
-                    """.trimIndent())
-                return MessageChain("小沐收到！")
-            }
+        // 1. 读取底图
+        val image = try {
+            ImageIO.read(path.toFile()) ?: throw IOException("底图为空")
+        } catch (_: IOException) {
+            log.error("""
+            没有 Ping 底图呢...
+            请确保你拥有 $path 这张底图！
+        """.trimIndent())
+            return MessageChain("小沐收到！")
+        }
 
-            val textPaint = Paint().setARGB(255, 191, 193, 124)
-            val millisPaint = Paint().setARGB(200, 191, 193, 124)
+        // 2. 创建画布并配置
+        val g = image.createGraphics()
+        try {
+            // 开启抗锯齿，保证文字平滑不锯齿
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-            var x = Font(TORUS_REGULAR, 160f)
-            var t = TextLine.make("?", x)
+            // 3. 绘制居中的 "?"
+            // 注意：如果 TORUS_REGULAR 是 java.awt.Font 类型可以直接用，如果是路径则用 Font.deriveFont() 或 Font.decode()
+            val textFont = TORUS_REGULAR.deriveFont(160f)
+            g.font = textFont
+            g.color = Color(191, 193, 124, 255)
 
-            canvas.drawTextLine(t, (648 - t.width) / 2, 208f, textPaint)
-            textPaint.close()
+            val text = "?"
+            val metrics = g.fontMetrics
+            val textWidth = metrics.stringWidth(text)
+            val x = (648 - textWidth) / 2
 
-            x.close()
-            t.close()
+            // 绘制文本 (Graphics2D 的 y 坐标是文字基线 Baseline)
+            g.drawString(text, x, 208)
 
-            x = Font(TORUS_REGULAR, 40f)
-            t = TextLine.make(
-                System.currentTimeMillis().toString() + "ms", x
-            )
+            // 4. 绘制左上角时间戳
+            val millisFont = TORUS_REGULAR.deriveFont(40f)
+            g.font = millisFont
+            g.color = Color(191, 193, 124, 200)
 
-            canvas.drawTextLine(t, 10f, t.capHeight + 10, millisPaint)
-            millisPaint.close()
+            val millisText = "${System.currentTimeMillis()}ms"
+            val millisMetrics = g.fontMetrics
+            val millisY = 10 + millisMetrics.ascent
 
-            x.close()
-            t.close()
-            return MessageChain(EncoderPNG.encode(it.makeImageSnapshot())!!.bytes)
+            g.drawString(millisText, 10, millisY)
+
+        } finally {
+            g.dispose() // 释放绘图句柄
+        }
+
+        // 5. 导出为 PNG 字节流
+        ByteArrayOutputStream().use { bs ->
+            ImageIO.write(image, "png", bs)
+            return MessageChain(bs.toByteArray())
         }
     }
 

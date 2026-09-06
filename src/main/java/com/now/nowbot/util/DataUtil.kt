@@ -7,9 +7,10 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Statistics
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.command.*
-import io.github.humbleui.skija.Typeface
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.awt.Font
+import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,17 +29,20 @@ import kotlin.time.toDuration
 object DataUtil {
     private val log: Logger = LoggerFactory.getLogger(DataUtil::class.java)
 
-    val TORUS_REGULAR: Typeface by lazy {
-        val fontPath = "${NowbotConfig.FONT_PATH}Torus-Regular.ttf"
+    val TORUS_REGULAR: Font by lazy {
+        val fontPath = Path.of(NowbotConfig.FONT_PATH, "Torus-Regular.ttf")
         try {
-            val file = java.io.File(fontPath)
+            val file = fontPath.toFile()
             if (!file.exists()) {
                 throw java.io.FileNotFoundException("字体文件不存在: $fontPath")
             }
-            Typeface.makeFromFile(file.absolutePath)
+            val font = Font.createFont(Font.TRUETYPE_FONT, file)
+            // 注册到本地图形环境
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font)
+            font
         } catch (e: Exception) {
             log.warn("读取目标字体失败: Torus-Regular.ttf，将使用系统默认字体", e)
-            Typeface.makeDefault()
+            Font(Font.SANS_SERIF, Font.PLAIN, 1)
         }
     }
 

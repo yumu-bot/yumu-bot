@@ -37,13 +37,16 @@
 - Java Runtime Environment (JRE，JDK 包含它)
   - 没它你没办法运行 jar
   - 最低 [22](https://www.oracle.com/java/technologies/downloads/)，或者支持虚拟线程、[FFM API](https://inside.java/2025/06/14/javaone-ffm/) 的更高正式版本
-  - 代码目标 Kotlin 版本是 2.3
+  - 代码目标 Kotlin 版本是 2.3+
   - 在 260228 (v0.7.6) 之前的提交，使用的目标 Kotlin 是 2.0
   - 在 260723 (v0.8.3) 之前的提交，使用的 JRE 是 21 Preview
   - 如果你想测试并运行一个较早版本的实例（比如 legacy 分支），可能需要 JRE 17（没有目标 Kotlin）
 - PostgreSQL 数据库
   - 记录存储各种信息，避免鸿儒 ppy 的 api
   - 最低 15，越新越好
+  - 这个数据库根本不重，实际上能运行在很低配置的机器（大于等于 Raspberry Pi 4B 或 5）上。
+  - 你也可以考虑只运行一个客户端，存储的数据库跑在其他机器上。
+  - 主程序更重（并且至少需要 512MB 内存）
 
 ### 可选
 
@@ -52,21 +55,23 @@
 - pom
   - com.mikuac.shiro 2.5.3
     - 项目里有一个只有服务器上才有的的 2.5.3-beta 包
-    - 如果您需要运行，请将它改成 2.5.3
+    - 如果您需要在 IDE 里测试运行，请将它改成 2.5.3
     - 未来修改
   - com.yumu.yumu-lib 0.0.4
-    - 去 [release](https://github.com/yumu-bot/yumu-bot/releases/download/v0.8.3/yumu-client-0.0.4.jar) 里直接下载即可
+    - 访问 [release](https://github.com/yumu-bot/yumu-bot/releases/download/v0.8.3/yumu-client-0.0.4.jar) 直接下载
+    - 运行 mvn install:install-file -Dfile=这个 JAR 在本地磁盘上的位置 -DgroupId=com.yumu -DartifactId=yumu-lib -Dversion=0.0.4 -Dpackaging=jar
     - 这个依赖只负责官方 qq 机器人部分的代码。
     - 您也可以尝试直接移除这个依赖以及依赖相关的代码（双击 shift，并搜索 com.yumu 相关的代码类，直接删除即可）
   - me.aloic.rosu-pp-java 0.0.1
     - [原项目地址](https://github.com/MaxOhn/rosu-pp)
-    - 访问[这个分支编译](https://github.com/YumeMuzi/rosu-pp-java-mac-support/actions/runs/32563760333/artifacts/9473546796)来获取并安装 rosu-pp-java.jar
-    - 暂时只支持 linux-x86-64、windows-x86-64、macos-arm64。
+    - 访问[这个分支编译](https://github.com/YumeMuzi/rosu-pp-java-arm-support/actions/runs/34044314202/artifacts/9992671800)来解压，并安装 rosu-pp-java-0.0.1.jar
+    - 运行 mvn install:install-file -Dfile=这个 JAR 在本地磁盘上的位置 -DgroupId=me.aloic -DartifactId=rosu-pp-java -Dversion=0.0.1 -Dpackaging=jar
+    - 暂时只支持 linux-x86-64、windows-x86-64、macos-arm64、linux-arm64。
     - ios、macos-x86-64 不行。
 - [Yumu 绘图模块](https://github.com/yumu-bot/yumu-image) 
   - 用于将获取的数据绘制成可视化图片
-  - 如果不运行，则主程序只会以最低的形式返回文字信息
-  - 注意保证 8388 端口可用（你可以自行修改，记得同步修改）
+  - 如果不运行，则只有一小部分功能，会以最基本的形式返回文字信息
+  - 注意保证 8388 端口可用（你可以自行修改，记得同步修改绘图那边的端口）
 - ~~Redis 数据库~~
   - 草你妈，redis 被我干掉了
   - 你可以不用了
