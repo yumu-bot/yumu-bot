@@ -17,6 +17,8 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.Period
 import java.time.temporal.ChronoUnit
+import java.util.Collections
+import java.util.IdentityHashMap
 import kotlin.math.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -1422,7 +1424,10 @@ object DataUtil {
      */
     inline fun <reified T : Throwable> Throwable.findCauseOfType(): T? {
         var current: Throwable? = this
-        while (current != null) {
+
+        val visited = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
+
+        while (current != null && visited.add(current)) {
             if (current is T) {
                 return current
             }

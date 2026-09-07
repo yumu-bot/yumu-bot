@@ -6,11 +6,14 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.restrict.RestrictTargetType.*
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.command.PATTERN_EXCLAMATION
 import com.now.nowbot.util.command.PATTERN_IGNORE
 import com.now.nowbot.util.command.PATTERN_SLASH
 import com.now.nowbot.util.ContextUtil
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -226,10 +229,20 @@ class RestrictImplement(
                 val reply = service.reply(event, data) ?: MessageChain("服务 $name 无响应。")
                 onMessage(reply)
                 return
-            } catch (_: Throwable) {
-                // 异常处理逻辑同原有保持一致
-                onMessage(MessageChain("服务 $name 运行出现异常。"))
-                return
+            } catch (e: Throwable) {
+                val ex = e.findCauseOfType<TipsException>()
+                val er = e.findCauseOfType<TipsRuntimeException>()
+
+                if (ex != null) {
+                    log.debug("腾讯消息类：出现错误：{}", e.message?.take(300))
+                    onMessage(MessageChain(ex))
+                } else if (er != null) {
+                    log.debug("腾讯消息类：出现运行时错误：{}", e.message?.take(300))
+                    onMessage(MessageChain(er))
+                } else {
+                    log.error("腾讯消息类：出现错误：", e)
+                    onMessage(MessageChain("服务 $name 出现未识别的错误。"))
+                }
             }
         }
     }
