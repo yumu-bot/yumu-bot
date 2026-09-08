@@ -250,6 +250,7 @@ import kotlin.text.Charsets.UTF_8
         score.genre = song.info.genre
         score.bpm = song.info.bpm
         score.version = song.info.version
+        score.versionColor = song.info.versionColor
 
         if (song.charts.isEmpty() || score.index >= song.charts.size) return
 

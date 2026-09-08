@@ -73,6 +73,9 @@ class MaiScore {
     @get:JsonProperty("version") var version: String = ""
 
     // 自己拿
+    @get:JsonProperty("color") var versionColor: String = ""
+
+    // 自己拿
     @get:JsonProperty("notes") var notes: List<Int> = listOf()
 
     // 自己拿

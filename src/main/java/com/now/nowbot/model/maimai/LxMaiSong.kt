@@ -63,6 +63,8 @@ data class LxMaiSong(
                 val value = selected.maxOf { it.version }
 
                 MaiSong().apply {
+                    val v = MaiVersion.getVersionFromValue(value)
+
                     songID = lx.songID.toMaiSongID(cabinet)
 
                     title = lx.title
@@ -77,8 +79,9 @@ data class LxMaiSong(
                         artist = lx.artist
                         genre = lx.genre
                         bpm = lx.bpm
-                        version = MaiVersion.getVersionFromValue(value).full
+                        version = v.full
                         versionInt = value
+                        versionColor = v.color
                         current = value >= MaiVersion.newestVersion.value
                     }
 

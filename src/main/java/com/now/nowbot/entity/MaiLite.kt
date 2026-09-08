@@ -1,5 +1,6 @@
 package com.now.nowbot.entity
 
+import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.maimai.*
 import com.now.nowbot.util.StringUtil.standardised
 
@@ -61,6 +62,9 @@ class MaiSongLite(
 
     fun toModel(): MaiSong = MaiSong().apply {
         val lite = this@MaiSongLite
+
+        val v = MaiVersion.getVersion(lite.version)
+
         info = MaiSong.SongInfo().apply {
             title = lite.songTitle
             artist = lite.songArtist
@@ -69,6 +73,8 @@ class MaiSongLite(
             release = lite.release
             version = lite.version
             current = lite.current
+            versionColor = v.color
+            versionInt = v.value
         }
         songID = lite.songID ?: 0
         title = lite.title

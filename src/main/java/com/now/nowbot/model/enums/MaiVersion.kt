@@ -4,40 +4,121 @@ import com.now.nowbot.util.command.REGEX_PLUS
 import com.now.nowbot.util.command.REGEX_SEPARATOR
 import com.now.nowbot.util.command.REGEX_SEPARATOR_NO_SPACE
 
-enum class MaiVersion(val full: String, val abbreviation: String, val code: String, val value: Int) {
-    DEFAULT("", "", "", 0),
-    MAIMAI("maimai", "初", "mai", 10000),
-    PLUS("maimai PLUS", "真", "mai", 11000),
-    GREEN("maimai GreeN", "超", "grn", 12000),
-    GREEN_PLUS("maimai GreeN PLUS", "檄", "grp", 13000),
-    ORANGE("maimai ORANGE", "橙", "org", 14000),
-    ORANGE_PLUS("maimai ORANGE PLUS", "暁", "orp", 15000),
-    PINK("maimai PiNK", "桃", "pnk", 16000),
-    PINK_PLUS("maimai PiNK PLUS", "櫻", "pkp", 17000),
-    MURASAKI("maimai MURASAKi", "紫", "msk", 18000),
-    MURASAKI_PLUS("maimai MURASAKi PLUS", "菫", "msp", 18500),
-    MILK("maimai MiLK", "白", "mlk", 19000),
-    MILK_PLUS("maimai MiLK PLUS", "雪", "mkp", 19500),
-    FINALE("maimai FiNALE", "輝", "fnl", 19900),
-    ALL_FINALE("ALL FiNALE", "舞", "afn", -1),
-    DX("maimai でらっくす", "熊", "dx", 20000),
-    DX_PLUS("maimai でらっくす PLUS", "華", "dxp", 20500),
-    SPLASH("maimai でらっくす Splash", "爽", "spl", 21000),
-    SPLASH_PLUS("maimai でらっくす Splash PLUS", "煌", "spp", 21500),
-    UNIVERSE("maimai でらっくす UNiVERSE", "宙", "uni", 22000),
-    UNIVERSE_PLUS("maimai でらっくす UNiVERSE PLUS", "星", "unp", 22500),
-    FESTIVAL("maimai でらっくす FESTiVAL", "祭", "fes", 23000),
-    FESTIVAL_PLUS("maimai でらっくす FESTiVAL PLUS", "祝", "fep", 23500),
-    BUDDIES("maimai でらっくす BUDDiES", "双", "bud", 24000),
-    BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bup", 24500),
-    PRISM("maimai でらっくす PRiSM", "鏡", "pri", 25000),
-    PRISM_PLUS("maimai でらっくす PRiSM PLUS", "稜", "prp", 25500),
-    CIRCLE("maimai でらっくす CiRCLE", "丸", "cir", 26000),
-    CIRCLE_PLUS("maimai でらっくす CiRCLE PLUS", "", "cip", 26500),
+enum class MaiVersion(
+    val full: String,
+    val abbreviation: String,
+    val code: String,
+    val value: Int,
+    val color: String,
+    val aliases: Array<String>
+) {
+    DEFAULT("", "", "", 0, "#aaa", emptyArray()),
+    ALL_FINALE("ALL FiNALE", "舞", "afn", -1, "#000",
+        arrayOf("allfinale", "finaleplus", "beforedeluxe", "beforedx", "finale+", "final+", "fn+", "fnl+", "0.75")),
+
+    MAIMAI("maimai", "初", "mai", 10000, "#00A29D",
+        arrayOf("maimai", "mai", "mi", "初", "0.1", "0.10")),
+    PLUS("maimai PLUS", "真", "mai", 11000, "#00A29D",
+        arrayOf("plus", "maimaiplus", "maimai+", "pl", "pls", "mai+", "真", "0.15")),
+    GREEN("maimai GreeN", "超", "grn", 12000, "#D0FD00",
+        arrayOf("green", "gr", "gre", "超", "0.2", "0.20")),
+    GREEN_PLUS("maimai GreeN PLUS", "檄", "grp", 13000, "#D0FD00",
+        arrayOf("greenplus", "grep", "gre+", "grn+", "gr+", "檄", "0.25")),
+    ORANGE("maimai ORANGE", "橙", "org", 14000, "#FF6400",
+        arrayOf("orange", "or", "org", "橙", "0.3", "0.30")),
+    ORANGE_PLUS("maimai ORANGE PLUS", "暁", "orp", 15000, "#FF6400",
+        arrayOf("orangeplus", "orgp", "orp", "or+", "org+", "晓", "暁", "0.35")),
+    PINK("maimai PiNK", "桃", "pnk", 16000, "#FE006F",
+        arrayOf("pink", "pnk", "pk", "桃", "0.4", "0.40")),
+    PINK_PLUS("maimai PiNK PLUS", "櫻", "pkp", 17000, "#FE006F",
+        arrayOf("pinkplus", "pink+", "pk+", "pnk+", "樱", "樱", "0.45")),
+    MURASAKI("maimai MURASAKi", "紫", "msk", 18000, "#A863A8",
+        arrayOf("murasaki", "ms", "紫", "0.5", "0.50")),
+    MURASAKI_PLUS("maimai MURASAKi PLUS", "菫", "msp", 18500, "#A863A8",
+        arrayOf("murasakiplus", "murasaki+", "ms+", "msk+", "菫", "0.55")),
+    MILK("maimai MiLK", "白", "mlk", 19000, "#F4F4F4",
+        arrayOf("milk", "white", "mk", "白", "0.6", "0.60")),
+    MILK_PLUS("maimai MiLK PLUS", "雪", "mkp", 19500, "#F4F4F4",
+        arrayOf("milkplus", "white+", "mk+", "mlk+", "雪", "0.65")),
+    FINALE("maimai FiNALE", "輝", "fnl", 19900, "#C69C6E",
+        arrayOf("finale", "final", "fn", "0.7", "輝", "辉", "0.70")),
+
+    DX("maimai でらっくす", "熊", "dx", 20000, "#7ECEF4",
+        arrayOf("deluxe", "dlx", "1.0", "舞萌dx2020", "舞萌dx", "舞萌", "20", "1.00")),
+    DX_PLUS("maimai でらっくす PLUS", "華", "dxp", 20500, "#7ECEF4",
+        arrayOf("deluxeplus", "dlxp", "deluxe+", "dx+", "dlx+", "華", "华", "1.05")),
+    SPLASH("maimai でらっくす Splash", "爽", "spl", 21000, "#79DDB4",
+        arrayOf("splash", "sp", "1.1", "爽", "舞萌dx2021", "舞萌2021", "2021", "21", "1.10")),
+    SPLASH_PLUS("maimai でらっくす Splash PLUS", "煌", "spp", 21500, "#79DDB4",
+        arrayOf("splashplus", "splp", "splash+", "sp+", "spl+", "1.15")),
+    UNIVERSE("maimai でらっくす UNiVERSE", "宙", "uni", 22000, "#00A0E9",
+        arrayOf("universe", "un", "uv", "unv", "宙", "舞萌dx2022", "舞萌2022", "2022", "22", "1.2", "1.20")),
+    UNIVERSE_PLUS("maimai でらっくす UNiVERSE PLUS", "星", "unp", 22500, "#00A0E9",
+        arrayOf("universeplus", "unp", "uvp", "unvp", "universe+", "un+", "uv+", "uni+", "unv+", "星", "1.25")),
+    FESTIVAL("maimai でらっくす FESTiVAL", "祭", "fes", 23000, "#C59EFE",
+        arrayOf("festival", "fs", "fst", "祭", "舞萌dx2023", "舞萌2023", "2023", "23", "1.3", "1.30")),
+    FESTIVAL_PLUS("maimai でらっくす FESTiVAL PLUS", "祝", "fep", 23500, "#C59EFE",
+        arrayOf("festivalplus", "fsp", "fesp", "festival+", "fs+", "fes+", "fst+", "1.35")),
+    BUDDIES("maimai でらっくす BUDDiES", "双", "bud", 24000, "#FFCD43",
+        arrayOf("buddies", "bd", "双", "舞萌dx2024", "舞萌2024", "2024", "24", "1.4", "1.40")),
+    BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bup", 24500, "#FFCD43",
+        arrayOf("buddiesplus", "bdp", "budp", "buddies+", "bd+", "bud+", "宴", "1.45")),
+    PRISM("maimai でらっくす PRiSM", "鏡", "pri", 25000, "#7DFDDD",
+        arrayOf("prism", "pr", "prs", "鏡", "镜", "舞萌dx2025", "舞萌2025", "2025", "25", "1.5", "1.50")),
+    PRISM_PLUS("maimai でらっくす PRiSM PLUS", "稜", "prp", 25500, "#7DFDDD",
+        arrayOf("prismplus", "prp", "prip", "prsp", "pr+", "pri+", "prs+", "prism+", "稜", "棱", "舞萌dx2026", "舞萌2026", "2026", "26", "1.55")),
+    CIRCLE("maimai でらっくす CiRCLE", "丸", "cir", 26000, "#FF43B5",
+        arrayOf("circle", "ci", "cle", "丸", "1.6", "1.60")),
+    CIRCLE_PLUS("maimai でらっくす CiRCLE PLUS", "円", "cip", 26500, "#FF43B5",
+        arrayOf("circleplus", "cirp", "clep", "circle+", "ci+", "cir+", "cle+", "圆", "円", "1.65")),
+    MAGICAL("maimai でらっくす MAGiCAL", "魔", "mgc", 27000, "#60FA5E",
+        arrayOf("magical", "mg", "魔", "1.7", "1.70")),
+    MAGICAL_PLUS("maimai でらっくす MAGiCAL PLUS", "幻", "mgp", 27500, "#60FA5E",
+        arrayOf("magicalplus", "mgcp", "magical+", "mg+", "mgc+", "幻", "1.75")),
     ;
 
     companion object {
-        val newestVersion = PRISM // 当前最新版本
+        val newestVersion = PRISM // 当前国服最新版本
+
+        private val ALIAS_MAP: Map<String, MaiVersion> = buildMap {
+            MaiVersion.entries.forEach { version ->
+                if (version == DEFAULT) return@forEach
+
+                if (version.full.isNotEmpty()) put(version.full.lowercase(), version)
+                if (version.abbreviation.isNotEmpty()) put(version.abbreviation.lowercase(), version)
+                if (version.code.isNotEmpty()) put(version.code.lowercase(), version)
+                if (version.value > 0) put(version.value.toString(), version)
+
+                version.aliases.forEach { alias ->
+                    put(alias.lowercase(), version)
+                }
+            }
+        }
+
+        private val VERSIONS_ASC = MaiVersion.entries
+            .filter { it.value > 0 }
+            .sortedBy { it.value }
+
+        private val VALUE_MAP: Map<Int, MaiVersion> = entries
+            .filter { it != DEFAULT }
+            .associateBy { it.value }
+
+        fun getVersion(str: String?): MaiVersion {
+            if (str == null) return DEFAULT
+
+            val cleanStr = str
+                .replace(REGEX_PLUS, "+")
+                .replace(REGEX_SEPARATOR, "")
+                .lowercase()
+
+            ALIAS_MAP[cleanStr]?.let { return it }
+
+            cleanStr.toIntOrNull()?.let { intVal ->
+                VALUE_MAP[intVal]?.let { return it }
+            }
+
+            return DEFAULT
+        }
 
         fun getNameList(versions: List<MaiVersion>): List<String> {
             return versions.map(MaiVersion::full)
@@ -48,29 +129,15 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
         }
 
         fun getVersionFromAbbr(abbreviation: String): MaiVersion {
-            /*
-            for(v in MaiVersion.entries) {
-                if (v.abbreviation == abbreviation) return v
-            }
-
-            return DEFAULT
-
-             */
-
             return MaiVersion.entries.firstOrNull { it.abbreviation == abbreviation } ?: DEFAULT
         }
 
-        fun getVersionFromValue(value: Int): MaiVersion {
-            MaiVersion.entries
-                .reversed()
-                .filter { it.value > 0 }
-                .forEach {
-                    if (value >= it.value) {
-                        return it
-                    }
-            }
+        private val VERSION_VALUES = VERSIONS_ASC.map { it.value }
 
-            return DEFAULT
+        fun getVersionFromValue(value: Int): MaiVersion {
+            val index = VERSION_VALUES.binarySearch(value)
+            val insertPoint = if (index >= 0) index else -index - 2
+            return if (insertPoint >= 0) VERSIONS_ASC[insertPoint] else DEFAULT
         }
 
         fun getVersionListOrNewest(str: String?): List<MaiVersion> {
@@ -104,275 +171,8 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
 
         fun List<MaiVersion>.listToString(): String {
             return this
-                .filter { it != DEFAULT }
+                .filter { it != DEFAULT && it.full.isNotBlank() }
                 .joinToString(separator = ", ", prefix = "[", postfix = "]", transform = MaiVersion::full)
-        }
-
-        fun getVersion(str: String?): MaiVersion {
-            if (str == null) return DEFAULT
-
-            return when (str
-                .replace(REGEX_PLUS, "+")
-                .replace(REGEX_SEPARATOR, "")
-                .lowercase()
-            ) {
-                "circleplus",
-                "cip",
-                "cirp",
-                "clep",
-                "circle+",
-                "ci+",
-                "cir+",
-                "cle+",
-                "1.65" -> CIRCLE_PLUS
-                "circle",
-                "ci",
-                "cir",
-                "cle",
-                "丸",
-                "1.6",
-                "1.60" -> CIRCLE
-                "prismplus",
-                "prp",
-                "prip",
-                "prsp",
-                "prism+",
-                "棱",
-                "稜",
-                "舞萌dx2026",
-                "舞萌2026",
-                "2026",
-                "26",
-                "pr+",
-                "pri+",
-                "prs+",
-                "1.55" -> PRISM_PLUS
-                "prism",
-                "pr",
-                "pri",
-                "prs",
-                "镜",
-                "鏡",
-                "舞萌dx2025",
-                "舞萌2025",
-                "2025",
-                "25",
-                "1.5",
-                "1.50" -> PRISM
-                "buddiesplus",
-                "bdp",
-                "budp",
-                "buddies+",
-                "bd+",
-                "bud+",
-                "宴",
-                "1.45" -> BUDDIES_PLUS
-                "buddies",
-                "bd",
-                "bud",
-                "1.4",
-                "双",
-                "舞萌dx2024",
-                "舞萌2024",
-                "2024",
-                "24",
-                "1.40" -> BUDDIES
-                "festivalplus",
-                "fep",
-                "fsp",
-                "fesp",
-                "festival+",
-                "fs+",
-                "fes+",
-                "fst+",
-                "祝",
-                "1.35" -> FESTIVAL_PLUS
-                "festival",
-                "fs",
-                "fes",
-                "fst",
-                "1.3",
-                "祭",
-                "舞萌dx2023",
-                "舞萌2023",
-                "2023",
-                "23",
-                "1.30" -> FESTIVAL
-                "universeplus",
-                "unp",
-                "uvp",
-                "unvp",
-                "universe+",
-                "un+",
-                "uv+",
-                "uni+",
-                "unv+",
-                "星",
-                "1.25" -> UNIVERSE_PLUS
-                "universe",
-                "un",
-                "uv",
-                "uni",
-                "unv",
-                "1.2",
-                "宙",
-                "舞萌dx2022",
-                "舞萌2022",
-                "2022",
-                "22",
-                "1.20" -> UNIVERSE
-                "splashplus",
-                "spp",
-                "splp",
-                "splash+",
-                "sp+",
-                "spl+",
-                "煌",
-                "1.15" -> SPLASH_PLUS
-                "splash",
-                "sp",
-                "spl",
-                "1.1",
-                "爽",
-                "舞萌dx2021",
-                "舞萌2021",
-                "2021",
-                "21",
-                "1.10" -> SPLASH
-                "deluxeplus",
-                "dxp",
-                "dlxp",
-                "deluxe+",
-                "dx+",
-                "dlx+",
-                "華",
-                "华",
-                "1.05" -> DX_PLUS
-                "deluxe",
-                "dx",
-                "dlx",
-                "1.0",
-                "熊",
-                "舞萌dx2020",
-                "舞萌dx",
-                "舞萌",
-                "20",
-                "1.00" -> DX
-                "allfinale",
-                "finaleplus",
-                "beforedeluxe",
-                "beforedx",
-                "afn",
-                "finale+",
-                "final+",
-                "fn+",
-                "fnl+",
-                "舞",
-                "0.75" -> ALL_FINALE
-                "finale",
-                "final",
-                "fn",
-                "fnl",
-                "0.7",
-                "輝",
-                "辉",
-                "0.70" -> FINALE
-                "milkplus",
-                "mkp",
-                "milk+",
-                "white+",
-                "mk+",
-                "mlk+",
-                "雪",
-                "0.65" -> MILK_PLUS
-                "milk",
-                "white",
-                "mk",
-                "mlk",
-                "0.6",
-                "白",
-                "0.60" -> MILK
-                "murasakiplus",
-                "msp",
-                "murasaki+",
-                "ms+",
-                "msk+",
-                "菫",
-                "0.55" -> MURASAKI_PLUS
-                "murasaki",
-                "ms",
-                "msk",
-                "0.5",
-                "紫",
-                "0.50" -> MURASAKI
-                "pinkplus",
-                "pkp",
-                "pink+",
-                "pk+",
-                "pnk+",
-                "櫻",
-                "樱",
-                "0.45" -> PINK_PLUS
-                "pink",
-                "pk",
-                "pnk",
-                "0.4",
-                "桃",
-                "0.40" -> PINK
-                "orangeplus",
-                "orgp",
-                "orp",
-                "or+",
-                "org+",
-                "暁",
-                "晓",
-                "0.35" -> ORANGE_PLUS
-                "orange",
-                "or",
-                "org",
-                "0.3",
-                "橙",
-                "0.30" -> ORANGE
-                "greenplus",
-                "grep",
-                "grp",
-                "gre+",
-                "grn+",
-                "gr+",
-                "檄",
-                "0.25" -> GREEN_PLUS
-                "green",
-                "gr",
-                "gre",
-                "grn",
-                "0.2",
-                "超",
-                "0.20" -> GREEN
-                "plus",
-                "maimaiplus",
-                "maimai+",
-                "pl",
-                "pls",
-                "mai+",
-                "真",
-                "0.15" -> PLUS
-                "maimai",
-                "mi",
-                "mai",
-                "初",
-                "0.1",
-                "0.10" -> MAIMAI
-                else -> {
-                    val long = str.toIntOrNull()
-
-                    for (v in entries) {
-                        if (str == v.full || str == v.abbreviation || long == v.value) {
-                            return v
-                        }
-                    }
-                    DEFAULT
-                }
-            }
         }
     }
 }

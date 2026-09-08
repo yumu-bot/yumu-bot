@@ -83,6 +83,8 @@ class FetchService(
         private fun getVersionInt(maiVersion: MaiVersion): Int {
             return when(maiVersion) {
                 DEFAULT -> 0
+                ALL_FINALE -> 0
+
                 MAIMAI -> 0
                 PLUS -> 1
                 GREEN -> 2
@@ -96,7 +98,6 @@ class FetchService(
                 MILK -> 10
                 MILK_PLUS -> 11
                 FINALE -> 12
-                ALL_FINALE -> 0
                 DX -> 13
                 DX_PLUS -> 13
                 SPLASH -> 14
@@ -111,6 +112,8 @@ class FetchService(
                 PRISM_PLUS -> 23
                 CIRCLE -> 24
                 CIRCLE_PLUS -> 25
+                MAGICAL -> 26
+                MAGICAL_PLUS -> 27
             }
         }
 
