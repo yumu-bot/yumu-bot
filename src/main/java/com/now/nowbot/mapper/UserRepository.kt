@@ -20,6 +20,25 @@ import java.time.LocalDate
 import java.util.stream.Stream
 
 interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
+    @Query(
+        value = """
+        SELECT s.* FROM user_info s 
+        WHERE s.user_id = :userID 
+          AND s.mode = :mode 
+          AND :targetDate BETWEEN s.created_at AND s.updated_at
+          AND s.updated_at < :maxLimitDate
+        ORDER BY s.updated_at DESC, s.id DESC 
+        LIMIT 1
+    """,
+        nativeQuery = true
+    )
+    fun getValidByDateRange(
+        userID: Long,
+        mode: Byte,
+        targetDate: LocalDate,
+        maxLimitDate: LocalDate
+    ): UserInfoLite?
+
     @Query("""
         select * from user_info
         where user_id = :userID and mode = :mode
@@ -127,6 +146,24 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
 }
 
 interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
+    @Query(
+        value = """
+        SELECT s.* FROM user_statistics s 
+        WHERE s.user_id = :userID 
+          AND s.mode = :mode 
+          AND :targetDate BETWEEN s.created_at AND s.updated_at
+          AND s.updated_at < :maxLimitDate
+        ORDER BY s.updated_at DESC, s.id DESC 
+        LIMIT 1
+    """,
+        nativeQuery = true
+    )
+    fun getValidByDateRange(
+        userID: Long,
+        mode: Byte,
+        targetDate: LocalDate,
+        maxLimitDate: LocalDate
+    ): UserStatisticsLite?
 
     @Query("""
         select * from user_statistics
@@ -492,6 +529,9 @@ interface UserRankPercentRepository: JpaRepository<UserRankPercentLite, UserRank
 
     @Query("SELECT s.* FROM user_rank_percent s WHERE s.user_id = :userID AND s.mode = :mode AND s.date < :from ORDER BY s.date DESC LIMIT 1", nativeQuery = true)
     fun getLatestBefore(userID: Long, mode: Byte, from: LocalDate): UserRankPercentLite?
+
+    @Query("SELECT s.* FROM user_rank_percent s WHERE s.user_id = :userID AND s.mode = :mode AND s.date <= :from ORDER BY s.date DESC LIMIT 1", nativeQuery = true)
+    fun getLatest(userID: Long, mode: Byte, from: LocalDate): UserRankPercentLite?
 
     @Query("""
         select * from user_rank_percent

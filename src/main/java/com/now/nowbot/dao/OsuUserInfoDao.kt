@@ -264,41 +264,16 @@ class OsuUserInfoDao(
         }
     }
 
-    /**
-     * 优先取相比目标天更旧或相同的数据（<= target），没有才取后面的数据（> target）
-     */
-    fun getPercentPreferBackward(userID: Long, mode: Byte, target: LocalDate): UserRankPercentLite? {
-        return userRankPercentRepository.getLatestBefore(userID, mode, target)
-            ?: userRankPercentRepository.getEarliest(userID, mode, target)
-    }
-
-    /**
-     * 优先取相比目标天更旧或相同的数据（<= target），没有才取后面的数据（> target）
-     */
-    fun getStatisticsPreferBackward(userID: Long, mode: Byte, target: LocalDate): UserStatisticsLite? {
-        return userStatisticsRepository.getLatestBefore(userID, mode, target)
-            ?: userStatisticsRepository.getEarliest(userID, mode, target)
-    }
-
-    /**
-     * 优先取相比目标天更旧或相同的数据（<= target），没有才取后面的数据（> target）
-     */
-    fun getInformationPreferBackward(userID: Long, mode: Byte, target: LocalDate): UserInfoLite? {
-        return userInfoRepository.getLatestBefore(userID, mode, target)
-            ?: userInfoRepository.getEarliest(userID, mode, target)
-    }
-
     fun getHistoryUser(user: OsuUser, duration: Duration = 1.days): OsuUser? {
         val today = LocalDate.now(ZoneOffset.UTC)
 
-        // 因为这里的目标天应该是今天
-        val target = today.minusDays(duration.minus(1.days).inWholeDays)
+        val target = today.minusDays(duration.inWholeDays)
         val mode = user.mode.modeValue
 
-        val info = getInformationPreferBackward(user.userID, mode, target)
-        val stats = getStatisticsPreferBackward(user.userID, mode, target)
-        val rank = userGlobalRankRepository.getBetween(user.userID, mode, target.minusDays(90), target)
-        val percent = getPercentPreferBackward(user.userID, mode, target)
+        val info = userInfoRepository.getValidByDateRange(user.userID, mode, target, today)
+        val stats = userStatisticsRepository.getValidByDateRange(user.userID, mode, target, today)
+        val rank = userGlobalRankRepository.getBetween(user.userID, mode, target.minusDays(89), target)
+        val percent = userRankPercentRepository.getLatest(user.userID, mode, target)
 
         return fromArchive(info, stats, rank, percent)
     }
