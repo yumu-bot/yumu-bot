@@ -443,26 +443,32 @@ class OsuUserInfoDao(
         for ((userID, statistics, countryRank) in inputs) {
             val latest = latestMap[userID]
 
-            if (latest != null) {
-                if (latest.countryRank >= countryRank && countryRank >= 0L) {
-                    if (latest.date.isBefore(today)) {
-                        val entity = latest.updateFrom(userID, mode, countryRank, statistics).apply {
-                            this.date = today
-                        }
-                        entitiesToUpsert.add(entity)
-                    }
-                    continue
-                }
-
-                val entity = latest.updateFrom(userID, mode, countryRank, statistics).apply {
-                    this.date = today
-                }
-                entitiesToUpsert.add(entity)
-            } else {
+            if (latest == null) {
+                // 1. 无历史记录：新建实体 (id 为 null -> INSERT)
                 val entity = UserRankPercentLite().updateFrom(userID, mode, countryRank, statistics).apply {
                     this.date = today
                 }
                 entitiesToUpsert.add(entity)
+            } else if (latest.date.isBefore(today)) {
+                // 2. 跨天：如果不相等（或名次有变化），必须创建全新的实体，不能复用 latest (id 为 null -> INSERT)
+                // 注意：如果只要跨天就必须留存一条今天的新快照，直接 New 实体即可；
+                // 如果只有排名变好/数据变化才新增，可以在这里加上条件判断
+                val isChanged = latest.countryRank != countryRank
+
+                if (isChanged) {
+                    val entity = UserRankPercentLite().updateFrom(userID, mode, countryRank, statistics).apply {
+                        this.date = today
+                    }
+                    entitiesToUpsert.add(entity)
+                }
+            } else {
+                // 3. 今天已存在记录：数据变化时复用 latest 实体进行更新 (带有今天的 id -> UPDATE)
+                if (latest.countryRank != countryRank) {
+                    val entity = latest.updateFrom(userID, mode, countryRank, statistics).apply {
+                        this.date = today
+                    }
+                    entitiesToUpsert.add(entity)
+                }
             }
         }
 
@@ -583,49 +589,61 @@ class OsuUserInfoDao(
         val latestMap = userStatisticsRepository.getLatestBatch(userIDs, mode.modeValue)
             .associateBy { it.userID }
 
-        val entitiesToUpsert = distinctInputs.mapNotNull { (userID, statistics) ->
+        val entitiesToInsert = mutableListOf<UserStatisticsLite>()
+        val entitiesToUpdate = mutableListOf<Long>()
+
+        distinctInputs.forEach { (userID, statistics) ->
             val latest = latestMap[userID]
+            val currentTotalHits = statistics.totalHits ?: 0L
 
             when {
-                // 没有记录：新增
-                latest == null -> UserStatisticsLite().apply {
-                    updateFrom(userID, mode, statistics)
-                    createdAt = today
-                    updatedAt = today
-                }
-
-                // 有记录但今天是新的一天
-                latest.updatedAt.isBefore(today) -> {
-                    val currentTotalHits = statistics.totalHits ?: 0L
-
-                    if (latest.totalHits != currentTotalHits) {
-                        // 有数据变更，必须新增
+                // 1. 无历史记录：直接新增今天的记录
+                latest == null -> {
+                    entitiesToInsert.add(
                         UserStatisticsLite().apply {
                             updateFrom(userID, mode, statistics)
-                            createdAt = today  // 新记录的创建日期是今天
+                            createdAt = today
                             updatedAt = today
                         }
+                    )
+                }
+
+                // 2. 跨天（历史最新记录是在今天之前）
+                latest.updatedAt.isBefore(today) -> {
+                    if (latest.totalHits != currentTotalHits) {
+                        // 数据有变动：新建今天的数据行（id 为 null，实现 INSERT 新历史）
+                        entitiesToInsert.add(
+                            UserStatisticsLite().apply {
+                                updateFrom(userID, mode, statistics)
+                                createdAt = today
+                                updatedAt = today
+                            }
+                        )
                     } else {
-                        // 只需要更新即可
-                        latest.updatedAt = today
-                        latest
+                        // 数据无变动：仅记录 ID，后续只刷新旧记录的 updatedAt，不覆盖整行数据
+                        latest.id?.let { entitiesToUpdate.add(it) }
                     }
                 }
 
-                // 今天已有记录且数据有变化
-                latest.totalHits != (statistics.totalHits ?: 0L) -> {
+                // 3. 今天已存在记录，且今天的数据有更新
+                latest.totalHits != currentTotalHits -> {
+                    // 修改今天的记录（带有今天的 id，saveAll 会执行 UPDATE 更新今天这行）
                     latest.updateFrom(userID, mode, statistics)
                     latest.updatedAt = today
-                    latest
+                    entitiesToInsert.add(latest)
                 }
 
-                // 今天已有记录且数据无变化：不操作
-                else -> null
+                // 4. 今天已存在记录且数据未变动：不做任何操作
+                else -> {}
             }
         }
 
-        if (entitiesToUpsert.isNotEmpty()) {
-            userStatisticsRepository.saveAll(entitiesToUpsert)
+        if (entitiesToInsert.isNotEmpty()) {
+            userStatisticsRepository.saveAll(entitiesToInsert)
+        }
+
+        if (entitiesToUpdate.isNotEmpty()) {
+            userStatisticsRepository.updateBatchUpdatedAt(entitiesToUpdate, today)
         }
     }
 

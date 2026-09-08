@@ -8,16 +8,12 @@ import com.now.nowbot.entity.UserRankModeProjection
 import com.now.nowbot.entity.UserRankPercentKey
 import com.now.nowbot.entity.UserRankPercentLite
 import com.now.nowbot.entity.UserStatisticsLite
-import jakarta.persistence.QueryHint
-import org.hibernate.jpa.HibernateHints.HINT_FETCH_SIZE
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.util.stream.Stream
 
 interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
     @Query(
@@ -235,14 +231,17 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
         to: LocalDate
     ): List<UserStatisticsLite>
 
-    @QueryHints(value = [QueryHint(name = HINT_FETCH_SIZE, value = "1000")])
-    @Query(value = """
-        SELECT DISTINCT ON (user_id, mode) * 
-        FROM user_statistics 
-        WHERE updated_at BETWEEN :from AND :to
-        ORDER BY user_id, mode, updated_at DESC
+    @Transactional
+    @Modifying
+    @Query("""
+        UPDATE user_statistics 
+        SET updated_at = :updatedAt 
+        WHERE id IN :ids
     """, nativeQuery = true)
-    fun streamByUpdatedAtBetween(from: LocalDate, to: LocalDate): Stream<UserStatisticsLite>
+    fun updateBatchUpdatedAt(
+        @Param("ids") ids: Collection<Long>,
+        @Param("updatedAt") updatedAt: LocalDate
+    ): Int
 
     @Query(
         value = """
