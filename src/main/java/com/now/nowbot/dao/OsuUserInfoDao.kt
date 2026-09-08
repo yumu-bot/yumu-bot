@@ -18,6 +18,7 @@ import com.now.nowbot.mapper.UserGlobalRankRepository
 import com.now.nowbot.mapper.UserInfoRepository
 import com.now.nowbot.mapper.UserRankPercentRepository
 import com.now.nowbot.mapper.UserStatisticsRepository
+import com.now.nowbot.model.calculate.InfoLogStatistics
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
@@ -264,38 +265,40 @@ class OsuUserInfoDao(
     }
 
     /**
-     * 优先取相比目标天更新或相同的数据，没有才取前面的数据
+     * 优先取相比目标天更旧或相同的数据（<= target），没有才取后面的数据（> target）
      */
-    fun getPercentFrom(userID: Long, mode: Byte, from: LocalDate): UserRankPercentLite? {
-        return userRankPercentRepository.getEarliest(userID, mode, from)
-            ?: userRankPercentRepository.getLatestBefore(userID, mode, from)
+    fun getPercentPreferBackward(userID: Long, mode: Byte, target: LocalDate): UserRankPercentLite? {
+        return userRankPercentRepository.getLatestBefore(userID, mode, target)
+            ?: userRankPercentRepository.getEarliest(userID, mode, target)
     }
 
     /**
-     * 优先取相比目标天更新或相同的数据，没有才取前面的数据
+     * 优先取相比目标天更旧或相同的数据（<= target），没有才取后面的数据（> target）
      */
-    fun getStatisticsFrom(userID: Long, mode: Byte, from: LocalDate): UserStatisticsLite? {
-        return userStatisticsRepository.getEarliest(userID, mode, from)
-            ?: userStatisticsRepository.getLatestBefore(userID, mode, from)
+    fun getStatisticsPreferBackward(userID: Long, mode: Byte, target: LocalDate): UserStatisticsLite? {
+        return userStatisticsRepository.getLatestBefore(userID, mode, target)
+            ?: userStatisticsRepository.getEarliest(userID, mode, target)
     }
 
     /**
-     * 优先取相比目标天更新或相同的数据，没有才取前面的数据
+     * 优先取相比目标天更旧或相同的数据（<= target），没有才取后面的数据（> target）
      */
-    fun getInformationFrom(userID: Long, mode: Byte, from: LocalDate): UserInfoLite? {
-        return userInfoRepository.getEarliest(userID, mode, from)
-            ?: userInfoRepository.getLatestBefore(userID, mode, from)
+    fun getInformationPreferBackward(userID: Long, mode: Byte, target: LocalDate): UserInfoLite? {
+        return userInfoRepository.getLatestBefore(userID, mode, target)
+            ?: userInfoRepository.getEarliest(userID, mode, target)
     }
 
     fun getHistoryUser(user: OsuUser, duration: Duration = 1.days): OsuUser? {
         val today = LocalDate.now(ZoneOffset.UTC)
-        val from = today.minusDays(duration.inWholeDays)
+
+        // 因为这里的目标天应该是今天
+        val target = today.minusDays(duration.minus(1.days).inWholeDays)
         val mode = user.mode.modeValue
 
-        val info = getInformationFrom(user.userID, mode, from)
-        val stats = getStatisticsFrom(user.userID, mode, from)
-        val rank = userGlobalRankRepository.getBetween(user.userID, mode, from.minusDays(90), from)
-        val percent = getPercentFrom(user.userID, mode, from)
+        val info = getInformationPreferBackward(user.userID, mode, target)
+        val stats = getStatisticsPreferBackward(user.userID, mode, target)
+        val rank = userGlobalRankRepository.getBetween(user.userID, mode, target.minusDays(90), target)
+        val percent = getPercentPreferBackward(user.userID, mode, target)
 
         return fromArchive(info, stats, rank, percent)
     }
@@ -678,7 +681,9 @@ class OsuUserInfoDao(
                 }
 
                 if (stats != null) {
-                    this.statistics = Statistics().apply {
+                    this.statistics = InfoLogStatistics().apply {
+                        this.logTime = stats.updatedAt.atStartOfDay()
+
                         this.rankedScore = stats.rankedScore
                         this.totalScore = stats.totalScore
                         this.totalHits = stats.totalHits
