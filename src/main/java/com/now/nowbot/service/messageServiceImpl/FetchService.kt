@@ -120,11 +120,7 @@ class FetchService(
         private fun fetchMaiMusicDatabaseJson(event: MessageEvent, onlyReMaster: Boolean = false, lxMaiApiService: LxMaiApiService) {
             val l = lxMaiApiService.getMaiSongs()
                 .filter {
-                    if (onlyReMaster) {
-                        !it.isUtage && it.charts.size >= 5
-                    } else {
-                        true
-                    }
+                    !onlyReMaster || !it.isUtage && it.charts.size >= 5
                 }
                 .associateBy { it.songID }
 

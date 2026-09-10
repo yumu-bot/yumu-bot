@@ -84,13 +84,13 @@ enum class MaiVersion(
             MaiVersion.entries.forEach { version ->
                 if (version == DEFAULT) return@forEach
 
-                if (version.full.isNotEmpty()) put(version.full.lowercase(), version)
-                if (version.abbreviation.isNotEmpty()) put(version.abbreviation.lowercase(), version)
-                if (version.code.isNotEmpty()) put(version.code.lowercase(), version)
+                if (version.full.isNotEmpty()) put(version.full.lowercase().replace(REGEX_SEPARATOR, ""), version)
+                if (version.abbreviation.isNotEmpty()) put(version.abbreviation.lowercase().replace(REGEX_SEPARATOR, ""), version)
+                if (version.code.isNotEmpty()) put(version.code.lowercase().replace(REGEX_SEPARATOR, ""), version)
                 if (version.value > 0) put(version.value.toString(), version)
 
                 version.aliases.forEach { alias ->
-                    put(alias.lowercase(), version)
+                    put(alias.lowercase().replace(REGEX_SEPARATOR, ""), version)
                 }
             }
         }
