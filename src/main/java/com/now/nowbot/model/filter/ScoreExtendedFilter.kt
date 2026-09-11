@@ -17,7 +17,7 @@ enum class ScoreExtendedFilter(@param:Language("RegExp") val regex: Regex)  {
         val regexes: List<Regex> by lazy { ScoreExtendedFilter.entries.map { it.regex } }
 
         fun getExtend(conditions: List<List<String>>): Pair<Long?, String?> {
-            require(conditions.size >= 2) { "Conditions must have more than two conditions" }
+            if (conditions.size < 2) return Pair(null, null)
 
             val scoreID = conditions[0].firstOrNull()?.split(REGEX_OPERATOR_WITH_SPACE)?.lastOrNull()?.toLongOrNull()
             val username = conditions[1].firstOrNull()?.split(REGEX_OPERATOR_WITH_SPACE)?.lastOrNull()?.trim()
