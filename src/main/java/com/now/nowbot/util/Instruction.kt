@@ -181,22 +181,22 @@ enum class Instruction(val pattern: Pattern) {
 
     SCORE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(score|s)", "成绩")
-        appendModeBIDQQUIDNameMod()
+        appendModeBIDQQUIDNameAnyMod()
     }),
 
     SCORE_SHOW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(score|s)\\s*(show|w)", "展示成绩")
-        appendModeBIDQQUIDNameMod()
+        appendModeBIDQQUIDNameAnyMod()
     }),
 
     UU_SCORE(CommandPatternBuilder.create {
         appendUUIgnoreAll("score", "s")
-        appendModeBIDQQUIDNameMod()
+        appendModeBIDQQUIDNameAnyMod()
     }),
 
     SCORES(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("scores", "ss", "多成绩")
-        appendModeBIDQQUIDNameMod()
+        appendModeBIDQQUIDNameAnyMod()
     }),
 
     SB_SCORE(CommandPatternBuilder.create {

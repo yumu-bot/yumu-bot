@@ -235,6 +235,11 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
+    fun appendNameAnyButNoPlus() {
+        appendCaptureGroup(FLAG_NAME, PATTERN_ANYTHING_BUT_NO_PLUS, MORE)
+        appendSpace()
+    }
+
     /**
      * maimai 合法名称（基本就是啥都匹配）
      * (?<name> X X+ X)
@@ -442,6 +447,15 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendQQ()
         appendUID()
         appendSBNameAndRange()
+    }
+
+    fun appendModeBIDQQUIDNameAnyMod() {
+        appendMode()
+        appendBID()
+        appendQQ()
+        appendUID()
+        appendNameAnyButNoPlus()
+        appendMod()
     }
 
     /**

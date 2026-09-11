@@ -8,13 +8,14 @@ import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
+import kotlin.collections.filter
 import kotlin.text.split
 
 // 当然，这个类是用来给 ppy 的 api 发送查询请求的
 enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
     CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
-    GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
+    // GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
     BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
@@ -42,7 +43,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     LENGTH("(length|drain|time|长度|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE($PATTERN_COLON$PATTERN_NUMBER_MORE)?)".toRegex()),
 
-    GENERAL("(general|bool(ean)?|常规?|总览?|布尔值?|值|e)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+    BOOLEAN("(general|bool(ean)?|常规?|总览?|布尔值?|值|e)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
     MODE("(mode|模式?|m)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_MODE)".toRegex()),
 
@@ -97,12 +98,12 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
             val op = operator.getText()
 
             return when (filter) {
-                GENERAL -> General.getGenerals(text).map { it.getQuery() }
+                BOOLEAN -> SearchBooleans.getSearchBooleans(text).map { it.getQuery() }
 
                 else -> {
                     val con: Pair<String, String>? = when(filter) {
                         CREATOR -> "q" to "creator=\"\"${text}\"\""
-                        GUEST -> "q" to "creator=\"\"${text}\"\""
+                        // GUEST -> "q" to "creator=\"\"${text}\"\""
                         BID -> "q" to text
                         SID -> "q" to text
                         TITLE -> "q" to "title=\"\"${text}\"\""
@@ -170,10 +171,10 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                 }
         }
 
-        internal enum class General {
+        internal enum class SearchBooleans {
             RECOMMENDED, CONVERTS, FOLLOWER, SPOTLIGHTS, FEATURED_ARTIST, EXPLICIT, HAS_VIDEO, HAS_STORYBOARD, PLAYED, UNPLAYED;
 
-            fun getQuery(): Pair<String, Any> {
+            fun getQuery(): Pair<String, String> {
                 return when(this) {
                     RECOMMENDED -> "c" to "recommended"
                     CONVERTS -> "c" to "converts"
@@ -189,13 +190,13 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
             }
 
             companion object {
-                fun getGenerals(inputs: String): List<General> {
+                fun getSearchBooleans(inputs: String): List<SearchBooleans> {
                     return inputs.split(REGEX_SEPARATOR_NO_SPACE)
-                        .dropWhile { it.isEmpty() }
-                        .mapNotNull { getGeneral(it) }
+                        .filter { it.isNotBlank() }
+                        .mapNotNull { getSearchBoolean(it) }
                 }
 
-                fun getGeneral(input: String): General? {
+                fun getSearchBoolean(input: String): SearchBooleans? {
                     return when(input.dropWhile { it.isWhitespace() }.trim()) {
                         "recommended", "recommend", "r" -> RECOMMENDED
                         "converts", "convert", "cv", "c" -> CONVERTS

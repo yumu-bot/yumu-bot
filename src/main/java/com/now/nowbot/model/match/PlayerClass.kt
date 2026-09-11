@@ -14,7 +14,7 @@ enum class PlayerClass(
     MF("Main Force", "主力", "#22AC38", "MF"),
     SP("Specialized", "专精", "#B3D465", "SP"),
     WF("Work Force", "打工", "#0068B7", "WF"),
-    GE("General", "普通", "#BDBDBD", "GE"),
+    GE("SearchBooleans", "普通", "#BDBDBD", "GE"),
     GU("Guest", "客串", "#00A0E9", "GU"),
     SU("Support", "抗压", "#9922EE", "SU"),
     SG("Scapegoat", "背锅", "#E4007F", "SG"),
@@ -25,9 +25,9 @@ enum class PlayerClass(
     CMA("Competent Marshal", "称职元帅", BC.color, BC.category),
     IMA("Indomitable Marshal", "不屈元帅", BC.color, BC.category),
 
-    EGE("Ever-Victorious General", "常胜将军", CA.color, CA.category),
-    AGE("Assiduous General", "勤奋将军", CA.color, CA.category),
-    SGE("Striven General", "尽力将军", CA.color, CA.category),
+    EGE("Ever-Victorious SearchBooleans", "常胜将军", CA.color, CA.category),
+    AGE("Assiduous SearchBooleans", "勤奋将军", CA.color, CA.category),
+    SGE("Striven SearchBooleans", "尽力将军", CA.color, CA.category),
 
     BMF("Breakthrough Main Force", "突破主力", MF.color, MF.category),
     RMF("Reliable Main Force", "可靠主力", MF.color, MF.category),

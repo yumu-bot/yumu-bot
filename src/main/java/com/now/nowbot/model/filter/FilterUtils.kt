@@ -1,10 +1,12 @@
 package com.now.nowbot.model.filter
 
+import com.now.nowbot.util.command.REGEX_OPERATOR_WITH_SPACE
+
 /**
  * 根据 Enum 的 ordinal 获取对应的匹配结果列表
  */
 fun <E : Enum<E>> List<List<String>>.getMatches(filter: E): List<String> {
-    return this.getOrNull(filter.ordinal).orEmpty()
+    return this.getOrNull(filter.ordinal).orEmpty().mapNotNull { it.split(REGEX_OPERATOR_WITH_SPACE).lastOrNull() }
 }
 
 /**

@@ -1,11 +1,19 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
+import com.now.nowbot.model.filter.ScoreExtendedFilter
+import com.now.nowbot.model.filter.SearchBeatmapsetFilter
+import com.now.nowbot.model.filter.getFirstMatch
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
@@ -28,6 +36,8 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
+import com.now.nowbot.util.StringUtil.asConditions
+import com.now.nowbot.util.command.FLAG_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -39,6 +49,8 @@ import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
+import kotlin.collections.chunked
+import kotlin.collections.map
 import kotlin.time.Duration.Companion.seconds
 
 @Service("SCORE") class ScoreService(
@@ -48,6 +60,8 @@ import kotlin.time.Duration.Companion.seconds
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao,
+    private val bindDao: BindDao,
+    private val groupDao: GroupDao,
     private val scoreDao: ScoreDao,
     private val restrict: NewbieRestrictService,
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
@@ -69,7 +83,8 @@ import kotlin.time.Duration.Companion.seconds
         val map: Beatmap,
         val scores: List<LazerScore>,
         val mode: OsuMode,
-        val mods: List<LazerMod>? = null
+        val mods: List<LazerMod>? = null,
+        val isMultipleScore: Boolean = false,
     )
 
     override fun isHandle(
@@ -120,6 +135,7 @@ import kotlin.time.Duration.Companion.seconds
             log.error("谱面成绩：发送失败", e)
             throw IllegalStateException.Send("谱面成绩")
         }
+
         val scores = param.scores.toList()
 
         return if (param.isRecordCallStatistics) {
@@ -176,13 +192,51 @@ import kotlin.time.Duration.Companion.seconds
         val inputMode = InstructionUtil.getMode(matcher)
         val mods: List<LazerMod> = InstructionUtil.getMod(matcher)
 
+        val any = matcher.group(FLAG_NAME).orEmpty()
+
+        val conditions = any.asConditions(SearchBeatmapsetFilter.regexes)
+        val (selectedScoreID, selectedUsername) = ScoreExtendedFilter.getExtend(any.asConditions(ScoreExtendedFilter.regexes))
+
         val isMyself = AtomicBoolean(true)
 
-        val userID: Long? = UserIDUtil.getUserIDWithoutRange(event, matcher, inputMode, isMyself)
+        val name2UserID: Long? = UserIDUtil.getUserIDWithoutRange(event, matcher, inputMode, isMyself)
+        val selectedUser: OsuUser? = if (selectedUsername.isNullOrBlank()) {
+            null
+        } else runCatching {
+            userApiService.getOsuUser(selectedUsername)
+        }.getOrNull()
+
+        val userID: Long? = selectedUser?.userID ?: name2UserID
+
+        val selectedBeatmapID = conditions.getFirstMatch(SearchBeatmapsetFilter.BID)?.toLongOrNull()
+        val selectedBeatmapsetID = conditions.getFirstMatch(SearchBeatmapsetFilter.SID)?.toLongOrNull()
 
         val isRecordCallStatistics = AtomicBoolean(true)
 
         val data: ScoreData = when {
+            selectedBeatmapID != null -> {
+                val d = getFromBeatmapID(selectedBeatmapID, userID, inputMode, event, messageText, matcher, mods)
+
+                if (d.scores.isNotEmpty()) {
+                    d
+                } else {
+                    getFromBeatmapset(d, event)
+                }
+            }
+
+            selectedBeatmapsetID != null -> {
+                val mode = inputMode.data.orElse()
+
+                val user = selectedUser
+                    ?: if (name2UserID != null) {
+                        userApiService.getOsuUser(name2UserID, mode)
+                    } else {
+                        userApiService.getOsuUser(bindDao.getBindFromQQ(event.target.takeIf { it > 0L } ?: event.sender.contactID))
+                    }
+
+                getFromBeatmapsetID(selectedBeatmapsetID, user, user.mode.orElse(mode), mods, event)
+            }
+
             number in 1L ..< 1000_0000L -> {
                 val d = getFromBeatmapID(number, userID, inputMode, event, messageText, matcher, mods)
 
@@ -193,9 +247,80 @@ import kotlin.time.Duration.Companion.seconds
                 }
             }
 
+            selectedScoreID != null -> {
+                getFromScoreID(selectedScoreID)
+            }
+
             number >= 1000_0000L -> {
                 getFromScoreID(number)
             }
+
+            conditions.flatten().isNotEmpty() -> {
+                val groupMode = groupDao.getGroupMode(event)
+
+                val overwritten = if (groupMode != OsuMode.DEFAULT && inputMode.data.isDefaultOrNull()) {
+                    mapOf(
+                        "m" to groupMode.modeValue.toString()
+                    )
+                } else {
+                    emptyMap()
+                }
+
+                val query = SearchBeatmapsetFilter.buildQuery(conditions, overwritten = overwritten)
+
+                val result = beatmapApiService.searchBeatmapset(query, userID?.let {
+                    bindDao.getBindUserFromOsuIDOrNull(userID)
+                })
+
+                if (result.beatmapsets.isEmpty()) {
+                    throw NoSuchElementException.Search()
+                }
+
+                val mode = inputMode.data.orElse(result.beatmapsets.take(5).mapNotNull { it.beatmaps }.flatten().maxOfOrNull { it.mode })
+
+                val user = selectedUser
+                    ?: if (name2UserID != null) {
+                        userApiService.getOsuUser(name2UserID, mode)
+                    } else {
+                        userApiService.getOsuUser(bindDao.getBindFromQQ(event.target.takeIf { it > 0L } ?: event.sender.contactID))
+                    }
+
+                getFromBeatmapsets(result.beatmapsets.take(5), user, mode, mods)
+            }
+
+//            any.isNotBlank() -> {
+//                val mode = inputMode.data.orElse()
+//
+//                if (name2UserID != null) {
+//                    val name2user = userApiService.getOsuUser(name2UserID, mode)
+//
+//                    val future = CompletableFuture<ScoreData>()
+//
+//                    AsyncMessageUtil.doubleCheck(event,
+//                        onCheck = {
+//                            event.reply("""
+//                                您想要查询标题为 $any 的成绩，还是想要查询玩家 ${name2user.username} 的成绩？
+//                                回复 1 查询标题，回复 2 查询玩家。
+//                            """.trimIndent())
+//                        },
+//
+//                        onSuccess = { ev ->
+//                            if (ev.rawMessage.contains("1", ignoreCase = true)) {
+//
+//
+//                                future.complete()
+//                            } else if (ev.rawMessage.contains("2", ignoreCase = true)) {
+//                                future.complete()
+//                            } else {
+//                                future.completeExceptionally(TipsException("操作已中止。"))
+//                            }
+//                        }
+//
+//                        )
+//                } else {
+//
+//                }
+//            }
 
             else -> {
                 // 进阶备用方法：先获取之前大家使用的 bid，然后尝试获取最近成绩
@@ -280,8 +405,7 @@ import kotlin.time.Duration.Companion.seconds
         return ScoreData(user, map, scores, mode)
     }
 
-    private fun getFromScoreID(scoreID: Long
-    ) : ScoreData {
+    private fun getFromScoreID(scoreID: Long) : ScoreData {
         val score = scoreApiService.getScore(scoreID)
 
         val async = AsyncMethodExecutor.awaitPair(
@@ -380,6 +504,147 @@ import kotlin.time.Duration.Companion.seconds
 
     private fun getFromBeatmapset(data: ScoreData, event: MessageEvent): ScoreData {
         return getFromBeatmapset(data.user, data.map, data.mode, data.mods, event)
+    }
+
+    private fun getFromBeatmapsets(beatmapsets: List<Beatmapset>, user: OsuUser, mode: OsuMode, mods: List<LazerMod>?): ScoreData {
+        val excludeConverts = mode.safeModeValue != 0.toByte()
+
+        val passed = beatmapApiService.getBeatmapPassed(
+            user.userID,
+            beatmapsets.map { it.beatmapsetID },
+            mode,
+            excludeConverts = excludeConverts,
+            isLegacy = null,
+            noDiffReductionMods = false
+        )
+
+        val beatmaps = passed.sortedByDescending { it.starRating }
+            .take(16)
+
+        val scores = mutableListOf<LazerScore>()
+
+        var count = 0
+
+        runBlocking(Dispatchers.IO) {
+            val chunkedBeatmaps = beatmaps.chunked(4)
+
+            for ((_, b4) in chunkedBeatmaps.withIndex()) {
+                // 1. 并发请求当前批次的 4 个谱面成绩
+                val b4Scores = b4.map { beatmap ->
+                    async(Dispatchers.IO) {
+                        runCatching {
+                            scoreApiService.getBeatmapScore(beatmap.beatmapID, user.userID, mode, mods)
+                        }.getOrNull()?.score
+                    }
+                }.awaitAll().filterNotNull() // 等待全部完成并过滤掉失败/null
+
+                count += b4.size
+
+                // 2. 检查是否拿到成绩
+                if (b4Scores.isNotEmpty()) {
+                    scores.addAll(b4Scores)
+                    // break
+                } else if (count < beatmaps.size) {
+                    delay(2.seconds)
+                }
+            }
+        }
+
+        // 成绩筛选机制：取 pp x 星数 最好的
+        val best = scores.maxWithOrNull(
+            compareBy<LazerScore> {
+                it.pp * it.beatmap.starRating
+            }.thenBy {
+                it.beatmap.starRating
+            }
+        ) ?: throw NoSuchElementException.BeatmapScore(beatmapsets.joinToString(", ") { it.previewName })
+
+        // better 的 beatmap 可能和上面的不一样，并且没有 max combo
+        beatmapApiService.applyBeatmapExtend(best)
+
+        return ScoreData(user, best.beatmap, listOf(best), mode, mods)
+    }
+
+    private fun getFromBeatmapsetID(beatmapsetID: Long, user: OsuUser, mode: OsuMode, mods: List<LazerMod>?, event: MessageEvent): ScoreData {
+        val (passed, set) = runBlocking(Dispatchers.IO) {
+            val excludeConverts = mode.safeModeValue != 0.toByte()
+
+            val passedDeferred = async {
+                beatmapApiService.getBeatmapPassed(
+                    user.userID,
+                    listOf(beatmapsetID),
+                    mode,
+                    excludeConverts = excludeConverts,
+                    isLegacy = null,
+                    noDiffReductionMods = false
+                )
+            }
+
+            val setDeferred = async {
+                beatmapApiService.getBeatmapset(beatmapsetID)
+            }
+
+            passedDeferred.await() to setDeferred.await()
+        }
+
+        if (passed.size >= 16) {
+            val mixin2 = listOf(
+                listOf("检测到您在此谱面留有大量不同难度的成绩。", "这张谱面难度好多啊，你肯定刷了很久。"),
+                listOf("\n"),
+                listOf("因此，", "所以，", "为了避免鸿儒 ppy 老冯，"),
+                listOf("只会尝试在星数较高的 16 个成绩中查询。", "星数太低的成绩不会纳入考虑。")
+            )
+
+            event.replyAndRecallAsync(mixin2.joinToString("") { it.random() })
+        } else if (passed.isEmpty()) {
+            throw NoSuchElementException.BeatmapScore(set.previewName)
+        }
+
+        val beatmaps = passed.sortedByDescending { it.starRating }
+            .take(16)
+
+        val scores = mutableListOf<LazerScore>()
+
+        var count = 0
+
+        runBlocking(Dispatchers.IO) {
+            val chunkedBeatmaps = beatmaps.chunked(4)
+
+            for ((_, b4) in chunkedBeatmaps.withIndex()) {
+                // 1. 并发请求当前批次的 4 个谱面成绩
+                val b4Scores = b4.map { beatmap ->
+                    async(Dispatchers.IO) {
+                        runCatching {
+                            scoreApiService.getBeatmapScore(beatmap.beatmapID, user.userID, mode, mods)
+                        }.getOrNull()?.score
+                    }
+                }.awaitAll().filterNotNull() // 等待全部完成并过滤掉失败/null
+
+                count += b4.size
+
+                // 2. 检查是否拿到成绩
+                if (b4Scores.isNotEmpty()) {
+                    scores.addAll(b4Scores)
+                    // break
+                } else if (count < beatmaps.size) {
+                    delay(2.seconds)
+                }
+            }
+        }
+
+        // 成绩筛选机制：取 pp x 星数 最好的
+        val best = scores.maxWithOrNull(
+            compareBy<LazerScore> {
+                it.pp * it.beatmap.starRating
+            }.thenBy {
+                it.beatmap.starRating
+            }
+        ) ?: throw NoSuchElementException.BeatmapScore(set.previewName)
+
+        // better 的 beatmap 可能和上面的不一样，并且没有 max combo
+        beatmapApiService.applyBeatmapExtend(best)
+
+        return ScoreData(user, best.beatmap, listOf(best), mode, mods)
     }
 
     private fun getFromBeatmapset(user: OsuUser, map: Beatmap, mode: OsuMode, mods: List<LazerMod>?, event: MessageEvent): ScoreData {
@@ -550,7 +815,6 @@ import kotlin.time.Duration.Companion.seconds
 
             getUUScores(user, pairs, covers)
         } else {
-
             val s = scores.first()
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)

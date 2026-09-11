@@ -259,6 +259,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             尝试修改范围，或尝试扩大搜索天数吧。
         """.trimIndent())
 
+    class Search:
+        NoSuchElementException("没有找到搜索结果。")
+
     class SeriesRound:
         NoSuchElementException("没有找到这一系列赛里的对局。")
 
