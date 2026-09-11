@@ -41,10 +41,10 @@ class OsuFile @Throws(IOException::class) constructor(private val reader: Buffer
             if (line.isNotBlank()) break
         }
 
-        if (line.startsWith("[SearchBooleans]")) {
+        if (line.startsWith("[General]")) {
             parseGeneral(reader)
         } else {
-            throw RuntimeException("解析错误,缺失 [SearchBooleans] 块")
+            throw RuntimeException("解析错误,缺失 [General] 块")
         }
     }
 
