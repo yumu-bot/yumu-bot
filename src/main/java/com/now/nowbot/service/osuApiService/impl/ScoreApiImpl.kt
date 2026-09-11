@@ -595,6 +595,7 @@ class ScoreApiImpl(
                 500 -> throw NetworkException.ScoreException.InternalServerError()
                 502 -> throw NetworkException.ScoreException.BadGateway()
                 503 -> throw NetworkException.ScoreException.ServiceUnavailable()
+                504 -> throw NetworkException.ScoreException.GatewayTimeout()
 
                 else -> when {
                     e.findCauseOfType<RejectedExecutionException>() != null -> {

@@ -85,6 +85,7 @@ open class NetworkException(message: String?
             RenderModuleException("""
                 504 Gateway Timeout
                 网关超时。
+                简单来说就是科学上网的节点波动了。重试即可。
             """.trimIndent()) {
             override val code = 504
         }
@@ -196,6 +197,7 @@ open class NetworkException(message: String?
             UserException("""
                 504 Gateway Timeout
                 网关超时。
+                简单来说就是科学上网的节点波动了。重试即可。
             """.trimIndent()) {
             override val code = 504
         }
@@ -297,6 +299,7 @@ open class NetworkException(message: String?
             BeatmapException("""
                 504 Gateway Timeout
                 网关超时。
+                简单来说就是科学上网的节点波动了。重试即可。
             """.trimIndent()) {
             override val code = 504
         }
@@ -397,6 +400,7 @@ open class NetworkException(message: String?
             ScoreException("""
                 504 Gateway Timeout
                 网关超时。
+                简单来说就是科学上网的节点波动了。重试即可。
             """.trimIndent()) {
             override val code = 504
         }
@@ -489,6 +493,7 @@ open class NetworkException(message: String?
             MatchException("""
                 504 Gateway Timeout
                 网关超时。
+                简单来说就是科学上网的节点波动了。重试即可。
             """.trimIndent()) {
             override val code = 504
         }
@@ -565,6 +570,7 @@ open class NetworkException(message: String?
             DivingFishException("""
                 504 Gateway Timeout
                 网关超时。
+                简单来说就是科学上网的节点波动了。重试即可。
             """.trimIndent()) {
             override val code = 504
         }
@@ -657,6 +663,7 @@ open class NetworkException(message: String?
             LxnsException("""
                 504 Gateway Timeout
                 网关超时。
+                简单来说就是科学上网的节点波动了。重试即可。
             """.trimIndent()) {
             override val code = 504
         }

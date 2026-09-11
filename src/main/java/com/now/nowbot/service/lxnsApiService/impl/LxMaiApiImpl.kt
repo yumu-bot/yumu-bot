@@ -253,8 +253,8 @@ class LxMaiApiImpl(
                 408 -> throw NetworkException.LxnsException.RequestTimeout()
                 429 -> throw NetworkException.LxnsException.TooManyRequests()
                 503 -> throw NetworkException.LxnsException.ServiceUnavailable()
-
                 504 -> throw NetworkException.LxnsException.GatewayTimeout()
+
                 else -> {
                     log.error("落雪咖啡屋：获取失败", e)
                     throw NetworkException.LxnsException.Undefined(e)

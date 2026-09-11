@@ -177,6 +177,7 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     500 -> throw NetworkException.UserException.InternalServerError()
                     502 -> throw NetworkException.UserException.BadGateWay()
                     503 -> throw NetworkException.UserException.ServiceUnavailable()
+                    504 -> throw NetworkException.UserException.GatewayTimeout()
                 }
             }
 
