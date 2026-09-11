@@ -89,5 +89,5 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
         }
     }
 
-    return JacksonUtil.parseObjectList(jsonString, T::class.java)
+    return JacksonUtil.parseObjectList<T>(jsonString)
 }

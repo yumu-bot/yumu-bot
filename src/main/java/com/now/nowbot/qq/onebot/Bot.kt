@@ -38,9 +38,10 @@ class Bot(val trueBot: Bot) : com.now.nowbot.qq.Bot {
 
     override fun getMessage(id: Long): MessageChain? {
         val action = trueBot.getMsg(id.toInt())
-        val data = JacksonUtil.parseObjectList(action?.data?.message ?: return null, ArrayMsg::class.java)
+        val message = action?.data?.message ?: return null
 
-        if (data.isEmpty()) return null
+        val data = JacksonUtil.parseObjectList<ArrayMsg>(message).takeIf { it.isNotEmpty() } ?: return null
+
         return getMessageChain(data)
     }
 

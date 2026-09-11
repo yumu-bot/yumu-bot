@@ -14,7 +14,7 @@ import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -113,9 +113,9 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
         return try {
             request(base.sbApiRestClient)
         } catch (e: Exception) {
-            val cause = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
-            when (cause?.statusCode?.value()) {
+            when (ex?.statusCode?.value()) {
                 400 -> throw NetworkException.ScoreException.BadRequest()
                 401 -> throw NetworkException.ScoreException.Unauthorized()
                 403 -> throw NetworkException.ScoreException.Forbidden()
@@ -161,7 +161,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
             if (status != "success") {
                 throw TipsException("获取${name}失败。失败提示：${status}")
             } else try {
-                return JacksonUtil.parseObjectList(node[field], T::class.java)
+                return JacksonUtil.parseObjectList(node[field])
             } catch (e : Exception) {
                 log.error("生成${name}失败。", e)
                 return listOf()

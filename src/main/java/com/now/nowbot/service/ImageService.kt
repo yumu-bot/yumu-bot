@@ -230,7 +230,7 @@ class ImageService(
 
             return b
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when(ex?.statusCode?.value()) {
                 400 -> throw NetworkException.RenderModuleException.BadRequest()
@@ -293,7 +293,6 @@ class ImageService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ImageService::class.java)
-        const val IMAGE_PATH: String = "http://127.0.0.1:1611/"
     }
 
 }

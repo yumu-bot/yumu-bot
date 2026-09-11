@@ -132,10 +132,10 @@ class ChunithmApiImpl(
         val song: List<ChuSong>
 
         if (isRegularFile("data-songs.json")) {
-            song = parseFileList("data-songs.json", ChuSong::class.java)
+            song = parseFileList("data-songs.json")
         } else {
             log.info("中二节奏: 本地歌曲库不存在，获取 API 版本")
-            song = JacksonUtil.parseObjectList(chunithmSongLibraryFromAPI, ChuSong::class.java)
+            song = JacksonUtil.parseObjectList(chunithmSongLibraryFromAPI)
         }
 
         return song.associateBy { it.songID }
@@ -227,7 +227,7 @@ class ChunithmApiImpl(
     }
 
     override fun updateChunithmSongLibraryDatabase() {
-        val songs = JacksonUtil.parseObjectList(chunithmSongLibraryFromAPI, ChuSong::class.java)
+        val songs = JacksonUtil.parseObjectList<ChuSong>(chunithmSongLibraryFromAPI)
 
         for (s in songs) {
             maiDao.saveChuSong(s)
@@ -276,11 +276,11 @@ class ChunithmApiImpl(
         }
     }
 
-    private fun <T> parseFileList(fileName: String, clazz: Class<T>): List<T> {
+    private inline fun <reified T> parseFileList(fileName: String): List<T> {
         val file = path.resolve(fileName)
         try {
             val s = Files.readString(file)
-            return JacksonUtil.parseObjectList(s, clazz)
+            return JacksonUtil.parseObjectList<T>(s)
         } catch (e: IOException) {
             log.error("chunithm: 获取文件失败", e)
             return listOf()

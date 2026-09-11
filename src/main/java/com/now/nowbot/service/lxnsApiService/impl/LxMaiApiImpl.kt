@@ -17,7 +17,7 @@ import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 
 @Service
@@ -52,7 +52,7 @@ class LxMaiApiImpl(
         }
         val node = JacksonUtil.toNode(jsonString)
 
-        return JacksonUtil.parseObjectList(node.get("songs"), LxMaiSong::class.java)
+        return JacksonUtil.parseObjectList(node.get("songs"))
     }
 
     override fun getMaiSong(songID: Int): MaiSong? {
@@ -231,7 +231,7 @@ class LxMaiApiImpl(
             throw NoSuchElementException.Data()
         }
 
-        return JacksonUtil.parseObjectList(body, LxMaiCollection::class.java).onEach { it.type = type }
+        return JacksonUtil.parseObjectList<LxMaiCollection>(body).onEach { it.type = type }
     }
 
     /**
@@ -242,7 +242,7 @@ class LxMaiApiImpl(
         return try {
             request(base.lxnsApiRestClient)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when (ex?.statusCode?.value()) {
                 502 -> throw NetworkException.LxnsException.BadGateway()

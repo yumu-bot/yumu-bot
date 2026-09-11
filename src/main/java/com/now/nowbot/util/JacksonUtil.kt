@@ -274,24 +274,34 @@ object JacksonUtil {
         return objectToJson(data)
     }
 
+    inline fun <reified T> parseObjectList(body: String?): List<T> =
+        parseObjectList(toNode(body))
+
+    inline fun <reified T> parseObjectList(node: JsonNode?): List<T> =
+        parseObjectList(node, T::class.java)
+
     fun <T> parseObjectList(body: String?, clazz: Class<T>): List<T> {
         val node = toNode(body)
         return parseObjectList(node, clazz)
     }
 
     fun <T> parseObjectList(body: JsonNode?, clazz: Class<T>): List<T> {
-        if (body != null && body.isArray) {
-            val collectionType = typeFactory.constructCollectionType(MutableList::class.java, clazz)
-            return mapper.convertValue<List<T>>(body, collectionType)
+        if (body == null || body.isNull || body.isMissingNode) {
+            return emptyList()
         }
 
-        val actualType = body?.nodeType?.toString() ?: "null"
-        val content = body?.toPrettyString()?.take(200) ?: "null"
-        val errorDetail = "Jackson：应用类型异常。预期 Array，实际是 $actualType。类：${clazz.name}。内容：$content"
+        if (!body.isArray) {
+            val actualType = body.nodeType
+            val content = body.toPrettyString().take(200)
+            val errorDetail = "Jackson：应用类型异常。预期 Array，实际是 $actualType。类：${clazz.name}。内容：$content"
 
-        log.error(errorDetail)
+            log.error(errorDetail)
 
-        throw RuntimeException(errorDetail)
+            throw RuntimeException(errorDetail)
+        }
+
+        val collectionType = typeFactory.constructCollectionType(MutableList::class.java, clazz)
+        return mapper.convertValue<List<T>>(body, collectionType)
     }
 
     fun parseSubnodeToString(body: String?, field: String?): String? {

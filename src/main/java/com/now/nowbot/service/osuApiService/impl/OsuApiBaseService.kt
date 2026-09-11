@@ -21,6 +21,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import java.io.IOException
@@ -666,7 +667,7 @@ class OsuApiBaseService(
                 .body(rawFormString)
                 .exchangeToBody<OauthTokenResponse>()
         } catch (e: Exception) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when(ex?.statusCode?.value()) {
                 400 -> throw NetworkException.UserException.BadRequest()

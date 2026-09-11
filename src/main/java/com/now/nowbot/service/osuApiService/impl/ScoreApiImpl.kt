@@ -22,7 +22,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import org.springframework.web.util.UriBuilder
 import java.io.IOException
@@ -583,7 +583,7 @@ class ScoreApiImpl(
                 request(base.osuApiRestClient)
             }
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when(ex?.statusCode?.value()) {
                 400 -> throw NetworkException.ScoreException.BadRequest()

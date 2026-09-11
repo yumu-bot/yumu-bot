@@ -347,7 +347,7 @@ class BeatmapDao(
             lazerOnly = b.lazerOnly
             failTimes = b.readFailTimesAsData()
             owners =
-                b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toModel() }
+                b.owners?.let { JacksonUtil.parseObjectList<NanoUserLite>(it) }?.map { it.toModel() }
             maxCombo = b.maxCombo
         }
 
@@ -400,7 +400,7 @@ class BeatmapDao(
         lazerOnly = b.lazerOnly
         failTimes = b.readFailTimesAsData()
         maxCombo = b.maxCombo
-        owners = b.owners?.let { JacksonUtil.parseObjectList(it, NanoUserLite::class.java) }?.map { it.toModel() }
+        owners = b.owners?.let { JacksonUtil.parseObjectList<NanoUserLite>(it) }?.map { it.toModel() }
 
         return this
     }

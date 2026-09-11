@@ -10,7 +10,7 @@ import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -39,7 +39,7 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
         return try {
             request(base.sbApiRestClient)
         } catch (e: Exception) {
-            val cause = e.findCauseOfType<HttpClientErrorException>()
+            val cause = e.findCauseOfType<HttpStatusCodeException>()
             when (cause?.statusCode?.value()) {
                 400 -> throw NetworkException.BeatmapException.BadRequest()
                 401 -> throw NetworkException.BeatmapException.Unauthorized()
@@ -67,16 +67,24 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
     companion object {
         private val log: Logger = LoggerFactory.getLogger(SBBeatmapApiService::class.java)
 
-        private inline fun <reified T> parse(node: JsonNode, field: String, name: String): T {
-            val status = node.get("status").asString("未知")
+        private inline fun <reified T> parse(node: JsonNode, field: String, name: String): T? {
+            val status = node.path("status").asString("未知")
 
             if (status != "success") {
+                log.warn("获取{}失败，状态异常：{}", name, status)
                 throw TipsException("获取${name}失败。失败提示：${status}")
-            } else try {
-                return JacksonUtil.parseObject<T>(node[field])!!
-            } catch (e : Exception) {
-                log.error("生成${name}失败。", e)
-                return T::class.objectInstance!!
+            }
+
+            val fieldNode = node.get(field) ?: run {
+                log.error("解析{}失败：未找到字段 {}", name, field)
+                return null
+            }
+
+            return try {
+                JacksonUtil.parseObject<T>(fieldNode)
+            } catch (e: Exception) {
+                log.error("解析{}失败，字段名：{}", name, field, e)
+                null
             }
         }
 
@@ -85,11 +93,13 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
 
             if (status != "success") {
                 throw TipsException("获取${name}失败。失败提示：${status}")
-            } else try {
-                return JacksonUtil.parseObjectList(node[field], T::class.java)
+            }
+
+            try {
+                return JacksonUtil.parseObjectList<T>(node[field])
             } catch (e : Exception) {
                 log.error("生成${name}失败。", e)
-                return listOf()
+                return emptyList()
             }
         }
     }

@@ -12,7 +12,7 @@ import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.exchangeToBody
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
@@ -149,7 +149,7 @@ class MatchApiImpl(
                 request(base.osuApiRestClient)
             }
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when(ex?.statusCode?.value()) {
                 400 -> throw NetworkException.MatchException.BadRequest()

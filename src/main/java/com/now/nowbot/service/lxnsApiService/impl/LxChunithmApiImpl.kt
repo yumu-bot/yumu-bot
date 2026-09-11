@@ -11,7 +11,7 @@ import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import tools.jackson.databind.JsonNode
 import java.util.concurrent.CancellationException
@@ -50,7 +50,7 @@ class LxChunithmApiImpl(
         return try {
             request(base.lxnsApiRestClient)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when (ex?.statusCode?.value()) {
                 502 -> throw NetworkException.LxnsException.BadGateway()

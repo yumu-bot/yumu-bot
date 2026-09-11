@@ -18,7 +18,7 @@ import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -164,10 +164,10 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
         return try {
             request(base.sbApiRestClient)
         } catch (e: Exception) {
-            val cause = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
-            if (cause != null) {
-                when (cause.statusCode.value()) {
+            if (ex != null) {
+                when (ex.statusCode.value()) {
                     400 -> throw NetworkException.UserException.BadRequest()
                     401 -> throw NetworkException.UserException.Unauthorized()
                     403 -> throw NetworkException.UserException.Forbidden()
@@ -218,7 +218,7 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
             if (status != "success") {
                 throw TipsException("获取${name}失败。失败提示：${status}")
             } else try {
-                return JacksonUtil.parseObjectList(node[field], T::class.java)
+                return JacksonUtil.parseObjectList(node[field])
             } catch (e : Exception) {
                 log.error("生成${name}失败。", e)
                 return listOf()

@@ -124,7 +124,7 @@ class MapPoolService(
             it.add("AuthorizationX", token)
         }.exchangeToBody<JsonNode>()
 
-        return JacksonUtil.parseObjectList(node["data"], Pool::class.java)
+        return JacksonUtil.parseObjectList(node["data"])
     }
 
     fun searchByID(id: Int): Pool? {

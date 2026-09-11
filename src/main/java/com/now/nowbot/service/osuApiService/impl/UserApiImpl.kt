@@ -28,6 +28,7 @@ import com.now.nowbot.util.exchangeToBodies
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import org.springframework.web.util.UriComponentsBuilder
 import java.io.IOException
@@ -426,7 +427,7 @@ import java.util.concurrent.CancellationException
                 request(base.osuApiRestClient)
             }
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when (ex?.statusCode?.value()) {
                 400 -> throw NetworkException.UserException.BadRequest()

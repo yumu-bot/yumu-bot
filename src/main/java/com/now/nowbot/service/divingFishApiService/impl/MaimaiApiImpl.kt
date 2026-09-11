@@ -273,10 +273,10 @@ import kotlin.text.Charsets.UTF_8
         val song: List<MaiSong>
 
         if (isRegularFile("data-songs.json")) {
-            song = parseFileList("data-songs.json", MaiSong::class.java)
+            song = parseFileList("data-songs.json")
         } else {
             log.info("舞萌: 本地歌曲库不存在，获取 API 版本")
-            song = JacksonUtil.parseObjectList(maimaiSongLibraryFromAPI, MaiSong::class.java)
+            song = JacksonUtil.parseObjectList(maimaiSongLibraryFromAPI)
         }
 
         return song.associateBy { it.songID }
@@ -286,10 +286,10 @@ import kotlin.text.Charsets.UTF_8
         val ranking: List<MaiRanking>
 
         if (isRegularFile("data-songs.json")) {
-            ranking = parseFileList("data-ranking.json", MaiRanking::class.java)
+            ranking = parseFileList("data-ranking.json")
         } else {
             log.info("舞萌: 本地排名库不存在，获取 API 版本")
-            ranking = JacksonUtil.parseObjectList(maimaiRankLibraryFromAPI, MaiRanking::class.java)
+            ranking = JacksonUtil.parseObjectList(maimaiRankLibraryFromAPI)
         }
 
         return ranking.associate { it.name to it.rating }
@@ -327,7 +327,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun updateMaimaiSongLibraryDatabase() {
-        val songs = JacksonUtil.parseObjectList(maimaiSongLibraryFromAPI, MaiSong::class.java)
+        val songs = JacksonUtil.parseObjectList<MaiSong>(maimaiSongLibraryFromAPI)
 
         for (s in songs) {
             maiDao.saveMaiSong(s)
@@ -336,7 +336,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun updateMaimaiRankLibraryDatabase() {
-        val rank = JacksonUtil.parseObjectList(maimaiRankLibraryFromAPI, MaiRanking::class.java)
+        val rank = JacksonUtil.parseObjectList<MaiRanking>(maimaiRankLibraryFromAPI)
         maiDao.saveMaiRanking(rank)
         log.info("舞萌: 排名数据库已更新")
     }
@@ -498,11 +498,11 @@ import kotlin.text.Charsets.UTF_8
         }
     }
 
-    private fun <T> parseFileList(fileName: String, clazz: Class<T>): List<T> {
+    private inline fun <reified T> parseFileList(fileName: String): List<T> {
         val file = path.resolve(fileName)
         try {
             val s = Files.readString(file)
-            return JacksonUtil.parseObjectList(s, clazz)
+            return JacksonUtil.parseObjectList<T>(s)
         } catch (e: IOException) {
             log.error("舞萌: 获取文件失败", e)
             return listOf()

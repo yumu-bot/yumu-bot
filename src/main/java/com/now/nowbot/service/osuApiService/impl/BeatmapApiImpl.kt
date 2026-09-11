@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClient
 import tools.jackson.databind.JsonNode
 import java.io.BufferedReader
@@ -99,7 +100,6 @@ class BeatmapApiImpl(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun getCover(covers: Covers, type: CoverType): ByteArray? {
         val path = Path.of(IMG_BUFFER_PATH)
 
@@ -423,7 +423,7 @@ class BeatmapApiImpl(
                 .exchangeToBody<String>()
         }
         val json = JacksonUtil.toNode(jsonString)
-        return JacksonUtil.parseObjectList(json["beatmaps"], Beatmap::class.java)
+        return JacksonUtil.parseObjectList<Beatmap>(json["beatmaps"])
     }
 
     override fun getUserBeatmapset(userID: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
@@ -1044,7 +1044,7 @@ class BeatmapApiImpl(
             }
             JacksonUtil.toNode(jsonString)
         } catch (e: Exception) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
             if (ex?.statusCode?.value() == 404) {
                 return null
             }
@@ -1370,7 +1370,7 @@ class BeatmapApiImpl(
      */
 
     override fun updateBeatmapTagLibraryDatabase() {
-        val tags = JacksonUtil.parseObjectList(beatmapTagLibraryFromAPI["tags"], Tag::class.java)
+        val tags = JacksonUtil.parseObjectList<Tag>(beatmapTagLibraryFromAPI["tags"])
 
         beatmapDao.saveTag(tags)
 
@@ -1434,7 +1434,7 @@ class BeatmapApiImpl(
             .uri("https://mapranktimes.vercel.app/api/beatmapsets")
             .exchangeToBody<String>()
         val json = JacksonUtil.toNode(jsonString)
-        return JacksonUtil.parseObjectList(json, BeatmapsetWithRankTime::class.java)
+        return JacksonUtil.parseObjectList(json)
     }
 
 
@@ -1545,7 +1545,7 @@ class BeatmapApiImpl(
                 request(base.osuApiRestClient)
             }
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<HttpClientErrorException>()
+            val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when (ex?.statusCode?.value()) {
                 400 -> throw NetworkException.BeatmapException.BadRequest()
