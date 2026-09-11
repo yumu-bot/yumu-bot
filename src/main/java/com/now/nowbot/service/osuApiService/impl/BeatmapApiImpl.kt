@@ -333,20 +333,27 @@ class BeatmapApiImpl(
     }
 
     // 获取谱面：先获取本地，再获取 bs api，最后获取网页
-    override fun getBeatmapFileString(beatmapID: Long): String? {
-        return beatmapFileCacheProvider.getOrFetchString(beatmapID) {
-
-            if (hasBeatmapFileFromDirectory(beatmapID)) {
-                val local = getBeatmapFileFromDirectory(beatmapID)
-                if (!local.isNullOrBlank()) {
-                    return@getOrFetchString local
-                }
+    override fun getBeatmapFileString(beatmapID: Long, noSave: Boolean): String? {
+        return if (noSave) {
+            fetchBeatmapFileString(beatmapID)
+        } else {
+            beatmapFileCacheProvider.getOrFetchString(beatmapID) {
+                fetchBeatmapFileString(beatmapID)
             }
-
-            getBeatmapFileStringFromOutside(beatmapID)
-                ?.takeIf { it.isNotBlank() }
-                ?.also { writeBeatmapFileToDirectory(it, beatmapID) }
         }
+    }
+
+    private fun fetchBeatmapFileString(beatmapID: Long): String? {
+        if (hasBeatmapFileFromDirectory(beatmapID)) {
+            val local = getBeatmapFileFromDirectory(beatmapID)
+            if (!local.isNullOrBlank()) {
+                return local
+            }
+        }
+
+        return getBeatmapFileStringFromOutside(beatmapID)
+            ?.takeIf { it.isNotBlank() }
+            ?.also { writeBeatmapFileToDirectory(it, beatmapID) }
     }
 
     // 查一下文件是否跟 checksum 是否对得上

@@ -16,11 +16,14 @@ import java.util.regex.Matcher
 interface OsuBeatmapApiService {
     fun getVoice(beatmapsetID: Number): ByteArray?
 
-    @OptIn(ExperimentalStdlibApi::class) fun getCover(covers: Covers, type: CoverType): ByteArray?
+    fun getCover(covers: Covers, type: CoverType): ByteArray?
 
-    @OptIn(ExperimentalStdlibApi::class) fun asyncDownloadCover(covers: List<Covers>, type: CoverType)
+    fun asyncDownloadCover(covers: List<Covers>, type: CoverType)
 
-    fun getBeatmapFileString(beatmapID: Long): String?
+    /**
+     * @param noSave 如果为真，则不会尝试保留这个缓存，避免 js 删掉了
+     */
+    fun getBeatmapFileString(beatmapID: Long, noSave: Boolean = false): String?
 
     fun getBeatmapFileFromDirectory(beatmapID: Long): String?
 

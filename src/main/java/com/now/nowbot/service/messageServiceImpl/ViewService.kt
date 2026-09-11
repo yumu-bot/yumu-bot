@@ -60,7 +60,7 @@ class ViewService(
             throw UnsupportedOperationException.OnlyManiaAndTaiko()
         }
 
-        beatmapApiService.getBeatmapFileString(beatmapID)
+        beatmapApiService.getBeatmapFileString(beatmapID, noSave = !beatmap.hasLeaderBoard)
             ?: throw NoSuchElementException.BeatmapCache(beatmapID)
 
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
