@@ -5,12 +5,11 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.NewbieRestrictService
-import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REGEX_NUMBER_DECIMAL
 import org.springframework.stereotype.Service
-import kotlin.math.roundToLong
+import kotlin.time.Duration
 
 @Service("OVER_SR") class OverSRService : MessageService<Double> {
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Double>): Boolean {
@@ -40,18 +39,10 @@ import kotlin.math.roundToLong
     }
 
      private fun getMessage(star: Double): String {
-        val message = StringBuilder()
-         val silence: Long
+         val message = StringBuilder()
+         val silence: Duration = NewbieRestrictService.getSilence(star)
 
-        if (star < STAR_BOUNDARY) {
-            throw IllegalArgumentException("未超星。")
-        } else if (star < 20.0) {
-            silence = ((star - STAR_BOUNDARY) * 2000).roundToLong()
-        } else {
-            throw IllegalArgumentException.ExceedException.StarRating()
-        }
-
-        message.append("已超星，预计禁言：")
+         message.append("已超星，预计禁言：")
          message.append(NewbieRestrictService.getTime(silence))
 
         return message.toString()

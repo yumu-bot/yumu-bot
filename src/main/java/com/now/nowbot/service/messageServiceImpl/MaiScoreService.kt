@@ -6,6 +6,7 @@ import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.*
 import com.now.nowbot.model.filter.MaiScoreFilter
+import com.now.nowbot.model.filter.anyMatches
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiScore
 import com.now.nowbot.model.maimai.MaiSong
@@ -264,7 +265,7 @@ import java.util.regex.Matcher
             val sorted = full.records
                 .sortedByDescending { it.rating }
 
-            val scores = if (conditions.size >= 11 && conditions[11].isNotEmpty()) {
+            val scores = if (conditions.anyMatches(MaiScoreFilter.ACHIEVEMENT)) {
                 sorted.sortedByDescending {
                     it.achievements
                 }

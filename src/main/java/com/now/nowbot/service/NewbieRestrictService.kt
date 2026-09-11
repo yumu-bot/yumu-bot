@@ -17,6 +17,11 @@ import org.springframework.stereotype.Service
 import java.text.DecimalFormat
 import kotlin.math.min
 import kotlin.math.roundToLong
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Service("NEWBIE_RESTRICT")
 class NewbieRestrictService(
@@ -100,7 +105,7 @@ class NewbieRestrictService(
 
         val sr = score.beatmap.starRating
         val silence = getSilence(sr)
-        if (silence <= 0) return
+        if (silence <= Duration.ZERO) return
 
         val criminal = event.sender
 
@@ -108,12 +113,12 @@ class NewbieRestrictService(
 
         val username = score.user.username
 
-        val count7 = newbieDao.getRestrictedCountWithin(criminal.contactID, 7L * 24 * 60 * 60 * 1000)
-        val duration7 = getTime(newbieDao.getRestrictedDurationWithin(criminal.contactID, 7L * 24 * 60 * 60 * 1000) / 60000)
+        val count7 = newbieDao.getRestrictedCountWithin(criminal.contactID, 7.days)
+        val duration7 = getTime(newbieDao.getRestrictedDurationWithin(criminal.contactID, 7.days).milliseconds)
 
         val t = newbieDao.getRestricted(criminal.contactID)
         val count = t.size
-        val duration = getTime(t.sumOf { it.duration ?: 0L } / 60000)
+        val duration = getTime(t.sumOf { it.duration ?: 0L }.milliseconds)
 
         val formatter = DecimalFormat("#.##")
 
@@ -144,7 +149,7 @@ class NewbieRestrictService(
 
         try {
             newbieDao.saveRestricted(criminal.contactID, sr, System.currentTimeMillis(),
-                min(silence * 60000L, 7L * 24 * 60 * 60 * 1000)
+                min(silence.inWholeMilliseconds, 7.days.inWholeMilliseconds)
             )
         } catch (e: Throwable) {
             log.error(sb.append("但是保存记录失败了。").toString(), e)
@@ -172,14 +177,14 @@ class NewbieRestrictService(
         if (event.subject.contactID != newbieGroupID) return
 
         // 情节严重
-        if (silence >= 30 * 24 * 60 - 1) {
+        val maximum = 30.days - 1.seconds
+
+        if (silence >= maximum) {
             report(isReportable, executorBot, sb.append("情节严重，已按最大时间禁言。").toString())
 
-
             val action = runCatching {
-                executorBot.setGroupBan(newbieGroupID, event.sender.contactID, (30 * 24 * 60 - 1) * 60)
+                executorBot.setGroupBan(newbieGroupID, event.sender.contactID, maximum.inWholeSeconds.toInt())
             }.getOrNull()
-
 
             if (action == null) {
                 report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
@@ -189,7 +194,7 @@ class NewbieRestrictService(
             report(isReportable, executorBot, sb.append("正在执行禁言任务。").toString())
 
             val action = runCatching {
-                executorBot.setGroupBan(newbieGroupID, event.sender.contactID, (silence * 60).toInt())
+                executorBot.setGroupBan(newbieGroupID, event.sender.contactID, silence.inWholeSeconds.toInt())
             }.getOrNull()
 
             if (action == null) {
@@ -218,25 +223,27 @@ class NewbieRestrictService(
         const val STAR_BOUNDARY = 6f
 
         /**
-         * 获取禁言时长（分钟）
+         * 获取禁言时长
          */
-        private fun getSilence(star: Double): Long {
-            return if (star <= STAR_BOUNDARY + 0.1) {
+        fun getSilence(star: Double): Duration {
+            return if (star <= STAR_BOUNDARY + 0.05) {
                 // 未超星
-                0L
+                Duration.ZERO
             } else {
-                ((star - STAR_BOUNDARY) * 2000).roundToLong()
+                ((star - STAR_BOUNDARY) * 2000).roundToLong().minutes
             }
         }
 
-        fun getTime(minutes: Long): String {
+        fun getTime(duration: Duration): String {
+            val minutes = duration.inWholeMinutes
+
             return if (minutes >= 1440) {
                 val day = minutes / 1440
                 val hour = (minutes - (day * 1440)) / 60
                 val minute = minutes - (day * 1440) - (hour * 60)
 
                 "${day}天${hour}时${minute}分"
-            } else if (minutes >= 60.0) {
+            } else if (minutes >= 60) {
                 val hour = minutes / 60
                 val minute = minutes - (hour * 60)
 
