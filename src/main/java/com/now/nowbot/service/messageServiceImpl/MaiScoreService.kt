@@ -239,7 +239,7 @@ import java.util.regex.Matcher
             // 只有一种谱面
             if (anotherResult == null) {
                 return MaiScoreParam(
-                    user = full.getUser(maiDao), songs = listOf(song), scores = scores, cabinet = cabinet
+                    user = full.getUser(maiDao), songs = listOf(song), scores = scores, cabinet = MaiCabinet.getCabinet(song)
                 )
             } else if (scores.isNotEmpty()) {
                 // 有两种谱面，有成绩，没有规定难度。此时取玩家成绩最好的那个
@@ -247,8 +247,7 @@ import java.util.regex.Matcher
 
                 val songs = listOf(song, anotherResult).filter { it.isDeluxe == isDX }
 
-                return MaiScoreParam(user = full.getUser(maiDao), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, cabinet = cabinet
-                )
+                return MaiScoreParam(user = full.getUser(maiDao), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, cabinet = MaiCabinet.ANY)
             } else {
                 // 有两种谱面，但是没有成绩，此时选定 DX
                 val songs = listOf(song, anotherResult).filter { it.isDeluxe }
