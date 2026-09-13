@@ -137,8 +137,8 @@ class QuickplayInfoService(
                 val roundTotal = users.sumOf { it.score }
                 if (roundTotal > 0L) {
                     val roundAvg = roundTotal.toDouble() / users.size
-                    for (u in users) {
-                        allPlayersMQHistory.getOrPut(u.user.userID) { mutableListOf() }.add(u.score / roundAvg)
+                    for ((user, score) in users) {
+                        allPlayersMQHistory.getOrPut(user.userID) { mutableListOf() }.add(score / roundAvg)
                     }
                 }
 
@@ -236,16 +236,18 @@ class QuickplayInfoService(
         val totalPage = leaderboards.maxOfOrNull { it.first } ?: 1
         val leaderboard = leaderboards.flatMap { it.second }.distinctBy { it.userID }.sortedBy { it.absoluteRank }
 
-        val size = leaderboard.size
-
-        val index = leaderboard.indexOfFirst { it.userID == targetID }
-
-        return if (index != -1) {
-            totalPage to leaderboard.drop((index - 3).coerceAtLeast(0)).take(7)
-        } else {
-            val mid = (size / 2 - 3).coerceAtLeast(0)
-            totalPage to leaderboard.drop(mid).take(7)
+        val index = leaderboard.indexOfFirst { it.userID == targetID }.let { foundIndex ->
+            if (foundIndex != -1) {
+                foundIndex
+            } else {
+                // 用传入的 targetRank 减去加载出来的第一个元素的 absoluteRank 算出偏移位置
+                val firstRank = leaderboard.firstOrNull()?.absoluteRank ?: 1
+                (targetRank - firstRank).coerceIn(0, leaderboard.lastIndex)
+            }
         }
+
+        val resultList = leaderboard.drop((index - 3).coerceAtLeast(0)).take(7)
+        return totalPage to resultList
     }
 
     data class QuickplayInfoParam(
