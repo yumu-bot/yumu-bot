@@ -670,11 +670,14 @@ class OsuApiBaseService(
             val ex = e.findCauseOfType<HttpStatusCodeException>()
 
             when(ex?.statusCode?.value()) {
-                400 -> throw NetworkException.UserException.BadRequest()
+                400 -> {
+                    log.info("更新令牌失败：请求错误 400：${user.userID}")
+                    throw NetworkException.UserException.BadRequest()
+                }
 
                 401 -> {
                     bindDao.downgradeBind(user.userID)
-                    log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
+                    log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}")
                     return null
                 }
 

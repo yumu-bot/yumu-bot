@@ -14,6 +14,7 @@ import com.now.nowbot.util.DataUtil
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -298,6 +299,9 @@ data class OsuUser(
         @field:JsonProperty("rank")
         var rank: Int = 0,
 
+        @field:JsonProperty("rank_percent")
+        var rankPercent: Double = 1.0,
+
         @field:JsonProperty("rating")
         var rating: Int = 0,
 
@@ -309,7 +313,10 @@ data class OsuUser(
         var userID: Long = 0L,
 
         @field:JsonProperty("pool")
-        var pool: MatchmakingPool = MatchmakingPool()
+        var pool: MatchmakingPool = MatchmakingPool(),
+
+        @field:JsonProperty("recent_history")
+        var recentHistory: List<MatchmakingHistory> = emptyList(),
     )
 
     data class MatchmakingPool(
@@ -327,6 +334,21 @@ data class OsuUser(
 
         @field:JsonProperty("variant_id")
         var variantID: Byte = 0,
+    )
+
+    data class MatchmakingHistory(
+        @field:JsonProperty("elo_after")
+        var eloAfter: Int = 0,
+
+        @field:JsonProperty("id")
+        var historyID: Long = 0L,
+
+        // Win / Loss
+        @field:JsonProperty("result")
+        var result: String = "",
+
+        @field:JsonProperty("created_at")
+        var createdAt: LocalDateTime = LocalDateTime.now(),
     )
 
     @get:JsonProperty("monthly_playcounts")
