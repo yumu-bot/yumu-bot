@@ -13,7 +13,7 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
                     response.statusCode,
                     response.statusText,
                     response.body.readAllBytes(),
-                    null
+                    Charsets.UTF_8
                 )
             } else {
                 response.body.readAllBytes()
@@ -23,7 +23,7 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
     val jsonString = try {
         exchange { _, response ->
             if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {
-                throw HttpClientErrorException(response.statusCode, response.statusText, response.body.readAllBytes(), null)
+                throw HttpClientErrorException(response.statusCode, response.statusText, response.body.readAllBytes(), Charsets.UTF_8)
             } else {
                 String(response.body.readAllBytes(), Charsets.UTF_8)
             }
@@ -63,7 +63,7 @@ inline fun <reified T : Any> org.springframework.web.client.RestClient.RequestHe
         exchange { _, response ->
             if (response.statusCode.is4xxClientError || response.statusCode.is5xxServerError) {
                 // 注意：Spring 6+ 建议使用 HttpStatusCodeException 的子类
-                throw HttpClientErrorException(response.statusCode, response.statusText, response.body.readAllBytes(), null)
+                throw HttpClientErrorException(response.statusCode, response.statusText, response.body.readAllBytes(), Charsets.UTF_8)
             } else {
                 String(response.body.readAllBytes(), Charsets.UTF_8)
             }
