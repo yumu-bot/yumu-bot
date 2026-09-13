@@ -93,8 +93,8 @@ open class NetworkException(message: String?
         class Undefined(e: Throwable):
             RenderModuleException("""
                 渲染模块出现未识别的错误。
-                信息如下：${e.message}
-            """.trimIndent()) {
+                信息如下：
+            """.trimIndent() + e.message) {
             override val code = -1
         }
     }
@@ -205,8 +205,8 @@ open class NetworkException(message: String?
         class Undefined(e: Throwable):
             UserException("""
                 连接出现未识别的错误。
-                信息如下：${e.message}
-            """.trimIndent()) {
+                信息如下：
+            """.trimIndent() + e.message) {
             override val code = -1
         }
     }
@@ -307,8 +307,8 @@ open class NetworkException(message: String?
         class Undefined(e: Throwable):
             BeatmapException("""
                 连接出现未识别的错误。
-                信息如下：${e.message}
-            """.trimIndent()) {
+                信息如下：
+            """.trimIndent() + e.message) {
             override val code = -1
         }
     }
@@ -408,8 +408,8 @@ open class NetworkException(message: String?
         class Undefined(e: Throwable):
             ScoreException("""
                 连接出现未识别的错误。
-                信息如下：${e.message}
-            """.trimIndent()) {
+                信息如下：
+            """.trimIndent() + e.message) {
             override val code = -1
         }
     }
@@ -501,8 +501,8 @@ open class NetworkException(message: String?
         class Undefined(e: Throwable):
             MatchException("""
                 连接出现未识别的错误。
-                信息如下：${e.message}
-            """.trimIndent()) {
+                信息如下：
+            """.trimIndent() + e.message) {
             override val code = -1
         }
     }
@@ -578,8 +578,8 @@ open class NetworkException(message: String?
         class Undefined(e: Throwable):
             DivingFishException("""
                 和水鱼之间的连接出现未识别的错误。
-                信息如下：${e.message}
-            """.trimIndent()) {
+                信息如下：
+            """.trimIndent() + e.message) {
             override val code = -1
         }
     }
@@ -671,8 +671,8 @@ open class NetworkException(message: String?
         class Undefined(e: Throwable):
             LxnsException("""
                 和落雪之间的连接出现未识别的错误。
-                信息如下：${e.message}
-            """.trimIndent()) {
+                信息如下：
+            """.trimIndent() + e.message) {
             override val code = -1
         }
     }

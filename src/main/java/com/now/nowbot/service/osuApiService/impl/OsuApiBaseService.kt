@@ -671,13 +671,22 @@ class OsuApiBaseService(
 
             when(ex?.statusCode?.value()) {
                 400 -> {
+                    val body = ex.responseBodyAsString
+
+                    if (body.contains("invalid_grant") || body.contains("Token has been revoked")) {
+                        bindDao.downgradeBind(user.userID)
+                        log.warn("更新令牌失败：玩家撤回了令牌授权，退回到名称绑定：${user.userID}")
+                        return null
+                        // throw NetworkException.UserException.TokenRevoked()
+                    }
+
                     log.error("更新令牌失败：请求错误 400：${ex.responseBodyAsString}")
                     throw NetworkException.UserException.BadRequest()
                 }
 
                 401 -> {
                     bindDao.downgradeBind(user.userID)
-                    log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}")
+                    log.warn("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}")
                     return null
                 }
 
