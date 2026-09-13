@@ -671,7 +671,7 @@ class OsuApiBaseService(
 
             when(ex?.statusCode?.value()) {
                 400 -> {
-                    log.info("更新令牌失败：请求错误 400：${ex}")
+                    log.error("更新令牌失败：请求错误 400：${ex}")
                     throw NetworkException.UserException.BadRequest()
                 }
 
