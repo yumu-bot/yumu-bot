@@ -42,7 +42,7 @@ class RunTimeService(
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
     // 每 1 分钟刷新 4 个人的 token
-    // @Scheduled(cron = "0,15,30,45 * 0-1,6-23 * * *")
+    @Scheduled(cron = "0,15,30,45 * 0-1,6-23 * * *")
     fun refreshToken() {
         bindDao.refreshOldUserToken(userApiService)
     }
