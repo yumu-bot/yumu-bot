@@ -14,7 +14,6 @@ import com.now.nowbot.util.DataUtil
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -348,7 +347,7 @@ data class OsuUser(
         var result: String = "",
 
         @field:JsonProperty("created_at")
-        var createdAt: LocalDateTime = LocalDateTime.now(),
+        var createdAt: OffsetDateTime = OffsetDateTime.now(),
     )
 
     @get:JsonProperty("monthly_playcounts")
