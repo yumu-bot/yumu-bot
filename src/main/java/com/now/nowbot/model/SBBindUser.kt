@@ -8,17 +8,17 @@ import java.time.OffsetDateTime
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class SBBindUser(
-    val id: Long? = null,
+    var id: Long? = null,
 
-    val userID: Long,
+    var userID: Long,
 
-    val username: String,
+    var username: String,
 
-    val mode: OsuMode,
+    var mode: OsuMode,
 
-    val time: Long = 0L,
+    var time: Long = 0L,
 
-    val joinDate: OffsetDateTime = OffsetDateTime.now(),
+    var joinDate: OffsetDateTime = OffsetDateTime.now(),
 ) {
     constructor(sbUser: SBUser): this (null, sbUser.userID, sbUser.username, sbUser.mode)
     constructor(userID: Long, username: String): this (null, userID, username, OsuMode.DEFAULT, 0L)

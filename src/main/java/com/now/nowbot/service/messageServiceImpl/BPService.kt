@@ -5,6 +5,7 @@ import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -188,7 +189,7 @@ import java.util.regex.Matcher
 
             val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
-                { id2.getBestsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition) }
+                { id2.getBestsFromUserID(mode.data.orElse(), isMultiple, hasCondition) }
             )
 
             user = async.first
@@ -214,7 +215,7 @@ import java.util.regex.Matcher
 
             user = range2.data!!
 
-            scores = range2.getBestsFromOsuUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
+            scores = range2.getBestsFromOsuUser(mode.data.orElse(), isMultiple, hasCondition)
         }
 
         if (scores.size == 200 || user.pp <= 0.0) {

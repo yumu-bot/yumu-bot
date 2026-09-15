@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.qq.event.MessageEvent
@@ -183,7 +182,7 @@ class MatchRecentService(
             .groupingBy { it.mode }
             .eachCount()
             .maxByOrNull { it.value }
-            ?.key ?: OsuMode.DEFAULT
+            ?.key.orElse()
 
         val user = if (this.userID != null) {
             userApiService.getOsuUser(this.userID, mode)

@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
@@ -276,7 +277,7 @@ class ScorePRService(
 
             val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
-                { id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass) }
+                { id2.getRecentsFromUserID(mode.data.orElse(), isMultiple, hasCondition, isPass) }
             )
 
             user = async.first
@@ -302,7 +303,7 @@ class ScorePRService(
 
             user = range2.data!!
 
-            scores = range2.getRecentsFromOsuUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass)
+            scores = range2.getRecentsFromOsuUser(mode.data.orElse(), isMultiple, hasCondition, isPass)
         }
 
         beatmapApiService.applyBeatmapExtend(scores)

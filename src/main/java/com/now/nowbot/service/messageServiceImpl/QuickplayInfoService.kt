@@ -81,7 +81,7 @@ class QuickplayInfoService(
 
         if (id != null) {
             val async = AsyncMethodExecutor.awaitPair(
-                { userApiService.getOsuUser(id, mode.data ?: OsuMode.DEFAULT) },
+                { userApiService.getOsuUser(id, mode.data.orElse()) },
                 { userApiService.getQuickplay(id).rooms }
             )
 

@@ -160,22 +160,30 @@ class UserIDUtil(
             "Matcher 中不包含 u2 分组"
         }
 
-        val me = bindDao.getBindFromQQOrNull(event.sender.contactID)
+        val senderID = event.sender.contactID
 
-        setMode(mode, event, me?.mode ?: OsuMode.DEFAULT)
+        val me = bindDao.getBindFromQQOrNull(senderID)
+
+        setMode(mode, event, me?.mode.orElse())
 
         if (event.hasAt()) {
-            return getUserIDFromQQ(event.target, me, mode, isVS)
+            val ats = event.targets
+
+            return if (ats.size > 1) {
+                getUserIDFromQQ(ats[1], bindDao.getBindFromQQ(ats[0], ats[0] == senderID), mode, senderID, isVS)
+            } else {
+                getUserIDFromQQ(event.target, me, mode, senderID, isVS)
+            }
         }
 
         val qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L
         if (qq != 0L) {
-            return getUserIDFromQQ(qq, me, mode, isVS)
+            return getUserIDFromQQ(qq, me, mode, senderID, isVS)
         }
 
         val uid = matcher.group(FLAG_UID)?.toLong() ?: 0L
         if (uid != 0L) {
-            return getUserIDFromQQ(0L - uid, me, mode, isVS)
+            return getUserIDFromQQ(0L - uid, me, mode, senderID, isVS)
         }
 
         val g = matcher.group(FLAG_2_USER)
@@ -212,14 +220,14 @@ class UserIDUtil(
     /**
      * @param qq 如果是负数，则认为是 UID
      */
-    private fun getUserIDFromQQ(qq: Long, me: BindUser?, mode: InstructionObject<OsuMode>, isVS: Boolean): Pair<Long?, Long?> {
+    private fun getUserIDFromQQ(qq: Long, me: BindUser?, mode: InstructionObject<OsuMode>, senderID: Long, isVS: Boolean): Pair<Long?, Long?> {
         val you = if (qq > 0L) {
-            bindDao.getBindFromQQ(qq)
+            bindDao.getBindFromQQ(qq, qq == senderID)
         } else {
             BindUser(- qq, "unknown")
         }
 
-        setMode(mode, selfMode = me?.mode ?: OsuMode.DEFAULT)
+        setMode(mode, selfMode = me?.mode.orElse())
 
         return if (isVS && me != null) {
             me.userID to you.userID
@@ -237,7 +245,7 @@ class UserIDUtil(
             null
         }
 
-        setMode(mode, selfMode = me?.mode ?: OsuMode.DEFAULT)
+        setMode(mode, selfMode = me?.mode.orElse())
 
         return if (isVS && me != null) {
             me.userID to yourID
@@ -286,12 +294,21 @@ class UserIDUtil(
                 }
             } catch (_: Exception) {}
 
-            isMyself.set(true)
+            if (event.hasAt()) {
+                isMyself.set(event.target == event.sender.contactID)
 
-            val me = bindDao.getBindFromQQ(event.sender.contactID)
-            setMode(mode, event, me.mode)
+                val other = bindDao.getBindFromQQ(event.target, isMyself.get())
+                setMode(mode, event, other.mode)
 
-            return InstructionRange(me.userID, range.first, range.second)
+                return InstructionRange(other.userID, range.first, range.second)
+            } else {
+                isMyself.set(true)
+                val me = bindDao.getBindFromQQ(event.sender.contactID)
+
+                setMode(mode, event, me.mode)
+
+                return InstructionRange(me.userID, range.first, range.second)
+            }
         }
 
         val range = if (hasHash) {
@@ -369,12 +386,21 @@ class UserIDUtil(
                 }
             } catch (_: Exception) {}
 
-            isMyself.set(true)
+            if (event.hasAt()) {
+                isMyself.set(event.target == event.sender.contactID)
 
-            val me = bindDao.getSBBindFromQQ(event.sender.contactID, true)
-            setMode(mode, selfMode = me.mode)
+                val other = bindDao.getSBBindFromQQ(event.target, isMyself.get())
+                setMode(mode, event, other.mode)
 
-            return InstructionRange(me.userID, range.first, range.second)
+                return InstructionRange(other.userID, range.first, range.second)
+            } else {
+                isMyself.set(true)
+
+                val me = bindDao.getSBBindFromQQ(event.sender.contactID, isMyself.get())
+                setMode(mode, selfMode = me.mode)
+
+                return InstructionRange(me.userID, range.first, range.second)
+            }
         }
 
         val range = if (hasHash) {

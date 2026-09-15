@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.filter.MicroUserFilter
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
@@ -281,7 +281,7 @@ class FriendService(
 
             if (other?.isTokenAvailable == null) {
                 // 对方未绑定模式
-                val others = InstructionUtil.getUserWithRange(event, matcher, InstructionObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
+                val others = InstructionUtil.getUserWithRange(event, matcher, InstructionObject(other?.mode.orElse()), isMyself).data!!
 
                 val async = AsyncMethodExecutor.awaitPair(
                     { userApiService.getOsuUser(me) },

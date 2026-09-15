@@ -436,7 +436,7 @@ import kotlin.time.Duration.Companion.seconds
 
         if (userID != null) {
             val async = AsyncMethodExecutor.awaitPair(
-                { userApiService.getOsuUser(userID, inputMode.data ?: OsuMode.DEFAULT) },
+                { userApiService.getOsuUser(userID, inputMode.data.orElse()) },
                 { scoreApiService.getRecentScore(userID, inputMode.data, 0, 1) }
             )
 

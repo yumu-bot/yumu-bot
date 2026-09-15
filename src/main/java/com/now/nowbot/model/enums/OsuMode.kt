@@ -67,7 +67,9 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
     companion object {
         fun OsuMode?.takeUnlessDefault(): OsuMode? = this?.takeUnless { it == DEFAULT }
 
-        fun OsuMode?.orElse(mode: OsuMode? = null): OsuMode = this.takeUnlessDefault() ?: mode ?: DEFAULT
+        fun OsuMode?.orElse(): OsuMode = this.takeUnlessDefault() ?: DEFAULT
+
+        fun OsuMode?.orElse(mode: OsuMode?): OsuMode = this.takeUnlessDefault() ?: mode ?: DEFAULT
 
         fun OsuMode?.orElse(value: Number?): OsuMode = this.takeUnlessDefault() ?: value.toOsuMode()
 

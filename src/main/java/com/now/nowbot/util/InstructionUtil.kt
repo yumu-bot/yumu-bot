@@ -129,7 +129,7 @@ class InstructionUtil(
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
             if (range.first != null && range.second == null && range.first in 201..999) try {
-                val bindMode = bindDao.getBindUserOrNull(range.first.toString())?.mode ?: OsuMode.DEFAULT
+                val bindMode = bindDao.getBindUserOrNull(range.first.toString())?.mode.orElse()
 
                 val user = try {
                     getOsuUser(range.first.toString(), mode.data)
@@ -162,7 +162,7 @@ class InstructionUtil(
             if (range.data == null) {
                 result = InstructionRange(null, range.start, range.end)
             } else {
-                val bindMode = bindDao.getBindUserOrNull(range.data!!)?.mode ?: OsuMode.DEFAULT
+                val bindMode = bindDao.getBindUserOrNull(range.data!!)?.mode.orElse()
 
                 setMode(mode, event, bindMode)
                 val user = getOsuUser(range.data!!, mode.data)
@@ -302,7 +302,7 @@ class InstructionUtil(
             if (range.data == null) {
                 result = InstructionRange(null, range.start, range.end)
             } else {
-                val bindMode = bindDao.getBindUserOrNull(range.data!!)?.mode ?: OsuMode.DEFAULT
+                val bindMode = bindDao.getBindUserOrNull(range.data!!)?.mode.orElse()
 
                 setMode(mode, selfMode = bindMode)
                 val user = sbUserApiService.getUser(username = range.data!!)
@@ -334,16 +334,18 @@ class InstructionUtil(
     ): List<OsuUser> {
         require(matcher.namedGroups().containsKey(FLAG_2_USER)) { "Matcher 中不包含 u2 分组" }
 
-        val myBind = bindDao.getBindFromQQOrNull(event.sender.contactID)
+        val senderID = event.sender.contactID
 
-        setMode(mode, event, myBind?.mode ?: OsuMode.DEFAULT)
+        val myBind = bindDao.getBindFromQQOrNull(senderID)
+
+        setMode(mode, event, myBind?.mode.orElse())
 
         /**
          * @param qq 如果是负数，则认为是 UID
          */
-        fun parseAtQQUID(qq: Long, myBind: BindUser?, mode: InstructionObject<OsuMode>, isVS: Boolean): List<OsuUser> {
+        fun parseAtQQUID(qq: Long, myBind: BindUser?, mode: InstructionObject<OsuMode>, senderID: Long, isVS: Boolean): List<OsuUser> {
             val you = if (qq > 0) {
-                getOsuUser(bindDao.getBindFromQQ(qq, false), mode.data)
+                getOsuUser(bindDao.getBindFromQQ(qq, qq == senderID), mode.data)
             } else {
                 getOsuUser(-qq, mode.data)
             }
@@ -360,17 +362,23 @@ class InstructionUtil(
         }
 
         if (event.hasAt()) {
-            return parseAtQQUID(event.target, myBind, mode, isVS)
+            val ats = event.targets
+
+            return if (ats.size > 1) {
+                parseAtQQUID(ats[1], bindDao.getBindFromQQ(ats[0], ats[0] == senderID), mode, senderID, isVS)
+            } else {
+                parseAtQQUID(event.target, myBind, mode, senderID, isVS)
+            }
         }
 
         val qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L
         if (qq != 0L) {
-            return parseAtQQUID(qq, myBind, mode, isVS)
+            return parseAtQQUID(qq, myBind, mode, senderID, isVS)
         }
 
         val uid = matcher.group(FLAG_UID)?.toLong() ?: 0L
         if (uid != 0L) {
-            return parseAtQQUID(0L - uid, myBind, mode, isVS)
+            return parseAtQQUID(0L - uid, myBind, mode, senderID, isVS)
         }
 
         val g = matcher.group(FLAG_2_USER)
@@ -537,7 +545,7 @@ class InstructionUtil(
      * @param mode 指定模式
      */
     private fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
-        return userApiService.getOsuUser(user, mode ?: OsuMode.DEFAULT)
+        return userApiService.getOsuUser(user, mode.orElse())
     }
 
     /**
@@ -547,7 +555,7 @@ class InstructionUtil(
      * @param mode 指定模式
      */
     private fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
-        return userApiService.getOsuUser(name, mode ?: OsuMode.DEFAULT)
+        return userApiService.getOsuUser(name, mode.orElse())
     }
 
     /**
@@ -557,7 +565,7 @@ class InstructionUtil(
      * @param mode 指定模式
      */
     private fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
-        return userApiService.getOsuUser(uid, mode ?: OsuMode.DEFAULT)
+        return userApiService.getOsuUser(uid, mode.orElse())
     }
 
     /**

@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -130,7 +130,7 @@ class SBTodayBPService(
                 { userApiService.getUser(id.data!!) },
                 { scoreApiService.getBestScore(
                     id = id.data!!,
-                    mode = mode.data ?: OsuMode.DEFAULT
+                    mode = mode.data.orElse()
                 ) }
             )
 

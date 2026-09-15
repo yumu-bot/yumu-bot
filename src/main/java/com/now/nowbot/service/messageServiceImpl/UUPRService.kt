@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
@@ -172,7 +173,7 @@ class UUPRService(
 
             val async = AsyncMethodExecutor.awaitPair(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
-                { id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, false, hasCondition, isPass) }
+                { id2.getRecentsFromUserID(mode.data.orElse(), false, hasCondition, isPass) }
             )
 
             user = async.first
@@ -198,7 +199,7 @@ class UUPRService(
 
             user = range2.data!!
 
-            scores = range2.getRecentsFromOsuUser(mode.data ?: OsuMode.DEFAULT, false, hasCondition, isPass)
+            scores = range2.getRecentsFromOsuUser(mode.data.orElse(), false, hasCondition, isPass)
         }
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
