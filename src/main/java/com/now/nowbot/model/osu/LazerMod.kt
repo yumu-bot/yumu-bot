@@ -2686,7 +2686,6 @@ sealed class LazerMod {
         fun List<LazerMod>.isNotAffectStarRating(): Boolean =
             !isAffectStarRating()
 
-
         fun List<LazerMod>.contains(target: Mod): Boolean =
             any { it == target || it.acronym == target.type }
 

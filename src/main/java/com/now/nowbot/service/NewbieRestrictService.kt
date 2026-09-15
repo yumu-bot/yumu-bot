@@ -5,6 +5,8 @@ import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.NewbieDao
+import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.containsAny
 import com.now.nowbot.model.osu.LazerMod.Companion.isNotAffectStarRating
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.MessageEvent
@@ -55,8 +57,8 @@ class NewbieRestrictService(
                 var maxScore: LazerScore? = null
 
                 for (score in scores) {
-                    // 过滤逻辑
-                    if (remitBIDs.contains(score.beatmapID) && score.mods.isNotAffectStarRating()) {
+                    // 过滤逻辑：符合赦免，并且模组不变星数，或只是视觉遮挡类模组
+                    if (remitBIDs.contains(score.beatmapID) && (score.mods.isNotAffectStarRating() || score.mods.containsAny(listOf(LazerMod.Hidden)))) {
                         continue
                     }
 
@@ -226,7 +228,7 @@ class NewbieRestrictService(
          * 获取禁言时长
          */
         fun getSilence(star: Double): Duration {
-            return if (star <= STAR_BOUNDARY + 0.05) {
+            return if (star <= STAR_BOUNDARY + 0.01) {
                 // 未超星
                 Duration.ZERO
             } else {
