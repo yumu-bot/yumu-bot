@@ -5,8 +5,7 @@ import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.NewbieDao
-import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.LazerMod.Companion.containsAny
+import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
 import com.now.nowbot.model.osu.LazerMod.Companion.isNotAffectStarRating
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.MessageEvent
@@ -58,7 +57,7 @@ class NewbieRestrictService(
 
                 for (score in scores) {
                     // 过滤逻辑：符合赦免，并且模组不变星数，或只是视觉遮挡类模组
-                    if (remitBIDs.contains(score.beatmapID) && (score.mods.isNotAffectStarRating() || score.mods.containsAny(listOf(LazerMod.Hidden)))) {
+                    if (remitBIDs.contains(score.beatmapID) && (score.mods.isNotAffectStarRating() || score.mods.containsHidden())) {
                         continue
                     }
 
