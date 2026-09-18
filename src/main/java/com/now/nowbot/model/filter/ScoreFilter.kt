@@ -50,9 +50,9 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     STAR("(stars?|rating|sr|r|星数?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)$PATTERN_STAR$LEVEL_MAYBE".toRegex()),
 
-    SCORE("(scores?|sc|ss|e|分数?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)$PATTERN_STAR$LEVEL_MAYBE".toRegex()),
+    SCORE("(scores?|sc|ss|e|分数?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    REPLAY("(replay|rep|rp|回放|录像|记录)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)$PATTERN_STAR$LEVEL_MAYBE".toRegex()),
+    REPLAY("(replay|re?p|journal|j|回放|录像|记录)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
     AR("(ar|approach\\s*(rate)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
