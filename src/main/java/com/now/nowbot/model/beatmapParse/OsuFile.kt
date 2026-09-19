@@ -37,7 +37,7 @@ class OsuFile @Throws(IOException::class) constructor(private val reader: Buffer
         // 修正：安全跳过空白行直到找到 [General]
         while (true) {
             line = reader.readLine()
-            if (line == null) throw RuntimeException("解析错误,缺失 [SearchBooleans] 块")
+            if (line == null) throw RuntimeException("解析错误,缺失 [General] 块")
             if (line.isNotBlank()) break
         }
 
