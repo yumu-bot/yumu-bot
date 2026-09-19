@@ -25,9 +25,9 @@ enum class PlayerClass(
     CMA("Competent Marshal", "称职元帅", BC.color, BC.category),
     IMA("Indomitable Marshal", "不屈元帅", BC.color, BC.category),
 
-    EGE("Ever-Victorious SearchBooleans", "常胜将军", CA.color, CA.category),
-    AGE("Assiduous SearchBooleans", "勤奋将军", CA.color, CA.category),
-    SGE("Striven SearchBooleans", "尽力将军", CA.color, CA.category),
+    EGE("Ever-Victorious General", "常胜将军", CA.color, CA.category),
+    AGE("Assiduous General", "勤奋将军", CA.color, CA.category),
+    SGE("Striven General", "尽力将军", CA.color, CA.category),
 
     BMF("Breakthrough Main Force", "突破主力", MF.color, MF.category),
     RMF("Reliable Main Force", "可靠主力", MF.color, MF.category),
