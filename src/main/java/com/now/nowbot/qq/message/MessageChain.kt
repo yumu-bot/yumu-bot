@@ -1,9 +1,9 @@
 package com.now.nowbot.qq.message
 
+import com.yumu.qq.message.Keyboard
 import java.net.URI
 import java.net.URL
 import java.util.*
-import kotlin.collections.get
 
 class MessageChain {
     class MessageChainBuilder {
@@ -41,6 +41,16 @@ class MessageChain {
 
         fun addAtAll(): MessageChainBuilder {
             msgChain.addMessage(AtMessage())
+            return this
+        }
+
+        fun addMarkdown(md: String): MessageChainBuilder {
+            msgChain.addMessage(MarkdownMessage(md))
+            return this
+        }
+
+        fun addKyeboard(keyboard: Keyboard): MessageChainBuilder {
+            msgChain.addMessage(KeyboardMessage(keyboard))
             return this
         }
 
@@ -105,6 +115,12 @@ class MessageChain {
             }
             return sb.toString()
         }
+
+    val markdown: MarkdownMessage?
+        get() = messageList.filterIsInstance<MarkdownMessage>().firstOrNull()
+
+    val keyboard: KeyboardMessage?
+        get() = messageList.filterIsInstance<KeyboardMessage>().firstOrNull()
 
     object MessageChainParser {
         // 匹配 CQ 码的正则表达式：[CQ:类型,参数=值,参数=值]

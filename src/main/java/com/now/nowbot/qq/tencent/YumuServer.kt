@@ -10,13 +10,9 @@ import com.now.nowbot.util.QQMsgUtil
 import com.yumu.YumuService
 import com.yumu.model.packages.Command
 import com.yumu.model.packages.QueryName
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.seconds
 
 object YumuServer : YumuService {
@@ -33,11 +29,15 @@ object YumuServer : YumuService {
         RestrictImplement.onTencentMessage(event) {
             df.complete(it)
         }
-        val response = withTimeoutOrNull(10.seconds) {
-            val messageChain = df.await()
-            messageToResponse(messageChain)
+        val response = try {
+            withTimeout(10.seconds) {
+                val messageChain = df.await()
+                messageToResponse(messageChain)
+            }
+        } catch (_: TimeoutCancellationException) {
+            return Command.Response("结果处理超时啦, 压力比较大, 请稍后再试")
         }
-        return response ?: Command.Response("结果处理超时啦, 压力比较大, 请稍后再试")
+        return response
     }
 
     override suspend fun onQueryName(param: QueryName.Request): QueryName.Response {
@@ -48,9 +48,16 @@ object YumuServer : YumuService {
     fun messageToResponse(messageChain: MessageChain): Command.Response {
         val (textList, imageList) = messageChain.messageList.filter { it is TextMessage || it is ImageMessage }
             .partition { it is TextMessage }
-        var text = textList.joinToString { it.toString() }
-        if (text.contains("(!bi)")) {
-            text = BindException.TokenExpiredException.OfficialTokenExpired().message!!
+        val md = messageChain.markdown
+        var text: String
+        // markdown 会覆盖普通消息
+        if (md == null) {
+            text = textList.joinToString { it.toString() }
+            if (text.contains("(!bi)")) {
+                text = BindException.TokenExpiredException.OfficialTokenExpired().message!!
+            }
+        } else {
+            text = md.toString()
         }
         var image: String? = null
         var isUrl = false
@@ -63,10 +70,13 @@ object YumuServer : YumuService {
                 image = QQMsgUtil.byte2str(imageData.data)
             }
         }
+        val keyboard: String? = messageChain.keyboard?.toString()
         val result = Command.Response(
             text,
             image,
-            isUrl,
+            isUrl = isUrl,
+            isMarkdown = md != null,
+            keyboard = keyboard
         )
         return result
     }

@@ -36,6 +36,14 @@ open class LocalContact(override val contactID: Long = 1340691940, override val 
                     "[图片: ${localPath}]"
                 }
 
+                is KeyboardMessage -> {
+                    "[keyboard]$it"
+                }
+
+                is MarkdownMessage -> {
+                    "[markdown]\n${it.markdown}"
+                }
+
                 else -> "[未知类型]"
             }
         }

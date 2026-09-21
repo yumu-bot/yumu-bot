@@ -11,6 +11,7 @@ open class Message {
         return ""
     }
 
+    // 返回空会自动跳过 onebot 11 的发送, 针对 Markdown / Keyboard 消息
     open fun toJson(): JsonMessage? {
         return null
     }

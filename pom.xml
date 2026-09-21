@@ -215,11 +215,18 @@
             <version>1.26.0</version>
         </dependency>
 
+        <!--        腾讯的桥接接口-->
         <dependency>
-            <groupId>com.yumu</groupId>
-            <artifactId>yumu-lib</artifactId>
-            <version>0.0.4</version>
+            <groupId>xyz.365246692.mvn</groupId>
+            <artifactId>yumu-client</artifactId>
+            <version>0.1.2</version>
         </dependency>
+        <dependency>
+            <groupId>xyz.365246692.mvn</groupId>
+            <artifactId>yumu-tencent-bot</artifactId>
+            <version>0.1.2</version>
+        </dependency>
+        <!--        腾讯的桥接接口-->
 
         <dependency>
             <groupId>me.aloic</groupId>
@@ -231,6 +238,13 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!--        动态代码解析工具库 -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>4.13.2</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/net.dv8tion/JDA -->
