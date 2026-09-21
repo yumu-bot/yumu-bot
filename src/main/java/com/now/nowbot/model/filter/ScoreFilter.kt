@@ -15,6 +15,7 @@ import com.now.nowbot.util.command.*
 
 import org.intellij.lang.annotations.Language
 import java.math.BigDecimal
+import java.math.MathContext
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.ZoneId
@@ -116,49 +117,66 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
         val regexes: List<Regex> by lazy { entries.map { it.regex } }
 
         fun filterScores(scores: List<LazerScore>, conditions: List<List<String>>): List<LazerScore> {
-            val result = scores.toMutableList()
+            val predicates = parsePredicates(conditions)
+            if (predicates.isEmpty()) return scores
 
-            conditions.dropLast(1).forEachIndexed { index, strings ->
-                if (strings.isNotEmpty()) {
-                    filterConditions(result, entries[index], strings)
-                }
-            }
-
-            return result
-        }
-
-        private fun filterConditions(scores: MutableList<LazerScore>, filter: ScoreFilter, conditions: List<String>) {
-            for (c in conditions) {
-                val operator = Operator.getOperator(c)
-                val condition = Condition(c.split(REGEX_OPERATOR_WITH_SPACE).lastOrNull() ?: "")
-
-                scores.removeIf { score -> fitScore(score, operator, filter, condition).not() }
+            return scores.filter { score ->
+                predicates.all { predicate -> predicate(score) }
             }
         }
 
         fun <K> filterScores(scores: Map<K, LazerScore>, conditions: List<List<String>>): Map<K, LazerScore> {
-            val filteredSet = filterScores(scores.values.toList(), conditions).toSet()
+            val predicates = parsePredicates(conditions)
+            if (predicates.isEmpty()) return scores
 
-            return scores.filterValues { it in filteredSet }
+            return scores.filterValues { score ->
+                predicates.all { predicate -> predicate(score) }
+            }
+        }
+
+        /**
+         * 将多维 conditions 解析为一组可复用的谓词函数 (Score -> Boolean)
+         */
+        private fun parsePredicates(conditions: List<List<String>>): List<(LazerScore) -> Boolean> {
+            val predicates = mutableListOf<(LazerScore) -> Boolean>()
+
+            // 使用 subList 避免 dropLast 带来的内存拷贝
+            val validConditions = if (conditions.isNotEmpty()) conditions.subList(0, conditions.size - 1) else emptyList()
+
+            for ((index, strings) in validConditions.withIndex()) {
+                if (strings.isEmpty()) continue
+
+                val filter = entries.getOrNull(index) ?: continue
+                for (c in strings) {
+                    val operator = Operator.getOperator(c)
+                    val conditionStr = c.split(REGEX_OPERATOR_WITH_SPACE).lastOrNull().orEmpty()
+                    val condition = Condition(conditionStr)
+
+                    predicates.add { score -> fitScore(score, operator, filter, condition) }
+                }
+            }
+            return predicates
         }
 
         /**
          * @param compare 被比较的数据
          * @param to 输入的数据，这里认为你已经在外面 standardized 了，否则开销是 O(N^2)
-         * @param isRound 如果为真，则会按照四舍五入的方式处理 compare（比如表现分）。否则按照向下取整的方式处理 compare（比如星数或者准确率）。
          */
         fun fit(
             operator: Operator,
             compare: Any?,
             to: Any?,
-            isRound: Boolean = false,
         ): Boolean {
             return !(compare == null || to == null) && when (compare) {
                 is Number if to is Number -> {
                     if (isIntegral(compare) && isIntegral(to)) {
                         compareLongs(operator, compare.toLong(), to.toLong())
+                    } else if (compare is BigDecimal && to is BigDecimal) {
+                        compareDecimals(operator, compare, to)
+                    } else if (to is BigDecimal) {
+                        compareDecimals(operator, compare.toString().toBigDecimal(), to)
                     } else {
-                        compareDoubles(operator, compare.toDouble(), to.toDouble(), isRound)
+                        compareDecimals(operator, BigDecimal(compare.toDouble()), BigDecimal(to.toDouble()))
                     }
                 }
 
@@ -236,28 +254,39 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             }
         }
 
-        private fun compareDoubles(
-            operator: Operator,
-            compare: Double,
-            to: Double,
-            isRound: Boolean = false
-        ): Boolean {
-            val bdTo = BigDecimal.valueOf(to).stripTrailingZeros()
-            val dig = maxOf(0, bdTo.scale())
+        private val epsilon = BigDecimal("0.0001")
 
-            val normCompare = BigDecimal.valueOf(compare).setScale(dig, if (isRound) RoundingMode.HALF_UP else RoundingMode.FLOOR)
-            val normTo = bdTo.setScale(dig, RoundingMode.HALF_UP)
+        private fun compareDecimals(
+            operator: Operator,
+            compare: BigDecimal,
+            to: BigDecimal
+        ): Boolean {
+            // 获取目标值的保留小数位数（避免 scale 为负数的情况，例如 1E2）
+            val dig = to.scale().coerceIn(0, 6)
+
+            // 1. 消除 Double 转换带来的尾数噪声（预平滑处理）
+            // Double 有效精度约为 15-17 位，这里保留 6 位小数并用 HALF_UP 规整
+            // 5.999999999999999 -> 6.0000000000
+            // 6.999999999999999 -> 7.0000000000
+            val cleanedCompare = compare.setScale(6, RoundingMode.HALF_UP)
+
+            // 2. 将规整后的值按目标 scale (dig) 进行 FLOOR 截断处理
+            val normCompare = cleanedCompare.setScale(dig, RoundingMode.FLOOR)
+            val normTo = to.setScale(dig, RoundingMode.FLOOR)
 
             return when (operator) {
-                Operator.XQ -> abs(compare - to) <= 1e-4
+                // EQ：匹配 [to, to + 10^-dig) 区间
+                // 示例 (dig=0): to=6 时，[6.0, 7.0) 范围均返回 true
+                // 示例 (dig=2): to=6.00 时，[6.00, 6.01) 范围均返回 true
+                Operator.EQ -> normCompare.compareTo(normTo) == 0
+                Operator.NE -> normCompare.compareTo(normTo) != 0
 
+                Operator.LE -> compare <= to
                 Operator.GT -> compare > to
                 Operator.GE -> compare >= to
                 Operator.LT -> compare < to
-                Operator.LE -> compare <= to
 
-                Operator.EQ -> normCompare.compareTo(normTo) == 0
-                Operator.NE -> normCompare.compareTo(normTo) != 0
+                Operator.XQ -> (compare - to).abs() <= epsilon
             }
         }
 
@@ -265,7 +294,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             val long = condition.long
             val double = condition.double
             val str = condition.condition
-            val dec = condition.hasDecimal
+            val decimal = condition.decimal
 
             return when (filter) {
                 CREATOR -> fit(operator, it.beatmapset.creator, str)
@@ -308,16 +337,16 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 DIFFICULTY -> fit(operator, it.beatmap.difficultyName, str)
 
-                STAR -> fit(operator, it.beatmap.starRating, double)
+                STAR -> fit(operator, it.beatmap.starRating.toBigDecimal(), decimal)
 
                 SCORE -> fit(operator, it.score, long)
 
                 REPLAY -> fit(operator, it.replay, !(str == "false" || str == "f") || long > 0)
 
-                AR -> fit(operator, it.beatmap.ar?.toDouble() ?: 0.0, double)
-                CS -> fit(operator, it.beatmap.cs?.toDouble() ?: 0.0, double)
-                OD -> fit(operator, it.beatmap.od?.toDouble() ?: 0.0, double)
-                HP -> fit(operator, it.beatmap.hp?.toDouble() ?: 0.0, double)
+                AR -> fit(operator, it.beatmap.ar?.toBigDecimal(), decimal)
+                CS -> fit(operator, it.beatmap.cs?.toBigDecimal(), decimal)
+                OD -> fit(operator, it.beatmap.od?.toBigDecimal(), decimal)
+                HP -> fit(operator, it.beatmap.hp?.toBigDecimal(), decimal)
                 PERFORMANCE -> fit(operator, it.pp.roundToLong(), long)
                 RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
@@ -345,7 +374,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.beatmap.totalLength.toLong(), seconds)
                 }
 
-                BPM -> fit(operator, it.beatmap.bpm.toDouble(), double)
+                BPM -> fit(operator, it.beatmap.bpm.toBigDecimal(), decimal)
                 ACCURACY -> {
                     val acc = when {
                         double > 10000.0 || double <= 0.0 -> throw IllegalArgumentException.WrongException.Henan()
@@ -357,25 +386,25 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.accuracy, acc)
                 }
 
-                COMBO -> fitCountOrPercent(operator, it.maxCombo, double, it.beatmap.maxCombo, dec)
+                COMBO -> fitCountOrPercent(operator, it.maxCombo, decimal, it.beatmap.maxCombo)
 
-                PERFECT -> it.mode == OsuMode.MANIA && fitCountOrPercent(operator, it.statistics.perfect, double, it.maximumStatistics.perfect, dec)
-                GREAT -> fitCountOrPercent(operator, it.statistics.great, double, it.maximumStatistics.great, dec)
-                GOOD -> it.mode == OsuMode.MANIA && fitCountOrPercent(operator, it.statistics.good, double, it.maximumStatistics.good, dec)
+                PERFECT -> it.mode == OsuMode.MANIA && fitCountOrPercent(operator, it.statistics.perfect, decimal, it.maximumStatistics.perfect)
+                GREAT -> fitCountOrPercent(operator, it.statistics.great, decimal, it.maximumStatistics.great)
+                GOOD -> it.mode == OsuMode.MANIA && fitCountOrPercent(operator, it.statistics.good, decimal, it.maximumStatistics.good)
 
                 OK -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
-                    fitCountOrPercent(operator, it.statistics.ok, double, it.maximumStatistics.ok, dec)
+                    fitCountOrPercent(operator, it.statistics.ok, decimal, it.maximumStatistics.ok)
                 } else {
-                    fitCountOrPercent(operator, it.statistics.ok, double, it.maximumStatistics.largeTickHit, dec)
+                    fitCountOrPercent(operator, it.statistics.ok, decimal, it.maximumStatistics.largeTickHit)
                 }
 
                 MEH -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
-                    fitCountOrPercent(operator, it.statistics.meh, double, it.maximumStatistics.meh, dec)
+                    fitCountOrPercent(operator, it.statistics.meh, decimal, it.maximumStatistics.meh)
                 } else {
-                    fitCountOrPercent(operator, it.statistics.meh, double, it.maximumStatistics.smallTickHit, dec)
+                    fitCountOrPercent(operator, it.statistics.meh, decimal, it.maximumStatistics.smallTickHit)
                 }
 
-                MISS -> fitCountOrPercent(operator, it.statistics.miss, double, it.maximumStatistics.miss, dec)
+                MISS -> fitCountOrPercent(operator, it.statistics.miss, decimal, it.maximumStatistics.miss)
 
                 MISSED_FRUIT -> {
                     val compare = if (it.isLazer) {
@@ -384,14 +413,14 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         it.statistics.miss - it.statistics.largeTickMiss
                     }
 
-                    (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && fitCountOrPercent(operator, compare, double, it.maximumStatistics.great, dec)
+                    (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && fitCountOrPercent(operator, compare, decimal, it.maximumStatistics.great)
                 }
 
                 MISSED_DROP -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.largeTickHit > 0 &&
-                        fitCountOrPercent(operator, it.statistics.largeTickMiss, double, it.maximumStatistics.largeTickHit, dec)
+                        fitCountOrPercent(operator, it.statistics.largeTickMiss, decimal, it.maximumStatistics.largeTickHit)
 
                 MISSED_DROPLET -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.smallTickHit > 0 &&
-                        fitCountOrPercent(operator, it.statistics.smallTickMiss, double, it.maximumStatistics.smallTickHit, dec)
+                        fitCountOrPercent(operator, it.statistics.smallTickMiss, decimal, it.maximumStatistics.smallTickHit)
 
                 MOD -> fitMod(operator, str, it.mods)
 
@@ -404,9 +433,9 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, rate, input)
                 }
 
-                CIRCLE -> fitCountOrPercent(operator, it.beatmap.circles, double, it.beatmap.totalNotes, dec)
-                SLIDER -> fitCountOrPercent(operator, it.beatmap.sliders, double, it.beatmap.totalNotes, dec)
-                SPINNER -> fitCountOrPercent(operator, it.beatmap.spinners, double, it.beatmap.totalNotes, dec)
+                CIRCLE -> fitCountOrPercent(operator, it.beatmap.circles, decimal, it.beatmap.totalNotes)
+                SLIDER -> fitCountOrPercent(operator, it.beatmap.sliders, decimal, it.beatmap.totalNotes)
+                SPINNER -> fitCountOrPercent(operator, it.beatmap.spinners, decimal, it.beatmap.totalNotes)
 
                 TOTAL -> {
                     val total = it.beatmap.totalNotes
@@ -457,17 +486,37 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
          * 公用方法
          * 在 to 含有小数点时，按 compare 占 total 的百分比来处理。在其他情况时，按 compare 整数来处理。
          */
-        fun fitCountOrPercent(operator: Operator, compare: Number?, to: Number, total: Number?, hasDecimal: Boolean): Boolean {
+        fun fitCountOrPercent(operator: Operator, compare: Number?, to: BigDecimal, total: Number?): Boolean {
             if (compare == null) return false
 
-            val c = compare.toDouble()
-            val t = to.toDouble()
-            val l = total?.toDouble() ?: 0.0
+            val cleanedTo = to.setScale(6, RoundingMode.HALF_UP).stripTrailingZeros()
 
-            return if (hasDecimal && t in 0.0..1.0 && operator !== Operator.XQ) {
-                l != 0.0 && fit(operator, c / l, t)
+            // 2. 判定是否含有有效小数：只需看剔除尾随 0 后的 scale 是否 > 0
+            val hasDecimal = cleanedTo.scale() > 0
+
+            // 3. 判断是否满足百分比模式条件：含有有效小数 且 在 [0.0, 1.0] 之间 且 不是 XQ
+            val isPercentMode = hasDecimal
+                    && cleanedTo >= BigDecimal.ZERO
+                    && cleanedTo <= BigDecimal.ONE
+                    && operator != Operator.XQ
+
+            return if (isPercentMode) {
+                val totalBd = BigDecimal(total.toString())
+                if (totalBd.abs() < epsilon) {
+                    false
+                } else {
+                    val compareBd = BigDecimal(compare.toString())
+
+                    val ratio = compareBd.divide(totalBd, MathContext.DECIMAL64)
+                        .setScale(6, RoundingMode.HALF_UP)
+                        .stripTrailingZeros()
+
+                    // 传入高精度的 fit / compareDecimals 函数进行比对
+                    fit(operator, ratio, cleanedTo)
+                }
             } else {
-                fit(operator, compare.toLong(), t.toLong())
+                // 整数模式：直接转为 Long 比较
+                fit(operator, compare.toLong(), cleanedTo.toLong())
             }
         }
 

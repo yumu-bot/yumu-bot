@@ -14,7 +14,7 @@ enum class PlayerClass(
     MF("Main Force", "主力", "#22AC38", "MF"),
     SP("Specialized", "专精", "#B3D465", "SP"),
     WF("Work Force", "打工", "#0068B7", "WF"),
-    GE("SearchBooleans", "普通", "#BDBDBD", "GE"),
+    GE("General", "普通", "#BDBDBD", "GE"),
     GU("Guest", "客串", "#00A0E9", "GU"),
     SU("Support", "抗压", "#9922EE", "SU"),
     SG("Scapegoat", "背锅", "#E4007F", "SG"),

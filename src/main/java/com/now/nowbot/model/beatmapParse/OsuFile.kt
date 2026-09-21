@@ -137,7 +137,7 @@ class OsuFile @Throws(IOException::class) constructor(private val reader: Buffer
                 // 修正：模仿 Java 的 while ((line = read.readLine()) != null)
                 while (reader.readLine().also { line = it } != null) {
                     val currentLine = line!!
-                    if (currentLine.startsWith("[SearchBooleans]") || currentLine.startsWith("[Metadata]")) {
+                    if (currentLine.startsWith("[General]") || currentLine.startsWith("[Metadata]")) {
                         parseAny(reader, info)
                     }
                     if (currentLine.startsWith("[Events]")) {

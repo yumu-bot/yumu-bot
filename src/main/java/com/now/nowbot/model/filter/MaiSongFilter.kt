@@ -4,6 +4,7 @@ import com.now.nowbot.model.enums.*
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fitCountOrPercent
 import com.now.nowbot.model.maimai.MaiSong
+import com.now.nowbot.model.maimai.MaiSong.MaiChart.MaiNote
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 
@@ -106,9 +107,8 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
         private fun fitSong(it: MaiSong, operator: Operator, filter: MaiSongFilter, condition: Condition): Pair<Boolean, List<MaiDifficulty>> {
             val int = condition.int
             val long = condition.long
-            val double = condition.double
             val str = condition.condition
-            val hasDecimal = condition.hasDecimal
+            val decimal = condition.decimal
 
             val default = listOf<MaiDifficulty>()
 
@@ -116,6 +116,29 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                 4 -> arrayListOf(0, 1, 2, 3)
                 5 -> arrayListOf(0, 1, 2, 3, 4)
                 else -> arrayListOf(5)
+            }
+
+            fun processNoteType(
+                charts: List<MaiSong.MaiChart>,
+                noteSelector: (MaiNote) -> Int
+            ): Pair<Boolean, List<MaiDifficulty>> {
+                val diff = charts.mapIndexedNotNull { i, chart ->
+                    val t = chart.maiNote.total
+                    val noteCount = noteSelector(chart.maiNote)
+
+                    val fits = fitCountOrPercent(operator, noteCount, decimal, t)
+                    if (fits) {
+                        MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
+                    } else {
+                        null
+                    }
+                }
+
+                return if (diff.isEmpty()) {
+                    false to default
+                } else {
+                    true to diff
+                }
             }
 
             return when(filter) {
@@ -214,102 +237,13 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                 BPM -> fit(operator, it.info, int) to default
 
-                TAP -> {
-                    val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.maiNote.total
 
-                        val f = fitCountOrPercent(operator, chart.maiNote.tap, double, t, hasDecimal)
+                TAP -> processNoteType(it.charts, MaiNote::tap)
+                HOLD -> processNoteType(it.charts, MaiNote::hold)
+                SLIDE -> processNoteType(it.charts, MaiNote::slide)
+                TOUCH -> processNoteType(it.charts, MaiNote::touch)
+                BREAK -> processNoteType(it.charts, MaiNote::`break`)
 
-                        val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
-
-                        f to l
-                    }
-
-                    val diff = result.filter { it.first }.map { it.second }
-
-                    if (diff.isEmpty()) {
-                        false to default
-                    } else {
-                        true to diff
-                    }
-                }
-
-                HOLD -> {
-                    val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.maiNote.total
-
-                        val f = fitCountOrPercent(operator, chart.maiNote.hold, double, t, hasDecimal)
-
-                        val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
-
-                        f to l
-                    }
-
-                    val diff = result.filter { it.first }.map { it.second }
-
-                    if (diff.isEmpty()) {
-                        false to default
-                    } else {
-                        true to diff
-                    }
-                }
-                SLIDE -> {
-                    val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.maiNote.total
-
-                        val f = fitCountOrPercent(operator, chart.maiNote.slide, double, t, hasDecimal)
-
-                        val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
-
-                        f to l
-                    }
-
-                    val diff = result.filter { it.first }.map { it.second }
-
-                    if (diff.isEmpty()) {
-                        false to default
-                    } else {
-                        true to diff
-                    }
-                }
-                TOUCH -> {
-                    val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.maiNote.total
-
-                        val f = fitCountOrPercent(operator, chart.maiNote.touch, double, t, hasDecimal)
-
-                        val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
-
-                        f to l
-                    }
-
-                    val diff = result.filter { it.first }.map { it.second }
-
-                    if (diff.isEmpty()) {
-                        false to default
-                    } else {
-                        true to diff
-                    }
-                }
-                BREAK -> {
-                    val result = it.charts.mapIndexed{ i, chart ->
-                        val t = chart.maiNote.total
-
-                        val f = fitCountOrPercent(operator, chart.maiNote.`break`, double, t, hasDecimal)
-
-                        val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
-
-                        f to l
-                    }
-
-                    val diff = result.filter { it.first }.map { it.second }
-
-                    if (diff.isEmpty()) {
-                        false to default
-                    } else {
-                        true to diff
-                    }
-                }
                 DX_SCORE -> {
                     val result = it.charts.mapIndexed{ i, chart ->
                         val f = fit(operator, chart.dxScore, int)

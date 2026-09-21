@@ -128,7 +128,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
             val int = condition.int
             val double = condition.double
             val str = condition.condition
-            val hasDecimal = condition.hasDecimal
+            val decimal = condition.decimal
 
             return when (filter) {
                 CHARTER -> fit(operator, MaiCharter.getCharter(it.charter), MaiCharter.getCharter(str))
@@ -177,12 +177,12 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                     fit(operator, it.achievements, acc)
                 }
-                TAP -> fitCountOrPercent(operator, it.notes[0], double, it.notes.sum(), hasDecimal)
-                HOLD -> fitCountOrPercent(operator, it.notes[1], double, it.notes.sum(), hasDecimal)
-                SLIDE -> fitCountOrPercent(operator, it.notes[2], double, it.notes.sum(), hasDecimal)
-                TOUCH -> fitCountOrPercent(operator, it.notes[3], double, it.notes.sum(), hasDecimal)
-                BREAK -> fitCountOrPercent(operator, it.notes[4], double, it.notes.sum(), hasDecimal)
-                DX_SCORE -> fitCountOrPercent(operator, it.score, double, it.notes.sum() * 3, hasDecimal)
+                TAP -> fitCountOrPercent(operator, it.notes[0], decimal, it.notes.sum())
+                HOLD -> fitCountOrPercent(operator, it.notes[1], decimal, it.notes.sum())
+                SLIDE -> fitCountOrPercent(operator, it.notes[2], decimal, it.notes.sum())
+                TOUCH -> fitCountOrPercent(operator, it.notes[3], decimal, it.notes.sum())
+                BREAK -> fitCountOrPercent(operator, it.notes[4], decimal, it.notes.sum())
+                DX_SCORE -> fitCountOrPercent(operator, it.score, decimal, it.notes.sum() * 3)
                 DX_STAR -> {
                     if (it.max == 0) return false
 

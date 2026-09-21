@@ -106,7 +106,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
         private fun fitBeatmapsets(s: Beatmapset, operator: Operator, filter: BeatmapsetFilter, condition: Condition): Boolean {
             val long = condition.long
-            val double = condition.double
+            val decimal = condition.decimal
             val str = condition.condition
 
             val bs = s.beatmaps.orEmpty()
@@ -144,7 +144,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.difficultyName, str)
                 }.contains(true)
                 STAR -> bs.map {
-                    fit(operator, it.starRating, double)
+                    fit(operator, it.starRating.toBigDecimal(), decimal)
                 }.contains(true)
                 MODE -> bs.map {
                     fit(operator, it.modeInt!!, str.toOsuMode().modeValue)
@@ -153,16 +153,16 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.ranked, DataUtil.getStatusByte(str) ?: return false)
                 }.contains(true)
                 AR -> bs.map {
-                    fit(operator, it.ar, double)
+                    fit(operator, it.ar?.toBigDecimal(), decimal)
                 }.contains(true)
                 CS -> bs.map {
-                    fit(operator, it.cs, double)
+                    fit(operator, it.cs?.toBigDecimal(), decimal)
                 }.contains(true)
                 OD -> bs.map {
-                    fit(operator, it.od, double)
+                    fit(operator, it.od?.toBigDecimal(), decimal)
                 }.contains(true)
                 HP -> bs.map {
-                    fit(operator, it.hp, double)
+                    fit(operator, it.hp?.toBigDecimal(), decimal)
                 }.contains(true)
                 LENGTH -> {
                     val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
@@ -172,7 +172,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     }.contains(true)
                 }
                 BPM -> bs.map {
-                    fit(operator, it.bpm.toDouble(), double)
+                    fit(operator, it.bpm, decimal)
                 }.contains(true)
                 CIRCLE -> bs.map {
                     fit(operator, it.circles!!.toLong(), long)
