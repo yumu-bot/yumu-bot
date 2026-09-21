@@ -9,11 +9,11 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.util.AsyncMessageUtil
+import com.now.nowbot.util.ContextUtil
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.command.PATTERN_EXCLAMATION
 import com.now.nowbot.util.command.PATTERN_IGNORE
 import com.now.nowbot.util.command.PATTERN_SLASH
-import com.now.nowbot.util.ContextUtil
-import com.now.nowbot.util.DataUtil.findCauseOfType
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -75,7 +75,12 @@ class RestrictImplement(
 
         fun onTencentMessage(event: MessageEvent, onMessage: (MessageChain) -> Unit) {
             val delegate = instance ?: throw IllegalStateException("RestrictImplement 未被 Spring 初始化，请检查启动流程！")
-            delegate.onTencentMessage(event, onMessage)
+            try {
+                ContextUtil.setContext(ContextUtil.IS_TENCENT_MESSAGE, true)
+                delegate.onTencentMessage(event, onMessage)
+            } finally {
+                ContextUtil.remove()
+            }
         }
     }
 

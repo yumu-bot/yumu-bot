@@ -2,12 +2,13 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.KeyboardMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
@@ -29,6 +30,7 @@ import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REGEX_HYPHEN
+import com.yumu.qq.message.Keyboard
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -108,6 +110,16 @@ class TodayBPService(
 
     override fun reply(event: MessageEvent, param: TodayBPParam): MessageChain? {
         // param.asyncImage()
+        if (ContextUtil.getContext(ContextUtil.IS_TENCENT_MESSAGE, Boolean::class.java) == true) {
+            val result = param.getMessageChain()
+
+            val buttonGroup = listOf(
+                listOf(Keyboard.Button("我也要查", "/t"))
+            )
+            val kb = Keyboard(keyboards = buttonGroup)
+            result.addMessage(KeyboardMessage(kb))
+            return result
+        }
         return param.getMessageChain()
     }
 

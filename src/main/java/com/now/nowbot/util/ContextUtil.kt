@@ -56,4 +56,6 @@ object ContextUtil {
     fun remove() {
         threadLocalService.remove()
     }
+
+    const val IS_TENCENT_MESSAGE = "fromTencent"
 }
