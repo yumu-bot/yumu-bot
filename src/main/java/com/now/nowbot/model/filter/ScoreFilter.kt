@@ -261,32 +261,31 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             compare: BigDecimal,
             to: BigDecimal
         ): Boolean {
-            // 获取目标值的保留小数位数（避免 scale 为负数的情况，例如 1E2）
-            val dig = to.scale().coerceIn(0, 6)
 
             // 1. 消除 Double 转换带来的尾数噪声（预平滑处理）
             // Double 有效精度约为 15-17 位，这里保留 6 位小数并用 HALF_UP 规整
             // 5.999999999999999 -> 6.0000000000
             // 6.999999999999999 -> 7.0000000000
             val cleanedCompare = compare.setScale(6, RoundingMode.HALF_UP)
+            val cleanedTo = to.setScale(6, RoundingMode.HALF_UP)
 
             // 2. 将规整后的值按目标 scale (dig) 进行 FLOOR 截断处理
-            val normCompare = cleanedCompare.setScale(dig, RoundingMode.FLOOR)
-            val normTo = to.setScale(dig, RoundingMode.FLOOR)
-
             return when (operator) {
-                // EQ：匹配 [to, to + 10^-dig) 区间
-                // 示例 (dig=0): to=6 时，[6.0, 7.0) 范围均返回 true
-                // 示例 (dig=2): to=6.00 时，[6.00, 6.01) 范围均返回 true
-                Operator.EQ -> normCompare.compareTo(normTo) == 0
-                Operator.NE -> normCompare.compareTo(normTo) != 0
+                Operator.EQ, Operator.NE -> {
+                    val dig = cleanedTo.stripTrailingZeros().scale().coerceIn(0, 6)
+                    val normCompare = cleanedCompare.setScale(dig, RoundingMode.FLOOR)
+                    val normTo = cleanedTo.setScale(dig, RoundingMode.FLOOR)
 
-                Operator.LE -> compare <= to
-                Operator.GT -> compare > to
-                Operator.GE -> compare >= to
-                Operator.LT -> compare < to
+                    val isEqual = normCompare.compareTo(normTo) == 0
+                    if (operator == Operator.EQ) isEqual else !isEqual
+                }
 
-                Operator.XQ -> (compare - to).abs() <= epsilon
+                Operator.LE -> cleanedCompare <= cleanedTo
+                Operator.LT -> cleanedCompare < cleanedTo
+                Operator.GE -> cleanedCompare >= cleanedTo
+                Operator.GT -> cleanedCompare > cleanedTo
+
+                Operator.XQ -> (cleanedCompare - cleanedTo).abs() <= epsilon
             }
         }
 
