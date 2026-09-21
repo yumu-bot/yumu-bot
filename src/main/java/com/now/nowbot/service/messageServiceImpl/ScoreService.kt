@@ -12,14 +12,11 @@ import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.filter.ScoreExtendedFilter
 import com.now.nowbot.model.filter.SearchBeatmapsetFilter
 import com.now.nowbot.model.filter.getFirstMatch
-import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.Beatmapset
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
-import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.KeyboardMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
@@ -38,19 +35,14 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.FLAG_NAME
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import com.yumu.qq.message.Keyboard
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.collections.chunked
-import kotlin.collections.map
 import kotlin.time.Duration.Companion.seconds
 
 @Service("SCORE") class ScoreService(
@@ -184,6 +176,29 @@ import kotlin.time.Duration.Companion.seconds
     }
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
+        if (ContextUtil.isTestUser) {
+            log.warn(
+                "ContextUtil.getContext(ContextUtil.IS_TENCENT_MESSAGE, Boolean::class.java): ${
+                    ContextUtil.getContext(
+                        ContextUtil.IS_TENCENT_MESSAGE,
+                        Boolean::class.java
+                    ) == true
+                }"
+            )
+        }
+        if (ContextUtil.getContext(ContextUtil.IS_TENCENT_MESSAGE, Boolean::class.java) == true) {
+            val result = param.getMessageChain()
+
+            val buttonGroup = listOf(
+                listOf(Keyboard.Button("我也要查", "/s"))
+            )
+            val kb = KeyboardMessage(Keyboard(keyboards = buttonGroup))
+            result.addMessage(kb)
+            if (ContextUtil.isTestUser) {
+                log.warn("keyboard: $kb")
+            }
+            return result
+        }
         return param.getMessageChain()
     }
 
