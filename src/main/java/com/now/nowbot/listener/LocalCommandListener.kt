@@ -54,7 +54,9 @@ class LocalCommandListener {
 
         if (message.startsWith("/") || message.startsWith("\\")) {
             try {
-                RestrictImplement.onTencentMessage(event, (event::replyAsync))
+                RestrictImplement.onTencentMessage(event) {
+                    event.replyAsync(it ?: return@onTencentMessage)
+                }
             } catch (e: Exception) {
                 log.info("捕捉到腾讯异常：{}", e.message)
                 log.debug("异常详细信息:", e)
