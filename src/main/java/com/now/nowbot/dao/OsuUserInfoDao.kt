@@ -270,8 +270,8 @@ class OsuUserInfoDao(
         val target = today.minusDays(duration.inWholeDays)
         val mode = user.mode.modeValue
 
-        val info = userInfoRepository.getValidByDateRange(user.userID, mode, target, today)
-        val stats = userStatisticsRepository.getValidByDateRange(user.userID, mode, target, today)
+        val info = userInfoRepository.getLatestValid(user.userID, mode, target)
+        val stats = userStatisticsRepository.getLatestValid(user.userID, mode, target)
         val rank = userGlobalRankRepository.getBetween(user.userID, mode, target.minusDays(89), target)
         val percent = userRankPercentRepository.getLatest(user.userID, mode, target)
 

@@ -90,7 +90,7 @@ import java.util.regex.Matcher
         val mrParam = getParam(matchID, round, keyword)
 
         val image = try {
-            imageService.getPanel(mrParam.toMap(), "F3")
+            imageService.getPanel(mrParam.toMap(), "F4")
         } catch (e: Exception) {
             log.error("对局信息图片渲染失败：", e)
             throw IllegalStateException.Render("对局信息")

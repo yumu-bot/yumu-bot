@@ -22,17 +22,15 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
         WHERE s.user_id = :userID 
           AND s.mode = :mode 
           AND :targetDate BETWEEN s.created_at AND s.updated_at
-          AND s.updated_at < :maxLimitDate
         ORDER BY s.updated_at DESC, s.id DESC 
         LIMIT 1
     """,
         nativeQuery = true
     )
-    fun getValidByDateRange(
+    fun getLatestValid(
         userID: Long,
         mode: Byte,
-        targetDate: LocalDate,
-        maxLimitDate: LocalDate
+        targetDate: LocalDate
     ): UserInfoLite?
 
     @Query("""
@@ -148,17 +146,15 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
         WHERE s.user_id = :userID 
           AND s.mode = :mode 
           AND :targetDate BETWEEN s.created_at AND s.updated_at
-          AND s.updated_at < :maxLimitDate
         ORDER BY s.updated_at DESC, s.id DESC 
         LIMIT 1
     """,
         nativeQuery = true
     )
-    fun getValidByDateRange(
+    fun getLatestValid(
         userID: Long,
         mode: Byte,
-        targetDate: LocalDate,
-        maxLimitDate: LocalDate
+        targetDate: LocalDate
     ): UserStatisticsLite?
 
     @Query("""
