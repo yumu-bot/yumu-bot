@@ -73,7 +73,7 @@ class RestrictImplement(
             delegate.onMessage(event, errorHandle)
         }
 
-        fun onTencentMessage(event: MessageEvent, onMessage: (MessageChain) -> Unit) {
+        fun onTencentMessage(event: MessageEvent, onMessage: (MessageChain?) -> Unit) {
             val delegate = instance ?: throw IllegalStateException("RestrictImplement 未被 Spring 初始化，请检查启动流程！")
             try {
                 ContextUtil.setContext(ContextUtil.IS_TENCENT_MESSAGE, true)
@@ -213,7 +213,7 @@ class RestrictImplement(
     /**
      * 腾讯平台消息入口
      */
-    fun onTencentMessage(event: MessageEvent, onMessage: (MessageChain) -> Unit) {
+    fun onTencentMessage(event: MessageEvent, onMessage: (MessageChain?) -> Unit) {
         val textMessage = event.textMessage
         if (!filterMessage(textMessage)) return
 
@@ -250,6 +250,9 @@ class RestrictImplement(
                 }
             }
         }
+        // 现在是没有任何处理的也会傻等10秒, 现在返回空
+        onMessage(null)
+        return
     }
 
     private fun checkStopListener(): Boolean {

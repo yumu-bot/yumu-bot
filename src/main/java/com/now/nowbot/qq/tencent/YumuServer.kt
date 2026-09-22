@@ -24,14 +24,19 @@ object YumuServer : YumuService {
         val contact = Contact(param.uid) {
             scope.launch { channel.send(it) }
         }
-        val df = CompletableDeferred<MessageChain>()
+        val df = CompletableDeferred<MessageChain?>()
         val event = Event(contact, param.command)
         RestrictImplement.onTencentMessage(event) {
             df.complete(it)
         }
         val response = try {
-            withTimeout(10.seconds) {
-                val messageChain = df.await()
+            val messageChain = withTimeout(10.seconds) {
+                df.await()
+            }
+            if (messageChain == null) {
+                // 全空数据为忽略消息
+                Command.Response()
+            } else {
                 messageToResponse(messageChain)
             }
         } catch (_: TimeoutCancellationException) {
