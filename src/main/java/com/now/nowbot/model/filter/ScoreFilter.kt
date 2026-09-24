@@ -261,31 +261,35 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             compare: BigDecimal,
             to: BigDecimal
         ): Boolean {
+            val dig = to.stripTrailingZeros().scale().coerceIn(0, 6)
 
-            // 1. 消除 Double 转换带来的尾数噪声（预平滑处理）
-            // Double 有效精度约为 15-17 位，这里保留 6 位小数并用 HALF_UP 规整
-            // 5.999999999999999 -> 6.0000000000
-            // 6.999999999999999 -> 7.0000000000
-            val cleanedCompare = compare.setScale(6, RoundingMode.HALF_UP)
-            val cleanedTo = to.setScale(6, RoundingMode.HALF_UP)
-
-            // 2. 将规整后的值按目标 scale (dig) 进行 FLOOR 截断处理
             return when (operator) {
                 Operator.EQ, Operator.NE -> {
-                    val dig = cleanedTo.stripTrailingZeros().scale().coerceIn(0, 6)
-                    val normCompare = cleanedCompare.setScale(dig, RoundingMode.FLOOR)
-                    val normTo = cleanedTo.setScale(dig, RoundingMode.FLOOR)
+                    // 1. 加上 epsilon 进行尾数纠偏，再 FLOOR 截断到 dig 位
+                    // 8.9999996 + 0.000001 -> 9.0000006 -> FLOOR(0) -> 9.0
+                    val correctedCompare = compare + epsilon
+                    val normCompare = correctedCompare.setScale(dig, RoundingMode.FLOOR)
+                    val normTo = to.setScale(dig, RoundingMode.FLOOR)
 
                     val isEqual = normCompare.compareTo(normTo) == 0
                     if (operator == Operator.EQ) isEqual else !isEqual
                 }
 
-                Operator.LE -> cleanedCompare <= cleanedTo
-                Operator.LT -> cleanedCompare < cleanedTo
-                Operator.GE -> cleanedCompare >= cleanedTo
-                Operator.GT -> cleanedCompare > cleanedTo
+                Operator.XQ -> {
+                    // 2. 多放大 1 位精度，同样先加 epsilon 纠偏再截断
+                    val extendedDig = (dig + 1).coerceAtMost(6)
 
-                Operator.XQ -> (cleanedCompare - cleanedTo).abs() <= epsilon
+                    val correctedCompare = compare + epsilon
+                    val normCompare = correctedCompare.setScale(extendedDig, RoundingMode.FLOOR)
+                    val normTo = to.setScale(extendedDig, RoundingMode.FLOOR)
+
+                    normCompare.compareTo(normTo) == 0
+                }
+
+                Operator.LE -> compare <= to + epsilon
+                Operator.LT -> compare < to - epsilon
+                Operator.GE -> compare >= to - epsilon
+                Operator.GT -> compare > to + epsilon
             }
         }
 

@@ -22,3 +22,31 @@ fun <E : Enum<E>> List<List<String>>.anyMatches(filter: E): Boolean {
 fun <E : Enum<E>> List<List<String>>.getFirstMatch(filter: E): String? {
     return this.getMatches(filter).firstOrNull()
 }
+
+enum class FilterValueType {
+    ANY, DECIMAL, INTEGER, NAME, TIME, MOD;
+
+    private val nameChars = setOf('_', '-', '[', ']', '(', ')')
+    private val timeChars: Set<Char> = setOf(
+        ':', '：', '-', '/',
+        '年','月','日','天','分','钟','秒','小','时',
+    )
+
+    fun isValidChar(c: Char): Boolean {
+        return c.isWhitespace() || when (this) {
+            INTEGER -> c.isDigit()
+            DECIMAL -> c.isDigit() || c == '.' || c == ','
+            TIME -> c.isLetterOrDigit() || c in timeChars
+            MOD -> c.isLetterOrDigit() || c == '+'
+            NAME -> c.isLetterOrDigit() || c in nameChars
+            ANY -> true
+        }
+    }
+}
+
+interface CommandClassifier {
+    val name: String
+    val prefix: Regex
+    val valueType: FilterValueType
+    val suffix: Regex?
+}
