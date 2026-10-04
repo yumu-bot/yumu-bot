@@ -20,6 +20,7 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
+import com.now.nowbot.util.StringUtil.compareSimilarity
 import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_ID
@@ -229,15 +230,23 @@ class GetItemsService(
                 }
             }
 
+            val s = b.beatmapset
+            val displayAlias = s?.titleUnicode.isNullOrBlank().not() && s.title.compareSimilarity(s.titleUnicode, standardised = false, standardisedTo = false) < 0.9
+
             calculateApiService.applyStarToBeatmap(b, mode.takeIfConvertable(b), mods)
+
+            val attributes = listOfNotNull(
+                "bid=${b.beatmapID}",
+                "sid=${b.beatmapsetID}",
+                "preview=\"${b.previewName}\"",
+                "star=${"%.2f".format(b.starRating)}",
+                "max=${b.maxCombo}",
+                if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
+            )
 
             return@map """
             <Beatmap
-              bid=${b.beatmapID}
-              sid=${b.beatmapsetID}
-              preview="${b.previewName}"
-              star=${"%.2f".format(b.starRating)}
-              max=${b.maxCombo}
+              ${attributes.joinToString("\n              ")}
             />
             """.trimIndent()
         }.joinToString("\n\n")
@@ -260,12 +269,14 @@ class GetItemsService(
             }.sortedBy { it.starRating }
 
             val t = bs.lastOrNull()
+            val displayAlias = s.titleUnicode.isNotBlank() && s.title.compareSimilarity(s.titleUnicode, standardised = false, standardisedTo = false) < 0.9
 
             val attributes = listOfNotNull(
                 "sid=${s.beatmapsetID}",
                 "preview=\"${s.previewName}\"",
                 "star=${"%.2f".format(t?.starRating ?: 0.0)}",
                 "difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]",
+                if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
                 if (s.availability.downloadDisabled) "disabled=true" else null,
             )
 
@@ -290,9 +301,12 @@ class GetItemsService(
             }
         }
 
+        val s = b.beatmapset
+
         calculateApiService.applyStarToBeatmap(b, mode.takeIfConvertable(b), mods)
 
         val displayCombos = this.combo.isNotEmpty() && this.accuracy.isNotEmpty()
+        val displayAlias = s?.titleUnicode.isNullOrBlank().not() && s.title.compareSimilarity(s.titleUnicode, standardised = false, standardisedTo = false) < 0.9
 
         val attributes = listOfNotNull(
             "bid=${b.beatmapID}",
@@ -303,6 +317,7 @@ class GetItemsService(
             "mode=\"${b.mode.charName}\"",
             if (displayCombos) "accuracy=${this.accuracy}" else null,
             if (displayCombos) "combo=${this.combo}" else null,
+            if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
             "rank=\"${this.rank.ifEmpty { "F" }.lowercase()}\"",
             "performance=${this.pp.ifEmpty { "0" }}",
             if (this.mods.isNotEmpty()) "mods=\"${this.mods.joinToString("") { it.acronym.uppercase() }}\"" else null
