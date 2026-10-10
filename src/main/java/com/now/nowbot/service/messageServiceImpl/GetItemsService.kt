@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toAcronyms
 import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -242,6 +243,7 @@ class GetItemsService(
                 "star=${"%.2f".format(b.starRating)}",
                 "max=${b.maxCombo}",
                 if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
+                if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
             )
 
             return@map """
@@ -278,6 +280,7 @@ class GetItemsService(
                 "difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]",
                 if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
                 if (s.availability.downloadDisabled) "disabled=true" else null,
+                if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
             )
 
             return@map """
@@ -320,7 +323,7 @@ class GetItemsService(
             if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
             "rank=\"${this.rank.ifEmpty { "F" }.lowercase()}\"",
             "performance=${this.pp.ifEmpty { "0" }}",
-            if (this.mods.isNotEmpty()) "mods=\"${this.mods.joinToString("") { it.acronym.uppercase() }}\"" else null
+            if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
         )
 
         return """
@@ -355,7 +358,7 @@ class GetItemsService(
             "combo=${this.maxCombo}",
             "rank=\"${this.rank.ifEmpty { "F" }.lowercase()}\"",
             "performance=${this.pp.roundToInt()}",
-            if (this.mods.isNotEmpty()) "mods=\"${this.mods.joinToString("") { it.acronym.uppercase() }}\"" else null
+            if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
         )
 
         return """

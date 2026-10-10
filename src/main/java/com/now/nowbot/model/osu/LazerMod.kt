@@ -2926,6 +2926,12 @@ sealed class LazerMod {
             }
         }
 
+        fun List<LazerMod>?.toAcronyms(): String {
+            if (this.isNullOrEmpty()) return ""
+
+            return this.joinToString("") { it.acronym.uppercase() }
+        }
+
         /**
          * 原 speed 方法
          */
