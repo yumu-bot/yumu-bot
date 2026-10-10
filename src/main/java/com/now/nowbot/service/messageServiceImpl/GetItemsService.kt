@@ -5,6 +5,7 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.toAcronyms
 import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
@@ -234,7 +235,9 @@ class GetItemsService(
             val s = b.beatmapset
             val displayAlias = s?.titleUnicode.isNullOrBlank().not() && s.title.compareSimilarity(s.titleUnicode, standardised = false, standardisedTo = false) < 0.9
 
-            calculateApiService.applyStarToBeatmap(b, mode.takeIfConvertable(b), mods)
+            val m = mode.takeIfConvertable(b)
+
+            calculateApiService.applyStarToBeatmap(b, m, mods)
 
             val attributes = listOfNotNull(
                 "bid=${b.beatmapID}",
@@ -243,7 +246,8 @@ class GetItemsService(
                 "star=${"%.2f".format(b.starRating)}",
                 "max=${b.maxCombo}",
                 if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
-                if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
+                if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null,
+                if (m.safeModeValue > 0) "mode=\"${m.charName}\"" else null
             )
 
             return@map """
@@ -273,6 +277,17 @@ class GetItemsService(
             val t = bs.lastOrNull()
             val displayAlias = s.titleUnicode.isNotBlank() && s.title.compareSimilarity(s.titleUnicode, standardised = false, standardisedTo = false) < 0.9
 
+            val m = s.beatmaps.orEmpty()
+                .groupBy { it.mode }
+                .entries
+                .sortedWith(
+                    compareByDescending<Map.Entry<OsuMode, List<Beatmap>>> { it.value.size }
+                        .thenBy { it.key.modeValue }
+                )
+                .map { it.key }
+
+            val first = m.firstOrNull()
+
             val attributes = listOfNotNull(
                 "sid=${s.beatmapsetID}",
                 "preview=\"${s.previewName}\"",
@@ -280,7 +295,8 @@ class GetItemsService(
                 "difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]",
                 if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
                 if (s.availability.downloadDisabled) "disabled=true" else null,
-                if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
+                if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null,
+                if ((first?.modeValue ?: 0) > 0) "mode=\"${first?.charName ?: "o"}\"" else null
             )
 
             return@map """
