@@ -7,7 +7,7 @@ import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
 import com.now.nowbot.cache.PercentileCacheProvider
 import com.now.nowbot.entity.UserGlobalRankLite
-import com.now.nowbot.entity.UserGlobalRankLite.Companion.parseToRanks
+import com.now.nowbot.entity.UserGlobalRankLite.Companion.parseToRankArray
 import com.now.nowbot.entity.UserInfoLite
 import com.now.nowbot.entity.UserInfoLite.Companion.updateFrom
 import com.now.nowbot.entity.UserRankPercentLite
@@ -272,22 +272,24 @@ class OsuUserInfoDao(
 
         val info = userInfoRepository.getLatestValid(user.userID, mode, target)
         val stats = userStatisticsRepository.getLatestValid(user.userID, mode, target)
-        val rank = userGlobalRankRepository.getBetween(user.userID, mode, target.minusDays(89), target)
+        val ranks = userGlobalRankRepository.getBetween(user.userID, mode, target.minusDays(89), target)
+        val closest = userGlobalRankRepository.getClosestFromDate(user.userID, mode, target)
         val percent = userRankPercentRepository.getLatest(user.userID, mode, target)
 
-        return fromArchive(info, stats, rank, percent)
+        return fromArchive(info, stats, ranks, percent, closest?.rank)
     }
 
-    fun getClosestFromTarget(userID: Long, mode: OsuMode, target: Double): OsuUser? {
-        val stats = userStatisticsRepository.getClosestFromTarget(userID, mode.modeValue, target) ?: return null
+    fun getClosestFromTarget(userID: Long, mode: OsuMode, targetPP: Double): OsuUser? {
+        val stats = userStatisticsRepository.getClosestFromTarget(userID, mode.modeValue, targetPP) ?: return null
 
         val targetDate = stats.updatedAt
 
         val info = userInfoRepository.getClosestFromDate(userID, mode.modeValue, targetDate)
-        val rank = userGlobalRankRepository.getBetween(userID, mode.modeValue, targetDate.minusDays(90), targetDate)
+        val ranks = userGlobalRankRepository.getBetween(userID, mode.modeValue, targetDate.minusDays(90), targetDate)
+        val closest = userGlobalRankRepository.getClosestFromDate(userID, mode.modeValue, targetDate)
         val percent = userRankPercentRepository.getClosestFromDate(userID, mode.modeValue, targetDate)
 
-        return fromArchive(info, stats, rank, percent)
+        return fromArchive(info, stats, ranks, percent, closest?.rank)
     }
 
     fun getPP(userID: Long, mode: OsuMode): Float? {
@@ -653,24 +655,25 @@ class OsuUserInfoDao(
         private fun fromArchive(
             info: UserInfoLite?,
             stats: UserStatisticsLite?,
-            rank: List<UserGlobalRankLite>?,
-            percent: UserRankPercentLite?
+            ranks: List<UserGlobalRankLite>?,
+            percent: UserRankPercentLite?,
+            closestRank: Long? = null
         ): OsuUser? {
             if (info == null) {
                 return null
             }
 
-            val ranks = rank?.parseToRanks()
+            val rankArray = ranks?.parseToRankArray()
 
-            val latestRank = ranks?.lastOrNull()
+            val latestRank = rankArray?.lastOrNull()
 
             return OsuUser(info.userID).apply {
                 this.beatmapPlaycount = info.beatmapPlaycount
                 this.userAchievementsCount = info.achievementsCount
                 this.mode = info.mode.toOsuMode()
 
-                if (!ranks.isNullOrEmpty()) {
-                    this.rankHistory = OsuUser.RankHistory(info.mode.toOsuMode().shortName, ranks)
+                if (!rankArray.isNullOrEmpty()) {
+                    this.rankHistory = OsuUser.RankHistory(info.mode.toOsuMode().shortName, rankArray)
                 }
 
                 if (stats != null) {
@@ -701,6 +704,8 @@ class OsuUserInfoDao(
 
                         if (latestRank != null) {
                             this.globalRank = latestRank
+                        } else if (closestRank != null) {
+                            this.globalRank = closestRank
                         }
                     }
                 } else if (percent != null) {
@@ -710,11 +715,17 @@ class OsuUserInfoDao(
 
                         if (latestRank != null) {
                             this.globalRank = latestRank
+                        } else if (closestRank != null) {
+                            this.globalRank = closestRank
                         }
                     }
                 } else if (latestRank != null) {
                     this.statistics = Statistics().apply {
                         this.globalRank = latestRank
+                    }
+                } else if (closestRank != null) {
+                    this.statistics = Statistics().apply {
+                        this.globalRank = closestRank
                     }
                 }
             }

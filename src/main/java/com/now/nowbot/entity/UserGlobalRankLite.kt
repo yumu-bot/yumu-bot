@@ -35,7 +35,7 @@ class UserGlobalRankLite(
          *
          * List<UserGlobalRankLite> 必须是时间降序排列
          */
-        fun List<UserGlobalRankLite>.parseToRanks(date: LocalDate = LocalDate.now(ZoneOffset.UTC)): List<Long> {
+        fun List<UserGlobalRankLite>.parseToRankArray(date: LocalDate = LocalDate.now(ZoneOffset.UTC)): List<Long> {
             val daysCount = 90
             val startDate = date.minusDays((daysCount - 1).toLong())
 
