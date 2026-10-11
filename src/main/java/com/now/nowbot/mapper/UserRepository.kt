@@ -241,19 +241,8 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
 
     @Query(
         value = """
-        (
-            SELECT * FROM user_statistics 
-            WHERE user_id = :userID AND mode = :mode AND pp >= :target
-            ORDER BY pp
-            LIMIT 1
-        )
-        UNION ALL
-        (
-            SELECT * FROM user_statistics 
-            WHERE user_id = :userID AND mode = :mode AND pp < :target
-            ORDER BY pp DESC
-            LIMIT 1
-        )
+        SELECT * FROM user_statistics
+        WHERE user_id = :userID AND mode = :mode
         ORDER BY ABS(pp - :target)
         LIMIT 1
     """,
