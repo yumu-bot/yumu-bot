@@ -4,7 +4,7 @@
 
 <div style="text-align: center">
 
-# Yumubot
+## Yumubot
 
 *连接 osu! 并处理数据的 bot 后端*
 
@@ -24,15 +24,15 @@
 
 </div>
 
-# 运行
+## 运行
 
-## 下载 jar 包
+### 下载 jar 包
 
 访问 [release](https://github.com/yumu-bot/yumu-bot/releases) 下载最新版本的 jar 包
 
-## 运行环境
+### 运行环境
 
-### 必备
+#### 必备
 
 - Java Runtime Environment (JRE，JDK 包含它)
   - 没它你没办法运行 jar
@@ -48,7 +48,7 @@
   - 你也可以考虑只运行一个客户端，存储的数据库跑在其他机器上。
   - 主程序更重（并且至少需要 512MB 内存）
 
-### 可选
+#### 可选
 
 简称你必然会踩到的坑
 
@@ -96,7 +96,7 @@
   - 可以使用 docker 运行。地址：```ghcr.io/syriiin/difficalcy-performanceplus:latest```
   - 如果你不想使用 pp+，直接禁用掉特定的功能即可。
 
-## 配置文件
+### 配置文件
 
 项目使用 spring boot 开发, 默认文件配置在 [application.yaml](src/main/resources/application.yaml), 根据注释进行修改.
 
@@ -125,11 +125,11 @@ java -jar nowbot-linux.jar
 > - `application-windows.yaml` — Windows 本地开发
 > - `application-server.yaml` — Linux 服务器部署
 
-## 数据库配置
+### 数据库配置
 
-### PostgreSQL 安装与初始化
+#### PostgreSQL 安装与初始化
 
-#### Linux
+##### Linux
 
 ```bash
 # 1. 安装 PostgreSQL
@@ -154,7 +154,7 @@ ALTER USER yumu WITH SUPERUSER;
 \q
 ```
 
-#### Windows
+##### Windows
 
 ```powershell
 # 1. 进入 PostgreSQL bin 目录（根据安装版本调整路径）
@@ -166,7 +166,7 @@ cd "C:\Program Files\PostgreSQL\15\bin"
 # 3. 执行与上面相同的 SQL 授权语句
 ```
 
-### application.yaml 中数据库相关配置
+#### application.yaml 中数据库相关配置
 
 ```yaml
 spring:
@@ -187,11 +187,11 @@ spring:
 > - `permission denied for schema public` → 执行 `GRANT ALL ON SCHEMA public TO 用户名;`
 > - `must be owner of table xxx` → 执行 `ALTER USER 用户名 WITH SUPERUSER;`
 
-## 配置文件详解
+### 配置文件详解
 
 以下是 `application.yaml` 各配置项的详细说明：
 
-### 域名设置 (`yumu.*-domain`)
+#### 域名设置 (`yumu.*-domain`)
 
 | 配置项 | 说明 | 示例 |
 |--------|------|------|
@@ -201,7 +201,7 @@ spring:
 
 > **本地测试提示**: 如果没有公网域名/内网穿透，`bind-domain` 和 `public-domain` 可以填 `http://localhost:你的端口`，此时 OAuth 绑定不可用，但可以用 `!bind osu用户名` 直接按名字绑定。
 
-### 文件路径设置 (`yumu.file`)
+#### 文件路径设置 (`yumu.file`)
 
 | 配置项 | 说明 | Windows 示例 | Linux 示例 |
 |--------|------|-------------|-----------|
@@ -212,7 +212,7 @@ spring:
 | `osuFilePath` | .osu 谱面文件缓存 | `${yumu.file.root}osufile/` | |
 | `exportFile` | ExportFileV3 素材目录（来自 yumu-image releases） | `${yumu.file.bgdir}ExportFileV3/` | |
 
-### osu! API 设置 (`yumu.osu`)
+#### osu! API 设置 (`yumu.osu`)
 
 | 配置项 | 说明 |
 |--------|------|
@@ -220,14 +220,14 @@ spring:
 | `token` | osu! OAuth 应用 Token |
 | `callbackPath` | OAuth 回调接口端点（默认 `/oauth`） |
 
-### 服务端口 (`server.port`)
+#### 服务端口 (`server.port`)
 
 | 环境 | 推荐端口 |
 |------|---------|
 | 本地开发 | `20009` 或任意未被占用的端口 |
 | 服务器部署 | `20009` 或根据需要调整 |
 
-### WebSocket 设置 (`shiro.ws`)
+#### WebSocket 设置 (`shiro.ws`)
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
@@ -238,15 +238,15 @@ spring:
 QQ Bot 客户端（NapCat/Lagrange 等）应连接到：`ws://主机地址:server.port/shiro.ws.server.url`
 例如：`ws://localhost:20009/pub/onebotSocket`
 
-## ~~Redis 连接问题解决~~
+### ~~Redis 连接问题解决~~
 
 解决了，不用管 Redis
 
-# 附属项目
+## 附属项目
 
 - [yumu-docs](https://docs.365246692.xyz/) 帮助文档
 
-# 相关项目
+## 相关项目
 
 本项目参考以下项目，或是使用了以下项目的 API：
 
@@ -260,10 +260,6 @@ QQ Bot 客户端（NapCat/Lagrange 等）应连接到：`ws://主机地址:serve
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=yumu-bot%2Fyumu-bot&type=date&releases=&legend=bottom-right">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=yumu-bot/yumu-bot&type=date&theme=dark&legend=bottom-right" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=yumu-bot/yumu-bot&type=date&legend=bottom-right" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=yumu-bot/yumu-bot&type=date&legend=bottom-right" />
- </picture>
-</a>
+## Star History
+
+[![Star History Chart](https://api.star-history.com/chart?repos=yumu-bot/yumu-bot&type=date&legend=bottom-right)](https://www.star-history.com/?repos=yumu-bot%2Fyumu-bot&type=date&releases=&legend=bottom-right)
