@@ -150,11 +150,13 @@ class MessageChain {
                         if (url != null) builder.addImage(URI(url).toURL())
                         else if (file != null) builder.addImage(file)
                     }
+
                     "at" -> {
                         val qq = params["qq"]
                         if (qq == "all") builder.addAtAll()
                         else qq?.toLongOrNull()?.let { builder.addAt(it) }
                     }
+
                     "record" -> {
                         // 语音消息，通常 OneBot 只有路径或 URL
                         // 注意：你的 Builder addVoice 只接受 ByteArray，这里可能需要下载
@@ -211,12 +213,14 @@ class MessageChain {
                             if (qq == "all") builder.addAtAll()
                             else builder.addAt(qq.toLong())
                         }
+
                         "image" -> {
                             val url = data["url"] as? String
                             val file = data["file"] as? String
                             if (url != null) builder.addImage(URI(url).toURL())
                             else if (file != null) builder.addImage(file)
                         }
+
                         "record" -> {
                             // 语音处理
                             (data["url"] as? String)?.let {
@@ -232,6 +236,7 @@ class MessageChain {
     }
 
     companion object {
+        fun builder() = MessageChainBuilder()
         fun parseMessageArray(list: List<*>): MessageChain {
             val builder = MessageChainBuilder()
             list.forEach { item ->
@@ -246,10 +251,12 @@ class MessageChain {
                         if (url != null) builder.addImage(URI(url).toURL())
                         else builder.addImage(segmentData["file"]?.toString() ?: "")
                     }
+
                     "at" -> {
                         val qq = segmentData["qq"]?.toString()
                         if (qq == "all") builder.addAtAll() else builder.addAt(qq?.toLong() ?: 0L)
                     }
+
                     "record" -> {
                         // 语音处理
                         (segmentData["url"] as? String)?.let {

@@ -66,7 +66,7 @@ class LocalCommandListener {
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(LocalCommandListener::class.java)
-        private var handler: MutableMap<String, out MessageService<Any>?> = mutableMapOf()
+        private var handler: MutableMap<String, out MessageService<Any>> = mutableMapOf()
 
         fun setHandler(handler: Map<String, MessageService<*>>?) {
             @Suppress("UNCHECKED_CAST")

@@ -2,6 +2,7 @@ package com.now.nowbot.config
 
 import com.now.nowbot.cache.PercentileCacheProvider
 import com.now.nowbot.listener.LocalCommandListener
+import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.restrict.RestrictImplement
 import com.now.nowbot.service.MessageService
@@ -11,6 +12,7 @@ import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.QQMsgUtil
 import jakarta.annotation.Resource
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.system.ApplicationHome
 import org.springframework.context.ApplicationContext
@@ -25,6 +27,7 @@ class IocAllReadyRunner(
     private val applicationContext: ApplicationContext,
     private val restrictImplement: RestrictImplement,
     private val messageServices: Map<String, MessageService<*>>,
+    private val txMessageServices: Map<String, TencentMessageService<*>>,
     private val percentileCacheProvider: PercentileCacheProvider,
 ) : CommandLineRunner {
 
@@ -51,9 +54,9 @@ class IocAllReadyRunner(
      * ioc容器加载完毕运行
      */
     override fun run(vararg args: String) {
-        QQMsgUtil.init(applicationContext.getBean(YumuConfig::class.java))
+        QQMsgUtil.init(applicationContext.getBean<YumuConfig>())
 
-        restrictImplement.init(messageServices)
+        restrictImplement.init(messageServices, txMessageServices)
 
         Runtime.getRuntime().addShutdownHook(Thread({
             APP_ALIVE = false

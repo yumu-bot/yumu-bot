@@ -88,16 +88,21 @@ class RestrictImplement(
      * 应用启动时加载所有的服务与初始化内存黑名单缓存
      */
     @Synchronized
-    fun init(services: Map<String, MessageService<*>>) {
+    fun init(
+        services: Map<String, MessageService<*>>,
+        txServices: Map<String, TencentMessageService<*>>
+    ) {
         serviceMap.clear()
         serviceMap4TX.clear()
 
         @Suppress("UNCHECKED_CAST")
         services.asSequence().sortedBy { it.key }.forEach { (name, service) ->
             serviceMap[name] = service as MessageService<Any>
-            if (service is TencentMessageService<*>) {
-                serviceMap4TX[name] = service as TencentMessageService<Any>
-            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        txServices.asSequence().sortedBy { it.key }.forEach { (name, service) ->
+            serviceMap4TX[name] = service as TencentMessageService<Any>
         }
 
         refreshCache()
