@@ -17,6 +17,7 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.LazerMod.Companion.filterByMode
 import com.now.nowbot.model.osu.LazerMod.Companion.getClockRate
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
+import com.now.nowbot.model.osu.LazerMod.Companion.isNotAffectStarRating
 import com.now.nowbot.model.osu.LazerMod.Companion.isOfficialCalculateAbleMod
 import com.now.nowbot.model.osu.LazerMod.Companion.toJson
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -261,6 +262,8 @@ class CalculateApiImpl(
         mods: List<LazerMod>
     ) {
         if (beatmap == null || beatmap.mode.isNotConvertAble(mode)) return
+
+        if (beatmap.starRating > 1e-4 && mode.isEqualOrDefault(beatmap.mode) && mods.isNotAffectStarRating()) return
 
         val map = getBeatmapStars(
             listOf(

@@ -7,6 +7,7 @@ import com.now.nowbot.entity.NewbiePlayCount
 import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.LazerMod.Companion.isNotAffectStarRating
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.service.NewbieRestrictService.Companion.STAR_BOUNDARY
@@ -33,7 +34,7 @@ class NewbieService(
 ) {
 
     fun getStarRating(bid: Long, mods: List<LazerMod>): Float {
-        if (mods.isEmpty()) {
+        if (mods.isNotAffectStarRating()) {
             return beatmapApiService.getBeatmapFromDatabase(bid).starRating.toFloat()
         }
 

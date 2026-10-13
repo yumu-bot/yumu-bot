@@ -50,7 +50,10 @@ class BeatmapDao(
         Thread.startVirtualThread {
             saveBeatmapset(beatmapset)
         }
-        saveBeatmapsAsync(beatmapset.beatmaps.orEmpty())
+
+        Thread.startVirtualThread {
+            saveBeatmapInBeatmapset(beatmapset)
+        }
     }
 
     fun saveBeatmapsetsAsync(beatmapsets: Collection<Beatmapset>) {
@@ -131,8 +134,14 @@ class BeatmapDao(
         beatmapRepository.saveAll(s)
     }
 
-    fun saveBeatmapset(beatmapset: Beatmapset): BeatmapsetLite {
-        return beatmapsetRepository.saveAndFlush(beatmapset.toEntity())
+    fun saveBeatmapset(beatmapset: Beatmapset) {
+        beatmapsetRepository.saveAndFlush(beatmapset.toEntity())
+    }
+
+    fun saveBeatmapInBeatmapset(beatmapset: Beatmapset) {
+        val copy = beatmapset.copy()
+
+        saveBeatmaps(beatmapset.beatmaps.orEmpty().onEach { it.beatmapset = copy })
     }
 
     fun saveBeatmapsets(beatmapsets: Collection<Beatmapset>) {
