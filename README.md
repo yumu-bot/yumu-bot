@@ -257,3 +257,13 @@ QQ Bot 客户端（NapCat/Lagrange 等）应连接到：`ws://主机地址:serve
 - [Lxns-Network](https://maimai.lxns.net/docs) 落雪咖啡屋：提供了部分 maimai、chunithm 的歌曲信息和外号库
 - [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect/) ~~哔哩哔哩 - API 收集整理：提供了 bilibili 的部分 API 信息~~ R.I.P.
 - [PP+](https://github.com/Syriiin/difficalcy-performanceplus) PP+：提供了表现分加功能的算法
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=yumu-bot%2Fyumu-bot&type=date&releases=&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=yumu-bot/yumu-bot&type=date&theme=dark&legend=bottom-right" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=yumu-bot/yumu-bot&type=date&legend=bottom-right" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=yumu-bot/yumu-bot&type=date&legend=bottom-right" />
+ </picture>
+</a>
