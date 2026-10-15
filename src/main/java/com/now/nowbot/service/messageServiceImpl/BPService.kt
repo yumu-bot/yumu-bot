@@ -231,6 +231,8 @@ import java.util.regex.Matcher
             throw NoSuchElementException.BestScoreFiltered(user.username)
         }
 
+        beatmapApiService.applyAlias(filteredScores)
+
         val historyUser = infoDao.getHistoryUser(user)
 
         return BPParam(user, historyUser, filteredScores, isShow, isCompact)

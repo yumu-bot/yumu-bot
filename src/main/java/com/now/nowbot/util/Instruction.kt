@@ -1085,6 +1085,26 @@ enum class Instruction(val pattern: Pattern) {
 
     PLAY_STATISTIC(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("ppst")
+    }),
+
+    // #5 别名库
+    // !alias add <标题或BID> = <别名> / !aa ...
+    // 支持多组：整段参数按 PATTERN_SEPARATOR_NO_SPACE 或 PATTERN_EQUAL 拆开，奇数位是标题、偶数位是别名
+    ALIAS_ADD(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("alias\\s*(add|set|new)", "aa", "(添加|新增|增加)别名")
+        appendCaptureGroup(FLAG_DATA, "[^\\n]", MORE)
+    }),
+
+    // !alias del <标题或BID> = <别名> / !ad ...
+    // 多组规则同 ALIAS_ADD；也可以只输入一个标题，此时删除该标题下的所有别名
+    ALIAS_DELETE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("alias\\s*(del(ete)?|rm|remove)", "ad", "(删除|移除|取消)别名")
+        appendCaptureGroup(FLAG_DATA, "[^\\n]", MORE)
+    }),
+
+    // !alias review / !a
+    ALIAS_REVIEW(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("alias\\s*(review|check|audit|list)", "aw", "审核别名", "别名审核")
     }), ;
 
     fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)

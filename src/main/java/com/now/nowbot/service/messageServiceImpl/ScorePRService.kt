@@ -318,6 +318,8 @@ class ScorePRService(
             }
         }
 
+        beatmapApiService.applyAlias(filteredScores)
+
         val historyUser = infoDao.getHistoryUser(user)
 
         return ScorePRParam(user, historyUser, filteredScores, isPass, isShow, isCompact)

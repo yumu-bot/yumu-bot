@@ -40,7 +40,16 @@ class Alias(
     val value: String,
 
     @ManyToMany(mappedBy = "aliases")
-    val titles: MutableList<AliasTitle> = mutableListOf(),
+    var titles: MutableList<AliasTitle> = mutableListOf(),
+
+    /**
+     * 是否已经通过审核。
+     *
+     * 普通用户添加的别名默认为 false（待审核），管理员（含超级管理员）添加的默认为 true。
+     * 列默认值是为了兼容 ddl-auto=update 时已存在的数据行。
+     */
+    @Column(name = "approved", nullable = false, columnDefinition = "boolean default false")
+    var approved: Boolean = false,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now()

@@ -13,33 +13,28 @@ interface AliasRepository : JpaRepository<Alias, Long> {
 
     // 检查某个别名是否存在
     fun existsByValue(value: String): Boolean
+
+    /**
+     * 查询所有还没有通过审核的别名，并一次性把关联的标题加载出来
+     * 供管理员审核时展示。
+     */
+    @Query("SELECT DISTINCT a FROM Alias a LEFT JOIN FETCH a.titles WHERE a.approved = false ORDER BY a.id")
+    fun findAllUnapproved(): List<Alias>
 }
 
 interface TitleRepository : JpaRepository<AliasTitle, Long> {
 
-    /**
-     * 根据 ID 查询标题，并使用 JOIN FETCH 一次性把别名加载出来
-     * 这样可以防止在事务外部访问 aliases 时抛出 LazyInitializationException
-     */
     @Query("SELECT DISTINCT t FROM AliasTitle t LEFT JOIN FETCH t.aliases WHERE t.id = :id")
     fun findByIdWithAliases(@Param("id") id: Long): AliasTitle?
 
-    /**
-     * 根据标题名称查询（利用 Spring Data JPA 的方法名解析）
-     * 注意：请确保 AliasTitle 实体类中有一个名为 name 的属性。
-     * 如果属性名叫 titleName，请修改方法名为 findByTitleName(titleName: String)
-     */
+    @Query("SELECT DISTINCT t FROM AliasTitle t LEFT JOIN FETCH t.aliases WHERE t.name = :name")
+    fun findByNameWithAliases(@Param("name") name: String): AliasTitle?
+
     fun findByName(name: String): AliasTitle?
 
-    /**
-     * 反向查询：通过别名（标准化后的值）查找所有包含该别名的标题列表
-     */
     @Query("SELECT DISTINCT t FROM AliasTitle t JOIN t.aliases a WHERE a.value = :aliasValue")
     fun findByAliasValue(@Param("aliasValue") aliasValue: String): List<AliasTitle>
 
-    /**
-     * 批量查询多个标题及其别名，避免 N+1 问题
-     */
     @Query("SELECT DISTINCT t FROM AliasTitle t LEFT JOIN FETCH t.aliases")
     override fun findAll(): List<AliasTitle>
 }

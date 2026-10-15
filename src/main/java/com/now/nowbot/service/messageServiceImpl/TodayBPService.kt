@@ -203,6 +203,8 @@ class TodayBPService(
             throw NoSuchElementException.TodayBestScoreFiltered(user.username)
         }
 
+        beatmapApiService.applyAlias(filteredScores)
+
         val historyUser = infoDao.getHistoryUser(user)
 
         return TodayBPParam(user, historyUser, mode.data!!, filteredScores, dataMap.size - filteredScores.size, isToday, isCompact)

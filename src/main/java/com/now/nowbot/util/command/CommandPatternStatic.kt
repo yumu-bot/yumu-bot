@@ -107,6 +107,7 @@ val REGEX_NUMBER_15 = Regex(PATTERN_NUMBER_15)
 
 val REGEX_NUMBER = Regex("^[0-9.]+$")
 
+val REGEX_NOT_LETTER = Regex("[\\p{P}\\p{S}]")
 
 /**
  * 只匹配单一数字，等同于 [0-9]

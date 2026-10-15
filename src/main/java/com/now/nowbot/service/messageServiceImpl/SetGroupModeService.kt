@@ -102,8 +102,13 @@ class SetGroupModeService (
             } else {
                 // 修改已有模式状态
                 if (mode.isNotDefault) {
-                    groupDao.saveGroupMode(group, mode)
-                    "已将群聊绑定的游戏模式 ${predeterminedMode.fullName} 修改为：${mode.fullName}。"
+                    if (mode == predeterminedMode) {
+                        // 与当前绑定一致，无需修改
+                        "当前群聊绑定的游戏模式已经是：${predeterminedMode.fullName}，无需重复修改。"
+                    } else {
+                        groupDao.saveGroupMode(group, mode)
+                        "已将群聊绑定的游戏模式 ${predeterminedMode.fullName} 修改为：${mode.fullName}。"
+                    }
                 } else {
                     groupDao.saveGroupMode(group, OsuMode.DEFAULT)
                     "已移除群聊绑定的游戏模式 ${predeterminedMode.fullName}。"

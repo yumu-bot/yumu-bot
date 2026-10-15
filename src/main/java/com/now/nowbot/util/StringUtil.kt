@@ -2,6 +2,7 @@ package com.now.nowbot.util
 
 import com.now.nowbot.model.enums.GreekChar.Companion.appendRomanizedGreekTo
 import com.now.nowbot.model.enums.JaChar.Companion.appendRomanizedJapaneseTo
+import com.now.nowbot.util.command.REGEX_NOT_LETTER
 import com.now.nowbot.util.command.REGEX_OPERATOR
 import com.now.nowbot.util.command.REGEX_RANGE
 import com.now.nowbot.util.command.REGEX_SEPARATOR
@@ -255,10 +256,11 @@ object StringUtil {
         RegexOption.IGNORE_CASE
     )
 
-    // 2. 匹配位于字符串末尾的常见版本/长度/电视大小等括号标记
-    val versionPattern = Regex(
-        "\\s*[\\[(]?" +
-                "(?:TV\\s*Size|" +
+    // 2a. 末尾带括号的版本标记（括号必须成对）
+    val versionParenPattern = Regex(
+        "\\s*[\\[(]" +
+                "(?:" +
+                "TV\\s*Size|" +
                 "Short\\s*(?:Ver\\.?|Version|Size)?|" +
                 "Game\\s*(?:Ver\\.?|Version|Size)?|" +
                 "Movie\\s*(?:Ver\\.?|Version|Cut)?|" +
@@ -268,8 +270,25 @@ object StringUtil {
                 "Nightcore(?:\\s*&\\s*Cut)?\\s*Mix|" +
                 "Live\\s*(?:Ver\\.?|Version)?|" +
                 "Karaoke\\s*(?:Ver\\.?|Version)?|" +
-                "[^)]*?\\b(?:Ver\\.|Version|Size|Edit|Mix|Cut)\\b[^)]*)" +
-                "[])]?\\s*$",
+                "[^)]*?\\b(?:Ver\\.|Version|Size|Edit|Mix|Cut|Remix|Bootleg|Mashup)\\b[^)]*" +
+                ")" +
+                "[])]\\s*$",
+        RegexOption.IGNORE_CASE
+    )
+
+    // 2b. 末尾不带括号的裸版本标记（只匹配你明确列出的词，避免误伤）
+    val versionBarePattern = Regex(
+        "\\s+(?:" +
+                "TV\\s*Size|" +
+                "Short\\s*(?:Ver\\.?|Version)|" +
+                "Game\\s*(?:Ver\\.?|Version)|" +
+                "Movie\\s*(?:Ver\\.?|Version|Cut)|" +
+                "Extended\\s*(?:Edit|Version|Mix)|" +
+                "Spee?d\\s*Up(?:\\s*&\\s*Cut)?\\s*Ver\\.?|" +
+                "Nightcore(?:\\s*&\\s*Cut)?\\s*Mix|" +
+                "Live\\s*(?:Ver\\.?|Version)|" +
+                "Karaoke\\s*(?:Ver\\.?|Version)" +
+                ")\\s*$",
         RegexOption.IGNORE_CASE
     )
 
@@ -285,14 +304,35 @@ object StringUtil {
         result = result.replace(featPattern, "")
 
         // 再循环移除末尾的版本后缀
+        // 阶段 1：循环剥离尾部所有「带括号的版本标记」
         while (true) {
-            val next = result!!.replace(versionPattern, "")
+            val next = result.orEmpty().replace(versionParenPattern, "")
+            if (next == result) break
+            result = next
+        }
+
+        // 阶段 2：循环剥离尾部所有「裸版本标记」
+        while (true) {
+            val next = result.orEmpty().replace(versionBarePattern, "")
             if (next == result) break
             result = next
         }
 
         // 清理可能残留的末尾空格或单独的破折号
-        return result.replace(REGEX_SPACE_MORE, " ").trim().removeSuffix("-")
+        return result.replace(REGEX_SPACE_MORE, " ")
+            .trim()
+            .trimEnd('-', '–', '—', '~', '·', ' ')
+    }
+
+    /**
+     * 这个是用来标准化罗马字的
+     */
+    fun String?.formatted(): String {
+        if (this.isNullOrEmpty()) return ""
+
+        return this.lowercase()
+            .replace(REGEX_SPACE_MORE, "")
+            .replace(REGEX_NOT_LETTER, "")
     }
 
     /**

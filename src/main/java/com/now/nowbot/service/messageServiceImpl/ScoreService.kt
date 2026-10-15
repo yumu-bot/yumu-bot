@@ -372,6 +372,8 @@ import kotlin.time.Duration.Companion.seconds
             throw NoSuchElementException.BeatmapScoreFiltered(data.map.previewName)
         }
 
+        beatmapApiService.applyAlias(filtered)
+
         return ScoreParam(data.user, data.map, filtered, data.mode, ms,
             isMultipleScore, isShow, isCompact, isRecordCallStatistics.get())
     }

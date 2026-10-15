@@ -149,7 +149,10 @@ data class Beatmapset(
     var creatorData: OsuUser? = null, 
 
     @field:JsonProperty("related_tags")
-    var relatedTags: List<Tag> = listOf()
+    var relatedTags: List<Tag> = listOf(),
+
+    @get:JsonProperty("aliases")
+    var aliases: List<String>? = null
 ) {
 
     data class Hype(val current: Int, val required: Int)

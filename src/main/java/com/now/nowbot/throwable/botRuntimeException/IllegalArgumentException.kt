@@ -42,8 +42,14 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
                 (!a <bid> / !a:s <sid>)
             """.trimIndent())
 
-        class Alias:
-            WrongException("请输入正确的别名！")
+        class Alias(alias: String?):
+            WrongException("请输入正确的别名！${alias}")
+
+        class AliasPair:
+            WrongException("""
+                参数数量不匹配！请按「标题 = 别名」成对输入，多组之间用逗号等分隔。
+                例如：!aa 标题1 = 别名1, 标题2 = 别名2
+            """.trimIndent())
 
         class BeatmapID:
             WrongException("请输入正确的谱面编号 (BID)！")

@@ -6,6 +6,7 @@ import com.now.nowbot.cache.BeatmapPathCacheProvider
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.config.OsuLocalCalculateConfig
+import com.now.nowbot.dao.AliasDao
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapCountLite
 import com.now.nowbot.entity.BeatmapLite.Companion.toModel
@@ -33,6 +34,8 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.DataUtil.findCauseOfType
+import com.now.nowbot.util.StringUtil.formatted
+import com.now.nowbot.util.StringUtil.removeSongSuffix
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -68,6 +71,7 @@ import kotlin.time.Duration.Companion.seconds
 class BeatmapApiImpl(
     private val base: OsuApiBaseService,
     private val beatmapDao: BeatmapDao,
+    private val aliasDao: AliasDao,
     private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
     private val beatmapCountMapper: BeatmapCountMapper,
     private val beatmapPathCacheProvider: BeatmapPathCacheProvider,
@@ -618,6 +622,17 @@ class BeatmapApiImpl(
         }
     }
 
+    override fun applyAlias(scores: Collection<LazerScore>) {
+        scores.forEach {
+            val set = it.beatmapset
+
+            val aliases = aliasDao.getAliasesByTitle(set.title.removeSongSuffix().formatted())
+
+            if (aliases.isNotEmpty()) {
+                set.aliases = aliases
+            }
+        }
+    }
 
     override fun isNotOverRating(beatmapID: Long): Boolean {
         try {

@@ -178,4 +178,10 @@ interface OsuBeatmapApiService {
 
         return getBeatmapsetAndTopBeatmapFromAnyID(inputType, inputID, groupIDFn)
     }
+
+    fun applyAlias(scores: Collection<LazerScore>)
+
+    fun applyAlias(scoresMap: Map<*, LazerScore>) {
+        applyAlias(scoresMap.values)
+    }
 }
