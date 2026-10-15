@@ -54,10 +54,10 @@ class AliasDao(
      */
     @Transactional
     @CanIgnoreReturnValue
-    fun addAliasToTitle(titleId: Long, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean = false): AliasTitle {
+    fun addAliasToTitle(titleId: Long, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean = false, from: Long): AliasTitle {
         val title = titleRepository.findById(titleId)
             .orElseThrow { IllegalArgumentException("Title not found with id: $titleId") }
-        return addAliasInternal(title, rawAliasValue, setAsPrimary, approved)
+        return addAliasInternal(title, rawAliasValue, setAsPrimary, approved, from)
     }
 
     /**
@@ -65,12 +65,12 @@ class AliasDao(
      */
     @Transactional
     @CanIgnoreReturnValue
-    fun addAliasToTitle(title: AliasTitle, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean = false): AliasTitle {
-        return addAliasInternal(title, rawAliasValue, setAsPrimary, approved)
+    fun addAliasToTitle(title: AliasTitle, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean = false, from: Long): AliasTitle {
+        return addAliasInternal(title, rawAliasValue, setAsPrimary, approved, from)
     }
 
     @Transactional
-    fun addAliasToTitle(titleName: String, aliasValue: String, setAsPrimary: Boolean, approved: Boolean) {
+    fun addAliasToTitle(titleName: String, aliasValue: String, setAsPrimary: Boolean, approved: Boolean, from: Long) {
         // 1. 【关键点】使用带 JOIN FETCH 的方法查询标题，将现有的 aliases 完整加载出来
         var aliasTitle = titleRepository.findByNameWithAliases(titleName)
 
@@ -83,7 +83,7 @@ class AliasDao(
         // 3. 查找或创建 Alias 实体
         var alias = aliasRepository.findByValue(aliasValue)
         if (alias == null) {
-            alias = Alias(value = aliasValue, approved = approved)
+            alias = Alias(value = aliasValue, approved = approved, qq = from)
             aliasRepository.save(alias)
         } else {
             // 如果别名已存在，可根据需要更新其状态
@@ -167,6 +167,7 @@ class AliasDao(
                 id = alias.id,
                 value = alias.value,
                 titles = alias.titles.map { it.name },
+                qq = alias.qq
             )
         }
     }
@@ -212,12 +213,12 @@ class AliasDao(
     /**
      * 内部核心逻辑：处理规范化、查找/创建别名、维护顺序（第一个为主）
      */
-    private fun addAliasInternal(title: AliasTitle, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean): AliasTitle {
+    private fun addAliasInternal(title: AliasTitle, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean, from: Long): AliasTitle {
         // 1. 存入前强制规范化
         val normalizedValue = rawAliasValue.removeSongSuffix().standardised()
 
         val alias = aliasRepository.findByValue(normalizedValue)
-            ?: aliasRepository.save(Alias(value = normalizedValue))
+            ?: aliasRepository.save(Alias(value = normalizedValue, approved = approved, qq = from))
 
         // 1. 如果该别名已经在当前 Title 的别名列表中，先把它从列表中移除（防止重复或占位冲突）
         val existingIndex = title.aliases.indexOfFirst { it.id == alias.id }
@@ -246,4 +247,5 @@ data class PendingAlias(
     val id: Long,
     val value: String,
     val titles: List<String>,
+    val qq: Long,
 )

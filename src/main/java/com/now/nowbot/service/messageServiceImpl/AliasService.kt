@@ -157,6 +157,7 @@ class AliasService(
                         alias,
                         setAsPrimary = false,
                         approved = approved,
+                        from = event.sender.contactID
                     )
                 }
                 event.reply(if (approved) "操作超时，已默认保存。" else "操作超时，已提交审核，请等待管理员审核。")
@@ -169,6 +170,7 @@ class AliasService(
                         alias,
                         setAsPrimary = false,
                         approved = approved,
+                        from = event.sender.contactID
                     )
                 }
                 ev.reply(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
@@ -290,7 +292,7 @@ class AliasService(
                         appendLine("待审核的别名：")
                     }
                     pending.forEachIndexed { index, alias ->
-                        appendLine("${index + 1}. ${alias.titles.joinToString(" / ")} -> ${alias.value}")
+                        appendLine("${index + 1}. ${alias.titles.joinToString(" / ")} -> ${alias.value}（${alias.qq}）")
                     }
                     append("请回复需要通过的编号（用逗号分隔），回复 0 本次全部通过，回复负数本次全部不通过，回复其他非数字取消操作。")
                     if (remaining > 0) {

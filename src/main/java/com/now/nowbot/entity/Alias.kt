@@ -42,6 +42,9 @@ class Alias(
     @ManyToMany(mappedBy = "aliases")
     var titles: MutableList<AliasTitle> = mutableListOf(),
 
+    @Column(name = "qq", nullable = false, updatable = false)
+    val qq: Long = 0,
+
     /**
      * 是否已经通过审核。
      *
