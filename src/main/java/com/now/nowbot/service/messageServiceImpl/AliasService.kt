@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.AliasDao
+import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
@@ -8,6 +9,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.StringUtil.formatted
@@ -22,6 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 @Service("ALIAS")
 class AliasService(
     private val beatmapApiService: OsuBeatmapApiService,
+    private val beatmapDao: BeatmapDao,
 
     private val aliasDao: AliasDao,
 ): MessageService<AliasService.AliasParam> {
@@ -133,12 +136,26 @@ class AliasService(
 
     /**
      * 取出标准化的标题。没有直接给标题时，通过 BID 查询谱面集标题。
-     */
-    private fun getStandardizedTitle(target: AliasTarget): String {
-        val title = target.title
-            ?: beatmapApiService.getBeatmap(
-                target.beatmapID ?: throw IllegalArgumentException.WrongException.BeatmapID()
-            ).beatmapset!!.title
+     */private fun getStandardizedTitle(target: AliasTarget): String {
+        // 1. 优先检查 target.title。如果存在且不为空白，直接使用（此时不需要 beatmapID）
+        val title = target.title?.takeIf { it.isNotBlank() }
+            ?: run {
+                // 2. 只有当 target.title 不可用时，才需要 beatmapID
+                val beatmapID = target.beatmapID ?: throw IllegalArgumentException.WrongException.BeatmapID()
+
+                // 3. 从 Dao 获取并过滤 isBlank，如果为空则请求 Api
+                beatmapDao.getBeatmapTitleFromExtend(beatmapID)?.takeIf { it.isNotBlank() }
+                    ?: try {
+                        beatmapApiService.getBeatmap(beatmapID).beatmapset?.title
+                    } catch (_: Exception) {
+                        throw NoSuchElementException.Beatmap(beatmapID)
+                    }
+            }
+
+        // 4. 如果最终获取到的标题为空或者全空白，抛出 TipsException
+        if (title.isNullOrBlank()) {
+            throw IllegalArgumentException.WrongException.BeatmapID()
+        }
 
         return title.removeSongSuffix().formatted()
     }

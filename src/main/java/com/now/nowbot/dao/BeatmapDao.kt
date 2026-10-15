@@ -488,6 +488,11 @@ class BeatmapDao(
         return extendBeatmapRepository.findByBeatmapID(beatmapID)?.beatmapset?.beatmapsetID
     }
 
+    fun getBeatmapTitleFromExtend(beatmapID: Long): String? {
+        val sid = getBeatmapsetIDFromExtend(beatmapID) ?: return null
+        return extendBeatmapSetRepository.findByBeatmapsetID(sid)?.title
+    }
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BeatmapDao::class.java)
     }
