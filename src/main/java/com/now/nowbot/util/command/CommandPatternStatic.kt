@@ -52,6 +52,7 @@ const val FLAG_TEXT: String = "text"
 const val FLAG_ANY: String = "any"
 const val FLAG_OPERATE: String = "operate"
 const val FLAG_SERVICE: String = "service"
+const val FLAG_FULL: String = "full"
 
 @Language("RegExp")
 const val INDICATOR_CAPS_INSENSITIVE: String = "(?i)"

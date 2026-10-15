@@ -1092,6 +1092,8 @@ enum class Instruction(val pattern: Pattern) {
     // 支持多组：整段参数按 PATTERN_SEPARATOR_NO_SPACE 或 PATTERN_EQUAL 拆开，奇数位是标题、偶数位是别名
     ALIAS_ADD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(add|set|new)", "aa", "(添加|新增|增加)别名")
+        // :f 表示管理员跳过二次确认直接添加，例如 !aa:f 123=abc（条目数量只对非管理员限制）
+        appendColonCaptureGroup(FLAG_FULL, "f")
         appendCaptureGroup(FLAG_DATA, "[^\\n]", MORE)
     }),
 
@@ -1099,6 +1101,8 @@ enum class Instruction(val pattern: Pattern) {
     // 多组规则同 ALIAS_ADD；也可以只输入一个标题，此时删除该标题下的所有别名
     ALIAS_DELETE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(del(ete)?|rm|remove)", "ad", "(删除|移除|取消)别名")
+        // :f 表示不限制单次删除的条目数量，并跳过二次确认直接删除，例如 !ad:f 123=abc（仅超级管理员生效）
+        appendColonCaptureGroup(FLAG_FULL, "f")
         appendCaptureGroup(FLAG_DATA, "[^\\n]", MORE)
     }),
 

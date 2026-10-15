@@ -13,6 +13,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
 import com.now.nowbot.util.StringUtil.standardised
+import com.now.nowbot.util.command.FLAG_FULL
 import com.now.nowbot.util.command.PATTERN_EQUAL
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
@@ -38,7 +39,13 @@ class AliasService(
 
     data class AliasParam(
         val targets: List<AliasTarget>,
-        val operation: AliasOperation
+        val operation: AliasOperation,
+        /** 添加/删除时因超过 [ALIAS_BATCH_SIZE] 而被抛弃的条目数量。 */
+        val discarded: Int = 0,
+        /** 是否跳过二次确认直接执行（`:f` + 管理员，添加/删除通用）。 */
+        val force: Boolean = false,
+        /** 第一条被抛弃的条目，用于提示用户抛弃是从哪一条开始的。 */
+        val discardedFrom: AliasTarget? = null,
     )
 
     enum class AliasOperation {
@@ -58,8 +65,22 @@ class AliasService(
      *
      * 数量为奇数说明最后一个标题漏写了别名，会提示用户。
      * 删除时允许只输入一个标题，表示删除该标题下的所有别名。
+     *
+     * 添加/删除时一次最多保留 [ALIAS_BATCH_SIZE] 条，超出的部分直接抛弃。
+     * 添加时管理员不受该限制，只有非管理员才会走抛弃；
+     * 删除时超级管理员输入带 `:f` 捕获组（如 `!ad:f 123=abc`）时不受该限制。
+     *
+     * `:f` 捕获组表示跳过二次确认直接执行（添加、删除同理），仅管理员生效。
+     *
+     * @param unlimited 为真时不限制条目数量。
+     * @param force 为真时表示跳过二次确认直接执行。
      */
-    private fun parseAliasParam(matcher: Matcher, operation: AliasOperation): AliasParam? {
+    private fun parseAliasParam(
+        matcher: Matcher,
+        operation: AliasOperation,
+        unlimited: Boolean = false,
+        force: Boolean = false,
+    ): AliasParam? {
         val tokens = matcher.group("data")
             ?.split(TARGET_SEPARATOR)
             ?.map { it.trim() }
@@ -72,7 +93,7 @@ class AliasService(
 
         // 删除：只给一个标题时，删除该标题下的所有别名
         if (operation == AliasOperation.DELETE && tokens.size == 1) {
-            return AliasParam(listOf(parseAliasTarget(tokens.first(), null)), operation)
+            return AliasParam(listOf(parseAliasTarget(tokens.first(), null)), operation, force = force)
         }
 
         // 标题和别名必须成对，奇数个说明漏写了别名
@@ -82,7 +103,19 @@ class AliasService(
 
         val targets = tokens.chunked(2).map { (title, alias) -> parseAliasTarget(title, alias) }
 
-        return AliasParam(targets, operation)
+        // 添加/删除：一次最多只处理 ALIAS_BATCH_SIZE 条，超出的主动抛弃
+        if (!unlimited && targets.size > ALIAS_BATCH_SIZE) {
+            return AliasParam(
+                targets = targets.take(ALIAS_BATCH_SIZE),
+                operation = operation,
+                discarded = targets.size - ALIAS_BATCH_SIZE,
+                force = force,
+                // 被抛弃的第一条，提示用户从这里开始
+                discardedFrom = targets[ALIAS_BATCH_SIZE],
+            )
+        }
+
+        return AliasParam(targets, operation, force = force)
     }
 
     /**
@@ -121,11 +154,32 @@ class AliasService(
     }
 
     /**
+     * 渲染第一条被抛弃的条目，拼成「（从 标题 -> 别名 开始）」。
+     *
+     * @param standardiseAlias 删除时别名需要和预览一致地做标准化。
+     */
+    private fun formatDiscardedFrom(target: AliasTarget?, standardiseAlias: Boolean): String {
+        if (target == null) return ""
+
+        val title = getStandardizedTitle(target)
+        val alias = target.alias
+            ?.takeIf { it.isNotBlank() }
+            ?.removeSongSuffix()
+            ?.let { if (standardiseAlias) it.standardised() else it }
+
+        val entry = if (alias == null) "$title -> 全部别名" else "$title -> $alias"
+
+        return "（从 $entry 开始）"
+    }
+
+    /**
      * 添加别名。
      *
      * 管理员（含超级管理员）添加的别名默认通过审核，普通用户添加的需要等待审核。
      *
      * 多组参数会合并成一条确认消息；回复 OK 才会保存，回复其他内容撤回本次操作；超时同样会默认保存。
+     *
+     * 管理员输入带 `:f` 捕获组（如 `!aa:f 123=abc`）时跳过二次确认，直接保存。
      */
     private fun check(event: MessageEvent, param: AliasParam) {
         val targets = param.targets.map { target ->
@@ -135,9 +189,29 @@ class AliasService(
         // 添加处甄别是否是管理员，是则默认通过审核
         val approved = event.isSuperAdmin()
 
+        // :f + 管理员：不确认，直接添加
+        if (param.force) {
+            targets.forEach { (title, alias) ->
+                aliasDao.addAliasToTitle(
+                    title,
+                    alias,
+                    setAsPrimary = false,
+                    approved = approved,
+                    from = event.sender.contactID
+                )
+            }
+            event.reply(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
+            return
+        }
+
         val preview = buildString {
             appendLine("添加别名：")
             targets.forEach { (title, alias) -> appendLine("$title -> $alias") }
+
+            if (param.discarded > 0) {
+                val from = formatDiscardedFrom(param.discardedFrom, standardiseAlias = false)
+                appendLine("一次最多只能添加 $ALIAS_BATCH_SIZE 条，已主动抛弃后面的 ${param.discarded} 条$from。")
+            }
 
             if (!approved) {
                 appendLine("这些别名需要管理员审核之后才会通过。")
@@ -183,6 +257,8 @@ class AliasService(
      * 删除别名。只有管理员才能调用。
      *
      * 多组参数会合并成一条确认消息；alias 为 null 时表示删除该标题下的所有别名。
+     *
+     * 超级管理员输入带 `:f` 捕获组（如 `!ad:f 123=abc`）时跳过二次确认，直接删除选定的所有条目。
      */
     private fun delete(event: MessageEvent, param: AliasParam) {
         val targets = param.targets.map { target ->
@@ -194,6 +270,12 @@ class AliasService(
             DeleteTarget(getStandardizedTitle(target), alias)
         }
 
+        // :f + 超级管理员：不确认，直接删除选定的所有条目
+        if (param.force) {
+            event.reply(deleteTargets(targets))
+            return
+        }
+
         val preview = buildString {
             appendLine("删除别名：")
             targets.forEach { target ->
@@ -202,6 +284,11 @@ class AliasService(
                 } else {
                     appendLine("${target.title} -> ${target.alias}")
                 }
+            }
+
+            if (param.discarded > 0) {
+                val from = formatDiscardedFrom(param.discardedFrom, standardiseAlias = true)
+                appendLine("一次最多只能删除 $ALIAS_BATCH_SIZE 条，已主动抛弃后面的 ${param.discarded} 条$from。")
             }
         }
 
@@ -367,7 +454,12 @@ class AliasService(
     ): Boolean {
         val add = Instruction.ALIAS_ADD.matcher(messageText)
         if (add.find()) {
-            data.value = parseAliasParam(add, AliasOperation.ADD) ?: return false
+            // 管理员添加时不抛弃超出的条目，只有非管理员才会走抛弃
+            val unlimited = event.isSuperAdmin()
+            // :f 让管理员跳过二次确认，直接添加
+            val force = add.group(FLAG_FULL) != null && event.isSuperAdmin()
+
+            data.value = parseAliasParam(add, AliasOperation.ADD, unlimited = unlimited, force = force) ?: return false
             return true
         }
 
@@ -376,7 +468,15 @@ class AliasService(
             // 删除需要管理员，否则不回应
             if (!event.isSuperAdmin()) return false
 
-            data.value = parseAliasParam(delete, AliasOperation.DELETE) ?: return false
+            // :f 捕获组表示不限制删除数量，并跳过二次确认直接删除
+            val force = delete.group(FLAG_FULL) != null
+
+            data.value = parseAliasParam(
+                delete,
+                AliasOperation.DELETE,
+                unlimited = force,
+                force = force,
+            ) ?: return false
             return true
         }
 
@@ -406,6 +506,11 @@ class AliasService(
     }
 
     companion object {
+        /**
+         * 添加/删除别名时一次最多处理的条目数量。超出的会被主动抛弃。
+         */
+        private const val ALIAS_BATCH_SIZE = 20
+
         /**
          * 审核时一次最多展示/处理的待审核别名数量。
          */
