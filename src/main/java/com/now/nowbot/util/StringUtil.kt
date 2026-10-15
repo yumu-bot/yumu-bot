@@ -270,7 +270,7 @@ object StringUtil {
                 "Nightcore(?:\\s*&\\s*Cut)?\\s*Mix|" +
                 "Live\\s*(?:Ver\\.?|Version)?|" +
                 "Karaoke\\s*(?:Ver\\.?|Version)?|" +
-                "[^)]*?\\b(?:Ver\\.|Version|Size|Edit|Mix|Cut|Remix|Bootleg|Mashup)\\b[^)]*" +
+                "[^)]*?\\b(?:Ver|Version|Size|Edit|Mix|Cut|Remix|Bootleg|Mashup)\\b\\.?[^)]*" +
                 ")" +
                 "[])]\\s*$",
         RegexOption.IGNORE_CASE
