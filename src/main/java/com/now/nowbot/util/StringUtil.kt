@@ -318,10 +318,7 @@ object StringUtil {
             result = next
         }
 
-        // 清理可能残留的末尾空格或单独的破折号
-        return result.replace(REGEX_SPACE_MORE, " ")
-            .trim()
-            .trimEnd('-', '–', '—', '~', '·', ' ')
+        return result.replace(REGEX_SPACE_MORE, " ").trim()
     }
 
     /**

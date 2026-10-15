@@ -45,7 +45,7 @@ class AliasService(
         val operation: AliasOperation,
         /** 添加/删除时因超过 [ALIAS_BATCH_SIZE] 而被抛弃的条目数量。 */
         val discarded: Int = 0,
-        /** 是否跳过二次确认直接执行（`:f` + 管理员，添加/删除通用）。 */
+        /** 是否跳过二次确认直接执行（:f + 管理员，添加/删除通用）。 */
         val force: Boolean = false,
         /** 第一条被抛弃的条目，用于提示用户抛弃是从哪一条开始的。 */
         val discardedFrom: AliasTarget? = null,
@@ -61,19 +61,23 @@ class AliasService(
     )
 
     /**
-     * 解析 `<标题或BID> = <别名>`，多组之间用 `,`、`;`、`:`、`&` 或 `=` 分隔。
+     * 解析 <标题或BID> = <别名>，多组之间用或换行分隔。
+     * 冒号不作为分隔符，它是 :f 开关的语法。
      *
      * 整段参数拆开后，奇数位（第 1、3、5……个）视为标题，偶数位视为别名。
      * 纯数字视为 BID，其余视为标题。
+     *
+     * 用成对引号包裹的内容不参与拆分，引号本身也不会保留。
+     * 例如输入  "A, B" = "C|D"  时会拆成标题 A, B 和别名 C|D。
      *
      * 数量为奇数说明最后一个标题漏写了别名，会提示用户。
      * 删除时允许只输入一个标题，表示删除该标题下的所有别名。
      *
      * 添加/删除时一次最多保留 [ALIAS_BATCH_SIZE] 条，超出的部分直接抛弃。
      * 添加时管理员不受该限制，只有非管理员才会走抛弃；
-     * 删除时超级管理员输入带 `:f` 捕获组（如 `!ad:f 123=abc`）时不受该限制。
+     * 删除时超级管理员输入带 :f 捕获组（如 !ad:f 123=abc）时不受该限制。
      *
-     * `:f` 捕获组表示跳过二次确认直接执行（添加、删除同理），仅管理员生效。
+     * :f 捕获组表示跳过二次确认直接执行（添加、删除同理），仅管理员生效。
      *
      * @param unlimited 为真时不限制条目数量。
      * @param force 为真时表示跳过二次确认直接执行。
@@ -85,9 +89,7 @@ class AliasService(
         force: Boolean = false,
     ): AliasParam? {
         val tokens = matcher.group("data")
-            ?.split(TARGET_SEPARATOR)
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
+            ?.let { splitTargets(it) }
             .orEmpty()
 
         if (tokens.isEmpty()) {
@@ -120,6 +122,48 @@ class AliasService(
 
         return AliasParam(targets, operation, force = force)
     }
+
+    /**
+     * 按 [TARGET_SEPARATOR] 把整段参数拆成标题/别名序列。
+     *
+     * 被成对引号（[QUOTATION]）包裹的内容一律视为普通字符，其中的分隔符不会被拆开，
+     * 引号本身只作为保护标记，不会出现在结果里。
+     *
+     * 引号没有成对出现时，说明用户想保护的范围不明确，提示用户重新输入。
+     *
+     * @return 去掉首尾空白后的非空片段。
+     */
+    private fun splitTargets(data: String): List<String> {
+        val tokens = mutableListOf<String>()
+        val token = StringBuilder()
+        var quoted = false
+
+        for (c in data) {
+            when {
+                c in QUOTATION -> quoted = !quoted
+                quoted -> token.append(c)
+                isTargetSeparator(c) -> {
+                    tokens += token.toString()
+                    token.clear()
+                }
+
+                else -> token.append(c)
+            }
+        }
+
+        if (quoted) {
+            throw IllegalArgumentException.WrongException.Quotation()
+        }
+
+        tokens += token.toString()
+
+        return tokens.map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    /**
+     * 单个字符是否是分隔符。所有分隔符都是单字符，所以可以直接逐个字符判断。
+     */
+    private fun isTargetSeparator(c: Char): Boolean = TARGET_SEPARATOR.matches(c.toString())
 
     /**
      * 纯数字视为 BID，其余视为标题。
@@ -196,7 +240,7 @@ class AliasService(
      *
      * 多组参数会合并成一条确认消息；回复 OK 才会保存，回复其他内容撤回本次操作；超时同样会默认保存。
      *
-     * 管理员输入带 `:f` 捕获组（如 `!aa:f 123=abc`）时跳过二次确认，直接保存。
+     * 管理员输入带 :f 捕获组（如 !aa:f 123=abc）时跳过二次确认，直接保存。
      */
     private fun check(event: MessageEvent, param: AliasParam) {
         val targets = param.targets.map { target ->
@@ -275,7 +319,7 @@ class AliasService(
      *
      * 多组参数会合并成一条确认消息；alias 为 null 时表示删除该标题下的所有别名。
      *
-     * 超级管理员输入带 `:f` 捕获组（如 `!ad:f 123=abc`）时跳过二次确认，直接删除选定的所有条目。
+     * 超级管理员输入带 :f 捕获组（如 !ad:f 123=abc）时跳过二次确认，直接删除选定的所有条目。
      */
     private fun delete(event: MessageEvent, param: AliasParam) {
         val targets = param.targets.map { target ->
@@ -534,10 +578,25 @@ class AliasService(
         private const val REVIEW_SIZE = 10
 
         /**
-         * 参数分隔符：`,`、`;`、`:`、`&` 或 PATTERN_EQUAL。
+         * 参数分隔符：,、，、;、&、|、反引号、、、PATTERN_EQUAL（=、＝）以及换行符。
+         *
+         * 冒号（:、：）**不在**此列：它是 :f 开关的语法，标题/别名里的冒号不应该被拆开。
          *
          * 整段参数按它拆开后，奇数位是标题，偶数位是别名。
+         * 被 [QUOTATION] 包裹的内容不参与拆分。
+         *
+         * 换行必须配合 Instruction 里 data 捕获组的 PATTERN_ANYTHING 才能生效，
+         * 若捕获组退回 [^\n]+，换行就进不到这里，这条分支会变成死代码。
+         *
+         * 所有分隔符都是单个字符，[isTargetSeparator] 依赖这一点。
          */
-        private val TARGET_SEPARATOR = Regex(",|;|:|&|$PATTERN_EQUAL")
+        private val TARGET_SEPARATOR = Regex("[,，;|&`、]|$PATTERN_EQUAL|[\\r\\n]")
+
+        /**
+         * 成对引号：英文双引号、中文双引号（开引号和闭引号都算）、全角双引号。
+         *
+         * 它们只作为保护标记，本身不会进入标题或别名。
+         */
+        private val QUOTATION = setOf('"', '“', '”', '＂')
     }
 }

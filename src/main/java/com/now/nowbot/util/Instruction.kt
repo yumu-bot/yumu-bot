@@ -1089,12 +1089,14 @@ enum class Instruction(val pattern: Pattern) {
 
     // #5 别名库
     // !alias add <标题或BID> = <别名> / !aa ...
-    // 支持多组：整段参数按 PATTERN_SEPARATOR_NO_SPACE 或 PATTERN_EQUAL 拆开，奇数位是标题、偶数位是别名
+    // 支持多组：整段参数按逗号类、等号或换行拆开，奇数位是标题、偶数位是别名；
+    // 成对引号包裹的内容不参与拆分。冒号留给 :f 开关，不作为分隔符。
     ALIAS_ADD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(add|set|new)", "aa", "(添加|新增|增加)别名")
         // :f 表示管理员跳过二次确认直接添加，例如 !aa:f 123=abc（条目数量只对非管理员限制）
         appendColonCaptureGroup(FLAG_FULL, "f")
-        appendCaptureGroup(FLAG_DATA, "[^\\n]", MORE)
+        // 允许跨行：一条消息里可以一行一组，换行由 AliasService 作为分隔符处理
+        appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
     // !alias del <标题或BID> = <别名> / !ad ...
@@ -1103,7 +1105,7 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("alias\\s*(del(ete)?|rm|remove)", "ad", "(删除|移除|取消)别名")
         // :f 表示不限制单次删除的条目数量，并跳过二次确认直接删除，例如 !ad:f 123=abc（仅超级管理员生效）
         appendColonCaptureGroup(FLAG_FULL, "f")
-        appendCaptureGroup(FLAG_DATA, "[^\\n]", MORE)
+        appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
     // !alias review / !a
