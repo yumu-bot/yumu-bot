@@ -80,19 +80,20 @@ class AliasDao(
             titleRepository.save(aliasTitle)
         }
 
-        // 3. 查找或创建 Alias 实体
+        // 3. 查找或创建 Alias 实体。
+        //    只有新建时才写 approved 和 qq；已存在的行一律不动，和 addAliasInternal 保持一致。
+        //    别名的审核状态只能由审核流程（reviewAliases）改变，
+        //    用户重复输入同一个别名是彻底的空操作，不能把已通过的别名打回待审核。
         var alias = aliasRepository.findByValue(aliasValue)
         if (alias == null) {
             alias = Alias(value = aliasValue, approved = approved, qq = from)
             aliasRepository.save(alias)
-        } else {
-            // 如果别名已存在，可根据需要更新其状态
-            alias.approved = approved
         }
 
         // 4. 将别名加入到标题的 aliases 列表中
         // 由于 aliases 已经被完整加载，Hibernate 能正确计算出当前列表的 size，
         // 从而生成正确的 position（例如当前有 2 个，新加的就是第 3 个，position = 2），不会再发生主键冲突。
+        // 该标题下已经有这个别名时，整体跳过：不新增绑定，也不改任何状态。
         if (!aliasTitle.aliases.contains(alias)) {
             if (setAsPrimary) {
                 aliasTitle.aliases.add(0, alias) // 插在最前面作为首选

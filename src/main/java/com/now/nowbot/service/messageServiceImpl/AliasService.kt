@@ -243,9 +243,13 @@ class AliasService(
      * 管理员输入带 :f 捕获组（如 !aa:f 123=abc）时跳过二次确认，直接保存。
      */
     private fun check(event: MessageEvent, param: AliasParam) {
+        // 同一标题下的同一个别名只允许写一次。
+        // 用户可能在同一句里重复输入（!aa A=x, A=x），也可能用 BID 和标题两种写法
+        // 指向同一个谱面集（!aa 123=x, A=x），解析后都会变成完全相同的「标题 -> 别名」。
+        // 这里先去重，保证数据库不会收到两次一样的别名。
         val targets = param.targets.map { target ->
             getStandardizedTitle(target) to getStandardizedAlias(target)
-        }
+        }.distinct()
 
         // 添加处甄别是否是管理员，是则默认通过审核
         val approved = event.isSuperAdmin()
@@ -322,6 +326,7 @@ class AliasService(
      * 超级管理员输入带 :f 捕获组（如 !ad:f 123=abc）时跳过二次确认，直接删除选定的所有条目。
      */
     private fun delete(event: MessageEvent, param: AliasParam) {
+        // 和添加同理：去掉重复的「标题 -> 别名」，避免同一条被删两次、也避免结果里重复计数。
         val targets = param.targets.map { target ->
             val alias = target.alias
                 ?.takeIf { it.isNotBlank() }
@@ -329,7 +334,7 @@ class AliasService(
                 ?.standardised()
 
             DeleteTarget(getStandardizedTitle(target), alias)
-        }
+        }.distinct()
 
         // :f + 超级管理员：不确认，直接删除选定的所有条目
         if (param.force) {
