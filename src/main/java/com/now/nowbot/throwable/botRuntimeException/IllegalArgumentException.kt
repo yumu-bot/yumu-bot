@@ -42,8 +42,8 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
                 (!a <bid> / !a:s <sid>)
             """.trimIndent())
 
-        class Accuracy:
-            WrongException("请输入正确的准确率！")
+        class Alias:
+            WrongException("请输入正确的别名！")
 
         class BeatmapID:
             WrongException("请输入正确的谱面编号 (BID)！")

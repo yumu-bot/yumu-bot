@@ -5,6 +5,7 @@ import com.now.nowbot.model.enums.JaChar.Companion.appendRomanizedJapaneseTo
 import com.now.nowbot.util.command.REGEX_OPERATOR
 import com.now.nowbot.util.command.REGEX_RANGE
 import com.now.nowbot.util.command.REGEX_SEPARATOR
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
 
 object StringUtil {
 
@@ -245,6 +246,53 @@ object StringUtil {
         }
 
         return (match * 2.0) / (cs.length + ts.length - ((stringLength - 1.0) * 2.0))
+    }
+
+    // 1. 匹配 feat. / ft. / featuring 及其之后的所有内容
+    // 同时能处理前面可能带有的括号或连字符（例如 " (feat. xxx)" 或 " - feat. xxx"）
+    val featPattern = Regex(
+        "\\s*(?:[(\\[-]\\s*)?(?:feat\\.?|ft\\.?|featuring)\\b.*$",
+        RegexOption.IGNORE_CASE
+    )
+
+    // 2. 匹配位于字符串末尾的常见版本/长度/电视大小等括号标记
+    val versionPattern = Regex(
+        "\\s*[\\[(]?" +
+                "(?:TV\\s*Size|" +
+                "Short\\s*(?:Ver\\.?|Version|Size)?|" +
+                "Game\\s*(?:Ver\\.?|Version|Size)?|" +
+                "Movie\\s*(?:Ver\\.?|Version|Cut)?|" +
+                "Cut\\s*Ver\\.?|" +
+                "Extended\\s*(?:Edit|Version|Mix)?|" +
+                "Spee?d\\s*Up(?:\\s*&\\s*Cut)?\\s*Ver\\.?|" +
+                "Nightcore(?:\\s*&\\s*Cut)?\\s*Mix|" +
+                "Live\\s*(?:Ver\\.?|Version)?|" +
+                "Karaoke\\s*(?:Ver\\.?|Version)?|" +
+                "[^)]*?\\b(?:Ver\\.|Version|Size|Edit|Mix|Cut)\\b[^)]*)" +
+                "[])]?\\s*$",
+        RegexOption.IGNORE_CASE
+    )
+
+    /**
+     * 移除 osu! 标题中不必要的版本标签，以及 feat. / ft. 及其之后的所有内容
+     */
+    fun String?.removeSongSuffix(): String {
+        if (this.isNullOrEmpty()) return ""
+
+        var result = this
+
+        // 先移除 feat. / ft. 及其之后的内容
+        result = result.replace(featPattern, "")
+
+        // 再循环移除末尾的版本后缀
+        while (true) {
+            val next = result!!.replace(versionPattern, "")
+            if (next == result) break
+            result = next
+        }
+
+        // 清理可能残留的末尾空格或单独的破折号
+        return result.replace(REGEX_SPACE_MORE, " ").trim().removeSuffix("-")
     }
 
     /**
