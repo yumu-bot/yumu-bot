@@ -53,19 +53,28 @@ class AliasDao(
     fun getAliasesByNormalizedTitles(normalizedTitles: Collection<String>): Map<String, List<String>> {
         val keys = normalizedTitles.toSet()
 
+        // 缓存里只放「库里查到的标题」，所以 getIfPresent == null 就是还没查过的
         val missed = keys.filter { aliasCache.getIfPresent(it) == null }
 
-        if (missed.isNotEmpty()) {
-            // 一次 IN 查询取回全部缺失标题及其别名，其余走缓存
-            titleRepository.findByNameInWithAliases(missed).forEach { title ->
-                aliasCache.put(title.name, title.aliases.map { it.value })
-            }
-
-            // 库中不存在的标题缓存成空列表，避免同一个标题反复穿透到数据库
-            missed.forEach { aliasCache.put(it, emptyList()) }
+        // 命中缓存的先收下，缺的那些等会儿一次 IN 查询补齐
+        val result = HashMap<String, List<String>>(keys.size)
+        keys.forEach { cached ->
+            aliasCache.getIfPresent(cached)?.let { result[cached] = it }
         }
 
-        return keys.associateWith { aliasCache.getIfPresent(it).orEmpty() }
+        if (missed.isNotEmpty()) {
+            titleRepository.findByNameInWithAliases(missed).forEach { title ->
+                val aliases = title.aliases.map { it.value }
+
+                // 直接拿查询结果填充返回值，绝不要在查完之后再从缓存回读
+                result[title.name] = aliases
+                aliasCache.put(title.name, aliases)
+            }
+        }
+
+        // 库里确实不存在的标题不写缓存：否则会把上面刚查到的结果覆盖成空列表。
+        // 返回值统一按空列表处理即可。
+        return keys.associateWith { result[it].orEmpty() }
     }
 
     /**
