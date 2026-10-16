@@ -30,6 +30,12 @@ interface TitleRepository : JpaRepository<AliasTitle, Long> {
     @Query("SELECT DISTINCT t FROM AliasTitle t LEFT JOIN FETCH t.aliases WHERE t.name = :name")
     fun findByNameWithAliases(@Param("name") name: String): AliasTitle?
 
+    /**
+     * 批量按标题名查询标题及其别名，一次查询取回所有标题，避免逐个标题查询造成的 N+1。
+     */
+    @Query("SELECT DISTINCT t FROM AliasTitle t LEFT JOIN FETCH t.aliases WHERE t.name IN :names")
+    fun findByNameInWithAliases(@Param("names") names: Collection<String>): List<AliasTitle>
+
     fun findByName(name: String): AliasTitle?
 
     @Query("SELECT DISTINCT t FROM AliasTitle t JOIN t.aliases a WHERE a.value = :aliasValue")

@@ -1,20 +1,72 @@
 package com.now.nowbot.dao
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.entity.Alias
 import com.now.nowbot.entity.AliasTitle
 import com.now.nowbot.mapper.AliasRepository
 import com.now.nowbot.mapper.TitleRepository
+import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
 import com.now.nowbot.util.StringUtil.standardised
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
+import java.time.Duration
 
 @Component
 class AliasDao(
     private val titleRepository: TitleRepository,
     private val aliasRepository: AliasRepository
 ) {
+    companion object {
+        /**
+         * 别名极少变动，但每条成绩消息都要查一次，因此这里做一层短期缓存。
+         *
+         * 本类是所有别名写操作的唯一入口，写完后会立即失效对应标题，
+         * 万一有别的途径（例如直接改库）写入，最迟 TTL 之后也会自动纠正。
+         */
+        private val aliasCache: Cache<String, List<String>> = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofHours(1))
+            .maximumSize(8192)
+            .build()
+
+        /**
+         * 缓存键与 [AliasTitle.name] 保持一致：
+         * 原始标题去掉歌曲后缀、再经 formatted 标准化。formatted 是幂等的，
+         * 所以调用方传处理过的标题进来当 key 也完全等价。
+         */
+        private fun normalizedTitle(rawTitle: String): String = rawTitle.removeSongSuffix().formatted()
+
+        private fun invalidateTitleCache(vararg rawTitles: String) {
+            aliasCache.invalidateAll(rawTitles.map { normalizedTitle(it) })
+        }
+    }
+
+    /**
+     * 批量按标题名称获取别名值列表，一次查询解决多个标题，避免逐条标题查库导致的 N+1。
+     *
+     * @param normalizedTitles 已经 removeSongSuffix + formatted 处理过的标题（即 [AliasTitle.name] 的形态）
+     * @return key 为标题，value 为该标题下的别名值列表；没有别名的标题对应空列表
+     */
+    @Transactional
+    fun getAliasesByNormalizedTitles(normalizedTitles: Collection<String>): Map<String, List<String>> {
+        val keys = normalizedTitles.toSet()
+
+        val missed = keys.filter { aliasCache.getIfPresent(it) == null }
+
+        if (missed.isNotEmpty()) {
+            // 一次 IN 查询取回全部缺失标题及其别名，其余走缓存
+            titleRepository.findByNameInWithAliases(missed).forEach { title ->
+                aliasCache.put(title.name, title.aliases.map { it.value })
+            }
+
+            // 库中不存在的标题缓存成空列表，避免同一个标题反复穿透到数据库
+            missed.forEach { aliasCache.put(it, emptyList()) }
+        }
+
+        return keys.associateWith { aliasCache.getIfPresent(it).orEmpty() }
+    }
 
     /**
      * 通过标题名称获取该标题下的所有别名值列表
@@ -102,6 +154,8 @@ class AliasDao(
             }
             titleRepository.save(aliasTitle)
         }
+
+        invalidateTitleCache(aliasTitle.name)
     }
 
     /**
@@ -127,6 +181,8 @@ class AliasDao(
         if (titleRepository.findByAliasValue(normalizedValue).isEmpty()) {
             aliasRepository.delete(alias)
         }
+
+        invalidateTitleCache(titleName)
 
         return true
     }
@@ -154,6 +210,8 @@ class AliasDao(
                 aliasRepository.findByValue(rawValue)?.let { aliasRepository.delete(it) }
             }
         }
+
+        invalidateTitleCache(titleName)
 
         return aliasValues.size
     }
@@ -223,6 +281,9 @@ class AliasDao(
             rejected = aliases.size
         }
 
+        // 涉及多个标题的别名变动，直接整体失效最省心
+        aliasCache.invalidateAll()
+
         return approved to rejected
     }
 
@@ -252,7 +313,11 @@ class AliasDao(
         }
 
         // 5. 保存并返回更新后的 Title 实体
-        return titleRepository.save(title)
+        val saved = titleRepository.save(title)
+
+        invalidateTitleCache(title.name)
+
+        return saved
     }
 }
 

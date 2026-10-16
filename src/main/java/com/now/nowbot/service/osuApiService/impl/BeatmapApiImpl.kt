@@ -623,13 +623,19 @@ class BeatmapApiImpl(
     }
 
     override fun applyAlias(scores: Collection<LazerScore>) {
-        scores.forEach {
-            val set = it.beatmapset
+        if (scores.isEmpty()) return
 
-            val aliases = aliasDao.getAliasesByTitle(set.title.removeSongSuffix().formatted())
+        // 一整批成绩里谱面集标题会大量重复，先按「去掉歌曲后缀并标准化」的标题分组：
+        // 处理过的标题只算一次，既省掉逐条成绩的重复正则，又能让整个批次只查一次库。
+        val scoreGroup = scores.groupBy { it.beatmapset.title.removeSongSuffix().formatted() }
 
-            if (aliases.isNotEmpty()) {
-                set.aliases = aliases
+        val titleAliases = aliasDao.getAliasesByNormalizedTitles(scoreGroup.keys)
+
+        scoreGroup.forEach { (title, sameTitleScores) ->
+            val aliases = titleAliases[title]
+
+            if (!aliases.isNullOrEmpty()) {
+                sameTitleScores.forEach { it.beatmapset.aliases = aliases }
             }
         }
     }

@@ -117,6 +117,8 @@ class BPFixService(
             throw NoSuchElementException.BestScore(user.username)
         }
 
+        beatmapApiService.applyAlias(scores)
+
         return BPFixParam(user, scores, mode.data!!, page)
     }
 
