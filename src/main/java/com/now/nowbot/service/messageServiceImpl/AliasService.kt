@@ -12,6 +12,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
 import com.now.nowbot.util.StringUtil.standardised
@@ -52,7 +53,7 @@ class AliasService(
     )
 
     enum class AliasOperation {
-        ADD, DELETE, REVIEW
+        ADD, DELETE, REVIEW, EXPORT
     }
 
     private data class DeleteTarget(
@@ -513,11 +514,44 @@ class AliasService(
         return selected
     }
 
+    /**
+     * 导出库里所有「标题 -> 第一个别名」的映射，发给用户一个 JSON 文件。
+     *
+     * 输出是 JSON 对象：键是标题，值是它排序最靠前的别名（没有别名的标题不会出现在结果里）。
+     * 外部 JS 程序可以直接读成 Map / Set 查询：
+     * ```js
+     * const titleToAlias = new Map(Object.entries(JSON.parse(text)))        // 标题 -> 别名
+     * const aliasToTitle = new Map([...titleToAlias].map(([t, a]) => [a, t])) // 别名 -> 标题
+     * const titles = new Set(titleToAlias.keys())                            // 标题集合
+     * ```
+     *
+     * 所有用户都能调用；只有超级管理员不受冷却限制，其余用户复用
+     * [FetchService.rateLimiter] 的令牌桶，2 分钟一次（独立计数，不占用 !fetch 的次数）。
+     */
+    private fun export(event: MessageEvent) {
+        // 超级管理员既不消耗令牌，也不受冷却限制
+        if (!event.isSuperAdmin()) {
+            FetchService.rateLimiter.checkOrThrow(EXPORT_RATE_KEY)
+        }
+
+        val mapping = aliasDao.getTitlePrimaryAliases()
+        val file = JacksonUtil.objectToJsonPretty(mapping).toByteArray(Charsets.UTF_8)
+
+        event.replyFileInGroupAsync(file, EXPORT_FILE_NAME)
+    }
+
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: MessageService.DataValue<AliasParam>
     ): Boolean {
+        val export = Instruction.ALIAS_EXPORT.matcher(messageText)
+        if (export.find()) {
+            // 所有用户都能导出，冷却只在 handleMessage 里对非超级管理员生效
+            data.value = AliasParam(emptyList(), AliasOperation.EXPORT)
+            return true
+        }
+
         val add = Instruction.ALIAS_ADD.matcher(messageText)
         if (add.find()) {
             // 管理员添加时不抛弃超出的条目，只有非管理员才会走抛弃
@@ -566,6 +600,7 @@ class AliasService(
             AliasOperation.ADD -> check(event, param)
             AliasOperation.DELETE -> delete(event, param)
             AliasOperation.REVIEW -> review(event)
+            AliasOperation.EXPORT -> export(event)
         }
 
         return ServiceCallStatistic.building(event)
@@ -581,6 +616,19 @@ class AliasService(
          * 审核时一次最多展示/处理的待审核别名数量。
          */
         private const val REVIEW_SIZE = 10
+
+        /**
+         * 导出指令发送的文件名。
+         */
+        private const val EXPORT_FILE_NAME = "aliasDB.json"
+
+        /**
+         * 导出指令在 [FetchService.rateLimiter] 里的令牌桶名。
+         *
+         * 用独立的名字，既复用 FetchService 的 2 分钟令牌桶，又不和 !fetch 抢次数。
+         * 这个名字会直接进冷却提示（「服务 xxx 已经超过限制」），所以用中文。
+         */
+        private const val EXPORT_RATE_KEY = "别名导出"
 
         /**
          * 参数分隔符：,、，、;、&、|、反引号、、、PATTERN_EQUAL（=、＝）以及换行符。

@@ -8,7 +8,7 @@ import java.time.OffsetDateTime
 class AliasTitle(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    var id: Long = 0,
 
     @Column(nullable = false)
     var name: String,
@@ -34,7 +34,7 @@ class AliasTitle(
 class Alias(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    var id: Long = 0,
 
     @Column(nullable = false, unique = true, length = 255)
     val value: String,
@@ -43,7 +43,7 @@ class Alias(
     var titles: MutableList<AliasTitle> = mutableListOf(),
 
     @Column(name = "qq", nullable = false, updatable = false)
-    val qq: Long = 0,
+    var qq: Long = 0,
 
     /**
      * 是否已经通过审核。
@@ -55,7 +55,7 @@ class Alias(
     var approved: Boolean = false,
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: OffsetDateTime = OffsetDateTime.now()
+    var createdAt: OffsetDateTime = OffsetDateTime.now()
 ) {
     // 既然已经是标准化的，可以直接比较 value
     override fun equals(other: Any?): Boolean {

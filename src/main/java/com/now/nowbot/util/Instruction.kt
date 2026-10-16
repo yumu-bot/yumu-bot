@@ -1111,6 +1111,13 @@ enum class Instruction(val pattern: Pattern) {
     // !alias review / !a
     ALIAS_REVIEW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(review|check|audit|list)", "aw", "审核别名", "别名审核")
+    }),
+
+    // !alias export / !ao
+    // 导出所有「标题 -> 第一个别名」的 JSON 映射，供外部程序读取查询。
+    // 冷却 2 分钟（复用 FetchService 的令牌桶），超级管理员不受限制。
+    ALIAS_EXPORT(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("alias\\s*(export|output|dump|json)", "ao", "别名(导出|输出)")
     }), ;
 
     fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)

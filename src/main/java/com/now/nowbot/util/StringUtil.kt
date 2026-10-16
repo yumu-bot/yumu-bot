@@ -252,7 +252,7 @@ object StringUtil {
     // 1. 匹配 feat. / ft. / featuring 及其之后的所有内容
     // 同时能处理前面可能带有的括号或连字符（例如 " (feat. xxx)" 或 " - feat. xxx"）
     val featPattern = Regex(
-        "\\s*(?:[(\\[-]\\s*)?(?:feat\\.?|ft\\.?|featuring)\\b.*$",
+        "\\s*(?:[(\\[-]\\s*)?(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b.*$",
         RegexOption.IGNORE_CASE
     )
 

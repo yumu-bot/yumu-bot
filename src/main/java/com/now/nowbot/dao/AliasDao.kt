@@ -159,6 +159,21 @@ class AliasDao(
     }
 
     /**
+     * 查询所有标题以及它的第一个别名，供导出使用。
+     *
+     * 第一个别名就是 [AliasTitle.primaryAlias]，即 @OrderColumn(position) 排序后的第一个。
+     * 还没有任何别名的标题不会出现在结果里。
+     *
+     * @return 有序 Map：key 是标题，value 是第一个别名
+     */
+    @Transactional
+    fun getTitlePrimaryAliases(): Map<String, String> {
+        return titleRepository.findAll()
+            .mapNotNull { title -> title.primaryAlias?.value?.let { alias -> title.name to alias } }
+            .toMap()
+    }
+
+    /**
      * 查询所有待审核的别名（含关联的标题名），供管理员审核时展示。
      */
     @Transactional
