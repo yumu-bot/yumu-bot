@@ -54,6 +54,12 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class AliasImportFile:
             WrongException("请发送要导入的 JSON 文件，或回复一条包含该文件的消息。")
 
+        class AliasImportNotFound(location: String):
+            WrongException("""
+                找不到文件：$location
+                如果刚用 !ao 导出，文件通常保存在运行目录的 debug 文件夹里，可以直接用 !ai aliasDB.json。
+            """.trimIndent())
+
         class AliasImportJson:
             WrongException("""
                 JSON 解析失败！请确认文件内容与 !ao 导出的格式一致。

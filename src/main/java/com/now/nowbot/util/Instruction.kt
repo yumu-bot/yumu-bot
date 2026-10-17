@@ -1130,8 +1130,10 @@ enum class Instruction(val pattern: Pattern) {
 
     // !alias import / !ai
     // 导入 !ao 导出的「标题 -> 别名」JSON 映射。仅超级管理员可用。
+    // 可以不带参数（之后发送文件），也可以直接给出链接或本地路径，方便命令行测试。
     ALIAS_IMPORT(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(import|load|upload)", "ai", "别名(导入|上传)")
+        appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }), ;
 
     fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)

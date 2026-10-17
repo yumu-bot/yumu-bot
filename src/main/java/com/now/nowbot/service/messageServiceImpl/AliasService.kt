@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.controller.TokenBucketRateLimiter
+import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.AliasDao
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.ServiceCallStatistic
@@ -22,6 +23,7 @@ import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
 import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.command.FLAG_BID
+import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_FULL
 import com.now.nowbot.util.command.PATTERN_EQUAL
 import com.now.nowbot.util.exchangeToBody
@@ -33,6 +35,7 @@ import org.springframework.web.client.RestClient
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.regex.Matcher
 import kotlin.time.Duration.Companion.minutes
@@ -68,6 +71,8 @@ class AliasService(
         val force: Boolean = false,
         /** 第一条被抛弃的条目，用于提示用户抛弃是从哪一条开始的。 */
         val discardedFrom: AliasTarget? = null,
+        /** !ai 直接给出的文件地址（命令行测试用，或用户直接贴链接）。 */
+        val location: String? = null,
     )
 
     enum class AliasOperation {
@@ -640,7 +645,15 @@ class AliasService(
      * 标题和 !aa 一样做 removeSongSuffix + formatted 标准化；
      * 已存在的绑定会跳过，新绑定追加在该标题的别名列表末尾，并直接通过审核。
      */
-    private fun importAliases(event: MessageEvent) {
+    private fun importAliases(event: MessageEvent, param: AliasParam) {
+        // 直接在指令后面给了链接或路径（命令行测试、或用户不想上传文件）
+        val location = param.location
+
+        if (!location.isNullOrBlank()) {
+            importText(event, readImportText(location))
+            return
+        }
+
         AsyncMessageUtil.doubleCheck(
             event = event,
             // 任意回复都当作「文件消息」继续处理，具体有没有文件由 importFile 判断
@@ -649,6 +662,7 @@ class AliasService(
                 event.reply("""
                     请发送要导入的 JSON 文件（格式与 !ao 导出的结果一致），
                     或回复一条包含该文件的消息。
+                    也可以直接回复文件的下载链接或本地路径。
                 """.trimIndent())
             },
             onOverTime = { throw TipsRuntimeException("等待文件超时，已取消导入。") },
@@ -658,8 +672,94 @@ class AliasService(
     }
 
     private fun importFile(event: MessageEvent) {
-        val file = findImportFile(event) ?: throw IllegalArgumentException.WrongException.AliasImportFile()
-        val text = readImportText(event, file)
+        val file = findImportFile(event)
+
+        if (file != null) {
+            importText(event, readImportText(event, file))
+            return
+        }
+
+        // 命令行测试时没法发文件，允许用户直接回复链接或本地路径
+        val location = textLocation(event) ?: throw IllegalArgumentException.WrongException.AliasImportFile()
+        importText(event, readImportText(location))
+    }
+
+    private fun textLocation(event: MessageEvent): String? {
+        val text = normalizeLocation(event.textMessage)
+        if (text.isEmpty()) return null
+
+        return when {
+            // 远程链接、file:// URL 直接交给 readImportText
+            isHttpLocation(text) || text.startsWith("file:", true) -> text
+
+            // 本地路径：即使文件不存在也交给 readImportText，好给出「找不到文件」的提示
+            looksLikeLocalPath(text) -> resolveImportPath(text).toAbsolutePath().toString()
+
+            // 只写了不带斜杠的文件名时，去 !ao 的 debug 目录里找一下
+            !text.contains('/') && !text.contains('\\') ->
+                resolveImportPath(text)
+                    .takeIf { Files.isRegularFile(it) }
+                    ?.toAbsolutePath()
+                    ?.toString()
+
+            else -> null
+        }
+    }
+
+    private fun isHttpLocation(text: String): Boolean {
+        return text.startsWith("http://", true) || text.startsWith("https://", true)
+    }
+
+    private fun looksLikeLocalPath(text: String): Boolean {
+        return text.startsWith("/") ||
+                text.startsWith("~") ||
+                text.startsWith("./") ||
+                text.startsWith("../") ||
+                text.contains('/') ||
+                text.contains('\\')
+    }
+
+    /**
+     * 处理从终端拖拽出来的路径：去掉外层引号，并把 \ 还原成空格。
+     */
+    private fun normalizeLocation(raw: String): String {
+        var value = raw.trim()
+
+        if (value.length >= 2 &&
+            ((value.startsWith('"') && value.endsWith('"')) ||
+                    (value.startsWith('\'') && value.endsWith('\'')))
+        ) {
+            value = value.substring(1, value.length - 1).trim()
+        }
+
+        return value.replace("\\ ", " ")
+    }
+
+    /**
+     * 解析本地路径：
+     * - 支持 ~ ~/`
+     * - 只给文件名（例如 aliasDB.json）时，去 !ao 导出的 debug 目录里找
+     */
+    private fun resolveImportPath(location: String): Path {
+        val value = normalizeLocation(location)
+        val expanded = when {
+            value == "~" -> System.getProperty("user.home")
+            value.startsWith("~/") -> System.getProperty("user.home") + value.substring(1)
+            else -> value
+        }
+
+        val path = Path.of(expanded)
+        if (Files.isRegularFile(path)) return path
+
+        if (!expanded.contains('/') && !expanded.contains('\\')) {
+            val debugPath = Path.of(NowbotConfig.RUN_PATH, "debug", expanded)
+            if (Files.isRegularFile(debugPath)) return debugPath
+        }
+
+        return path
+    }
+
+    private fun importText(event: MessageEvent, text: String) {
         val rawMapping = parseImportJson(text)
 
         // 标题标准化，并丢掉空标题/空别名；同一标题只保留一条
@@ -715,17 +815,25 @@ class AliasService(
             throw IllegalStateException.ReadFile("别名导入")
         }
 
+        return readImportText(location)
+    }
+
+    private fun readImportText(location: String): String {
         return try {
             when {
-                location.startsWith("http://", true) || location.startsWith("https://", true) ->
+                isHttpLocation(location) ->
                     restClient.get().uri(location).exchangeToBody<ByteArray>()
                         .toString(StandardCharsets.UTF_8)
 
                 location.startsWith("file:", true) ->
                     Files.readString(Path.of(URI(location)), StandardCharsets.UTF_8)
 
-                else -> Files.readString(Path.of(location), StandardCharsets.UTF_8)
+                // 普通本地路径（绝对路径、~/、相对路径都走这里）
+                else -> Files.readString(resolveImportPath(location), StandardCharsets.UTF_8)
             }.removePrefix("\uFEFF")
+        } catch (e: NoSuchFileException) {
+            log.warn("别名导入：文件不存在，location=$location")
+            throw IllegalArgumentException.WrongException.AliasImportNotFound(e.file ?: location)
         } catch (e: Exception) {
             log.error("别名导入：读取文件失败，location=$location", e)
             throw IllegalStateException.ReadFile("别名导入")
@@ -763,7 +871,12 @@ class AliasService(
             // 导入会直接写入数据库并通过审核，只允许超级管理员
             if (event.isNotSuperAdmin()) return false
 
-            data.value = AliasParam(emptyList(), AliasOperation.IMPORT)
+            // 指令后面可以跟链接或本地路径，不跟则等待用户发送文件
+            val location = importInstruction.group(FLAG_DATA)
+                ?.let { normalizeLocation(it) }
+                ?.takeIf { it.isNotBlank() }
+
+            data.value = AliasParam(emptyList(), AliasOperation.IMPORT, location = location)
             return true
         }
 
@@ -825,7 +938,7 @@ class AliasService(
             AliasOperation.DELETE -> delete(event, param)
             AliasOperation.REVIEW -> review(event)
             AliasOperation.EXPORT -> export(event)
-            AliasOperation.IMPORT -> importAliases(event)
+            AliasOperation.IMPORT -> importAliases(event, param)
             AliasOperation.MANUAL -> manual(event, param)
         }
 
