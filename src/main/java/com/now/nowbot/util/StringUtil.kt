@@ -249,16 +249,16 @@ object StringUtil {
         return (match * 2.0) / (cs.length + ts.length - ((stringLength - 1.0) * 2.0))
     }
 
-    // 1. 匹配 feat. / ft. / featuring 及其之后的所有内容
-    // 同时能处理前面可能带有的括号或连字符（例如 " (feat. xxx)" 或 " - feat. xxx"）
+    // 严格匹配 feat. / ft. / featuring / cover 及其之后的内容，同时绝对不会误伤单词内部的 feat（如 Defeat）
     val featPattern = Regex(
-        "\\s*(?:[(\\[-]\\s*)?(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b.*$",
+        "(?<![a-zA-Z])\\b(?:[(\\[-]\\s*)?(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b.*$",
         RegexOption.IGNORE_CASE
     )
 
-    // 2a. 末尾带括号的版本标记（括号必须成对）
+    // 2a. 末尾带括号的版本标记（必须成对匹配 () 或 []）
     val versionParenPattern = Regex(
-        "\\s*[\\[(]" +
+        "\\s*(?:" +
+                "\\(" + // 匹配左圆括号 (
                 "(?:" +
                 "TV\\s*Size|" +
                 "Short\\s*(?:Ver\\.?|Version|Size)?|" +
@@ -272,7 +272,24 @@ object StringUtil {
                 "Karaoke\\s*(?:Ver\\.?|Version)?|" +
                 "[^)]*?\\b(?:Ver|Version|Size|Edit|Mix|Cut|Remix|Bootleg|Mashup)\\b\\.?[^)]*" +
                 ")" +
-                "[])]\\s*$",
+                "\\)" + // 匹配右圆括号 )
+                "|" +
+                "\\[" + // 匹配左方括号 [
+                "(?:" +
+                "TV\\s*Size|" +
+                "Short\\s*(?:Ver\\.?|Version|Size)?|" +
+                "Game\\s*(?:Ver\\.?|Version|Size)?|" +
+                "Movie\\s*(?:Ver\\.?|Version|Cut)?|" +
+                "Cut\\s*Ver\\.?|" +
+                "Extended\\s*(?:Edit|Version|Mix)?|" +
+                "Spee?d\\s*Up(?:\\s*&\\s*Cut)?\\s*Ver\\.?|" +
+                "Nightcore(?:\\s*&\\s*Cut)?\\s*Mix|" +
+                "Live\\s*(?:Ver\\.?|Version)?|" +
+                "Karaoke\\s*(?:Ver\\.?|Version)?|" +
+                "[^]]*?\\b(?:Ver|Version|Size|Edit|Mix|Cut|Remix|Bootleg|Mashup)\\b\\.?[^]]*" +
+                ")" +
+                "]" + // 匹配右方括号 ]
+                ")\\s*$",
         RegexOption.IGNORE_CASE
     )
 
