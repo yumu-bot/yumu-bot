@@ -29,7 +29,7 @@ open class MessageEvent(val event: MessageEvent, bot: Bot): Event(bot), com.now.
     override val message: MessageChain
         get() = getMessageChain(
             event.arrayMsg,
-            bot.trueBot,
+            bot?.trueBot,
             (event as? GroupMessageEvent)?.groupId,
         )
 
