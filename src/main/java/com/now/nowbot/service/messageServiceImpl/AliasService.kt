@@ -21,7 +21,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
-import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_FULL
@@ -242,16 +241,15 @@ class AliasService(
     /**
      * 渲染第一条被抛弃的条目，拼成「（从 标题 -> 别名 开始）」。
      *
-     * @param standardiseAlias 删除时别名需要和预览一致地做标准化。
+     * 别名和删除时一样只做 removeSongSuffix + trim，不再做 standardised。
      */
-    private fun formatDiscardedFrom(target: AliasTarget?, standardiseAlias: Boolean): String {
+    private fun formatDiscardedFrom(target: AliasTarget?): String {
         if (target == null) return ""
 
         val title = getStandardizedTitle(target)
         val alias = target.alias
             ?.takeIf { it.isNotBlank() }
             ?.removeSongSuffix()
-            ?.let { if (standardiseAlias) it.standardised() else it }
 
         val entry = if (alias == null) "$title -> 全部别名" else "$title -> $alias"
 
@@ -299,7 +297,7 @@ class AliasService(
             targets.forEach { (title, alias) -> appendLine("$title -> $alias") }
 
             if (param.discarded > 0) {
-                val from = formatDiscardedFrom(param.discardedFrom, standardiseAlias = false)
+                val from = formatDiscardedFrom(param.discardedFrom)
                 appendLine("一次最多只能添加 $ALIAS_BATCH_SIZE 条，已主动抛弃后面的 ${param.discarded} 条$from。")
             }
 
@@ -433,7 +431,6 @@ class AliasService(
             val alias = target.alias
                 ?.takeIf { it.isNotBlank() }
                 ?.removeSongSuffix()
-                ?.standardised()
 
             DeleteTarget(getStandardizedTitle(target), alias)
         }.distinct()
@@ -461,7 +458,7 @@ class AliasService(
             }
 
             if (param.discarded > 0) {
-                val from = formatDiscardedFrom(param.discardedFrom, standardiseAlias = true)
+                val from = formatDiscardedFrom(param.discardedFrom)
                 appendLine("一次最多只能删除 $ALIAS_BATCH_SIZE 条，已主动抛弃后面的 ${param.discarded} 条$from。")
             }
         }

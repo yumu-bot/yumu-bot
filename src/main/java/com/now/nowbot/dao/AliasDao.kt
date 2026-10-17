@@ -9,7 +9,6 @@ import com.now.nowbot.mapper.AliasRepository
 import com.now.nowbot.mapper.TitleRepository
 import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
-import com.now.nowbot.util.StringUtil.standardised
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
 import java.time.Duration
@@ -131,7 +130,10 @@ class AliasDao(
     }
 
     @Transactional
-    fun addAliasToTitle(titleName: String, aliasValue: String, setAsPrimary: Boolean, approved: Boolean, from: Long) {
+    fun addAliasToTitle(titleName: String, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean, from: Long) {
+        // 别名只做 trim，其余字符原样保存（和 deleteAliasFromTitle / deleteAliasesFromTitle 的比较规则保持一致）
+        val aliasValue = rawAliasValue.trim()
+
         // 1. 【关键点】使用带 JOIN FETCH 的方法查询标题，将现有的 aliases 完整加载出来
         var aliasTitle = titleRepository.findByNameWithAliases(titleName)
 
@@ -171,7 +173,7 @@ class AliasDao(
      * 批量导入「标题 -> 别名」映射，供 !ai 使用。
      *
      * 标题必须已经过 removeSongSuffix + formatted 标准化；
-     * 别名会在这里再做一次 removeSongSuffix，和 [addAliasToTitle] 的添加规则一致。
+     * 别名只做 trim，和 [addAliasToTitle] 的存储规则一致。
      *
      * 已存在的绑定会跳过，不会改变它在标题下的顺序（因此不会影响 !ao 导出的首选别名）。
      * 已存在但还没审核的别名，在 [approved] 为真时会一并置为已通过。
@@ -185,18 +187,20 @@ class AliasDao(
     fun importAliases(mapping: Map<String, String>, approved: Boolean, from: Long): AliasImportResult {
         if (mapping.isEmpty()) return AliasImportResult(0, 0)
 
+        // 先按 trim 后的值准备别名，批量查询和写入都用同一份值，避免查不到已存在的别名
+        val trimmedMapping = mapping.mapValues { (_, rawAliasValue) -> rawAliasValue.trim() }
+
         // 一次把相关的标题和别名都查出来，避免逐条导入时的 N+1
         val titles = titleRepository.findByNameInWithAliases(mapping.keys)
             .associateByTo(HashMap<String, AliasTitle>()) { it.name }
-        val aliases = aliasRepository.findAllByValueIn(mapping.values.toSet())
+        val aliases = aliasRepository.findAllByValueIn(trimmedMapping.values.toSet())
             .associateByTo(HashMap<String, Alias>()) { it.value }
 
         var imported = 0
         var skipped = 0
 
-        mapping.forEach { (titleName, rawAliasValue) ->
+        trimmedMapping.forEach { (titleName, aliasValue) ->
             val title = titles.getOrPut(titleName) { AliasTitle(name = titleName) }
-            val aliasValue = rawAliasValue.removeSongSuffix()
 
             val alias = aliases.getOrPut(aliasValue) {
                 Alias(value = aliasValue, approved = approved, qq = from)
@@ -229,24 +233,29 @@ class AliasDao(
     /**
      * 删除某个标题下的别名。
      *
+     * 别名只做 trim，其余字符（大小写、全角、假名等）原样参与比较。
+     * 别名是给人看的短名字，不能像标题那样 standardised，
+     * 否则会出现「列表里明明有、删除时却说没有这个别名」的问题。
+     *
      * 如果删除后该别名已经没有任何标题引用，则连同别名一起删除。
      *
      * @return 是否真的删除了（标题或别名不存在时返回 false）
      */
     @Transactional
     fun deleteAliasFromTitle(titleName: String, rawAliasValue: String): Boolean {
-        val normalizedValue = rawAliasValue.removeSongSuffix().standardised()
+        val value = rawAliasValue.trim()
 
-        val title = titleRepository.findByName(titleName) ?: return false
-        val alias = aliasRepository.findByValue(normalizedValue) ?: return false
+        val title = titleRepository.findByNameWithAliases(titleName) ?: return false
 
-        val removed = title.aliases.removeAll { it.id == alias.id || it.value == alias.value }
-        if (!removed) return false
+        // 直接在该标题已加载的别名里比对，避免再走一次可能受数据库排序规则影响的 SQL 查询
+        val alias = title.aliases.firstOrNull { it.value.trim() == value } ?: return false
+
+        title.aliases.removeAll { it.id == alias.id }
 
         titleRepository.save(title)
 
         // 如果这个别名已经没有任何标题引用了，就顺手删掉，避免留下孤儿数据
-        if (titleRepository.findByAliasValue(normalizedValue).isEmpty()) {
+        if (titleRepository.findByAliasValue(alias.value).isEmpty()) {
             aliasRepository.delete(alias)
         }
 
@@ -258,7 +267,7 @@ class AliasDao(
     /**
      * 删除某个标题下指定的若干个别名（包括还没通过审核的）。
      *
-     * 别名值会按 [deleteAliasFromTitle] 的规则先 removeSongSuffix + standardised；
+     * 别名只做 trim，比较时两边都 trim，其余字符原样比较（和 [addAliasToTitle] 的存储规则一致）。
      * 标题下不存在的值会被忽略。删除后不再被任何标题引用的别名会连同一起删除。
      *
      * @return 实际删除的别名数量
@@ -267,31 +276,30 @@ class AliasDao(
     fun deleteAliasesFromTitle(titleName: String, rawAliasValues: Collection<String>): Int {
         if (rawAliasValues.isEmpty()) return 0
 
-        val title = titleRepository.findByName(titleName) ?: return 0
-        if (title.aliases.isEmpty()) return 0
+        val title = titleRepository.findByNameWithAliases(titleName) ?: return 0
 
-        val values = rawAliasValues.map { it.removeSongSuffix().standardised() }.toSet()
+        val values = rawAliasValues.map { it.trim() }.toSet()
 
         // filter 会先把关联列表读出来，之后才能安全地在列表上 removeAll
-        val removedValues = title.aliases
-            .map { it.value }
-            .filter { it in values }
+        val removed = title.aliases.filter { it.value.trim() in values }
 
-        if (removedValues.isEmpty()) return 0
+        if (removed.isEmpty()) return 0
 
-        title.aliases.removeAll { it.value in values }
+        // 按 id 删除，避免值比较的差异导致实际没删掉
+        val removedIds = removed.map { it.id }.toSet()
+        title.aliases.removeAll { it.id in removedIds }
         titleRepository.save(title)
 
         // 如果这些别名已经没有任何标题引用了，就顺手删掉，避免留下孤儿数据
-        removedValues.forEach { rawValue ->
-            if (titleRepository.findByAliasValue(rawValue).isEmpty()) {
-                aliasRepository.findByValue(rawValue)?.let { aliasRepository.delete(it) }
+        removed.forEach { alias ->
+            if (titleRepository.findByAliasValue(alias.value).isEmpty()) {
+                aliasRepository.delete(alias)
             }
         }
 
         invalidateTitleCache(titleName)
 
-        return removedValues.size
+        return removed.size
     }
 
     /**
@@ -398,8 +406,8 @@ class AliasDao(
      * 内部核心逻辑：处理规范化、查找/创建别名、维护顺序（第一个为主）
      */
     private fun addAliasInternal(title: AliasTitle, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean, from: Long): AliasTitle {
-        // 1. 存入前强制规范化
-        val normalizedValue = rawAliasValue.removeSongSuffix().standardised()
+        // 1. 存入前只做 trim（别名不能 standardised，否则会和删除时的比较不一致）
+        val normalizedValue = rawAliasValue.trim()
 
         val alias = aliasRepository.findByValue(normalizedValue)
             ?: aliasRepository.save(Alias(value = normalizedValue, approved = approved, qq = from))
