@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.toAcronyms
 import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
@@ -23,6 +24,9 @@ import com.now.nowbot.util.BeatmapUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.StringUtil.compareSimilarity
+import com.now.nowbot.util.StringUtil.formatted
+import com.now.nowbot.util.StringUtil.removeSongSuffix
+import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_ID
@@ -233,7 +237,7 @@ class GetItemsService(
             }
 
             val s = b.beatmapset
-            val displayAlias = s?.titleUnicode.isNullOrBlank().not() && s.title.compareSimilarity(s.titleUnicode, standardised = false, standardisedTo = false) < 0.9
+            val displayUnicode = s.shouldDisplayUnicode()
 
             val m = mode.takeIfConvertable(b)
 
@@ -245,7 +249,7 @@ class GetItemsService(
                 "preview=\"${b.previewName}\"",
                 "star=${"%.2f".format(b.starRating)}",
                 "max=${b.maxCombo}",
-                if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
+                if (displayUnicode) "unicode=\"${s?.titleUnicode}\"" else null,
                 if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null,
                 if (m.safeModeValue > 0) "mode=\"${m.charName}\"" else null
             )
@@ -275,7 +279,7 @@ class GetItemsService(
             }.sortedBy { it.starRating }
 
             val t = bs.lastOrNull()
-            val displayAlias = s.titleUnicode.isNotBlank() && s.title.compareSimilarity(s.titleUnicode, standardised = false, standardisedTo = false) < 0.9
+            val displayUnicode = s.shouldDisplayUnicode()
 
             val m = s.beatmaps.orEmpty()
                 .groupBy { it.mode }
@@ -293,7 +297,7 @@ class GetItemsService(
                 "preview=\"${s.previewName}\"",
                 "star=${"%.2f".format(t?.starRating ?: 0.0)}",
                 "difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]",
-                if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
+                if (displayUnicode) "unicode=\"${s.titleUnicode}\"" else null,
                 if (s.availability.downloadDisabled) "disabled=true" else null,
                 if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null,
                 if ((first?.modeValue ?: 0) > 0) "mode=\"${first?.charName ?: "o"}\"" else null
@@ -325,7 +329,7 @@ class GetItemsService(
         calculateApiService.applyStarToBeatmap(b, mode.takeIfConvertable(b), mods)
 
         val displayCombos = this.combo.isNotEmpty() && this.accuracy.isNotEmpty()
-        val displayAlias = s?.titleUnicode.isNullOrBlank().not() && s.title.compareSimilarity(s.titleUnicode, standardised = false, standardisedTo = false) < 0.9
+        val displayUnicode = s.shouldDisplayUnicode()
 
         val attributes = listOfNotNull(
             "bid=${b.beatmapID}",
@@ -336,7 +340,7 @@ class GetItemsService(
             "mode=\"${b.mode.charName}\"",
             if (displayCombos) "accuracy=${this.accuracy}" else null,
             if (displayCombos) "combo=${this.combo}" else null,
-            if (displayAlias) "alias=\"${s.titleUnicode}\"" else null,
+            if (displayUnicode) "unicode=\"${s?.titleUnicode}\"" else null,
             "rank=\"${this.rank.ifEmpty { "F" }.lowercase()}\"",
             "performance=${this.pp.ifEmpty { "0" }}",
             if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
@@ -492,7 +496,33 @@ class GetItemsService(
         return null
     }
 
+    /**
+     * 判断是否需要额外展示 unicode 标题。
+     *
+     * title 和 titleUnicode 都先经过 [removeSongSuffix]、[formatted]、[standardised] 处理后，
+     * 只有相似度仍然低于 [UNICODE_SIMILARITY_THRESHOLD] 时才有展示 unicode 的必要。
+     */
+    private fun Beatmapset?.shouldDisplayUnicode(): Boolean {
+        val beatmapset = this ?: return false
+        val unicode = beatmapset.titleUnicode
+
+        if (unicode.isBlank()) return false
+
+        val title = beatmapset.title.removeSongSuffix().formatted().standardised()
+        val unicodeStandardised = unicode.removeSongSuffix().formatted().standardised()
+
+        if (unicodeStandardised.isBlank()) return false
+
+        return title.compareSimilarity(
+            unicodeStandardised,
+            standardised = false,
+            standardisedTo = false
+        ) < UNICODE_SIMILARITY_THRESHOLD
+    }
+
     companion object {
+        private const val UNICODE_SIMILARITY_THRESHOLD = 0.75
+
         fun String?.parseToLongList(): List<Long> {
             return this.orEmpty().split(REGEX_SEPARATOR)
                 .filter { it.isNotEmpty() }
