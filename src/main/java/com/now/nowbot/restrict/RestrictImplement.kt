@@ -6,6 +6,7 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.restrict.RestrictTargetType.*
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.PassiveMessageHandler
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.util.AsyncMessageUtil
@@ -22,7 +23,8 @@ import kotlin.time.Clock
 
 @Component
 class RestrictImplement(
-    private val restrictRecordRepository: RestrictRecordRepository
+    private val restrictRecordRepository: RestrictRecordRepository,
+    private val passiveMessageHandlers: List<PassiveMessageHandler>,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(RestrictImplement::class.java)
@@ -181,7 +183,20 @@ class RestrictImplement(
         AsyncMessageUtil.put(event)
         val textMessage = event.textMessage
 
-        if (!filterMessage(textMessage)) return
+        if (!filterMessage(textMessage)) {
+            // 不是指令时，交给正在等待普通输入的会话（例如 !am 手动补录别名）。
+            val messageText = textMessage.trim()
+
+            for (handler in passiveMessageHandlers) {
+                try {
+                    if (handler.handlePassiveMessage(event, messageText)) break
+                } catch (e: Throwable) {
+                    errorHandle(event, e)
+                    break
+                }
+            }
+            return
+        }
 
         val messageText = textMessage.trim()
         val uid = event.sender.contactID

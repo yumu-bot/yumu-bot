@@ -1,5 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.now.nowbot.controller.TokenBucketRateLimiter
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.AliasDao
@@ -11,6 +13,7 @@ import com.now.nowbot.qq.message.FileMessage
 import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.PassiveMessageHandler
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
@@ -21,7 +24,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
-import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_FULL
 import com.now.nowbot.util.command.PATTERN_EQUAL
@@ -36,6 +38,9 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Matcher
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -48,7 +53,27 @@ class AliasService(
     private val beatmapDao: BeatmapDao,
 
     private val aliasDao: AliasDao,
-): MessageService<AliasService.AliasParam> {
+): MessageService<AliasService.AliasParam>, PassiveMessageHandler {
+
+    /**
+     * 以 event.subject.contactID 为键的 !am 会话。
+     *
+     * 用 Caffeine 的 expireAfterWrite 自动清理超时会话，不需要额外定时任务。
+     */
+    private val manualSessions: Cache<Long, ManualSession> = Caffeine.newBuilder()
+        .expireAfterWrite(MANUAL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .maximumSize(MANUAL_SESSION_MAX_SIZE)
+        .build()
+
+    /**
+     * 每个联系人最近一次 !am 请求的编号。
+     *
+     * 新 !am 一发起就更新编号并清掉旧会话；谱面查询是异步完成的，
+     * 编号能保证先发起但后返回的旧请求不会把已经被替换的会话重新写回去。
+     */
+    private val manualRequestIDs = ConcurrentHashMap<Long, Long>()
+
+    private val manualRequestSequence = AtomicLong()
 
     /**
      * 一组「标题 -> 别名」参数。
@@ -72,11 +97,30 @@ class AliasService(
         val discardedFrom: AliasTarget? = null,
         /** !ai 直接给出的文件地址（命令行测试用，或用户直接贴链接）。 */
         val location: String? = null,
+        /** !am 后面直接给出的别名（非纯数字），保存到对应会话的谱面上。 */
+        val manualAlias: String? = null,
     )
 
     enum class AliasOperation {
-        ADD, DELETE, REVIEW, EXPORT, IMPORT, MANUAL
+        ADD, DELETE, REVIEW, EXPORT, IMPORT, MANUAL, MANUAL_ALIAS
     }
+
+    /**
+     * 一次 !am 手动补录会话。
+     *
+     * 以 event.subject.contactID 为键，所以同一个群/私聊里只有一个进行中的会话；
+     * 再次发送 !am <BID> 会直接用新谱面覆盖旧会话。
+     */
+    private data class ManualSession(
+        val beatmapID: Long,
+        val title: String,
+        /** 发起 !am 的用户。直接回复别名时只认这位用户，避免把群友的正常聊天当成别名。 */
+        val requester: Long,
+        /** 发起 !am 时的权限状态。管理员发起的补录直接生效，普通用户发起的需要审核。 */
+        val approved: Boolean,
+        /** 会话过期时间，使用 MANUAL_TIMEOUT_SECONDS 计算。 */
+        val expireAt: Long,
+    )
 
     private data class DeleteTarget(
         val title: String,
@@ -344,18 +388,29 @@ class AliasService(
     /**
      * 手动补录别名（!am <BID>）。
      *
-     * 先按 BID 找到谱面并展示它的 title、titleUnicode、artist，
-     * 再用一问一答让用户决定要保存的别名：
-     * - 回复 OK：取消操作
-     * - 超时：取消操作
-     * - 回复其他任意内容：把回复内容去掉歌曲后缀后保存为该曲目的别名
+     * 按 BID 找到谱面并展示它的 title、titleUnicode、artist，然后把这次补录登记成
+     * 一个以 event.subject.contactID 为键、60 秒有效的会话。
      *
-     * 挂载标题和 [check] 一致：beatmapset.title 经 removeSongSuffix + formatted 标准化。
+     * 之后有两种方式提交别名：
+     * - 再次发送「!am 别名」：由 [manualAlias] 处理，不会再请求一次谱面信息；
+     * - 直接回复别名（不带 !am 前缀）：由 [handlePassiveMessage] 处理。
+     *
+     * 别名不能是纯数字：!am 后面的纯数字一律视为 BID，会开启新的补录会话。
+     * 回复 OK 或超时视为取消。挂载标题和 [check] 一致：
+     * beatmapset.title 经 removeSongSuffix + formatted 标准化。
      * 权限也和 [check] 一致：管理员直接生效，普通用户提交后需要审核。
      */
     private fun manual(event: MessageEvent, param: AliasParam) {
         val target = param.targets.firstOrNull() ?: return
         val beatmapID = target.beatmapID ?: throw IllegalArgumentException.WrongException.BeatmapID()
+
+        val key = event.subject.contactID
+        val requestID = manualRequestSequence.incrementAndGet()
+
+        // 新的 !am 一发起，旧的补录会话立即失效。
+        // 即使这次查询谱面失败，也不会再回退到上一个未完成的会话。
+        manualRequestIDs[key] = requestID
+        manualSessions.invalidate(key)
 
         val beatmapset = runCatching {
             beatmapApiService.getBeatmap(beatmapID).beatmapset
@@ -364,8 +419,6 @@ class AliasService(
         // 挂载标题和 !aa 保持一致：去掉歌曲后缀再 formatted 标准化
         val title = beatmapset.title.removeSongSuffix().formatted()
         if (title.isBlank()) throw IllegalArgumentException.WrongException.BeatmapID()
-
-        val approved = event.isSuperAdmin()
 
         // 按标准流程（和 applyAlias 一致）查询该标题当前的别名，没有就是空列表
         val aliases = aliasDao.getAliasesByNormalizedTitles(listOf(title))[title].orEmpty()
@@ -379,38 +432,130 @@ class AliasService(
             appendLine()
             appendLine("将保存到别名库的标题：$title")
             appendLine("现有别名：${if (aliases.isEmpty()) "（空）" else aliases.joinToString("、")}")
-            appendLine("回复 OK 取消本次操作，回复其他内容则将其作为该标题的别名保存。")
+            appendLine("发送「!am 别名」或直接回复别名，即可将其保存为该标题的别名。")
+            appendLine("「!am 别名」里的别名不能是纯数字（纯数字会被当成 BID）。")
+            appendLine("回复 OK 取消本次操作。")
             append("60 秒后不操作同样视为取消。")
         }
 
-        AsyncMessageUtil.doubleCancel(
-            event = event,
-            keywords = listOf("OK"),
-            onCheck = { event.reply(preview) },
-            // 回复 OK、超时都视为取消（默认行为就是取消，这里显式写出来更清楚）
-            onCancel = { throw TipsRuntimeException("已取消操作。") },
-            onInput = { ev ->
-                val alias = ev.textMessage.removeSongSuffix()
-                    .takeIf { it.isNotBlank() }
-                    ?: throw IllegalArgumentException.WrongException.Alias(ev.textMessage)
+        val session = ManualSession(
+            beatmapID = beatmapID,
+            title = title,
+            requester = event.sender.contactID,
+            approved = event.isSuperAdmin(),
+            expireAt = System.currentTimeMillis() + MANUAL_TIMEOUT_SECONDS * 1_000,
+        )
 
-                aliasDao.addAliasToTitle(
-                    title,
-                    alias,
-                    setAsPrimary = false,
-                    approved = approved,
-                    from = event.sender.contactID,
-                )
+        // 只有仍然是最新一次 !am 请求时，才允许把会话写回去。
+        // 先发起但后返回的旧请求不会覆盖后来的会话。
+        manualSessions.asMap().compute(key) { _, current ->
+            if (manualRequestIDs[key] == requestID) session else current
+        }
 
-                event.replyAsync(
-                    if (approved) {
-                        "保存成功！已将「$alias」保存为「$title」的别名。"
-                    } else {
-                        "已提交审核！已将「$alias」提交为「$title」的别名，请等待管理员审核。"
-                    }
-                )
-            },
-            timeout = 60.seconds,
+        // 已经被更新的 !am 替换掉的请求不再发送谱面预览
+        if (manualSessions.getIfPresent(key) !== session) return
+
+        event.replyAsync(preview)
+    }
+
+    /**
+     * 处理「!am 别名」：把别名保存到当前会话对应的谱面上。
+     *
+     * 这里不会重新请求谱面信息，也不会开启新的补录会话。
+     * 没有会话时只提示用户先发送 !am <BID>。
+     */
+    private fun manualAlias(event: MessageEvent, rawAlias: String?) {
+        val session = currentManualSession(event)
+
+        if (session == null) {
+            event.replyAsync("当前没有正在进行的 !am 会话，请先发送「!am <BID>」查询谱面。")
+            return
+        }
+
+        val alias = rawAlias?.trim()?.takeIf { it.isNotBlank() }
+            ?: throw IllegalArgumentException.WrongException.Alias(rawAlias)
+
+        // !am 后面的纯数字已经在 isHandle 里当成 BID 了，这里再防一手
+        if (alias.toLongOrNull() != null) {
+            throw IllegalArgumentException.WrongException.Alias(alias)
+        }
+
+        saveManualAlias(event, session, alias)
+    }
+
+    /**
+     * 不是指令的普通消息：如果当前会话正在等待别名，就把这条消息当成别名。
+     *
+     * 只接受发起 !am 的用户，避免同群的其他人正常聊天时误保存。
+     * 回复 OK 取消；没有会话或不是发起人时返回 false，消息继续按普通聊天处理。
+     */
+    override fun handlePassiveMessage(event: MessageEvent, messageText: String): Boolean {
+        val session = currentManualSession(event) ?: return false
+
+        if (session.requester != event.sender.contactID) return false
+
+        val text = messageText.trim()
+        if (text.isEmpty()) return false
+
+        // 和原来的 doubleCancel 保持一致：回复里包含 OK 就取消
+        if (text.contains("OK", ignoreCase = true)) {
+            manualSessions.asMap().remove(event.subject.contactID, session)
+            event.replyAsync("已取消操作。")
+            return true
+        }
+
+        saveManualAlias(event, session, text)
+        return true
+    }
+
+    /**
+     * 取出当前联系人的 !am 会话。
+     *
+     * Caffeine 负责自动清理，这里再用 expireAt 显式判断一次，避免临界时间点上拿到刚过期的会话。
+     */
+    private fun currentManualSession(event: MessageEvent): ManualSession? {
+        val key = event.subject.contactID
+        val session = manualSessions.getIfPresent(key) ?: return null
+
+        if (session.expireAt <= System.currentTimeMillis()) {
+            manualSessions.asMap().remove(key, session)
+            return null
+        }
+
+        return session
+    }
+
+    /**
+     * 保存会话对应的别名。
+     *
+     * 先用 remove(key, session) 抢占会话：并发的「!am 别名」和直接回复里只有一个能成功，
+     * 也避免旧会话被新 !am 请求覆盖之后还把别名写到旧谱面上。
+     */
+    private fun saveManualAlias(event: MessageEvent, session: ManualSession, rawAlias: String) {
+        val alias = rawAlias.removeSongSuffix().takeIf { it.isNotBlank() }
+            ?: throw IllegalArgumentException.WrongException.Alias(rawAlias)
+
+        if (!manualSessions.asMap().remove(event.subject.contactID, session)) {
+            event.replyAsync("本次 !am 会话已经结束，请重新发送「!am <BID>」。")
+            return
+        }
+
+        val approved = session.approved
+
+        aliasDao.addAliasToTitle(
+            session.title,
+            alias,
+            setAsPrimary = false,
+            approved = approved,
+            from = event.sender.contactID,
+        )
+
+        event.replyAsync(
+            if (approved) {
+                "保存成功！已将「$alias」保存为「${session.title}」的别名。"
+            } else {
+                "已提交审核！已将「$alias」提交为「${session.title}」的别名，请等待管理员审核。"
+            }
         )
     }
 
@@ -1006,10 +1151,16 @@ class AliasService(
 
         val manual = Instruction.ALIAS_MANUAL.matcher(messageText)
         if (manual.find()) {
-            // 必须给出 BID，没给就当没匹配上，交给其他服务
-            val bid = manual.group(FLAG_BID)?.toLongOrNull() ?: return false
+            // !am 后面可以跟 BID，也可以跟别名：
+            // 纯数字视为 BID，开启一个新的补录会话；其余内容视为别名，保存到当前会话。
+            val input = manual.group(FLAG_DATA)?.trim()?.takeIf { it.isNotBlank() } ?: return false
 
-            data.value = AliasParam(listOf(AliasTarget(null, bid, null)), AliasOperation.MANUAL)
+            val bid = input.toLongOrNull()
+            data.value = if (bid != null) {
+                AliasParam(listOf(AliasTarget(null, bid, null)), AliasOperation.MANUAL)
+            } else {
+                AliasParam(emptyList(), AliasOperation.MANUAL_ALIAS, manualAlias = input)
+            }
             return true
         }
 
@@ -1036,6 +1187,7 @@ class AliasService(
             AliasOperation.EXPORT -> export(event)
             AliasOperation.IMPORT -> importAliases(event, param)
             AliasOperation.MANUAL -> manual(event, param)
+            AliasOperation.MANUAL_ALIAS -> manualAlias(event, param.manualAlias)
         }
 
         return ServiceCallStatistic.building(event)
@@ -1055,6 +1207,16 @@ class AliasService(
          * 审核时一次最多展示/处理的待审核别名数量。
          */
         private const val REVIEW_SIZE = 10
+
+        /**
+         * !am 手动补录会话的有效期（秒）。
+         */
+        private const val MANUAL_TIMEOUT_SECONDS = 60L
+
+        /**
+         * !am 会话缓存的容量上限。
+         */
+        private const val MANUAL_SESSION_MAX_SIZE = 10_000L
 
         /**
          * 导出指令发送的文件名。

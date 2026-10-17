@@ -1109,12 +1109,13 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
-    // !alias manual <BID> / !am <BID>
-    // 输入谱面编号，先展示该谱面的 title / titleUnicode / artist，
-    // 再让用户回复别名：回复 OK 或超时视为取消，回复其他内容则保存为该曲目的别名。
+    // !alias manual <BID 或别名> / !am ...
+    // 纯数字视为 BID：先展示该谱面的 title / titleUnicode / artist，并开启一个按会话保存的补录。
+    // 非纯数字视为别名：把别名保存到当前会话对应的谱面上，不会重新请求谱面信息。
+    // 直接回复别名（不带 !am）仍然保留，由 PassiveMessageHandler 接收。
     ALIAS_MANUAL(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(manual|byid|bybid)", "am", "别名(手动|补录)")
-        appendBID()
+        appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
     // !alias review / !a
