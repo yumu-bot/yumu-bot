@@ -4,7 +4,7 @@ import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -30,7 +30,7 @@ class GroupCollectService(
             return false
         }
 
-        if (!event.isSuperAdmin()) {
+        if (event.isNotSuperAdmin()) {
             return false
         }
 

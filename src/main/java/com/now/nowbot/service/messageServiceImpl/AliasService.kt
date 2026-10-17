@@ -7,6 +7,7 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.FileMessage
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -620,7 +621,7 @@ class AliasService(
      */
     private fun export(event: MessageEvent) {
         // 超级管理员既不消耗令牌，也不受冷却限制
-        if (!event.isSuperAdmin()) {
+        if (event.isNotSuperAdmin()) {
             rateLimiter.checkOrThrow(EXPORT_RATE_KEY)
         }
 
@@ -760,7 +761,7 @@ class AliasService(
         val importInstruction = Instruction.ALIAS_IMPORT.matcher(messageText)
         if (importInstruction.find()) {
             // 导入会直接写入数据库并通过审核，只允许超级管理员
-            if (!event.isSuperAdmin()) return false
+            if (event.isNotSuperAdmin()) return false
 
             data.value = AliasParam(emptyList(), AliasOperation.IMPORT)
             return true
@@ -780,7 +781,7 @@ class AliasService(
         val delete = Instruction.ALIAS_DELETE.matcher(messageText)
         if (delete.find()) {
             // 删除需要管理员，否则不回应
-            if (!event.isSuperAdmin()) return false
+            if (event.isNotSuperAdmin()) return false
 
             // :f 捕获组表示不限制删除数量，并跳过二次确认直接删除
             val force = delete.group(FLAG_FULL) != null
@@ -806,7 +807,7 @@ class AliasService(
         val review = Instruction.ALIAS_REVIEW.matcher(messageText)
         if (review.find()) {
             // 审核需要管理员，否则不回应
-            if (!event.isSuperAdmin()) return false
+            if (event.isNotSuperAdmin()) return false
 
             data.value = AliasParam(emptyList(), AliasOperation.REVIEW)
             return true

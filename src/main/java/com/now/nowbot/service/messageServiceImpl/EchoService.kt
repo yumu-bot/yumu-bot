@@ -11,6 +11,7 @@ import com.now.nowbot.qq.event.getMessageFromStringOrArray
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.onebot.contact.Friend
 import com.now.nowbot.qq.onebot.contact.Group
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
@@ -87,7 +88,7 @@ class EchoService(
             return false
         }
 
-        if (event.isSuperAdmin()) {
+        if (event.isNotSuperAdmin()) {
             return false
         }
 
