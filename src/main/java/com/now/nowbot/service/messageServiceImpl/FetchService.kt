@@ -78,7 +78,7 @@ class FetchService(
     }
 
     companion object {
-        val rateLimiter = TokenBucketRateLimiter(1, 2.minutes)
+        private val rateLimiter = TokenBucketRateLimiter(1, 2.minutes)
 
         private fun getVersionInt(maiVersion: MaiVersion): Int {
             return when(maiVersion) {

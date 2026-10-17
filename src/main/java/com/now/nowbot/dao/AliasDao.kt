@@ -168,6 +168,65 @@ class AliasDao(
     }
 
     /**
+     * 批量导入「标题 -> 别名」映射，供 !ai 使用。
+     *
+     * 标题必须已经过 removeSongSuffix + formatted 标准化；
+     * 别名会在这里再做一次 removeSongSuffix，和 [addAliasToTitle] 的添加规则一致。
+     *
+     * 已存在的绑定会跳过，不会改变它在标题下的顺序（因此不会影响 !ao 导出的首选别名）。
+     * 已存在但还没审核的别名，在 [approved] 为真时会一并置为已通过。
+     *
+     * 所有条目在同一个事务里完成，避免逐条导入时反复提交。
+     *
+     * @return 新增的绑定数量和跳过的已存在绑定数量
+     */
+    @Transactional
+    @CanIgnoreReturnValue
+    fun importAliases(mapping: Map<String, String>, approved: Boolean, from: Long): AliasImportResult {
+        if (mapping.isEmpty()) return AliasImportResult(0, 0)
+
+        // 一次把相关的标题和别名都查出来，避免逐条导入时的 N+1
+        val titles = titleRepository.findByNameInWithAliases(mapping.keys)
+            .associateByTo(HashMap<String, AliasTitle>()) { it.name }
+        val aliases = aliasRepository.findAllByValueIn(mapping.values.toSet())
+            .associateByTo(HashMap<String, Alias>()) { it.value }
+
+        var imported = 0
+        var skipped = 0
+
+        mapping.forEach { (titleName, rawAliasValue) ->
+            val title = titles.getOrPut(titleName) { AliasTitle(name = titleName) }
+            val aliasValue = rawAliasValue.removeSongSuffix()
+
+            val alias = aliases.getOrPut(aliasValue) {
+                Alias(value = aliasValue, approved = approved, qq = from)
+            }
+
+            // 导入的别名视为已通过审核
+            if (approved && !alias.approved) {
+                alias.approved = true
+            }
+
+            val exists = title.aliases.any { it.id == alias.id || it.value == alias.value }
+
+            if (exists) {
+                skipped++
+            } else {
+                title.aliases.add(alias)
+                imported++
+            }
+        }
+
+        // 先保存别名拿到 ID，再保存标题与别名的绑定关系
+        aliasRepository.saveAll(aliases.values)
+        titleRepository.saveAll(titles.values)
+
+        invalidateTitleCache(*mapping.keys.toTypedArray())
+
+        return AliasImportResult(imported, skipped)
+    }
+
+    /**
      * 删除某个标题下的别名。
      *
      * 如果删除后该别名已经没有任何标题引用，则连同别名一起删除。
@@ -338,4 +397,15 @@ data class PendingAlias(
     val value: String,
     val titles: List<String>,
     val qq: Long,
+)
+
+/**
+ * 批量导入的结果。
+ *
+ * @param imported 新增的绑定数量
+ * @param skipped 已存在、被跳过的绑定数量
+ */
+data class AliasImportResult(
+    val imported: Int,
+    val skipped: Int,
 )

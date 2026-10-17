@@ -3,6 +3,7 @@ package com.now.nowbot.qq.onebot
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.model.ArrayMsg
 import com.now.nowbot.qq.contact.Stranger
+import com.now.nowbot.qq.message.FileMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.onebot.contact.Friend
 import com.now.nowbot.qq.onebot.contact.Group
@@ -43,6 +44,20 @@ class Bot(val trueBot: Bot) : com.now.nowbot.qq.Bot {
         val data = JacksonUtil.parseObjectList<ArrayMsg>(message).takeIf { it.isNotEmpty() } ?: return null
 
         return getMessageChain(data)
+    }
+
+    override fun getFileUrl(file: FileMessage, groupID: Long?): String? {
+        file.url?.takeIf { it.isNotBlank() }?.let { return it }
+
+        val fileID = file.fileID?.takeIf { it.isNotBlank() } ?: return null
+        if (groupID == null) return null
+
+        return try {
+            val busID = if (file.busID > 0) file.busID else 102
+            trueBot.getGroupFileUrl(groupID, fileID, busID)?.data?.url
+        } catch (_: Exception) {
+            null
+        }
     }
 
     /***

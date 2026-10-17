@@ -29,6 +29,11 @@ class MessageChain {
             return this
         }
 
+        fun addFile(file: FileMessage): MessageChainBuilder {
+            msgChain.addMessage(file)
+            return this
+        }
+
         fun addText(msg: String): MessageChainBuilder {
             msgChain.addMessage(TextMessage(msg))
             return this
@@ -166,6 +171,19 @@ class MessageChain {
                             builder.addVoice(URI(url).toURL().readBytes())
                         }
                     }
+
+                    "file" -> {
+                        val name = params["file_name"] ?: params["file"]
+                        builder.addFile(
+                            FileMessage(
+                                name = name,
+                                url = params["url"],
+                                fileID = params["file_id"],
+                                busID = params["busid"]?.toIntOrNull() ?: 0,
+                                size = params["file_size"]?.toLongOrNull() ?: 0,
+                            )
+                        )
+                    }
                     // 可以继续添加其他 CQ 码支持...
                     else -> builder.addText(match.value) // 不认识的 CQ 码原样当作文本
                 }
@@ -227,6 +245,18 @@ class MessageChain {
                                 builder.addVoice(URI(it).toURL().readBytes())
                             }
                         }
+
+                        "file" -> {
+                            builder.addFile(
+                                FileMessage(
+                                    name = data["file_name"] as? String ?: data["file"] as? String,
+                                    url = data["url"] as? String,
+                                    fileID = data["file_id"] as? String,
+                                    busID = (data["busid"] as? Number)?.toInt() ?: 0,
+                                    size = (data["file_size"] as? Number)?.toLong() ?: 0,
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -262,6 +292,18 @@ class MessageChain {
                         (segmentData["url"] as? String)?.let {
                             builder.addVoice(URI(it).toURL().readBytes())
                         }
+                    }
+
+                    "file" -> {
+                        builder.addFile(
+                            FileMessage(
+                                name = segmentData["file_name"]?.toString() ?: segmentData["file"]?.toString(),
+                                url = segmentData["url"]?.toString(),
+                                fileID = segmentData["file_id"]?.toString(),
+                                busID = segmentData["busid"]?.toString()?.toIntOrNull() ?: 0,
+                                size = segmentData["file_size"]?.toString()?.toLongOrNull() ?: 0,
+                            )
+                        )
                     }
                 }
             }

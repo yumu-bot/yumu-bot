@@ -51,6 +51,15 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
                 例如：!aa 标题1 = 别名1, 标题2 = 别名2
             """.trimIndent())
 
+        class AliasImportFile:
+            WrongException("请发送要导入的 JSON 文件，或回复一条包含该文件的消息。")
+
+        class AliasImportJson:
+            WrongException("""
+                JSON 解析失败！请确认文件内容与 !ao 导出的格式一致。
+                正确格式：{ "标题": "别名" }
+            """.trimIndent())
+
         class BeatmapID:
             WrongException("请输入正确的谱面编号 (BID)！")
 

@@ -1126,6 +1126,12 @@ enum class Instruction(val pattern: Pattern) {
     // 冷却 2 分钟（复用 FetchService 的令牌桶），超级管理员不受限制。
     ALIAS_EXPORT(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(export|output|dump|json)", "ao", "别名(导出|输出)")
+    }),
+
+    // !alias import / !ai
+    // 导入 !ao 导出的「标题 -> 别名」JSON 映射。仅超级管理员可用。
+    ALIAS_IMPORT(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("alias\\s*(import|load|upload)", "ai", "别名(导入|上传)")
     }), ;
 
     fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)

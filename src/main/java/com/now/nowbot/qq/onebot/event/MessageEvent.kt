@@ -27,7 +27,11 @@ open class MessageEvent(val event: MessageEvent, bot: Bot): Event(bot), com.now.
         }
 
     override val message: MessageChain
-        get() = getMessageChain(event.arrayMsg)
+        get() = getMessageChain(
+            event.arrayMsg,
+            bot.trueBot,
+            (event as? GroupMessageEvent)?.groupId,
+        )
 
     override val rawMessage: String
         get() = event.rawMessage
@@ -39,8 +43,17 @@ open class MessageEvent(val event: MessageEvent, bot: Bot): Event(bot), com.now.
 
     companion object {
 
-        fun getMessageChain(messages: List<ArrayMsg>): MessageChain {
+        fun getMessageChain(
+            messages: List<ArrayMsg>,
+            bot: Bot? = null,
+            groupID: Long? = null,
+        ): MessageChain {
             val msg = messages.map {
+                // shiro 的 MsgTypeEnum 没有 file，只能按原始类型名判断
+                if (it.rawType?.equals("file", ignoreCase = true) == true) {
+                    return@map parseFile(it, bot, groupID)
+                }
+
                 return@map when (it.type) {
                     MsgTypeEnum.at -> {
                         val qqStr = it.getStringData("qq")
@@ -80,6 +93,39 @@ open class MessageEvent(val event: MessageEvent, bot: Bot): Event(bot), com.now.
             }
 
             return MessageChain(msg)
+        }
+
+        /**
+         * 解析 file 段。
+         *
+         * url 有时不会直接给出，此时对群文件调用 get_group_file_url 补全。
+         * busid 缺省为 102（群文件）。
+         */
+        private fun parseFile(msg: ArrayMsg, bot: Bot?, groupID: Long?): FileMessage {
+            val fileID = msg.getStringData("file_id")
+                .ifBlank { msg.getStringData("file") }
+            val busID = msg.getLongData("busid").toInt().let { if (it > 0) it else 102 }
+            val name = msg.getStringData("file_name")
+                .ifBlank { msg.getStringData("file").substringAfterLast('/').substringAfterLast('\\') }
+
+            val url = msg.getStringData("url").takeIf { it.isNotBlank() }
+                ?: run {
+                    if (bot == null || groupID == null || fileID.isBlank()) return@run null
+
+                    try {
+                        bot.getGroupFileUrl(groupID, fileID, busID)?.data?.url
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+
+            return FileMessage(
+                name = name.ifBlank { null },
+                url = url,
+                fileID = fileID.ifBlank { null },
+                busID = busID,
+                size = msg.getLongData("file_size"),
+            )
         }
 
 //        private fun decode(m: String): String {

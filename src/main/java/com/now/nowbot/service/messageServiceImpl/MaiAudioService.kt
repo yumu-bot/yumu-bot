@@ -57,7 +57,7 @@ class MaiAudioService(
         event: MessageEvent,
         param: MaiFindService.MaiFindParam
     ): ServiceCallStatistic? {
-        tokenBucketRateLimiter.checkOrThrow("MAI_AUDIO", event.subject.contactID)
+        limiter.checkOrThrow("MAI_AUDIO", event.subject.contactID)
 
         val first = param.songs.map { it.songID }.first()
 
@@ -88,7 +88,7 @@ class MaiAudioService(
     }
 
     companion object {
-        private val tokenBucketRateLimiter = TokenBucketRateLimiter(3, 30.seconds)
+        private val limiter = TokenBucketRateLimiter(3, 30.seconds)
 
         private fun getVoiceInfo(songs: List<MaiSong>): String {
             if (songs.isEmpty()) return "没有需要播放的舞萌歌曲。"

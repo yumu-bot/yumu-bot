@@ -11,6 +11,9 @@ interface AliasRepository : JpaRepository<Alias, Long> {
     // 因为 value 字段是唯一且规范化后的，可以直接精确查找
     fun findByValue(value: String): Alias?
 
+    // 批量按别名值查询，供导入时一次性取回已存在的别名
+    fun findAllByValueIn(values: Collection<String>): List<Alias>
+
     // 检查某个别名是否存在
     fun existsByValue(value: String): Boolean
 

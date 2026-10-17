@@ -212,6 +212,21 @@ interface MessageEvent : Event {
         return this.image != null
     }
 
+    val file: FileMessage?
+        get() = getMessageType<FileMessage>()
+
+    fun hasFile(): Boolean {
+        return this.file != null
+    }
+
+    /**
+     * 被回复的那条消息。取不到时返回 null。
+     *
+     * 平台一般只在 reply 段里给消息 ID，需要主动再查一次原消息。
+     */
+    val repliedMessage: MessageChain?
+        get() = replyMessage?.let { bot?.getMessage(it.id) }
+
     val at: AtMessage?
         get() = getMessageType<AtMessage>()
 

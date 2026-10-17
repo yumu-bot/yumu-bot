@@ -1,14 +1,18 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.controller.TokenBucketRateLimiter
 import com.now.nowbot.dao.AliasDao
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.FileMessage
 import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
@@ -19,12 +23,24 @@ import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_FULL
 import com.now.nowbot.util.command.PATTERN_EQUAL
+import com.now.nowbot.util.exchangeToBody
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClient
+import java.net.URI
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.regex.Matcher
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @Service("ALIAS")
 class AliasService(
+    @field:Qualifier("restClient")
+    private val restClient: RestClient,
     private val beatmapApiService: OsuBeatmapApiService,
     private val beatmapDao: BeatmapDao,
 
@@ -54,7 +70,7 @@ class AliasService(
     )
 
     enum class AliasOperation {
-        ADD, DELETE, REVIEW, EXPORT, MANUAL
+        ADD, DELETE, REVIEW, EXPORT, IMPORT, MANUAL
     }
 
     private data class DeleteTarget(
@@ -605,13 +621,128 @@ class AliasService(
     private fun export(event: MessageEvent) {
         // 超级管理员既不消耗令牌，也不受冷却限制
         if (!event.isSuperAdmin()) {
-            FetchService.rateLimiter.checkOrThrow(EXPORT_RATE_KEY)
+            rateLimiter.checkOrThrow(EXPORT_RATE_KEY)
         }
 
         val mapping = aliasDao.getTitlePrimaryAliases()
         val file = JacksonUtil.objectToJsonPretty(mapping).toByteArray(Charsets.UTF_8)
 
         event.replyFileInGroupAsync(file, EXPORT_FILE_NAME)
+    }
+
+    /**
+     * 导入 !ao 导出的「标题 -> 别名」JSON 映射，仅超级管理员可用。
+     *
+     * 先提示用户发送文件（也可以回复一条包含文件的消息），再把文件内容按 JSON 解析。
+     * 读取失败、JSON 解析失败都会直接回复用户，不会写入数据库。
+     *
+     * 标题和 !aa 一样做 removeSongSuffix + formatted 标准化；
+     * 已存在的绑定会跳过，新绑定追加在该标题的别名列表末尾，并直接通过审核。
+     */
+    private fun importAliases(event: MessageEvent) {
+        AsyncMessageUtil.doubleCheck(
+            event = event,
+            // 任意回复都当作「文件消息」继续处理，具体有没有文件由 importFile 判断
+            keywords = emptyList(),
+            onCheck = {
+                event.reply("""
+                    请发送要导入的 JSON 文件（格式与 !ao 导出的结果一致），
+                    或回复一条包含该文件的消息。
+                """.trimIndent())
+            },
+            onOverTime = { throw TipsRuntimeException("等待文件超时，已取消导入。") },
+            onSuccess = { ev -> importFile(ev) },
+            timeout = 60.seconds,
+        )
+    }
+
+    private fun importFile(event: MessageEvent) {
+        val file = findImportFile(event) ?: throw IllegalArgumentException.WrongException.AliasImportFile()
+        val text = readImportText(event, file)
+        val rawMapping = parseImportJson(text)
+
+        // 标题标准化，并丢掉空标题/空别名；同一标题只保留一条
+        val mapping = LinkedHashMap<String, String>(rawMapping.size)
+        rawMapping.forEach { (rawTitle, rawAlias) ->
+            val title = rawTitle.removeSongSuffix().formatted()
+            val alias = rawAlias.removeSongSuffix()
+
+            if (title.isNotBlank() && alias.isNotBlank()) {
+                mapping[title] = alias
+            }
+        }
+
+        if (mapping.isEmpty()) {
+            event.reply("文件里没有可以导入的别名。")
+            return
+        }
+
+        val result = aliasDao.importAliases(
+            mapping = mapping,
+            approved = true,
+            from = event.sender.contactID,
+        )
+
+        event.reply(buildString {
+            append("导入完成！新增 ${result.imported} 条")
+            if (result.skipped > 0) append("，跳过已存在 ${result.skipped} 条")
+            append("。")
+        })
+    }
+
+    /**
+     * 当前消息带文件就用当前消息的；否则如果它在回复一条消息，就去原消息里找文件。
+     */
+    private fun findImportFile(event: MessageEvent): FileMessage? {
+        event.file?.let { return it }
+
+        return event.repliedMessage
+            ?.messageList
+            ?.filterIsInstance<FileMessage>()
+            ?.firstOrNull()
+    }
+
+    /**
+     * 读取文件的文本内容。支持 http(s) 链接和本地路径（含 file:// URL）。
+     */
+    private fun readImportText(event: MessageEvent, file: FileMessage): String {
+        val location = file.url?.takeIf { it.isNotBlank() }
+            ?: event.bot?.getFileUrl(file, (event.subject as? Group)?.contactID)
+
+        if (location.isNullOrBlank()) {
+            log.warn("别名导入：文件没有可用的下载地址，name=${file.name}, fileID=${file.fileID}")
+            throw IllegalStateException.ReadFile("别名导入")
+        }
+
+        return try {
+            when {
+                location.startsWith("http://", true) || location.startsWith("https://", true) ->
+                    restClient.get().uri(location).exchangeToBody<ByteArray>()
+                        .toString(StandardCharsets.UTF_8)
+
+                location.startsWith("file:", true) ->
+                    Files.readString(Path.of(URI(location)), StandardCharsets.UTF_8)
+
+                else -> Files.readString(Path.of(location), StandardCharsets.UTF_8)
+            }.removePrefix("\uFEFF")
+        } catch (e: Exception) {
+            log.error("别名导入：读取文件失败，location=$location", e)
+            throw IllegalStateException.ReadFile("别名导入")
+        }
+    }
+
+    /**
+     * 把文件内容解析成「标题 -> 别名」，格式与 !ao 导出一致。
+     */
+    private fun parseImportJson(text: String): Map<String, String> {
+        val mapping = try {
+            JacksonUtil.parseObject<Map<String, String>>(text)
+        } catch (e: Exception) {
+            log.warn("别名导入：JSON 解析失败", e)
+            null
+        } ?: throw IllegalArgumentException.WrongException.AliasImportJson()
+
+        return mapping
     }
 
     override fun isHandle(
@@ -623,6 +754,15 @@ class AliasService(
         if (export.find()) {
             // 所有用户都能导出，冷却只在 handleMessage 里对非超级管理员生效
             data.value = AliasParam(emptyList(), AliasOperation.EXPORT)
+            return true
+        }
+
+        val importInstruction = Instruction.ALIAS_IMPORT.matcher(messageText)
+        if (importInstruction.find()) {
+            // 导入会直接写入数据库并通过审核，只允许超级管理员
+            if (!event.isSuperAdmin()) return false
+
+            data.value = AliasParam(emptyList(), AliasOperation.IMPORT)
             return true
         }
 
@@ -684,6 +824,7 @@ class AliasService(
             AliasOperation.DELETE -> delete(event, param)
             AliasOperation.REVIEW -> review(event)
             AliasOperation.EXPORT -> export(event)
+            AliasOperation.IMPORT -> importAliases(event)
             AliasOperation.MANUAL -> manual(event, param)
         }
 
@@ -691,6 +832,10 @@ class AliasService(
     }
 
     companion object {
+        private val log: Logger = LoggerFactory.getLogger(AliasService::class.java)
+
+        private val rateLimiter = TokenBucketRateLimiter(1, 2.minutes)
+
         /**
          * 添加/删除别名时一次最多处理的条目数量。超出的会被主动抛弃。
          */
