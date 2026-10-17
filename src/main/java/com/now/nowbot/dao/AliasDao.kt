@@ -256,6 +256,45 @@ class AliasDao(
     }
 
     /**
+     * 删除某个标题下指定的若干个别名（包括还没通过审核的）。
+     *
+     * 别名值会按 [deleteAliasFromTitle] 的规则先 removeSongSuffix + standardised；
+     * 标题下不存在的值会被忽略。删除后不再被任何标题引用的别名会连同一起删除。
+     *
+     * @return 实际删除的别名数量
+     */
+    @Transactional
+    fun deleteAliasesFromTitle(titleName: String, rawAliasValues: Collection<String>): Int {
+        if (rawAliasValues.isEmpty()) return 0
+
+        val title = titleRepository.findByName(titleName) ?: return 0
+        if (title.aliases.isEmpty()) return 0
+
+        val values = rawAliasValues.map { it.removeSongSuffix().standardised() }.toSet()
+
+        // filter 会先把关联列表读出来，之后才能安全地在列表上 removeAll
+        val removedValues = title.aliases
+            .map { it.value }
+            .filter { it in values }
+
+        if (removedValues.isEmpty()) return 0
+
+        title.aliases.removeAll { it.value in values }
+        titleRepository.save(title)
+
+        // 如果这些别名已经没有任何标题引用了，就顺手删掉，避免留下孤儿数据
+        removedValues.forEach { rawValue ->
+            if (titleRepository.findByAliasValue(rawValue).isEmpty()) {
+                aliasRepository.findByValue(rawValue)?.let { aliasRepository.delete(it) }
+            }
+        }
+
+        invalidateTitleCache(titleName)
+
+        return removedValues.size
+    }
+
+    /**
      * 删除某个标题下的所有别名（包括还没通过审核的）。
      *
      * 删除后不再被任何标题引用的别名会连同一起删除。

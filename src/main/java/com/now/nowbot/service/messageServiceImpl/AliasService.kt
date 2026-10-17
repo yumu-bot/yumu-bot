@@ -95,7 +95,8 @@ class AliasService(
      * 例如输入  "A, B" = "C|D"  时会拆成标题 A, B 和别名 C|D。
      *
      * 数量为奇数说明最后一个标题漏写了别名，会提示用户。
-     * 删除时允许只输入一个标题，表示删除该标题下的所有别名。
+     * 删除时允许只输入一个标题（别名留空），此时 [delete] 会先列出该标题下的所有别名，
+     * 再让用户用位置（从 1 开始、逗号分隔）挑选要删除的几项，输入 0 删除全部。
      *
      * 添加/删除时一次最多保留 [ALIAS_BATCH_SIZE] 条，超出的部分直接抛弃。
      * 添加时管理员不受该限制，只有非管理员才会走抛弃；
@@ -120,7 +121,7 @@ class AliasService(
             return null
         }
 
-        // 删除：只给一个标题时，删除该标题下的所有别名
+        // 删除：只给一个标题时先留空别名，具体删哪几条交给 delete 让用户挑选
         if (operation == AliasOperation.DELETE && tokens.size == 1) {
             return AliasParam(listOf(parseAliasTarget(tokens.first(), null)), operation, force = force)
         }
@@ -289,7 +290,7 @@ class AliasService(
                     from = event.sender.contactID
                 )
             }
-            event.reply(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
+            event.replyAsync(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
             return
         }
 
@@ -323,7 +324,7 @@ class AliasService(
                         from = event.sender.contactID
                     )
                 }
-                event.reply(if (approved) "操作超时，已默认保存。" else "操作超时，已提交审核，请等待管理员审核。")
+                event.replyAsync(if (approved) "操作超时，已默认保存。" else "操作超时，已提交审核，请等待管理员审核。")
             },
             onFailure = { throw TipsRuntimeException("已撤回操作。") },
             onSuccess = { ev ->
@@ -336,7 +337,7 @@ class AliasService(
                         from = event.sender.contactID
                     )
                 }
-                ev.reply(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
+                ev.replyAsync(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
             },
             timeout = 60.seconds
         )
@@ -403,7 +404,7 @@ class AliasService(
                     from = event.sender.contactID,
                 )
 
-                event.reply(
+                event.replyAsync(
                     if (approved) {
                         "保存成功！已将「$alias」保存为「$title」的别名。"
                     } else {
@@ -418,9 +419,13 @@ class AliasService(
     /**
      * 删除别名。只有管理员才能调用。
      *
-     * 多组参数会合并成一条确认消息；alias 为 null 时表示删除该标题下的所有别名。
+     * 给出明确的「标题 = 别名」时合并成一条确认消息，回复 OK 才删除。
      *
-     * 超级管理员输入带 :f 捕获组（如 !ad:f 123=abc）时跳过二次确认，直接删除选定的所有条目。
+     * 只给一个标题时不会直接删掉全部：先列出该标题下的所有别名，再由用户回复位置挑选，
+     * 详细规则见 [deleteOneTitle]。
+     *
+     * 超级管理员输入带 :f 捕获组（如 !ad:f 123=abc）时跳过二次确认，直接删除选定的所有条目；
+     * 只给标题时（!ad:f 123）则跳过挑选，直接删除该标题下的全部别名。
      */
     private fun delete(event: MessageEvent, param: AliasParam) {
         // 和添加同理：去掉重复的「标题 -> 别名」，避免同一条被删两次、也避免结果里重复计数。
@@ -433,9 +438,15 @@ class AliasService(
             DeleteTarget(getStandardizedTitle(target), alias)
         }.distinct()
 
+        // 只给了标题（没有指定别名）：列出该标题下的别名，让用户自己挑要删哪几条
+        if (targets.size == 1 && targets.single().alias == null) {
+            deleteOneTitle(event, targets.single().title, param.force)
+            return
+        }
+
         // :f + 超级管理员：不确认，直接删除选定的所有条目
         if (param.force) {
-            event.reply(deleteTargets(targets))
+            event.replyAsync(deleteTargets(targets))
             return
         }
 
@@ -459,9 +470,97 @@ class AliasService(
             event = event,
             keywords = listOf("OK"),
             onCheck = { event.reply(preview) },
-            onSuccess = { ev -> ev.reply(deleteTargets(targets)) },
+            onSuccess = { ev -> ev.replyAsync(deleteTargets(targets)) },
             timeout = 60.seconds
         )
+    }
+
+    /**
+     * 单标题删除：先把该标题下的别名连位置一起列出来，再等用户回复要删除的位置。
+     *
+     * 回复里只允许出现数字和逗号（半角逗号、中文逗号、顿号、空白）：
+     * - 输入 1 开始的自然数：删除对应位置的别名，可以用逗号一次挑多个
+     * - 输入 0：删除该标题下的全部别名
+     * - 输入数字和逗号之外的内容、空回复：放弃本次操作
+     * - 超时：同样视为放弃
+     *
+     * 超出范围的位置会被无视；挑中的位置全都超出范围时也算放弃。
+     *
+     * [force] 为真（:f）时不询问，直接删除该标题下的全部别名。
+     */
+    private fun deleteOneTitle(event: MessageEvent, title: String, force: Boolean) {
+        // :f 沿用原来的强制语义：不询问，直接删掉这个标题下的全部别名
+        if (force) {
+            event.replyAsync(deleteTargets(listOf(DeleteTarget(title, null))))
+            return
+        }
+
+        val aliases = aliasDao.getAliasesByNormalizedTitles(listOf(title))[title].orEmpty()
+
+        if (aliases.isEmpty()) {
+            event.replyAsync("「$title」下没有别名。")
+            return
+        }
+
+        AsyncMessageUtil.doubleCheck(
+            event = event,
+            // 任意回复都交给下面解析，非数字由 parseDeleteSelection 判定为放弃
+            keywords = emptyList(),
+            onCheck = {
+                event.reply(buildString {
+                    appendLine("「$title」下的别名：")
+                    aliases.forEachIndexed { index, alias -> appendLine("${index + 1}. $alias") }
+                    appendLine()
+                    append("请回复要删除的别名位置（从 1 开始，可用逗号分隔多个），回复 0 删除全部，回复其他内容放弃本次操作。")
+                    append("\n60 秒内不回复同样视为放弃。")
+                })
+            },
+            onOverTime = { throw TipsRuntimeException("操作超时，已放弃删除。") },
+            onSuccess = { ev ->
+                val selected = parseDeleteSelection(ev.textMessage, aliases.size)
+
+                when {
+                    selected == null -> ev.replyAsync("已放弃操作。")
+                    selected.isEmpty() -> ev.replyAsync("没有选中任何别名，已放弃操作。")
+                    else -> {
+                        val count = aliasDao.deleteAliasesFromTitle(title, selected.map { aliases[it - 1] })
+                        ev.replyAsync(if (count > 0) "删除成功！共删除 $count 个别名。" else "没有找到这个别名。")
+                    }
+                }
+            },
+            timeout = 60.seconds
+        )
+    }
+
+    /**
+     * 解析「要删除哪些别名」的回复。
+     *
+     * 只接受数字和逗号类的分隔符，出现其他字符（字母、负号等）就当作放弃：
+     * - 输入 0（和其它位置写在一起也算）：全部
+     * - 其余数字按 1 开始的位置理解，超出范围的位置会被无视
+     *
+     * @return 要删除的位置（1-based，已去重、升序）；
+     * 空列表表示输入合法但位置全都超出范围；返回 null 表示放弃本次操作。
+     */
+    private fun parseDeleteSelection(text: String, size: Int): List<Int>? {
+        val input = text.trim()
+
+        if (input.isEmpty()) return null
+
+        // 只接受数字和逗号，其它字符一律视为放弃
+        if (!input.matches(DELETE_SELECTION_INPUT)) return null
+
+        val numbers = input.split(DELETE_SELECTION_SEPARATOR)
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .map { it.toIntOrNull() ?: return null }
+
+        if (numbers.isEmpty()) return null
+
+        // 0 表示全部，和别的编号写在一起也按全部处理
+        if (numbers.any { it == 0 }) return (1..size).toList()
+
+        return numbers.filter { it in 1..size }.distinct().sorted()
     }
 
     /**
@@ -522,7 +621,7 @@ class AliasService(
         val allPending = aliasDao.getPendingAliases()
 
         if (allPending.isEmpty()) {
-            event.reply("目前没有待审核的别名。")
+            event.replyAsync("目前没有待审核的别名。")
             return
         }
 
@@ -555,13 +654,13 @@ class AliasService(
                 val selected = parseSelection(ev.textMessage, pending.size)
 
                 if (selected == null) {
-                    ev.reply("已取消操作。")
+                    ev.replyAsync("已取消操作。")
                 } else {
                     val approvedIds = selected.map { pending[it - 1].id }
                     val rejectedIds = pending.map { it.id }.filterNot { it in approvedIds }
 
                     val (approved, rejected) = aliasDao.reviewAliases(approvedIds, rejectedIds)
-                    ev.reply(buildString {
+                    ev.replyAsync(buildString {
                         append("已通过 $approved 个，不通过并删除 $rejected 个。")
                         if (remaining > 0) append("还有 $remaining 条待审核。")
                     })
@@ -774,7 +873,7 @@ class AliasService(
         }
 
         if (mapping.isEmpty()) {
-            event.reply("文件里没有可以导入的别名。")
+            event.replyAsync("文件里没有可以导入的别名。")
             return
         }
 
@@ -784,7 +883,7 @@ class AliasService(
             from = event.sender.contactID,
         )
 
-        event.reply(buildString {
+        event.replyAsync(buildString {
             append("导入完成！新增 ${result.imported} 条")
             if (result.skipped > 0) append("，跳过已存在 ${result.skipped} 条")
             append("。")
@@ -994,5 +1093,17 @@ class AliasService(
          * 它们只作为保护标记，本身不会进入标题或别名。
          */
         private val QUOTATION = setOf('"', '“', '”', '＂')
+
+        /**
+         * 单标题删除时挑选位置的输入：只允许数字、逗号类分隔符和空白。
+         *
+         * 出现其他字符（字母、负号等）就视为放弃本次操作。
+         */
+        private val DELETE_SELECTION_INPUT = Regex("[\\d\\s,，、]+")
+
+        /**
+         * 单标题删除时挑选位置的分隔符：半角逗号、中文逗号、顿号、空白。
+         */
+        private val DELETE_SELECTION_SEPARATOR = Regex("[\\s,，、]+")
     }
 }

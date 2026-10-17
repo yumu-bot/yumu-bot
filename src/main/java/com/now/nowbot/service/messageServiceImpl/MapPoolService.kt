@@ -76,7 +76,7 @@ class MapPoolService(
             if (result.isEmpty()) throw TipsException("未找到名称包含 ${param.name} 的图池")
 
             if (result.size == 1) {
-                event.reply(MapPoolDto(result.first(), beatmapApiService, calculateApiService), param.mode)
+                event.replyAsync(MapPoolDto(result.first(), beatmapApiService, calculateApiService), param.mode)
             } else {
                 val sb = StringBuilder("查到了多个图池, 请确认结果:\n")
                 for (i in result.indices) {
@@ -95,18 +95,18 @@ class MapPoolService(
 
                 if (n !in 1..result.size) throw TipsException("输入错误")
 
-                event.reply(MapPoolDto(result[n - 1], beatmapApiService, calculateApiService), param.mode)
+                event.replyAsync(MapPoolDto(result[n - 1], beatmapApiService, calculateApiService), param.mode)
             }
         } else {
             val pool = searchByID(param.id) ?: throw TipsException("未找到id为 ${param.id} 的图池")
 
-            event.reply(MapPoolDto(pool, beatmapApiService, calculateApiService), param.mode)
+            event.replyAsync(MapPoolDto(pool, beatmapApiService, calculateApiService), param.mode)
         }
 
         return ServiceCallStatistic.building(event)
     }
 
-    private fun MessageEvent.reply(data: MapPoolDto, mode: OsuMode) {
+    private fun MessageEvent.replyAsync(data: MapPoolDto, mode: OsuMode) {
         val body = mapOf("pool" to data, "mode" to mode.shortName)
 
         val image = imageService.getPanel(body, "H")

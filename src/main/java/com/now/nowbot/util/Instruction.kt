@@ -1100,7 +1100,8 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     // !alias del <标题或BID> = <别名> / !ad ...
-    // 多组规则同 ALIAS_ADD；也可以只输入一个标题，此时删除该标题下的所有别名
+    // 多组规则同 ALIAS_ADD；只输入一个标题时先列出该标题下的别名，
+    // 再回复位置（从 1 开始，逗号分隔多个）挑选要删除的项，回复 0 删除全部。
     ALIAS_DELETE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(del(ete)?|rm|remove)", "ad", "(删除|移除|取消)别名")
         // :f 表示不限制单次删除的条目数量，并跳过二次确认直接删除，例如 !ad:f 123=abc（仅超级管理员生效）

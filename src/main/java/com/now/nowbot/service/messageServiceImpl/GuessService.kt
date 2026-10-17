@@ -371,7 +371,14 @@ class GuessService(
             if (game.timeout) {
                 iterator.remove()
 
-                game.event.saveAndReplyDone(game, GuessReply.Timeout)
+                // 结算需要渲染并上传结果图，比较耗时，不能卡住共用的调度线程
+                KALEI_DX_SCOPE.launch {
+                    runCatching {
+                        game.event.saveAndReplyDone(game, GuessReply.Timeout)
+                    }.onFailure { e ->
+                        log.warn("猜歌超时结算失败：${e.message}", e)
+                    }
+                }
             }
         }
     }
@@ -1113,13 +1120,12 @@ class GuessService(
 
         reply.append("\n得分：${rewards}")
 
+        // replyGuess 是同步发送：这里返回时，结果图那条消息已经真正发到群里了。
+        // 因此后面的「猜歌结束。」天然排在结果图之后，不会再被抢先。
         event.replyGuess(game, reply.toString())
 
-        KALEI_DX_SCOPE.launch {
-            delay(500.milliseconds)
-            if (game.trySettle()) {
-                event.saveAndReplyDone(game, "猜歌结束。", noGuess = true)
-            }
+        if (game.trySettle()) {
+            event.saveAndReplyDone(game, "猜歌结束。", noGuess = true)
         }
     }
 
@@ -1181,26 +1187,34 @@ class GuessService(
         }
     }
 
+    /**
+     * 发送猜歌面板。
+     *
+     * 这里刻意使用同步发送（[reply] 而不是 [replyAsync]）：图片消息需要渲染 + base64 上传，
+     * 耗时天然远大于一条纯文本消息。如果异步发送，调用方紧接着再发一条文字（比如「猜歌结束。」），
+     * 文字几乎必定先于图片到达，顺序就反了。
+     *
+     * 需要异步执行时，由调用方自己放进协程 / 虚拟线程，确保同一串消息在同一个执行流里依次发送。
+     */
     private fun MessageEvent.replyGuess(game: GuessGame, text: Any? = null) {
+        val content = text?.toString()?.takeIf { it.isNotBlank() }
 
         runCatching {
             val image = imageService.getPanel(game.toMap(), "A8")
 
-            if (text?.toString()?.isNotBlank() == true) {
-                this.replyAsync(image, text.toString())
+            if (content != null) {
+                reply(image, content)
             } else {
-                this.replyAsync(image)
+                reply(image)
+            }
+        }.onFailure { e ->
+            log.warn("猜歌面板发送失败，降级为文字消息：${e.message}")
+
+            if (content != null) {
+                runCatching { reply(content) }
             }
 
-        }.onFailure {
-            if (text?.toString()?.isNotBlank() == true) {
-                this.replyAsync(text)
-            }
-
-            KALEI_DX_SCOPE.launch {
-                delay(500.milliseconds)
-                this@replyGuess.replyAsync(game.getTextMessage())
-            }
+            runCatching { reply(game.getTextMessage()) }
         }
     }
 
