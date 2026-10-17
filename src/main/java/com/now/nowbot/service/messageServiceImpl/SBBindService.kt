@@ -107,7 +107,7 @@ class SBBindService(
         if (existingBind != null) {
             AsyncMessageUtil.doubleCheck(
                 event = event,
-                keyword = "OK",
+                keywords = listOf("OK"),
                 onCheck = {
                     event.reply(
                         BindException.BindConfirmException.RecoverBind(
@@ -120,7 +120,7 @@ class SBBindService(
                 onOverTime = {
                     throw BindException.BindReceiveException.ReceiveOverTime()
                 },
-                onWrong = {
+                onFailure = {
                     throw BindException.BindReceiveException.ReceiveRefused()
                 },
                 onSuccess = {}
@@ -199,12 +199,12 @@ class SBBindService(
 
         AsyncMessageUtil.doubleCheck(
             event = event,
-            keyword = "",
+            keywords = emptyList(),
             onCheck = {
                 event.reply(BindException.BindReceiveException.ReceiveNoName())
             },
             onOverTime = { throw BindException.BindReceiveException.ReceiveOverTime() },
-            onWrong = {},
+            onFailure = {},
             onSuccess = { result ->
                 val input = result.rawMessage.trim()
                 sbUser = fetchSBUser(input)

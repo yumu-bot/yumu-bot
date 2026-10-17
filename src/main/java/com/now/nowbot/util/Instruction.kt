@@ -1108,6 +1108,14 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
+    // !alias manual <BID> / !am <BID>
+    // 输入谱面编号，先展示该谱面的 title / titleUnicode / artist，
+    // 再让用户回复别名：回复 OK 或超时视为取消，回复其他内容则保存为该曲目的别名。
+    ALIAS_MANUAL(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("alias\\s*(manual|byid|bybid)", "am", "别名(手动|补录)")
+        appendBID()
+    }),
+
     // !alias review / !a
     ALIAS_REVIEW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(review|check|audit|list)", "aw", "审核别名", "别名审核")

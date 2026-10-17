@@ -226,7 +226,7 @@ class ServiceSwitchService(
                             """.trimIndent())
                         },
 
-                        onWrong = {
+                        onFailure = {
                             future.completeExceptionally(TipsException("操作已中止。"))
                         },
 
@@ -283,7 +283,7 @@ class ServiceSwitchService(
                         """.trimIndent())
                 },
 
-                onWrong = {
+                onFailure = {
                     future.completeExceptionally( TipsException("${does}操作已中止。"))
                 },
 
@@ -333,7 +333,7 @@ class ServiceSwitchService(
                     """.trimIndent())
                 },
 
-                onWrong = {
+                onFailure = {
                     future.completeExceptionally(TipsException("${does}操作已中止。"))
                 },
 

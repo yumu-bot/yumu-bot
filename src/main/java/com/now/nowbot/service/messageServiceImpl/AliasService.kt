@@ -16,6 +16,7 @@ import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
 import com.now.nowbot.util.StringUtil.standardised
+import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_FULL
 import com.now.nowbot.util.command.PATTERN_EQUAL
 import org.springframework.stereotype.Service
@@ -53,7 +54,7 @@ class AliasService(
     )
 
     enum class AliasOperation {
-        ADD, DELETE, REVIEW, EXPORT
+        ADD, DELETE, REVIEW, EXPORT, MANUAL
     }
 
     private data class DeleteTarget(
@@ -288,7 +289,7 @@ class AliasService(
 
         AsyncMessageUtil.doubleCheck(
             event = event,
-            keyword = "OK",
+            keywords = listOf("OK"),
             onCheck = { event.reply(preview) },
             onOverTime = {
                 targets.forEach { (title, alias) ->
@@ -302,7 +303,7 @@ class AliasService(
                 }
                 event.reply(if (approved) "操作超时，已默认保存。" else "操作超时，已提交审核，请等待管理员审核。")
             },
-            onWrong = { throw TipsRuntimeException("已撤回操作。") },
+            onFailure = { throw TipsRuntimeException("已撤回操作。") },
             onSuccess = { ev ->
                 targets.forEach { (title, alias) ->
                     aliasDao.addAliasToTitle(
@@ -315,7 +316,80 @@ class AliasService(
                 }
                 ev.reply(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
             },
-            timeout = 30.seconds
+            timeout = 60.seconds
+        )
+    }
+
+    /**
+     * 手动补录别名（!am <BID>）。
+     *
+     * 先按 BID 找到谱面并展示它的 title、titleUnicode、artist，
+     * 再用一问一答让用户决定要保存的别名：
+     * - 回复 OK：取消操作
+     * - 超时：取消操作
+     * - 回复其他任意内容：把回复内容去掉歌曲后缀后保存为该曲目的别名
+     *
+     * 挂载标题和 [check] 一致：beatmapset.title 经 removeSongSuffix + formatted 标准化。
+     * 权限也和 [check] 一致：管理员直接生效，普通用户提交后需要审核。
+     */
+    private fun manual(event: MessageEvent, param: AliasParam) {
+        val target = param.targets.firstOrNull() ?: return
+        val beatmapID = target.beatmapID ?: throw IllegalArgumentException.WrongException.BeatmapID()
+
+        val beatmapset = runCatching {
+            beatmapApiService.getBeatmap(beatmapID).beatmapset
+        }.getOrNull() ?: throw NoSuchElementException.Beatmap(beatmapID)
+
+        // 挂载标题和 !aa 保持一致：去掉歌曲后缀再 formatted 标准化
+        val title = beatmapset.title.removeSongSuffix().formatted()
+        if (title.isBlank()) throw IllegalArgumentException.WrongException.BeatmapID()
+
+        val approved = event.isSuperAdmin()
+
+        // 按标准流程（和 applyAlias 一致）查询该标题当前的别名，没有就是空列表
+        val aliases = aliasDao.getAliasesByNormalizedTitles(listOf(title))[title].orEmpty()
+
+        val preview = buildString {
+            appendLine("谱面信息：")
+            appendLine("标准化标题：${title}")
+            appendLine("标题：${beatmapset.title}")
+            appendLine("罗马字标题：${beatmapset.titleUnicode}")
+            appendLine("艺术家：${beatmapset.artist}")
+            appendLine()
+            appendLine("将保存到别名库的标题：$title")
+            appendLine("现有别名：${if (aliases.isEmpty()) "（空）" else aliases.joinToString("、")}")
+            appendLine("回复 OK 取消本次操作，回复其他内容则将其作为该标题的别名保存。")
+            append("60 秒后不操作同样视为取消。")
+        }
+
+        AsyncMessageUtil.doubleCancel(
+            event = event,
+            keywords = listOf("OK"),
+            onCheck = { event.reply(preview) },
+            // 回复 OK、超时都视为取消（默认行为就是取消，这里显式写出来更清楚）
+            onCancel = { throw TipsRuntimeException("已取消操作。") },
+            onInput = { ev ->
+                val alias = ev.textMessage.removeSongSuffix()
+                    .takeIf { it.isNotBlank() }
+                    ?: throw IllegalArgumentException.WrongException.Alias(ev.textMessage)
+
+                aliasDao.addAliasToTitle(
+                    title,
+                    alias,
+                    setAsPrimary = false,
+                    approved = approved,
+                    from = event.sender.contactID,
+                )
+
+                event.reply(
+                    if (approved) {
+                        "保存成功！已将「$alias」保存为「$title」的别名。"
+                    } else {
+                        "已提交审核！已将「$alias」提交为「$title」的别名，请等待管理员审核。"
+                    }
+                )
+            },
+            timeout = 60.seconds,
         )
     }
 
@@ -361,10 +435,10 @@ class AliasService(
 
         AsyncMessageUtil.doubleCheck(
             event = event,
-            keyword = "OK",
+            keywords = listOf("OK"),
             onCheck = { event.reply(preview) },
             onSuccess = { ev -> ev.reply(deleteTargets(targets)) },
-            timeout = 30.seconds
+            timeout = 60.seconds
         )
     }
 
@@ -436,8 +510,8 @@ class AliasService(
 
         AsyncMessageUtil.doubleCheck(
             event = event,
-            // 空关键字，任意回复都会进入 onSuccess，由我们自己解析数字序列
-            keyword = "",
+            // 空列表表示任意回复都会进入 onSuccess，由我们自己解析数字序列
+            keywords = emptyList(),
             onCheck = {
                 event.reply(buildString {
                     if (remaining > 0) {
@@ -580,6 +654,15 @@ class AliasService(
             return true
         }
 
+        val manual = Instruction.ALIAS_MANUAL.matcher(messageText)
+        if (manual.find()) {
+            // 必须给出 BID，没给就当没匹配上，交给其他服务
+            val bid = manual.group(FLAG_BID)?.toLongOrNull() ?: return false
+
+            data.value = AliasParam(listOf(AliasTarget(null, bid, null)), AliasOperation.MANUAL)
+            return true
+        }
+
         val review = Instruction.ALIAS_REVIEW.matcher(messageText)
         if (review.find()) {
             // 审核需要管理员，否则不回应
@@ -601,6 +684,7 @@ class AliasService(
             AliasOperation.DELETE -> delete(event, param)
             AliasOperation.REVIEW -> review(event)
             AliasOperation.EXPORT -> export(event)
+            AliasOperation.MANUAL -> manual(event, param)
         }
 
         return ServiceCallStatistic.building(event)

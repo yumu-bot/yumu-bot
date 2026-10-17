@@ -22,14 +22,15 @@ object AsyncMessageUtil {
     // ========== 高层 API ==========
 
     /**
-     * @param keyword 如果传入 ""，则能够保证无论如何都可以走 onSuccess，忽视 onWrong
+     * @param keywords 命中其中任意一个关键字都算「确认」。传入空列表则任何回复都会走 onSuccess、忽视 onFailure。
+     * @param onFailure 收到不匹配任何 [keywords] 的回复时调用，参数就是这条回复事件
      */
     fun doubleCheck(
         event: MessageEvent,
-        keyword: String = "OK",
-        onCheck: () -> MessageReceipt? = { event.reply("是否要执行操作？回复 $keyword 确认。") },
+        keywords: List<String> = listOf("OK"),
+        onCheck: () -> MessageReceipt? = { event.reply("是否要执行操作？回复 ${keywords.joinToString("、")} 确认。") },
         onOverTime: () -> Unit = { throw TipsRuntimeException("超时了。") },
-        onWrong: () -> Unit = { throw TipsRuntimeException("已取消操作。") },
+        onFailure: (MessageEvent) -> Unit = { throw TipsRuntimeException("已取消操作。") },
         onSuccess: (MessageEvent) -> Unit = {},
         timeout: Duration = 60.seconds,
         anyoneCanResponse: Boolean = false,
@@ -74,11 +75,14 @@ object AsyncMessageUtil {
             // 尝试撤回提示消息
             receipt.recallAndLog()
 
-            // 处理响应
-            if (keyword.isEmpty() || result.rawMessage.contains(keyword, ignoreCase = true)) {
+            // 处理响应：空列表代表「任何回复都算确认」，否则任意一个关键字命中都算确认
+            val confirmed = keywords.isEmpty() ||
+                    keywords.any { result.rawMessage.contains(it, ignoreCase = true) }
+
+            if (confirmed) {
                 onSuccess(result)
             } else {
-                onWrong()
+                onFailure(result)
             }
 
         } catch (_: TimeoutException) {
@@ -88,6 +92,41 @@ object AsyncMessageUtil {
             lockManager.cleanup(lockKey)
             lock.unlock()
         }
+    }
+
+    /**
+     * 「反向」的一问一答：回复 [keywords] 或超时都算取消，回复其他内容才执行操作。
+     *
+     * 和 [doubleCheck] 的区别只是语义颠倒：[doubleCheck] 里 [keywords] 代表「确认」，
+     * 这里 [keywords] 代表「取消」。适合「先把内容展示给用户，用户不想要就回复一个固定词退出，
+     * 想要就把回复内容本身当成参数」的场景。
+     *
+     * 内部直接委托给 [doubleCheck]，所以锁、撤回提示消息、超时等行为完全一致。
+     *
+     * @param keywords 取消操作的关键字，回复中包含其中任意一个即视为取消。传入空列表时任何回复都会取消。
+     * @param onCancel 命中 [keywords] 或超时时调用，默认取消。
+     * @param onInput 收到非取消回复时调用，参数就是这条回复事件（内容是原文，未做任何裁剪）。
+     */
+    fun doubleCancel(
+        event: MessageEvent,
+        keywords: List<String> = listOf("OK"),
+        onCheck: () -> MessageReceipt? = { event.reply("回复 ${keywords.joinToString("、")} 取消操作，回复其他内容则继续。") },
+        onCancel: () -> Unit = { throw TipsRuntimeException("已取消操作。") },
+        onInput: (MessageEvent) -> Unit = {},
+        onOverTime: () -> Unit = onCancel,
+        timeout: Duration = 60.seconds,
+        anyoneCanResponse: Boolean = false,
+    ) {
+        doubleCheck(
+            event = event,
+            keywords = keywords,
+            onCheck = onCheck,
+            onOverTime = onOverTime,
+            onSuccess = { onCancel() },
+            onFailure = onInput,
+            timeout = timeout,
+            anyoneCanResponse = anyoneCanResponse,
+        )
     }
 
     fun MessageReceipt?.recallAndLog() {
@@ -100,8 +139,8 @@ object AsyncMessageUtil {
 
     fun <T> doubleCheckSync(
         event: MessageEvent,
-        keyword: String = "OK",
-        onCheck: () -> MessageReceipt? = { event.reply("是否要执行操作？回复 $keyword 确认。") },
+        keywords: List<String> = listOf("OK"),
+        onCheck: () -> MessageReceipt? = { event.reply("是否要执行操作？回复 ${keywords.joinToString("、")} 确认。") },
         onSuccess: (MessageEvent) -> T,
         defaultValue: T,
         timeout: Duration = 60.seconds,
@@ -113,7 +152,7 @@ object AsyncMessageUtil {
 
         doubleCheck(
             event = event,
-            keyword = keyword,
+            keywords = keywords,
             onCheck = onCheck,
             onSuccess = {
                 result = onSuccess(it)
@@ -121,7 +160,7 @@ object AsyncMessageUtil {
                 latch.countDown()
             },
             onOverTime = { latch.countDown() },
-            onWrong = { latch.countDown() },
+            onFailure = { latch.countDown() },
             timeout = timeout,
             anyoneCanResponse = anyoneCanResponse
         )

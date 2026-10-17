@@ -134,14 +134,14 @@ class BindService(
             // 找到了玩家，二次询问确认
             AsyncMessageUtil.doubleCheck(
                 event = event,
-                keyword = "OK",
+                keywords = listOf("OK"),
                 onCheck = {
                     event.reply(BindException.BindConfirmException.Found(user.userID, user.username))
                 },
                 onOverTime = {
                     throw BindException.BindReceiveException.ReceiveOverTime()
                 },
-                onWrong = {
+                onFailure = {
                     throw BindException.BindReceiveException.ReceiveQuestion()
                 },
                 onSuccess = { _ ->
@@ -284,7 +284,7 @@ class BindService(
     private fun interactiveBind(event: MessageEvent, targetID: Long) {
         AsyncMessageUtil.doubleCheck(
             event = event,
-            keyword = "",
+            keywords = emptyList(),
             onCheck = {
                 event.reply(BindException.BindReceiveException.ReceiveNoName())
             },
@@ -298,7 +298,7 @@ class BindService(
             onOverTime = {
                 throw BindException.BindReceiveException.ReceiveOverTime()
             },
-            onWrong = {},
+            onFailure = {},
         )
     }
 

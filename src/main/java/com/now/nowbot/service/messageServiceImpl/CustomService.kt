@@ -98,7 +98,7 @@ class CustomService(
 
         AsyncMessageUtil.doubleCheck(
             event = event,
-            keyword = "OK",
+            keywords = listOf("OK"),
             onCheck = {
                 event.reply("""
                 您想要清除你的自定义 ${type.name} 吗？回复 OK 确认。
@@ -108,7 +108,7 @@ class CustomService(
             onOverTime = {
                 future.completeExceptionally(TipsException("操作超时，请重试。"))
             },
-            onWrong = {
+            onFailure = {
                 future.completeExceptionally(TipsException("清除过程已中止。"))
             },
             onSuccess = { _ ->
@@ -128,14 +128,14 @@ class CustomService(
 
         AsyncMessageUtil.doubleCheck(
             event = event,
-            keyword = "",
+            keywords = emptyList(),
             onCheck = {
                 event.reply("请发送一张图片。")
             },
             onOverTime = {
                 future.completeExceptionally(TipsException("等待图片超时，请重试。"))
             },
-            onWrong = {
+            onFailure = {
                 future.completeExceptionally(TipsException("未收到图片，请重试。"))
             },
             timeout = 60.seconds,

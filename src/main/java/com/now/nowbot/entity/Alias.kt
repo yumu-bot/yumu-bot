@@ -20,10 +20,10 @@ class AliasTitle(
         inverseJoinColumns = [JoinColumn(name = "alias_id")]
     )
     @OrderColumn(name = "position")
-    val aliases: MutableList<Alias> = mutableListOf(),
+    var aliases: MutableList<Alias> = mutableListOf(),
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: OffsetDateTime = OffsetDateTime.now()
+    var createdAt: OffsetDateTime = OffsetDateTime.now()
 ) {
     val primaryAlias: Alias?
         get() = aliases.firstOrNull()
@@ -37,7 +37,7 @@ class Alias(
     var id: Long = 0,
 
     @Column(nullable = false, unique = true, length = 255)
-    val value: String,
+    var value: String,
 
     @ManyToMany(mappedBy = "aliases")
     var titles: MutableList<AliasTitle> = mutableListOf(),
