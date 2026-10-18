@@ -221,10 +221,10 @@ class InfoService(
             bests = scoreApiService.getBestScores(user.userID, mode.data!!)
         }
 
-        AsyncMethodExecutor.awaitPair(
-            { BeatmapUtil.applyBeatmapChanges(bests.take(6)) },
-            { calculateApiService.applyStarToScores(bests.take(6)) }
-        )
+        // 同一批成绩对象的就地加工必须串行
+        val top = bests.take(6)
+        BeatmapUtil.applyBeatmapChanges(top)
+        calculateApiService.applyStarToScores(top)
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
 

@@ -342,9 +342,10 @@ class GetItemsService(
     }
 
     private fun NewbieBestParam.getNewbieBestsComponent(): String {
-        calculateApiService.applyPPToScores(this.bests)
-        calculateApiService.applyStarToScores(this.bests)
+        // 顺序固定：extend 会整体替换 beatmap，必须最先；模组最后叠，且只会叠一次
         beatmapApiService.applyBeatmapExtend(this.bests)
+        calculateApiService.applyStarToScores(this.bests)
+        calculateApiService.applyPPToScores(this.bests)
         BeatmapUtil.applyBeatmapChanges(this.bests)
 
         return this.bests.joinToString("\n\n") { it.getNewbieScore() }

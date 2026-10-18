@@ -18,7 +18,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMessageUtil
-import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.FastPower095
 import com.now.nowbot.util.Instruction
@@ -182,10 +181,9 @@ class BestHistoryRecoverService(
 
         return if (scores.size > 1) {
 
-            AsyncMethodExecutor.awaitPair(
-                { beatmapApiService.applyBeatmapExtend(scores) },
-                { calculateApiService.applyStarToScores(scores) }
-            )
+            // extend 会整体替换 score.beatmap，星数必须在其之后串行执行
+            beatmapApiService.applyBeatmapExtend(scores)
+            calculateApiService.applyStarToScores(scores)
 
             val body = mapOf(
                 "user" to user.apply {

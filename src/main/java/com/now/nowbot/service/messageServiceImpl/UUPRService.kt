@@ -240,11 +240,10 @@ class UUPRService(
 
         val scores = scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
 
-        AsyncMethodExecutor.awaitTriple(
-            { calculateApiService.applyStarToScores(scores) },
-            { calculateApiService.applyPPToScores(scores) },
-            { BeatmapUtil.applyBeatmapChanges(scores) }
-        )
+        // 同一批成绩对象的就地加工必须串行
+        calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyPPToScores(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
@@ -302,11 +301,10 @@ class UUPRService(
             }
         }
 
-        AsyncMethodExecutor.awaitTriple(
-            { calculateApiService.applyStarToScores(scores) },
-            { calculateApiService.applyPPToScores(scores) },
-            { BeatmapUtil.applyBeatmapChanges(scores) }
-        )
+        // 同一批成绩对象的就地加工必须串行
+        calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyPPToScores(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }

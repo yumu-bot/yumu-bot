@@ -308,6 +308,9 @@ class ScorePRService(
 
         beatmapApiService.applyBeatmapExtend(scores)
 
+        // 别名现在要参与筛选，必须在 filterScores 之前挂到 beatmapset 上
+        beatmapApiService.applyAlias(scores)
+
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
@@ -317,8 +320,6 @@ class ScorePRService(
                 throw NoSuchElementException.RecentScoreFiltered(user.username, user.mode)
             }
         }
-
-        beatmapApiService.applyAlias(filteredScores)
 
         val historyUser = infoDao.getHistoryUser(user)
 
@@ -557,13 +558,10 @@ class ScorePRService(
             val beatmap = score.beatmap
             val original = BeatmapUtil.getDetailMap(beatmap)
 
-            AsyncMethodExecutor.awaitRunnableExecute(
-                listOf(
-                    AsyncMethodExecutor.Runnable { calculateApiService.applyPPToScore(score) },
-                    AsyncMethodExecutor.Runnable { BeatmapUtil.applyBeatmapChanges(score) },
-                    AsyncMethodExecutor.Runnable { calculateApiService.applyStarToScore(score) },
-                )
-            )
+            // 同一份成绩对象的就地加工必须串行（applyBeatmapChanges 是就地叠加，不能与其他步骤交叉）
+            calculateApiService.applyPPToScore(score)
+            BeatmapUtil.applyBeatmapChanges(score)
+            calculateApiService.applyStarToScore(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 

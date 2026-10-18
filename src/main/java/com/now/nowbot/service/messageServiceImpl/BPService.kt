@@ -222,18 +222,20 @@ import java.util.regex.Matcher
             user.updateEstimatedPP(scores)
         }
 
-        beatmapApiService.applyBeatmapExtend(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
+        val historyUser = AsyncMethodExecutor.awaitPair(
+            {
+                beatmapApiService.applyBeatmapExtend(scores)
+                BeatmapUtil.applyBeatmapChanges(scores)
+                beatmapApiService.applyAlias(scores)
+            },
+            { infoDao.getHistoryUser(user) }
+        ).second
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
             throw NoSuchElementException.BestScoreFiltered(user.username)
         }
-
-        beatmapApiService.applyAlias(filteredScores)
-
-        val historyUser = infoDao.getHistoryUser(user)
 
         return BPParam(user, historyUser, filteredScores, isShow, isCompact)
     }

@@ -113,11 +113,10 @@ class UUBAService(
             fetchedUser to fetchedBests
         }
 
-        AsyncMethodExecutor.awaitTriple(
-            { BeatmapUtil.applyBeatmapChanges(bests) },
-            { calculateApiService.applyStarToScores(bests) },
-            { beatmapApiService.applyBeatmapExtend(bests) }
-        )
+        // extend 会整体替换 score.beatmap 并从原对象抄 cs/ar/od/hp/bpm/starRating，必须最先执行且串行
+        beatmapApiService.applyBeatmapExtend(bests)
+        calculateApiService.applyStarToScores(bests)
+        BeatmapUtil.applyBeatmapChanges(bests)
 
         return BAParam(user, bests, isMyself.get(), emptyList(), 2)
 

@@ -65,10 +65,6 @@ class ScorePRCardService(
             throw NoSuchElementException.RecentScore(range.data!!.username, mode.data!!)
         }
 
-        calculateApiService.applyPPToScore(score)
-        BeatmapUtil.applyBeatmapChanges(score)
-        calculateApiService.applyStarToScore(score)
-
         restrict.checkAsync(event, score)
 
         data.value = PRCardParam(score)
@@ -141,6 +137,11 @@ class ScorePRCardService(
         } catch (_: Exception) {
             throw IllegalStateException.Fetch("谱面")
         }
+
+        // 顺序固定：extend 之后才是最终实例，星数 → PP → 模组，且只做一次
+        calculateApiService.applyStarToScore(score)
+        calculateApiService.applyPPToScore(score)
+        BeatmapUtil.applyBeatmapChanges(score)
 
         val image = imageService.getPanelGamma(score)
 

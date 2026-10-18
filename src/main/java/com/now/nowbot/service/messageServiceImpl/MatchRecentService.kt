@@ -17,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MATCH_ID
 import com.now.nowbot.util.command.FLAG_NAME
@@ -213,12 +212,11 @@ class MatchRecentService(
         val body = if (filteredScores.size == 1) {
             val score = filteredScores.first()
 
-            AsyncMethodExecutor.awaitTriple(
-                // 缺的东西太多
-                { beatmapApiService.applyBeatmapExtendFromAPI(score) },
-                { calculateApiService.applyStarToScore(score) },
-                { calculateApiService.applyPPToScore(score) }
-            )
+            // extend 会整体替换 score.beatmap，星数/PP 必须在其之后串行执行
+            // 缺的东西太多
+            beatmapApiService.applyBeatmapExtendFromAPI(score)
+            calculateApiService.applyStarToScore(score)
+            calculateApiService.applyPPToScore(score)
 
             val e5 = ScorePRService.getE5Param(
                 user, null, score, "MR", beatmapApiService, calculateApiService
@@ -228,11 +226,10 @@ class MatchRecentService(
 
             e5
         } else {
-            AsyncMethodExecutor.awaitTriple(
-                { beatmapApiService.applyBeatmapExtend(filteredScores) },
-                { calculateApiService.applyStarToScores(filteredScores) },
-                { calculateApiService.applyPPToScores(filteredScores) }
-            )
+            // extend 会整体替换 score.beatmap，星数/PP 必须在其之后串行执行
+            beatmapApiService.applyBeatmapExtend(filteredScores)
+            calculateApiService.applyStarToScores(filteredScores)
+            calculateApiService.applyPPToScores(filteredScores)
 
 
             mapOf(

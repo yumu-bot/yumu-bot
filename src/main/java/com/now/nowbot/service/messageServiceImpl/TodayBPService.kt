@@ -191,19 +191,16 @@ class TodayBPService(
             }
         }
 
-        AsyncMethodExecutor.awaitTriple(
-            { BeatmapUtil.applyBeatmapChanges(dataMap) },
-            { calculateApiService.applyStarToScores(dataMap) },
-            { beatmapApiService.applyBeatmapExtend(dataMap) }
-        )
+        beatmapApiService.applyBeatmapExtend(dataMap)
+        calculateApiService.applyStarToScores(dataMap)
+        BeatmapUtil.applyBeatmapChanges(dataMap)
+        beatmapApiService.applyAlias(dataMap)
 
         val filteredScores = ScoreFilter.filterScores(dataMap, conditions)
 
         if (filteredScores.isEmpty()) {
             throw NoSuchElementException.TodayBestScoreFiltered(user.username)
         }
-
-        beatmapApiService.applyAlias(filteredScores)
 
         val historyUser = infoDao.getHistoryUser(user)
 

@@ -173,6 +173,10 @@ class LeaderBoardService(
             .orElse(groupDao.getGroupMode(event))
             .takeIfConvertable(beatmap)
 
+        // 扩充成绩时要用「干净」的谱面（星数还没被模组改写），
+        // 否则成绩会继承到面板头部的模组星数，且结果取决于 extend 走哪个分支
+        val cleanBeatmap = beatmap.copy()
+
         calculateApiService.applyStarToBeatmap(beatmap, mode, mods)
 
         val bindUser = bindDao.getBindFromQQOrNull(event.sender.contactID)
@@ -227,7 +231,7 @@ class LeaderBoardService(
                 userScores
             }
 
-            beatmapApiService.applyBeatmapExtendForSameScore(specials, beatmap)
+            beatmapApiService.applyBeatmapExtendForSameScore(specials, cleanBeatmap)
             calculateApiService.applyPPToScoresWithSameBeatmap(specials)
 
             val filteredScores = ScoreFilter.filterScores(specials, conditions)
@@ -251,7 +255,7 @@ class LeaderBoardService(
             runCatching {
                 val scores = scoreApiService.getLeaderBoardScore(bindUser, beatmap.beatmapID, mode, mods, type, isLegacy)
 
-                beatmapApiService.applyBeatmapExtendForSameScore(scores, beatmap)
+                beatmapApiService.applyBeatmapExtendForSameScore(scores, cleanBeatmap)
                 calculateApiService.applyPPToScoresWithSameBeatmap(scores)
 
                 val filteredScores = ScoreFilter.filterScores(

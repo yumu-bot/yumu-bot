@@ -139,6 +139,10 @@ class GroupLeaderBoardService(
 
         val mods = InstructionUtil.getMod(matcher)
 
+        // applyBeatmapChanges 是就地改写 beatmap；如果和下面「copy 它来扩充成绩」并发，
+        // 成绩可能拿到只打了一半模组的谱面。这里先留一份干净副本，专门用于扩充。
+        val cleanBeatmap = beatmap.copy()
+
         val (ss, user) = runBlocking(Dispatchers.IO) {
             launch {
                 BeatmapUtil.applyBeatmapChanges(beatmap, mods)
@@ -173,7 +177,7 @@ class GroupLeaderBoardService(
                     throw NoSuchElementException.GroupBeatmapScore(beatmap.previewName)
                 }
 
-                beatmapApiService.applyBeatmapExtendForSameScore(scores, beatmap)
+                beatmapApiService.applyBeatmapExtendForSameScore(scores, cleanBeatmap)
                 calculateApiService.applyPPToScoresWithSameBeatmap(scores)
 
                 val filteredScores = ScoreFilter.filterScores(scores, conditions)

@@ -117,8 +117,6 @@ class BPFixService(
             throw NoSuchElementException.BestScore(user.username)
         }
 
-        beatmapApiService.applyAlias(scores)
-
         return BPFixParam(user, scores, mode.data!!, page)
     }
 
@@ -131,6 +129,9 @@ class BPFixService(
 
         beatmapApiService.applyBeatmapExtend(bestsMap)
         calculateApiService.applyStarToScores(bestsMap)
+
+        // 必须在 applyBeatmapExtend 之后：扩充时 beatmapset 会被整体替换，提前挂的别名会丢
+        beatmapApiService.applyAlias(bestsMap)
 
         //before bp sum
 

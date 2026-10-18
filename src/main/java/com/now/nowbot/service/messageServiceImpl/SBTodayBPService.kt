@@ -175,11 +175,10 @@ class SBTodayBPService(
             }
         }
 
-        AsyncMethodExecutor.awaitTriple(
-            { BeatmapUtil.applyBeatmapChanges(dataMap) },
-            { osuCalculateApiService.applyStarToScores(dataMap) },
-            { osuBeatmapApiService.applyBeatmapExtend(dataMap) }
-        )
+        // extend 会整体替换 score.beatmap 并从原对象抄 cs/ar/od/hp/bpm/starRating，必须最先执行且串行
+        osuBeatmapApiService.applyBeatmapExtend(dataMap)
+        osuCalculateApiService.applyStarToScores(dataMap)
+        BeatmapUtil.applyBeatmapChanges(dataMap)
 
         val filteredScores = ScoreFilter.filterScores(dataMap, conditions)
 

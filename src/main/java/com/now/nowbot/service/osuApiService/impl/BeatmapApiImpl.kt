@@ -1622,6 +1622,10 @@ class BeatmapApiImpl(
                     hitLength = lite.hitLength
                     bpm = lite.bpm
                     convert = lite.convert
+
+                    // lite 可能已经打过模组（ar/cs/od/bpm 是模组后的值），
+                    // 必须把它的原始快照带过来，否则新实例会把模组值当成原始值。
+                    inheritOriginalDetails(lite)
                 }
             } else {
                 extended.copy().apply {
