@@ -11,6 +11,7 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.FileMessage
+import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
@@ -21,6 +22,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMessageUtil
+import com.now.nowbot.util.AsyncMessageUtil.recallAndLog
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.StringUtil.formatted
@@ -40,8 +42,10 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Matcher
 import kotlin.time.Duration.Companion.minutes
@@ -76,6 +80,22 @@ class AliasService(
     private val manualRequestIDs = ConcurrentHashMap<Long, Long>()
 
     private val manualRequestSequence = AtomicLong()
+
+    /**
+     * 等待用户回复 OK 的 !aa 添加会话。
+     *
+     * 和 [manualSessions] 一样按「群 + 发送人」区分，用 Caffeine 的 expireAfterWrite 自动清理。
+     * 之所以不复用 [AsyncMessageUtil.doubleCheck]，是因为它只允许同时存在一个操作：
+     * 上一条还在等确认时再发 !aa 会被「操作正在进行中」顶回去，
+     * 而这里的语义是「新的 !aa 直接保存上一条，然后正常开启新的确认」。
+     *
+     * 缓存时间故意比 [ADD_TIMEOUT_SECONDS] 长：等待线程必须自己按超时处理并默认保存，
+     * 不能让 Caffeine 先把会话清掉。
+     */
+    private val addSessions: Cache<AddSessionKey, AddSession> = Caffeine.newBuilder()
+        .expireAfterWrite(ADD_SESSION_CACHE_SECONDS, TimeUnit.SECONDS)
+        .maximumSize(ADD_SESSION_MAX_SIZE)
+        .build()
 
     /**
      * 一组「标题 -> 别名」参数。
@@ -130,6 +150,50 @@ class AliasService(
         val title: String,
         val alias: String?,
     )
+
+    /**
+     * 一条等待保存的「标题 -> 别名」。
+     */
+    private data class AddEntry(
+        val title: String,
+        val alias: String,
+    )
+
+    /**
+     * !aa 会话的键：群 + 发送人。
+     *
+     * 和在用的 [AsyncMessageUtil.doubleCheck] 一致，同一个群里不同的人各自等待各自的确认，
+     * 不会互相覆盖、也不会把别人的回复当成自己的确认。
+     */
+    private data class AddSessionKey(
+        val contactID: Long,
+        val senderID: Long,
+    )
+
+    /**
+     * 一次等待用户回复的 !aa 添加。
+     *
+     * @property entries 本次要保存的「标题 -> 别名」，已经去重。
+     * @property approved 发起人是否管理员：管理员直接生效，普通用户提交后需要审核。
+     * @property expireAt 会话过期时间，使用 [ADD_TIMEOUT_SECONDS] 计算。
+     */
+    private class AddSession(
+        val entries: List<AddEntry>,
+        val approved: Boolean,
+        val expireAt: Long,
+    ) {
+        /**
+         * 用户对本次添加的回复。
+         *
+         * 被新的 !aa 接管时以 null 完成，用来唤醒等待线程直接退出；
+         * 和「等待超时」一样都返回 null，由等待线程用 [claimAddSession] 区分。
+         */
+        val response = CompletableFuture<MessageEvent?>()
+
+        /** 确认消息的句柄，接管或结束时顺手撤回，避免留下过期的确认提示。 */
+        @Volatile
+        var receipt: MessageReceipt? = null
+    }
 
     /**
      * 解析 <标题或BID> = <别名>，多组之间用或换行分隔。
@@ -310,6 +374,10 @@ class AliasService(
      * 管理员（含超级管理员）添加的别名默认通过审核，普通用户添加的需要等待审核。
      *
      * 多组参数会合并成一条确认消息；回复 OK 才会保存，回复其他内容撤回本次操作；超时同样会默认保存。
+     * 保存之后会列出具体保存了哪些「标题 -> 别名」，不会只回一句「保存成功」。
+     *
+     * 确认期间再次发送 !aa 时（借鉴 !am 的会话替换）：上一条还在等待确认的添加会立即保存并给出结果，
+     * 然后新的 !aa 照常开启自己的确认，不会再被「操作正在进行中」拒绝。
      *
      * 管理员输入带 :f 捕获组（如 !aa:f 123=abc）时跳过二次确认，直接保存。
      */
@@ -318,31 +386,28 @@ class AliasService(
         // 用户可能在同一句里重复输入（!aa A=x, A=x），也可能用 BID 和标题两种写法
         // 指向同一个谱面集（!aa 123=x, A=x），解析后都会变成完全相同的「标题 -> 别名」。
         // 这里先去重，保证数据库不会收到两次一样的别名。
-        val targets = param.targets.map { target ->
-            getStandardizedTitle(target) to getStandardizedAlias(target)
-        }.distinct()
+        val entries = param.targets.map { target ->
+            AddEntry(getStandardizedTitle(target), getStandardizedAlias(target))
+        }.distinctBy { it.title to it.alias }
 
         // 添加处甄别是否是管理员，是则默认通过审核
         val approved = event.isSuperAdmin()
 
+        val key = AddSessionKey(event.subject.contactID, event.sender.contactID)
+
+        // 新的 !aa 一到来，先把上一条还在等待确认的添加保存掉，避免被新请求顶掉时丢失
+        supersedeAddSession(event, key)
+
         // :f + 管理员：不确认，直接添加
+        // 一次可能添加很多条，结果只回条数和首尾两条，避免刷屏
         if (param.force) {
-            targets.forEach { (title, alias) ->
-                aliasDao.addAliasToTitle(
-                    title,
-                    alias,
-                    setAsPrimary = false,
-                    approved = approved,
-                    from = event.sender.contactID
-                )
-            }
-            event.replyAsync(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
+            saveAddEntries(event, entries, approved, brief = true)
             return
         }
 
         val preview = buildString {
             appendLine("添加别名：")
-            targets.forEach { (title, alias) -> appendLine("$title -> $alias") }
+            entries.forEach { appendLine("${it.title} -> ${it.alias}") }
 
             if (param.discarded > 0) {
                 val from = formatDiscardedFrom(param.discardedFrom)
@@ -353,40 +418,164 @@ class AliasService(
                 appendLine("这些别名需要管理员审核之后才会通过。")
             }
 
-            append("回复 OK 确认本次操作，回复其他内容则撤回本次操作。")
+            append("回复 OK 或者 1 确认本次操作，回复其他内容则撤回本次操作。")
+            append("\n确认之前再次发送 !aa 会直接保存本次添加。")
+            append("\n${ADD_TIMEOUT_SECONDS} 秒内不回复同样视为默认保存。")
         }
 
-        AsyncMessageUtil.doubleCheck(
-            event = event,
-            keywords = listOf("OK"),
-            onCheck = { event.reply(preview) },
-            onOverTime = {
-                targets.forEach { (title, alias) ->
-                    aliasDao.addAliasToTitle(
-                        title,
-                        alias,
-                        setAsPrimary = false,
-                        approved = approved,
-                        from = event.sender.contactID
-                    )
-                }
-                event.replyAsync(if (approved) "操作超时，已默认保存。" else "操作超时，已提交审核，请等待管理员审核。")
-            },
-            onFailure = { throw TipsRuntimeException("已撤回操作。") },
-            onSuccess = { ev ->
-                targets.forEach { (title, alias) ->
-                    aliasDao.addAliasToTitle(
-                        title,
-                        alias,
-                        setAsPrimary = false,
-                        approved = approved,
-                        from = event.sender.contactID
-                    )
-                }
-                ev.replyAsync(if (approved) "保存成功！" else "已提交审核，请等待管理员审核。")
-            },
-            timeout = 60.seconds
+        val session = AddSession(
+            entries = entries,
+            approved = approved,
+            expireAt = System.currentTimeMillis() + ADD_TIMEOUT_SECONDS * 1_000,
         )
+
+        addSessions.put(key, session)
+
+        // 先登记会话再发确认消息：确认消息期间到达的新 !aa 也能找到并保存这一条
+        session.receipt = event.reply(preview)
+
+        val response = awaitAddResponse(session)
+
+        // 会话已经被新的 !aa 接管：那边已经保存并回复过，这里不再重复处理
+        if (!claimAddSession(key, session)) return
+
+        session.receipt.recallAndLog()
+
+        if (response == null) {
+            // 超时：和原来一样默认保存，只是把具体条目一起回给用户
+            saveAddEntries(
+                event,
+                entries,
+                approved,
+                if (approved) "操作超时，已默认保存本次添加：" else "操作超时，已自动提交审核：",
+            )
+            return
+        }
+
+        if (response.rawMessage.contains("OK", ignoreCase = true) || response.rawMessage.trim().toLongOrNull() == 1L) {
+            // 回复挂在确认的那条消息上，具体保存了哪些别名也一起给出来
+            saveAddEntries(response, entries, approved)
+        } else {
+            response.replyAsync("已撤回本次操作，本次添加没有保存。")
+        }
+    }
+
+    /**
+     * 把同一个人上一条还在等待确认的 !aa 直接保存。
+     *
+     * 用 remove(key, session) 抢占会话，保证并发时只有一方能处理：
+     * 旧的等待线程醒来后会发现会话已经被认领，不会再保存一次。
+     */
+    private fun supersedeAddSession(event: MessageEvent, key: AddSessionKey) {
+        val session = addSessions.getIfPresent(key) ?: return
+
+        if (!addSessions.asMap().remove(key, session)) return
+
+        // 唤醒旧的等待线程，让它直接退出（被接管时不需要它再保存或提示）
+        session.response.complete(null)
+
+        session.receipt.recallAndLog()
+
+        saveAddEntries(
+            event,
+            session.entries,
+            session.approved,
+            if (session.approved) "检测到新的添加指令，上一条已自动保存：" else "检测到新的添加指令，上一条已自动提交审核：",
+        )
+    }
+
+    /**
+     * 等待用户对本次添加的回复。
+     *
+     * 返回 null 表示两种可能：等待超时（会话仍然有效），或者会话已经被新的 !aa 接管。
+     * 调用方用 [claimAddSession] 区分。
+     */
+    private fun awaitAddResponse(session: AddSession): MessageEvent? {
+        val remaining = session.expireAt - System.currentTimeMillis()
+        if (remaining <= 0) return null
+
+        return try {
+            session.response.get(remaining, TimeUnit.MILLISECONDS)
+        } catch (_: TimeoutException) {
+            null
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            null
+        }
+    }
+
+    /**
+     * 认领会话：返回 true 表示当前线程成功移除会话、可以继续保存或撤回。
+     *
+     * 返回 false 说明会话已经被新的 !aa 接管，当前线程什么都不该做。
+     */
+    private fun claimAddSession(key: AddSessionKey, session: AddSession): Boolean {
+        return addSessions.asMap().remove(key, session)
+    }
+
+    /**
+     * 保存一组「标题 -> 别名」，并把具体保存了什么回复给用户。
+     *
+     * @param header 结果消息的第一行；为 null 时用默认的「已保存以下 N 条别名」。
+     * @param brief 为真时只列条数、第一条和最后一条（:f 一次添加几十条时不刷屏）。
+     */
+    private fun saveAddEntries(
+        event: MessageEvent,
+        entries: List<AddEntry>,
+        approved: Boolean,
+        header: String? = null,
+        brief: Boolean = false,
+    ) {
+        entries.forEach { (title, alias) ->
+            aliasDao.addAliasToTitle(
+                title,
+                alias,
+                setAsPrimary = false,
+                approved = approved,
+                from = event.sender.contactID,
+            )
+        }
+
+        event.replyAsync(formatSavedEntries(entries, approved, header, brief))
+    }
+
+    /**
+     * 拼出「保存了什么」的结果消息。
+     *
+     * [brief] 为真时只保留第一条和最后一条（两条以内就直接都列出来），
+     * 适合 :f 批量添加这种一次可能几十条、全部列出反而看不清的场景。
+     */
+    private fun formatSavedEntries(
+        entries: List<AddEntry>,
+        approved: Boolean,
+        header: String?,
+        brief: Boolean,
+    ): String {
+        val lines = mutableListOf<String>()
+
+        val defaultHeader = if (brief) {
+            if (approved) "已保存 ${entries.size} 条别名：" else "已提交审核 ${entries.size} 条别名："
+        } else {
+            if (approved) "已保存以下 ${entries.size} 条别名：" else "已提交以下 ${entries.size} 条别名等待审核："
+        }
+
+        lines += header ?: defaultHeader
+
+        if (brief) {
+            if (entries.size <= 2) {
+                entries.forEach { lines += "${it.title} -> ${it.alias}" }
+            } else {
+                lines += "${entries.first().title} -> ${entries.first().alias}"
+                lines += "……（中间 ${entries.size - 2} 条省略）……"
+                lines += "${entries.last().title} -> ${entries.last().alias}"
+            }
+        } else {
+            entries.forEach { lines += "${it.title} -> ${it.alias}" }
+        }
+
+        if (!approved) lines += "管理员审核通过后才会生效。"
+
+        return lines.joinToString("\n")
     }
 
     /**
@@ -503,12 +692,17 @@ class AliasService(
     }
 
     /**
-     * 不是指令的普通消息：如果当前会话正在等待别名，就把这条消息当成别名。
+     * 不是指令的普通消息：先看是否有等待确认的 !aa，再看 !am 会话是否在等待别名。
      *
-     * 只接受发起 !am 的用户，避免同群的其他人正常聊天时误保存。
+     * !aa 的会话也按「群 + 发送人」区分，只认发起人自己的回复；
+     * 命中时把事件交给等待中的线程，由它决定是保存还是撤回。
+     *
+     * !am 只接受发起 !am 的用户，避免同群的其他人正常聊天时误保存。
      * 回复 OK 取消；没有会话或不是发起人时返回 false，消息继续按普通聊天处理。
      */
     override fun handlePassiveMessage(event: MessageEvent, messageText: String): Boolean {
+        if (handleAddSessionReply(event)) return true
+
         val session = currentManualSession(event) ?: return false
 
         if (session.requester != event.sender.contactID) return false
@@ -525,6 +719,29 @@ class AliasService(
 
         saveManualAlias(event, session, text)
         return true
+    }
+
+    /**
+     * 把普通消息转交给等待确认的 !aa 会话。
+     *
+     * 和 [AsyncMessageUtil.doubleCheck] 一样，任何回复都算答复：
+     * 含 OK 的是确认，其余内容在等待线程里按撤回处理。
+     *
+     * @return true 表示这条消息已经被 !aa 消费，不再继续当作 !am 的别名或普通聊天。
+     */
+    private fun handleAddSessionReply(event: MessageEvent): Boolean {
+        val key = AddSessionKey(event.subject.contactID, event.sender.contactID)
+        val session = addSessions.getIfPresent(key) ?: return false
+
+        // 理论上等待线程会先按超时把它认领掉，这里只防御临界时间点上的残留
+        if (session.expireAt <= System.currentTimeMillis()) {
+            addSessions.asMap().remove(key, session)
+            session.response.complete(null)
+            return false
+        }
+
+        // 完成等待中的 future；真正的保存/撤回由等待线程自己做
+        return session.response.complete(event)
     }
 
     /**
@@ -1311,6 +1528,24 @@ class AliasService(
          * !am 会话缓存的容量上限。
          */
         private const val MANUAL_SESSION_MAX_SIZE = 10_000L
+
+        /**
+         * !aa 二次确认会话的有效期（秒）。超时后默认保存。
+         */
+        private const val ADD_TIMEOUT_SECONDS = 60L
+
+        /**
+         * !aa 会话缓存的容量上限。
+         */
+        private const val ADD_SESSION_MAX_SIZE = 10_000L
+
+        /**
+         * !aa 会话在缓存里的保留时间（秒）。
+         *
+         * 比 [ADD_TIMEOUT_SECONDS] 长，让等待线程自己按超时处理并默认保存，
+         * 而不是会话先被缓存清掉、导致超时那次添加凭空消失。
+         */
+        private const val ADD_SESSION_CACHE_SECONDS = ADD_TIMEOUT_SECONDS * 2
 
         /**
          * 导出指令发送的文件名。
