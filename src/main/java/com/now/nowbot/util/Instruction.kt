@@ -1118,9 +1118,12 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
-    // !alias review / !a
+    // !alias review [编号] / !aw [编号]
+    // 不带参数：列出待审核的别名，再回复编号（支持 1,2,5-10 这样的闭区间）。
+    // 带参数：直接用这些编号处理本次展示的待审核别名，例如 !aw 1,2,5-10。
     ALIAS_REVIEW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(review|check|audit|list)", "aw", "审核别名", "别名审核")
+        appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
     // !alias export / !ao

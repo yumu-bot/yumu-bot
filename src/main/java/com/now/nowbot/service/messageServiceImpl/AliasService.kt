@@ -6,6 +6,7 @@ import com.now.nowbot.controller.TokenBucketRateLimiter
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.AliasDao
 import com.now.nowbot.dao.BeatmapDao
+import com.now.nowbot.dao.PendingAlias
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
@@ -27,6 +28,7 @@ import com.now.nowbot.util.StringUtil.removeSongSuffix
 import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_FULL
 import com.now.nowbot.util.command.PATTERN_EQUAL
+import com.now.nowbot.util.command.PATTERN_HYPHEN
 import com.now.nowbot.util.exchangeToBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -99,6 +101,8 @@ class AliasService(
         val location: String? = null,
         /** !am 后面直接给出的别名（非纯数字），保存到对应会话的谱面上。 */
         val manualAlias: String? = null,
+        /** !aw 后面直接给出的审核编号（支持 1,2,5-10 这样的闭区间）。 */
+        val reviewSelection: String? = null,
     )
 
     enum class AliasOperation {
@@ -653,13 +657,14 @@ class AliasService(
                     appendLine("「$title」下的别名：")
                     aliases.forEachIndexed { index, alias -> appendLine("${index + 1}. $alias") }
                     appendLine()
-                    append("请回复要删除的别名位置（从 1 开始，可用逗号分隔多个），回复 0 删除全部，回复其他内容放弃本次操作。")
+                    append("请回复要删除的别名位置（从 1 开始，可用逗号分隔多个，也可以用 5-8 这样包含头尾的区间），回复 0 删除全部，回复其他内容放弃本次操作。")
                     append("\n60 秒内不回复同样视为放弃。")
                 })
             },
             onOverTime = { throw TipsRuntimeException("操作超时，已放弃删除。") },
             onSuccess = { ev ->
-                val selected = parseDeleteSelection(ev.textMessage, aliases.size)
+                // 和审核一样，编号要从原文里取，textMessage 可能拿不到用户输入的内容
+                val selected = parseDeleteSelection(ev.rawMessage, aliases.size)
 
                 when {
                     selected == null -> ev.replyAsync("已放弃操作。")
@@ -677,25 +682,16 @@ class AliasService(
     /**
      * 解析「要删除哪些别名」的回复。
      *
-     * 只接受数字和逗号类的分隔符，出现其他字符（字母、负号等）就当作放弃：
+     * 编号写法和审核一致（见 [expandSelection]），另外：
      * - 输入 0（和其它位置写在一起也算）：全部
      * - 其余数字按 1 开始的位置理解，超出范围的位置会被无视
+     * - 出现无法识别的内容：放弃本次操作
      *
      * @return 要删除的位置（1-based，已去重、升序）；
      * 空列表表示输入合法但位置全都超出范围；返回 null 表示放弃本次操作。
      */
-    private fun parseDeleteSelection(text: String, size: Int): List<Int>? {
-        val input = text.trim()
-
-        if (input.isEmpty()) return null
-
-        // 只接受数字和逗号，其它字符一律视为放弃
-        if (!input.matches(DELETE_SELECTION_INPUT)) return null
-
-        val numbers = input.split(DELETE_SELECTION_SEPARATOR)
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .map { it.toIntOrNull() ?: return null }
+    private fun parseDeleteSelection(raw: String, size: Int): List<Int>? {
+        val numbers = expandSelection(raw, size) ?: return null
 
         if (numbers.isEmpty()) return null
 
@@ -703,6 +699,54 @@ class AliasService(
         if (numbers.any { it == 0 }) return (1..size).toList()
 
         return numbers.filter { it in 1..size }.distinct().sorted()
+    }
+
+    /**
+     * 把「1,2,5-10」这样的编号串展开成具体的编号列表，供 AD 的位置挑选和 AW 的审核共用。
+     *
+     * 支持：
+     * - 单个编号：`1,2,3`，允许负数（负数在审核里表示全部不通过）
+     * - 闭区间：`5-10`，头尾都包含；写成 `10-5` 也按 `5-10` 处理
+     * - 区间符号和 `PATTERN_HYPHEN` 一致：`-`、`－`、`—`、`~`、`～`、`〜`
+     * - 分隔符见 [SELECTION_SEPARATOR]；区间符号两侧的空白会被忽略
+     *
+     * 区间会截断到 1..[max]（只展示 10 条时 `1-100` 等于 `1-10`，不会真的展开一百个），
+     * 单个编号原样保留，越界和 0 的语义交给调用方判断。
+     *
+     * @return 展开后的编号，保持输入顺序；返回 null 表示输入为空或含有无法识别的内容。
+     */
+    private fun expandSelection(raw: String, max: Int): List<Int>? {
+        val input = raw.trim()
+
+        if (input.isEmpty()) return null
+
+        // 先去掉区间符号两侧的空白，避免「5 - 10」被空白拆成三段
+        val normalized = SELECTION_RANGE_SPACE.replace(input) { it.value.trim() }
+
+        val numbers = mutableListOf<Int>()
+
+        for (token in normalized.split(SELECTION_SEPARATOR)) {
+            if (token.isEmpty()) continue
+
+            // 单个编号，允许负数
+            if (token.matches(SELECTION_NUMBER)) {
+                numbers += token.toIntOrNull() ?: return null
+                continue
+            }
+
+            // 闭区间，头尾都包含
+            val range = SELECTION_RANGE.matchEntire(token) ?: return null
+            val start = range.groupValues[1].toIntOrNull() ?: return null
+            val end = range.groupValues[2].toIntOrNull() ?: return null
+
+            // 写反也按从小到大处理，再截断到本次展示的范围
+            val from = maxOf(1, minOf(start, end))
+            val to = minOf(max, maxOf(start, end))
+
+            if (from <= to) numbers += from..to
+        }
+
+        return numbers
     }
 
     /**
@@ -751,15 +795,17 @@ class AliasService(
      * 审核别名。只有管理员才能调用。
      *
      * 一次最多只展示 REVIEW_SIZE 条待审核的别名，剩下的下次审核时再展示。
-     * 然后等待管理员回复编号序列：
-     * - 输入 0：本次展示的全部通过
-     * - 输入负数：本次展示的全部不通过
-     * - 输入其他非数字：取消操作
-     * - 输入数字和逗号：对应的通过，其余的不通过（不存在的编号无视）
+     *
+     * 两种用法：
+     * - `!aw`：展示列表后等待管理员回复编号序列；
+     * - `!aw 1,2,5-10`：直接按给出的编号处理本次展示的这批别名，不再等回复。
+     *
+     * 编号规则见 [parseSelection]：0 全部通过、负数全部不通过、
+     * 其余编号（含 `5-10` 这种闭区间）对应的通过，没有选中的不通过。
      *
      * 不通过的别名会连同绑定一起删除。
      */
-    private fun review(event: MessageEvent) {
+    private fun review(event: MessageEvent, rawSelection: String?) {
         val allPending = aliasDao.getPendingAliases()
 
         if (allPending.isEmpty()) {
@@ -770,6 +816,12 @@ class AliasService(
         // 一次最多只给 REVIEW_SIZE 条，剩下的下次审核时再给
         val pending = allPending.take(REVIEW_SIZE)
         val remaining = allPending.size - pending.size
+
+        // 指令后面直接跟了编号：不用再等回复，按同样的顺序直接处理
+        if (!rawSelection.isNullOrBlank()) {
+            applySelection(event, pending, remaining, rawSelection)
+            return
+        }
 
         AsyncMessageUtil.doubleCheck(
             event = event,
@@ -785,7 +837,7 @@ class AliasService(
                     pending.forEachIndexed { index, alias ->
                         appendLine("${index + 1}. ${alias.titles.joinToString(" / ")} -> ${alias.value}（${alias.qq}）")
                     }
-                    append("请回复需要通过的编号（用逗号分隔），回复 0 本次全部通过，回复负数本次全部不通过，回复其他非数字取消操作。")
+                    append("请回复需要通过的编号（用逗号分隔，也可以用 5-10 这样包含头尾的区间），回复 0 本次全部通过，回复负数本次全部不通过，回复其他非数字取消操作。")
                     if (remaining > 0) {
                         append("\n处理完这 ${pending.size} 条后还有 $remaining 条待审核，请再次使用本指令。")
                     }
@@ -793,47 +845,67 @@ class AliasService(
             },
             onOverTime = { throw TipsRuntimeException("审核超时了。") },
             onSuccess = { ev ->
-                val selected = parseSelection(ev.textMessage, pending.size)
-
-                if (selected == null) {
-                    ev.replyAsync("已取消操作。")
-                } else {
-                    val approvedIds = selected.map { pending[it - 1].id }
-                    val rejectedIds = pending.map { it.id }.filterNot { it in approvedIds }
-
-                    val (approved, rejected) = aliasDao.reviewAliases(approvedIds, rejectedIds)
-                    ev.replyAsync(buildString {
-                        append("已通过 $approved 个，不通过并删除 $rejected 个。")
-                        if (remaining > 0) append("还有 $remaining 条待审核。")
-                    })
-                }
+                // 这里必须用 rawMessage：部分平台 textMessage 是空的，编号只存在于原文里，
+                // 用 textMessage 会解析不出任何内容，看起来就像「不识别」。
+                applySelection(ev, pending, remaining, ev.rawMessage)
             },
             timeout = 60.seconds
         )
     }
 
     /**
-     * 解析审核回复。
+     * 按编号执行审核：选中的通过，其余的不通过并删除。
      *
-     * 不存在的编号会被无视，不会导致其余编号失效。
+     * @param pending 本次展示的这一批待审核别名，[rawSelection] 里的编号就是它的位置。
+     * @param remaining 展示范围之外还剩多少条待审核，只用于提示。
+     */
+    private fun applySelection(
+        event: MessageEvent,
+        pending: List<PendingAlias>,
+        remaining: Int,
+        rawSelection: String,
+    ) {
+        val selected = parseSelection(rawSelection, pending.size)
+
+        if (selected == null) {
+            event.replyAsync("已取消审核。回复 0 全部通过，回复负数全部不通过。")
+            return
+        }
+
+        val approvedIds = selected.map { pending[it - 1].id }
+        val rejectedIds = pending.map { it.id }.filterNot { it in approvedIds }
+
+        val (approved, rejected) = aliasDao.reviewAliases(approvedIds, rejectedIds)
+
+        event.replyAsync(buildString {
+            append("已通过 $approved 个，不通过并删除 $rejected 个。")
+            if (remaining > 0) append("还有 $remaining 条待审核。")
+        })
+    }
+
+    /**
+     * 解析审核编号。
+     *
+     * 编号写法和 AD 完全一致（见 [expandSelection]），另外：
+     * - `0`：本次全部通过
+     * - 负数：本次全部不通过
+     *
+     * 超出本次展示范围的编号会被无视，不会导致其余编号失效。
      *
      * @return 通过审核的编号（1-based，已去重、排序）。
-     * 返回空表示全部不通过；返回 null 表示取消操作（输入非数字，或编号全都不存在）。
+     * 返回空表示全部不通过；返回 null 表示取消操作（输入为空或含有无法识别的内容）。
      */
-    private fun parseSelection(text: String, size: Int): List<Int>? {
-        val input = text.trim()
+    private fun parseSelection(raw: String, size: Int): List<Int>? {
+        val input = raw.trim()
+
+        // 空回复视为取消操作
+        if (input.isEmpty()) return null
 
         // 全部通过
         if (input == "0") return (1..size).toList()
 
-        // 只接受「数字 + 分隔符」的输入，其余（含空回复）视为取消操作
-        if (!input.matches(Regex("[\\d\\s,，、|:：`-]+"))) return null
+        val numbers = expandSelection(input, size) ?: return null
 
-        val numbers = input.split(Regex("[\\s,，、|:：`]+"))
-            .filter { it.isNotEmpty() }
-            .map { it.toIntOrNull() ?: return null }
-
-        // 空回复视为取消操作
         if (numbers.isEmpty()) return null
 
         // 负数：全部不通过
@@ -1169,7 +1241,12 @@ class AliasService(
             // 审核需要管理员，否则不回应
             if (event.isNotSuperAdmin()) return false
 
-            data.value = AliasParam(emptyList(), AliasOperation.REVIEW)
+            // 指令后面可以直接跟编号，例如 !aw 1,2,5-10
+            val selection = review.group(FLAG_DATA)
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+
+            data.value = AliasParam(emptyList(), AliasOperation.REVIEW, reviewSelection = selection)
             return true
         }
 
@@ -1183,7 +1260,7 @@ class AliasService(
         when (param.operation) {
             AliasOperation.ADD -> check(event, param)
             AliasOperation.DELETE -> delete(event, param)
-            AliasOperation.REVIEW -> review(event)
+            AliasOperation.REVIEW -> review(event, param.reviewSelection)
             AliasOperation.EXPORT -> export(event)
             AliasOperation.IMPORT -> importAliases(event, param)
             AliasOperation.MANUAL -> manual(event, param)
@@ -1254,15 +1331,25 @@ class AliasService(
         private val QUOTATION = setOf('"', '“', '”', '＂')
 
         /**
-         * 单标题删除时挑选位置的输入：只允许数字、逗号类分隔符和空白。
+         * 编号之间的分隔符：空白、半角逗号、中文逗号、顿号、竖线、冒号、反引号。
          *
-         * 出现其他字符（字母、负号等）就视为放弃本次操作。
+         * AD 的位置挑选和 AW 的审核共用这一套。
          */
-        private val DELETE_SELECTION_INPUT = Regex("[\\d\\s,，、]+")
+        private val SELECTION_SEPARATOR = Regex("[\\s,，、|:：`]+")
 
         /**
-         * 单标题删除时挑选位置的分隔符：半角逗号、中文逗号、顿号、空白。
+         * 区间符号两侧的空白。先去掉它们，`5 - 10` 才不会被空白拆成三段。
          */
-        private val DELETE_SELECTION_SEPARATOR = Regex("[\\s,，、]+")
+        private val SELECTION_RANGE_SPACE = Regex("\\s*$PATTERN_HYPHEN\\s*")
+
+        /**
+         * 单个编号，允许负数（负数在审核里表示本次全部不通过）。
+         */
+        private val SELECTION_NUMBER = Regex("-?\\d+")
+
+        /**
+         * 闭区间：`5-10`、`5~10` 等，头尾都包含。区间符号和 [PATTERN_HYPHEN] 一致。
+         */
+        private val SELECTION_RANGE = Regex("(\\d+)\\s*$PATTERN_HYPHEN\\s*(\\d+)")
     }
 }
