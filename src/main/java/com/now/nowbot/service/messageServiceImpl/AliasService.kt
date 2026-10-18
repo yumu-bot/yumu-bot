@@ -2,7 +2,6 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.now.nowbot.controller.TokenBucketRateLimiter
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.AliasDao
 import com.now.nowbot.dao.BeatmapDao
@@ -48,7 +47,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Matcher
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @Service("ALIAS")
@@ -126,7 +124,7 @@ class AliasService(
     )
 
     enum class AliasOperation {
-        ADD, DELETE, REVIEW, EXPORT, IMPORT, MANUAL, MANUAL_ALIAS
+        ADD, DELETE, REVIEW, IMPORT, MANUAL, MANUAL_ALIAS
     }
 
     /**
@@ -1158,33 +1156,7 @@ class AliasService(
     }
 
     /**
-     * 导出库里所有「标题 -> 第一个别名」的映射，发给用户一个 JSON 文件。
-     *
-     * 输出是 JSON 对象：键是标题，值是它排序最靠前的别名（没有别名的标题不会出现在结果里）。
-     * 外部 JS 程序可以直接读成 Map / Set 查询：
-     * ```js
-     * const titleToAlias = new Map(Object.entries(JSON.parse(text)))        // 标题 -> 别名
-     * const aliasToTitle = new Map([...titleToAlias].map(([t, a]) => [a, t])) // 别名 -> 标题
-     * const titles = new Set(titleToAlias.keys())                            // 标题集合
-     * ```
-     *
-     * 所有用户都能调用；只有超级管理员不受冷却限制，其余用户复用
-     * [FetchService.rateLimiter] 的令牌桶，2 分钟一次（独立计数，不占用 !fetch 的次数）。
-     */
-    private fun export(event: MessageEvent) {
-        // 超级管理员既不消耗令牌，也不受冷却限制
-        if (event.isNotSuperAdmin()) {
-            rateLimiter.checkOrThrow(EXPORT_RATE_KEY)
-        }
-
-        val mapping = aliasDao.getTitlePrimaryAliases()
-        val file = JacksonUtil.objectToJsonPretty(mapping).toByteArray(Charsets.UTF_8)
-
-        event.replyFileInGroupAsync(file, EXPORT_FILE_NAME)
-    }
-
-    /**
-     * 导入 !ao 导出的「标题 -> 别名」JSON 映射，仅超级管理员可用。
+     * 导入「标题 -> 别名」JSON 映射（由 !fetch a 导出），仅超级管理员可用。
      *
      * 先提示用户发送文件（也可以回复一条包含文件的消息），再把文件内容按 JSON 解析。
      * 读取失败、JSON 解析失败都会直接回复用户，不会写入数据库。
@@ -1207,7 +1179,7 @@ class AliasService(
             keywords = emptyList(),
             onCheck = {
                 event.reply("""
-                    请发送要导入的 JSON 文件（格式与 !ao 导出的结果一致），
+                    请发送要导入的 JSON 文件（格式与 !fetch a 导出的结果一致），
                     或回复一条包含该文件的消息。
                     也可以直接回复文件的下载链接或本地路径。
                 """.trimIndent())
@@ -1242,7 +1214,7 @@ class AliasService(
             // 本地路径：即使文件不存在也交给 readImportText，好给出「找不到文件」的提示
             looksLikeLocalPath(text) -> resolveImportPath(text).toAbsolutePath().toString()
 
-            // 只写了不带斜杠的文件名时，去 !ao 的 debug 目录里找一下
+            // 只写了不带斜杠的文件名时，去 !fetch a 的 debug 目录里找一下
             !text.contains('/') && !text.contains('\\') ->
                 resolveImportPath(text)
                     .takeIf { Files.isRegularFile(it) }
@@ -1285,7 +1257,7 @@ class AliasService(
     /**
      * 解析本地路径：
      * - 支持 ~ ~/`
-     * - 只给文件名（例如 aliasDB.json）时，去 !ao 导出的 debug 目录里找
+     * - 只给文件名（例如 aliasDB.json）时，去 !fetch a 导出的 debug 目录里找
      */
     private fun resolveImportPath(location: String): Path {
         val value = normalizeLocation(location)
@@ -1388,7 +1360,7 @@ class AliasService(
     }
 
     /**
-     * 把文件内容解析成「标题 -> 别名」，格式与 !ao 导出一致。
+     * 把文件内容解析成「标题 -> 别名」，格式与 !fetch a 导出一致。
      */
     private fun parseImportJson(text: String): Map<String, String> {
         val mapping = try {
@@ -1406,13 +1378,6 @@ class AliasService(
         messageText: String,
         data: MessageService.DataValue<AliasParam>
     ): Boolean {
-        val export = Instruction.ALIAS_EXPORT.matcher(messageText)
-        if (export.find()) {
-            // 所有用户都能导出，冷却只在 handleMessage 里对非超级管理员生效
-            data.value = AliasParam(emptyList(), AliasOperation.EXPORT)
-            return true
-        }
-
         val importInstruction = Instruction.ALIAS_IMPORT.matcher(messageText)
         if (importInstruction.find()) {
             // 导入会直接写入数据库并通过审核，只允许超级管理员
@@ -1495,7 +1460,6 @@ class AliasService(
             AliasOperation.ADD -> check(event, param)
             AliasOperation.DELETE -> delete(event, param)
             AliasOperation.REVIEW -> review(event, param.reviewSelection)
-            AliasOperation.EXPORT -> export(event)
             AliasOperation.IMPORT -> importAliases(event, param)
             AliasOperation.MANUAL -> manual(event, param)
             AliasOperation.MANUAL_ALIAS -> manualAlias(event, param.manualAlias)
@@ -1506,8 +1470,6 @@ class AliasService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(AliasService::class.java)
-
-        private val rateLimiter = TokenBucketRateLimiter(1, 2.minutes)
 
         /**
          * 添加/删除别名时一次最多处理的条目数量。超出的会被主动抛弃。
@@ -1546,19 +1508,6 @@ class AliasService(
          * 而不是会话先被缓存清掉、导致超时那次添加凭空消失。
          */
         private const val ADD_SESSION_CACHE_SECONDS = ADD_TIMEOUT_SECONDS * 2
-
-        /**
-         * 导出指令发送的文件名。
-         */
-        private const val EXPORT_FILE_NAME = "aliasDB.json"
-
-        /**
-         * 导出指令在 [FetchService.rateLimiter] 里的令牌桶名。
-         *
-         * 用独立的名字，既复用 FetchService 的 2 分钟令牌桶，又不和 !fetch 抢次数。
-         * 这个名字会直接进冷却提示（「服务 xxx 已经超过限制」），所以用中文。
-         */
-        private const val EXPORT_RATE_KEY = "别名导出"
 
         /**
          * 参数分隔符：,、，、;、&、|、反引号、、、PATTERN_EQUAL（=、＝）以及换行符。

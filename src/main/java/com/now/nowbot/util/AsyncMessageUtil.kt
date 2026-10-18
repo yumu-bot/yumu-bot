@@ -6,9 +6,11 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.throwable.TipsRuntimeException
 import org.slf4j.LoggerFactory
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.locks.ReentrantLock
@@ -18,6 +20,10 @@ import kotlin.time.Duration.Companion.seconds
 object AsyncMessageUtil {
     private const val DEFAULT_TIMEOUT = 60 * 60 * 1000L
     private val lockManager = LockManager()
+
+    // doubleCheck 正在等待回答的会话，按和 lockManager 相同的 key 保存。
+    // 单独存放是为了让新指令只取消这些会话，不影响 AsyncLock。
+    private val promptFutures = ConcurrentHashMap<String, CompletableFuture<MessageEvent>>()
 
     // ========== 高层 API ==========
 
@@ -54,15 +60,24 @@ object AsyncMessageUtil {
         // 发送提示消息
         val receipt: MessageReceipt? = onCheck()
 
-        try {
-            // 创建 Future
-            val future = lockManager.getOrCreateFuture(lockKey, timeout.inWholeMilliseconds)
+        // doubleCheck 的 future 单独保存，和 AsyncLock 的 future 分开：
+        // 这样新指令可以静默取消正在等待回答的会话，而不会误伤其它等待者。
+        val future = CompletableFuture<MessageEvent>()
+        promptFutures[lockKey] = future
 
+        try {
             // 等待响应
             val result = try {
                 future.get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             } catch (_: TimeoutException) {
                 null
+            } catch (e: ExecutionException) {
+                // 被新指令取消：提示消息已经没用了，撤回后静默结束
+                if (e.cause is PendingCancelledException) {
+                    receipt.recallAndLog()
+                    return
+                }
+                throw e
             }
 
             if (result == null) {
@@ -89,6 +104,7 @@ object AsyncMessageUtil {
             receipt.recallAndLog()
             onOverTime()
         } finally {
+            promptFutures.remove(lockKey, future)
             lockManager.cleanup(lockKey)
             lock.unlock()
         }
@@ -276,17 +292,55 @@ object AsyncMessageUtil {
         val key = generateKey(message)
         // 检查是否有自定义的检查函数
         val check = lockManager.getCheck(key)
-        return !(check != null && !check(message)) && lockManager.completeFuture(key, message)
+        if (check != null && !check(message)) return false
+
+        val lockCompleted = lockManager.completeFuture(key, message)
+        val promptCompleted = promptFutures[key]?.complete(message) ?: false
+        return lockCompleted || promptCompleted
     }
 
     /**
-     * 手动 put 消息到所有锁（原代码的 put 方法）
+     * 手动 put 消息到所有等待者。
+     *
+     * 普通回复会同时唤醒 doubleCheck 和 AsyncLock；
+     * 指令消息不应调用这里，见 [cancelPrompts] 和 [putLocks]。
      */
     fun put(message: MessageEvent?) {
+        putLocks(message)
+        completePromptFutures(message)
+    }
+
+    /**
+     * 只唤醒 AsyncLock（getLock 系列）的等待者，保持新指令到达时的原有行为。
+     */
+    fun putLocks(message: MessageEvent?) {
         if (message == null) return
         lockManager.getAllKeys().forEach { key ->
             if (matchKey(key, message)) {
                 lockManager.completeFuture(key, message)
+            }
+        }
+    }
+
+    /**
+     * 静默取消正在等待回复的 doubleCheck 会话。
+     *
+     * 新指令到达时调用：指令不应该被旧会话当成回答，
+     * 也不能让旧会话在超时后再补一条「操作超时」。
+     */
+    fun cancelPrompts(message: MessageEvent) {
+        promptFutures.forEach { (key, future) ->
+            if (matchKey(key, message)) {
+                future.completeExceptionally(PendingCancelledException())
+            }
+        }
+    }
+
+    private fun completePromptFutures(message: MessageEvent?) {
+        if (message == null) return
+        promptFutures.forEach { (key, future) ->
+            if (matchKey(key, message)) {
+                future.complete(message)
             }
         }
     }
@@ -451,6 +505,14 @@ object AsyncMessageUtil {
             }
         }
     }
+
+    /**
+     * 等待中的 doubleCheck 被新指令静默取消。
+     *
+     * 用异常而不是普通返回值，是为了和「用户发来回复」「等待超时」区分开：
+     * 取消时既不执行 onSuccess，也不执行 onFailure / onOverTime，也不发提示。
+     */
+    private class PendingCancelledException : CancellationException("等待中的会话已被新指令取消")
 
     private val log = LoggerFactory.getLogger(AsyncMessageUtil::class.java)
 }

@@ -1,11 +1,13 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.AliasDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.*
 import com.now.nowbot.controller.TokenBucketRateLimiter
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.restrict.RestrictUtils.isGroupAdmin
+import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
@@ -17,24 +19,27 @@ import kotlin.time.Duration.Companion.minutes
 
 @Service("FETCH")
 class FetchService(
-    private val lxMaiApiService: LxMaiApiService
+    private val lxMaiApiService: LxMaiApiService,
+    private val aliasDao: AliasDao,
 ): MessageService<FetchService.FetchType> {
 
     enum class FetchType {
-        MAIMAI, RE_MASTER;
+        MAIMAI, RE_MASTER, ALIAS;
 
         companion object {
             fun getType(string: String?): FetchType {
                 return when(string?.trim()) {
                     "m", "mai", "maimai", "舞萌" -> MAIMAI
                     "r", "e", "re", "remaster", "白", "re master" -> RE_MASTER
+                    "a", "alias", "aliases", "别名" -> ALIAS
 
                     else -> throw UnsupportedOperationException("""
                         请输入需要获取的种类：
                         
                         m -> maimai: musicDB.json
                         r -> remaster: remaster.json
-                        限制 2 分钟获取一次。
+                        a -> alias: aliasDB.json
+                        限制 5 分钟获取一次。
                     """.trimIndent())
                 }
             }
@@ -52,24 +57,32 @@ class FetchService(
         }
 
         val any: String? = matcher.group(FLAG_ANY)
+        val type = FetchType.getType(any)
 
-        if (event.isGroupAdmin()) {
-            val type = FetchType.getType(any)
+        // 别名导出对所有用户开放，其他种类仍然只给群管理员（或超级管理员）
+        if (type != FetchType.ALIAS && !event.isGroupAdmin()) return false
 
-            data.value = type
-            return true
-        } else return false
+        data.value = type
+        return true
     }
 
     override fun handleMessage(
         event: MessageEvent,
         param: FetchType
     ): ServiceCallStatistic? {
-        rateLimiter.checkOrThrow("FETCH")
+        // 使用独立令牌桶，超级管理员不受限制
+        if (event.isNotSuperAdmin()) {
+            if (param == FetchType.ALIAS) {
+                rateLimiter.checkOrThrow("ALIAS")
+            } else {
+                rateLimiter.checkOrThrow("FETCH")
+            }
+        }
 
         when(param) {
             FetchType.MAIMAI -> fetchMaiMusicDatabaseJson(event, false, lxMaiApiService)
             FetchType.RE_MASTER -> fetchMaiMusicDatabaseJson(event, true, lxMaiApiService)
+            FetchType.ALIAS -> fetchAliasDatabaseJson(event, aliasDao)
 
             // else -> throw UnsupportedOperationException.Invalid()
         }
@@ -78,7 +91,7 @@ class FetchService(
     }
 
     companion object {
-        private val rateLimiter = TokenBucketRateLimiter(1, 2.minutes)
+        private val rateLimiter = TokenBucketRateLimiter(1, 5.minutes)
 
         private fun getVersionInt(maiVersion: MaiVersion): Int {
             return when(maiVersion) {
@@ -144,6 +157,20 @@ class FetchService(
             } else {
                 "musicDB.json"
             }
+
+            event.replyFileInGroupAsync(fileArray, name)
+        }
+
+        /**
+         * 导出库里所有「标题 -> 第一个别名」的映射：键是标题，值是排序最靠前的别名。
+         * 没有别名的标题不会出现在结果里，格式与 !ai 导入一致。
+         */
+        private fun fetchAliasDatabaseJson(event: MessageEvent, aliasDao: AliasDao) {
+            val map = aliasDao.getTitlePrimaryAliases()
+
+            val fileArray = JacksonUtil.objectToJsonPretty(map).toByteArray(Charsets.UTF_8)
+
+            val name = "aliasDB.json"
 
             event.replyFileInGroupAsync(fileArray, name)
         }

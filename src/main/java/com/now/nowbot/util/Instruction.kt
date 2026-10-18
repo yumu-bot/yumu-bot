@@ -1126,15 +1126,10 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
-    // !alias export / !ao
-    // 导出所有「标题 -> 第一个别名」的 JSON 映射，供外部程序读取查询。
-    // 冷却 2 分钟（复用 FetchService 的令牌桶），超级管理员不受限制。
-    ALIAS_EXPORT(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("alias\\s*(export|output|dump|json)", "ao", "别名(导出|输出)")
-    }),
+    // 别名导出已并入 !fetch：!fetch a / !fetch alias 导出「标题 -> 第一个别名」的 JSON 映射。
 
     // !alias import / !ai
-    // 导入 !ao 导出的「标题 -> 别名」JSON 映射。仅超级管理员可用。
+    // 导入 !fetch a 导出的「标题 -> 别名」JSON 映射。仅超级管理员可用。
     // 可以不带参数（之后发送文件），也可以直接给出链接或本地路径，方便命令行测试。
     ALIAS_IMPORT(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(import|load|upload)", "ai", "别名(导入|上传)")

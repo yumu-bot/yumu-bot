@@ -180,10 +180,12 @@ class RestrictImplement(
      * 标准消息监听入口
      */
     fun onMessage(event: MessageEvent, errorHandle: (MessageEvent, Throwable) -> Unit) {
-        AsyncMessageUtil.put(event)
         val textMessage = event.textMessage
 
         if (!filterMessage(textMessage)) {
+            // 普通消息才交给正在等待回答的会话（例如 !aw 的编号回复）。
+            AsyncMessageUtil.put(event)
+
             // 不是指令时，交给正在等待普通输入的会话（例如 !am 手动补录别名）。
             val messageText = textMessage.trim()
 
@@ -197,6 +199,12 @@ class RestrictImplement(
             }
             return
         }
+
+        // 指令不应该被旧的一问一答会话当成回答：
+        // 静默取消这些会话，避免它们稍后超时再发一条提示；
+        // AsyncLock 等旧式等待仍需收到消息，保持原有行为。
+        AsyncMessageUtil.cancelPrompts(event)
+        AsyncMessageUtil.putLocks(event)
 
         val messageText = textMessage.trim()
         val uid = event.sender.contactID
