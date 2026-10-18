@@ -45,8 +45,10 @@ class AliasDao(
     /**
      * 批量按标题名称获取别名值列表，一次查询解决多个标题，避免逐条标题查库导致的 N+1。
      *
+     * 只会返回已通过审核的别名；待审核数据仅允许在审核流程里出现。
+     *
      * @param normalizedTitles 已经 removeSongSuffix + formatted 处理过的标题（即 [AliasTitle.name] 的形态）
-     * @return key 为标题，value 为该标题下的别名值列表；没有别名的标题对应空列表
+     * @return key 为标题，value 为该标题下已通过审核的别名值列表；没有已审核别名的标题对应空列表
      */
     @Transactional
     fun getAliasesByNormalizedTitles(normalizedTitles: Collection<String>): Map<String, List<String>> {
@@ -63,7 +65,8 @@ class AliasDao(
 
         if (missed.isNotEmpty()) {
             titleRepository.findByNameInWithAliases(missed).forEach { title ->
-                val aliases = title.aliases.map { it.value }
+                // 只把已审核的别名放进缓存和返回值，待审核数据不能对外泄露
+                val aliases = title.approvedAliases.map { it.value }
 
                 // 直接拿查询结果填充返回值，绝不要在查完之后再从缓存回读
                 result[title.name] = aliases
@@ -77,36 +80,66 @@ class AliasDao(
     }
 
     /**
-     * 通过标题名称获取该标题下的所有别名值列表
+     * 通过标题名称获取该标题下已通过审核的别名值列表
      * @param titleName 标题名称
-     * @return 别名字符串列表（如果标题不存在返回空列表）
+     * @return 已审核别名字符串列表（如果标题不存在或没有已审核别名返回空列表）
      */
     @Transactional
     fun getAliasesByTitle(titleName: String): List<String> {
         val title = titleRepository.findByNameWithAliases(titleName) ?: return emptyList()
-        return title.aliases.map { it.value }
+        return title.approvedAliases.map { it.value }
     }
 
     /**
-     * 通过标题 ID 获取该标题下的所有别名值列表
+     * 通过标题 ID 获取该标题下已通过审核的别名值列表
      * @param titleId 标题 ID
-     * @return 别名字符串列表（如果标题不存在返回空列表）
+     * @return 已审核别名字符串列表（如果标题不存在或没有已审核别名返回空列表）
      */
     @Transactional
     fun getAliasesByTitleId(titleId: Long): List<String> {
         val title = titleRepository.findByIdWithAliases(titleId) ?: return emptyList()
-        return title.aliases.map { it.value }
+        return title.approvedAliases.map { it.value }
     }
 
     /**
-     * 通过标题名称获取该标题下的所有 Alias 实体列表（包含审核状态等详细信息）
+     * 通过标题名称获取该标题下已通过审核的 Alias 实体列表
      * @param titleName 标题名称
-     * @return Alias 实体列表
+     * @return 已审核 Alias 实体列表，不会包含 approved = false 的数据
      */
     @Transactional
     fun getAliasEntitiesByTitle(titleName: String): List<Alias> {
         val title = titleRepository.findByNameWithAliases(titleName) ?: return emptyList()
-        return title.aliases.toList()
+        return title.approvedAliases
+    }
+
+    /**
+     * 删除流程专用：获取标题下的所有别名（包含还没有通过审核的别名）。
+     *
+     * 删除指令是超级管理员专属操作，管理员需要能看到并删除待审核别名，
+     * 因此这里刻意不按 approved 过滤。除删除流程外不要调用本方法。
+     *
+     * @param titleName 标题名称
+     * @return 标题下的全部别名值（标题不存在时返回空列表）
+     */
+    @Transactional
+    fun getAliasesByTitleIncludingUnapproved(titleName: String): List<String> {
+        val title = titleRepository.findByNameWithAliases(titleName) ?: return emptyList()
+        return title.aliases.map { it.value }
+    }
+
+    /**
+     * 统计某个标题下还没有通过审核的别名数量。
+     *
+     * 供 `!am` 的普通用户预览使用：普通用户看不到待审核别名本身，
+     * 但需要知道还有多少条正在等待审核。
+     *
+     * @param titleName 标题名称
+     * @return 待审核别名数量（标题不存在时返回 0）
+     */
+    @Transactional
+    fun countUnapprovedAliasesByTitle(titleName: String): Int {
+        val title = titleRepository.findByNameWithAliases(titleName) ?: return 0
+        return title.aliases.count { !it.approved }
     }
 
     /**
@@ -332,22 +365,27 @@ class AliasDao(
     }
 
     /**
-     * 查询所有标题以及它的第一个别名，供导出使用。
+     * 查询所有标题以及它的第一个已审核别名，供导出使用。
      *
-     * 第一个别名就是 [AliasTitle.primaryAlias]，即 @OrderColumn(position) 排序后的第一个。
-     * 还没有任何别名的标题不会出现在结果里。
+     * 取的是 [AliasTitle.primaryApprovedAlias]，即 @OrderColumn(position) 排序后
+     * 第一个 approved = true 的别名。首位别名还在待审核时会顺延到下一个已审核别名，
+     * 因此未审核数据不会进入导出文件。
      *
-     * @return 有序 Map：key 是标题，value 是第一个别名
+     * @return 有序 Map：key 是标题，value 是第一个已审核别名；没有已审核别名的标题不会出现
      */
     @Transactional
     fun getTitlePrimaryAliases(): Map<String, String> {
         return titleRepository.findAll()
-            .mapNotNull { title -> title.primaryAlias?.value?.let { alias -> title.name to alias } }
+            // 首选别名也必须从已审核列表里取，待审核的别名不能进入导出文件
+            .mapNotNull { title -> title.primaryApprovedAlias?.value?.let { alias -> title.name to alias } }
             .toMap()
     }
 
     /**
-     * 查询所有待审核的别名（含关联的标题名），供管理员审核时展示。
+     * 查询所有待审核的别名（含关联的标题名）。
+     *
+     * 这是唯一允许返回 approved = false 数据的读取方法，只能由
+     * AliasService 的 review 审核流程调用，禁止用于任何对外展示。
      */
     @Transactional
     fun getPendingAliases(): List<PendingAlias> {
@@ -432,8 +470,23 @@ class AliasDao(
 
         invalidateTitleCache(title.name)
 
-        return saved
+        // 写操作需要完整的 aliases 才能避免重复绑定，但返回值可能被直接展示，
+        // 所以只把已审核的别名交给调用方。
+        return saved.toApprovedView()
     }
+
+    /**
+     * 生成一个只包含已审核别名的安全副本，供写操作的返回值使用。
+     *
+     * 这里刻意返回副本而不是直接修改 [AliasTitle.aliases]：
+     * 原实体仍是 JPA 管理对象，删掉待审核别名会被当成真正的解绑。
+     */
+    private fun AliasTitle.toApprovedView(): AliasTitle = AliasTitle(
+        id = id,
+        name = name,
+        aliases = approvedAliases.toMutableList(),
+        createdAt = createdAt,
+    )
 }
 
 /**

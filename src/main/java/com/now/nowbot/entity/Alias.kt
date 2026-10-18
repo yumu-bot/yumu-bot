@@ -27,6 +27,25 @@ class AliasTitle(
 ) {
     val primaryAlias: Alias?
         get() = aliases.firstOrNull()
+
+    /**
+     * 只包含已通过审核的别名，保持原本的展示顺序。
+     *
+     * 对外展示、导出、匹配歌曲时都必须使用这个视图；
+     * 未审核的别名只允许在 `AliasService.review` 的审核流程里出现。
+     * 这里不修改 [aliases] 本身，写操作仍然需要看到完整列表以避免重复绑定。
+     */
+    val approvedAliases: List<Alias>
+        get() = aliases.filter { it.approved }
+
+    /**
+     * 第一个已通过审核的别名。
+     *
+     * 导出的首选别名必须使用它：如果原来的首位别名还在待审核，
+     * 不能把它泄露出去，也不能让该标题因为首位未审核而整个消失。
+     */
+    val primaryApprovedAlias: Alias?
+        get() = approvedAliases.firstOrNull()
 }
 
 @Entity

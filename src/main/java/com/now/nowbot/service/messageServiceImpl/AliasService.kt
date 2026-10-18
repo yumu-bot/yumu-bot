@@ -424,8 +424,23 @@ class AliasService(
         val title = beatmapset.title.removeSongSuffix().formatted()
         if (title.isBlank()) throw IllegalArgumentException.WrongException.BeatmapID()
 
-        // 按标准流程（和 applyAlias 一致）查询该标题当前的别名，没有就是空列表
-        val aliases = aliasDao.getAliasesByNormalizedTitles(listOf(title))[title].orEmpty()
+        // 管理员可以看到全部别名（含待审核）；普通用户只能看到已审核别名，
+        // 并额外提示还有多少条在等待审核。
+        val isAdmin = event.isSuperAdmin()
+        val aliases = if (isAdmin) {
+            aliasDao.getAliasesByTitleIncludingUnapproved(title)
+        } else {
+            // 按标准流程（和 applyAlias 一致）查询该标题当前已审核的别名
+            aliasDao.getAliasesByNormalizedTitles(listOf(title))[title].orEmpty()
+        }
+        val unapprovedCount = if (isAdmin) 0 else aliasDao.countUnapprovedAliasesByTitle(title)
+
+        val aliasText = if (aliases.isEmpty()) "（空）" else aliases.joinToString("、")
+        val unapprovedHint = if (!isAdmin && unapprovedCount > 0) {
+            "（有${unapprovedCount}个未通过审核的别名）"
+        } else {
+            ""
+        }
 
         val preview = buildString {
             appendLine("谱面信息：")
@@ -435,7 +450,7 @@ class AliasService(
             appendLine("艺术家：${beatmapset.artist}")
             appendLine()
             appendLine("将保存到别名库的标题：$title")
-            appendLine("现有别名：${if (aliases.isEmpty()) "（空）" else aliases.joinToString("、")}")
+            appendLine("现有别名：$aliasText$unapprovedHint")
             appendLine("发送「!am 别名」或直接回复别名，即可将其保存为该标题的别名。")
             appendLine("「!am 别名」里的别名不能是纯数字（纯数字会被当成 BID）。")
             appendLine("回复 OK 取消本次操作。")
@@ -446,7 +461,7 @@ class AliasService(
             beatmapID = beatmapID,
             title = title,
             requester = event.sender.contactID,
-            approved = event.isSuperAdmin(),
+            approved = isAdmin,
             expireAt = System.currentTimeMillis() + MANUAL_TIMEOUT_SECONDS * 1_000,
         )
 
@@ -564,7 +579,7 @@ class AliasService(
     }
 
     /**
-     * 删除别名。只有管理员才能调用。
+     * 删除别名。只有超级管理员才能调用。
      *
      * 给出明确的「标题 = 别名」时合并成一条确认消息，回复 OK 才删除。
      *
@@ -641,7 +656,9 @@ class AliasService(
             return
         }
 
-        val aliases = aliasDao.getAliasesByNormalizedTitles(listOf(title))[title].orEmpty()
+        // 删除是超级管理员专属操作，这里必须列出全部别名（含待审核），
+        // 不能复用面向普通用户的「只返回已审核别名」视图。
+        val aliases = aliasDao.getAliasesByTitleIncludingUnapproved(title)
 
         if (aliases.isEmpty()) {
             event.replyAsync("「$title」下没有别名。")
@@ -1206,7 +1223,7 @@ class AliasService(
 
         val delete = Instruction.ALIAS_DELETE.matcher(messageText)
         if (delete.find()) {
-            // 删除需要管理员，否则不回应
+            // 删除需要超级管理员，否则不回应
             if (event.isNotSuperAdmin()) return false
 
             // :f 捕获组表示不限制删除数量，并跳过二次确认直接删除
