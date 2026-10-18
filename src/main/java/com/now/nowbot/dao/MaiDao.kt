@@ -261,7 +261,7 @@ class MaiDao(
 
     fun getAllMaiAliases(): List<MaiAlias> {
         val aliases = maiAliasLiteRepository.findAll()
-        return aliases.map { it.toModel() }
+        return aliases.map { it.toModel().withoutEmojiAliases() }
     }
 
     fun getMaiAliasByID(id: Int): MaiAlias? {
@@ -277,7 +277,7 @@ class MaiDao(
             return null
         }
         val alias = aliasOpt.get()
-        return alias.toModel()
+        return alias.toModel().withoutEmojiAliases()
     }
 
     @Transactional
