@@ -526,9 +526,18 @@ class GuessService(
                 }
 
                 SOURCE_OR_TAG -> if (s.source.isEmpty()) {
-                    MessageChain("谱面 #$i 没有来源。它的部分标签是：${s.tags
-                        .split(REGEX_SPACE_MORE).shuffled().take(5).joinToString(", ")
-                    }。")
+                    // 标签按原顺序保留，随机取一个长度为 5 的连续窗口（不足 5 个则全取），像滑动视角一样
+                    val tags  = s.tags.split(REGEX_SPACE_MORE).filter { it.isNotBlank() }
+                    val size  = minOf(5, tags.size)
+                    val start = if (tags.size <= size) 0 else Random.nextInt(tags.size - size + 1)
+
+                    if (size == 0) {
+                        MessageChain("谱面 #$i 没有来源，也没有标签。")
+                    } else {
+                        MessageChain("谱面 #$i 没有来源。它的部分标签是：${
+                            tags.subList(start, start + size).joinToString(", ")
+                        }。")
+                    }
                 } else {
                     MessageChain("谱面 #$i 的来源是 ${s.source}。")
                 }
