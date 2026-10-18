@@ -6,11 +6,9 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.throwable.TipsRuntimeException
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.locks.ReentrantLock
@@ -23,7 +21,7 @@ object AsyncMessageUtil {
 
     // doubleCheck 正在等待回答的会话，按和 lockManager 相同的 key 保存。
     // 单独存放是为了让新指令只取消这些会话，不影响 AsyncLock。
-    private val promptFutures = ConcurrentHashMap<String, CompletableFuture<MessageEvent>>()
+    private val promptFutures = ConcurrentHashMap<String, CompletableFuture<PromptResult>>()
 
     // ========== 高层 API ==========
 
@@ -62,42 +60,46 @@ object AsyncMessageUtil {
 
         // doubleCheck 的 future 单独保存，和 AsyncLock 的 future 分开：
         // 这样新指令可以静默取消正在等待回答的会话，而不会误伤其它等待者。
-        val future = CompletableFuture<MessageEvent>()
+        val future = CompletableFuture<PromptResult>()
         promptFutures[lockKey] = future
 
         try {
-            // 等待响应
+            // 等待响应。取消也通过普通结果返回，不使用异常做控制流。
             val result = try {
                 future.get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             } catch (_: TimeoutException) {
                 null
-            } catch (e: ExecutionException) {
-                // 被新指令取消：提示消息已经没用了，撤回后静默结束
-                if (e.cause is PendingCancelledException) {
+            }
+
+            when (result) {
+                null -> {
+                    receipt.recallAndLog()
+                    onOverTime()
+                    return
+                }
+
+                PromptResult.Cancelled -> {
+                    // 被新指令取消：撤回原提示后静默结束
                     receipt.recallAndLog()
                     return
                 }
-                throw e
-            }
 
-            if (result == null) {
-                receipt.recallAndLog()
+                is PromptResult.Reply -> {
+                    // 尝试撤回提示消息
+                    receipt.recallAndLog()
 
-                onOverTime()
-                return
-            }
+                    val reply = result.event
 
-            // 尝试撤回提示消息
-            receipt.recallAndLog()
+                    // 处理响应：空列表代表「任何回复都算确认」，否则任意一个关键字命中都算确认
+                    val confirmed = keywords.isEmpty() ||
+                            keywords.any { reply.rawMessage.contains(it, ignoreCase = true) }
 
-            // 处理响应：空列表代表「任何回复都算确认」，否则任意一个关键字命中都算确认
-            val confirmed = keywords.isEmpty() ||
-                    keywords.any { result.rawMessage.contains(it, ignoreCase = true) }
-
-            if (confirmed) {
-                onSuccess(result)
-            } else {
-                onFailure(result)
+                    if (confirmed) {
+                        onSuccess(reply)
+                    } else {
+                        onFailure(reply)
+                    }
+                }
             }
 
         } catch (_: TimeoutException) {
@@ -295,7 +297,7 @@ object AsyncMessageUtil {
         if (check != null && !check(message)) return false
 
         val lockCompleted = lockManager.completeFuture(key, message)
-        val promptCompleted = promptFutures[key]?.complete(message) ?: false
+        val promptCompleted = promptFutures[key]?.complete(PromptResult.Reply(message)) ?: false
         return lockCompleted || promptCompleted
     }
 
@@ -331,16 +333,17 @@ object AsyncMessageUtil {
     fun cancelPrompts(message: MessageEvent) {
         promptFutures.forEach { (key, future) ->
             if (matchKey(key, message)) {
-                future.completeExceptionally(PendingCancelledException())
+                future.complete(PromptResult.Cancelled)
             }
         }
     }
 
     private fun completePromptFutures(message: MessageEvent?) {
         if (message == null) return
+        val result = PromptResult.Reply(message)
         promptFutures.forEach { (key, future) ->
             if (matchKey(key, message)) {
-                future.complete(message)
+                future.complete(result)
             }
         }
     }
@@ -507,12 +510,18 @@ object AsyncMessageUtil {
     }
 
     /**
-     * 等待中的 doubleCheck 被新指令静默取消。
+     * doubleCheck 等待中的结果。
      *
-     * 用异常而不是普通返回值，是为了和「用户发来回复」「等待超时」区分开：
-     * 取消时既不执行 onSuccess，也不执行 onFailure / onOverTime，也不发提示。
+     * 用普通结果区分「收到回复」和「被新指令取消」，
+     * 不把取消做成异常，避免被 CompletableFuture 或外层 catch 意外抛给用户。
      */
-    private class PendingCancelledException : CancellationException("等待中的会话已被新指令取消")
+    private sealed interface PromptResult {
+        /** 收到了一条普通回复。 */
+        data class Reply(val event: MessageEvent) : PromptResult
+
+        /** 会话被新指令静默取消。 */
+        data object Cancelled : PromptResult
+    }
 
     private val log = LoggerFactory.getLogger(AsyncMessageUtil::class.java)
 }
