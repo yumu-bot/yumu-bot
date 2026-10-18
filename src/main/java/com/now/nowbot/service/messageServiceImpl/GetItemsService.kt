@@ -207,19 +207,19 @@ class GetItemsService(
             user.globalRank
         }
 
-        return """
-            <Player 
-              id=${user.userID}
-              name="${user.username}"
-              country=${user.countryRank}
-              global=${globalRank}
-              from="${user.countryCode}"
-              accuracy=${"%.2f".format(user.accuracy).toDouble()}
-              level=${user.levelCurrent}
-              progress=${user.levelProgress}
-              performance=${pp}
-            />
-        """.trimIndent()
+        return buildString {
+            appendLine("<Player")
+            appendLine("  id=${user.userID}")
+            appendLine("  name=\"${user.username}\"")
+            appendLine("  country=${user.countryRank}")
+            appendLine("  global=$globalRank")
+            appendLine("  from=\"${user.countryCode}\"")
+            appendLine("  accuracy=${"%.2f".format(user.accuracy).toDouble()}")
+            appendLine("  level=${user.levelCurrent}")
+            appendLine("  progress=${user.levelProgress}")
+            appendLine("  performance=$pp")
+            append("/>")
+        }
     }
 
     private fun NewbieBeatmapParam.getNewbieBeatmapComponent(): String {
@@ -243,22 +243,18 @@ class GetItemsService(
 
             calculateApiService.applyStarToBeatmap(b, m, mods)
 
-            val attributes = listOfNotNull(
-                "bid=${b.beatmapID}",
-                "sid=${b.beatmapsetID}",
-                "preview=\"${b.previewName}\"",
-                "star=${"%.2f".format(b.starRating)}",
-                "max=${b.maxCombo}",
-                if (displayUnicode) "unicode=\"${s?.titleUnicode}\"" else null,
-                if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null,
-                if (m.safeModeValue > 0) "mode=\"${m.charName}\"" else null
-            )
-
-            return@map """
-            <Beatmap
-              ${attributes.joinToString("\n              ")}
-            />
-            """.trimIndent()
+            return@map buildString {
+                appendLine("<Beatmap")
+                appendLine("  bid=${b.beatmapID}")
+                appendLine("  sid=${b.beatmapsetID}")
+                appendLine("  preview=\"${b.previewName}\"")
+                appendLine("  star=${"%.2f".format(b.starRating)}")
+                appendLine("  max=${b.maxCombo}")
+                if (displayUnicode) appendLine("  unicode=\"${s?.titleUnicode}\"")
+                if (mods.isNotEmpty()) appendLine("  mods=\"${mods.toAcronyms()}\"")
+                if (m.safeModeValue > 0) appendLine("  mode=\"${m.charName}\"")
+                append("/>")
+            }
         }.joinToString("\n\n")
     }
 
@@ -292,22 +288,18 @@ class GetItemsService(
 
             val first = m.firstOrNull()
 
-            val attributes = listOfNotNull(
-                "sid=${s.beatmapsetID}",
-                "preview=\"${s.previewName}\"",
-                "star=${"%.2f".format(t?.starRating ?: 0.0)}",
-                "difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]",
-                if (displayUnicode) "unicode=\"${s.titleUnicode}\"" else null,
-                if (s.availability.downloadDisabled) "disabled=true" else null,
-                if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null,
-                if ((first?.modeValue ?: 0) > 0) "mode=\"${first?.charName ?: "o"}\"" else null
-            )
-
-            return@map """
-            <Beatmap
-              ${attributes.joinToString("\n              ")}
-            />
-            """.trimIndent()
+            return@map buildString {
+                appendLine("<Beatmap")
+                appendLine("  sid=${s.beatmapsetID}")
+                appendLine("  preview=\"${s.previewName}\"")
+                appendLine("  star=${"%.2f".format(t?.starRating ?: 0.0)}")
+                appendLine("  difficulties=[${bs.sortedBy { it.mode.modeValue }.joinToString(",") { "%.2f".format(it.starRating) }}]")
+                if (displayUnicode) appendLine("  unicode=\"${s.titleUnicode}\"")
+                if (s.availability.downloadDisabled) appendLine("  disabled=true")
+                if (mods.isNotEmpty()) appendLine("  mods=\"${mods.toAcronyms()}\"")
+                if ((first?.modeValue ?: 0) > 0) appendLine("  mode=\"${first?.charName ?: "o"}\"")
+                append("/>")
+            }
         }.joinToString("\n\n")
     }
 
@@ -331,26 +323,22 @@ class GetItemsService(
         val displayCombos = this.combo.isNotEmpty() && this.accuracy.isNotEmpty()
         val displayUnicode = s.shouldDisplayUnicode()
 
-        val attributes = listOfNotNull(
-            "bid=${b.beatmapID}",
-            "sid=${b.beatmapsetID}",
-            "preview=\"${b.previewName}\"",
-            "star=${"%.2f".format(b.starRating)}",
-            "max=${b.maxCombo}",
-            "mode=\"${b.mode.charName}\"",
-            if (displayCombos) "accuracy=${this.accuracy}" else null,
-            if (displayCombos) "combo=${this.combo}" else null,
-            if (displayUnicode) "unicode=\"${s?.titleUnicode}\"" else null,
-            "rank=\"${this.rank.ifEmpty { "F" }.lowercase()}\"",
-            "performance=${this.pp.ifEmpty { "0" }}",
-            if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
-        )
-
-        return """
-            <Score
-              ${attributes.joinToString("\n              ")}
-            />
-            """.trimIndent()
+        return buildString {
+            appendLine("<Score")
+            appendLine("  bid=${b.beatmapID}")
+            appendLine("  sid=${b.beatmapsetID}")
+            appendLine("  preview=\"${b.previewName}\"")
+            appendLine("  star=${"%.2f".format(b.starRating)}")
+            appendLine("  max=${b.maxCombo}")
+            appendLine("  mode=\"${b.mode.charName}\"")
+            if (displayCombos) appendLine("  accuracy=$accuracy")
+            if (displayCombos) appendLine("  combo=$combo")
+            if (displayUnicode) appendLine("  unicode=\"${s?.titleUnicode}\"")
+            appendLine("  rank=\"${rank.ifEmpty { "F" }.lowercase()}\"")
+            appendLine("  performance=${pp.ifEmpty { "0" }}")
+            if (mods.isNotEmpty()) appendLine("  mods=\"${mods.toAcronyms()}\"")
+            append("/>")
+        }
     }
 
     private fun NewbieBestParam.getNewbieBestsComponent(): String {
@@ -367,73 +355,68 @@ class GetItemsService(
         val b = this.beatmap
         b.beatmapset = this.beatmapset
 
-        val attributes = listOfNotNull(
-            "bid=${b.beatmapID}",
-            "sid=${b.beatmapsetID}",
-            "preview=\"${this.previewName}\"",
-            "star=${"%.2f".format(b.starRating)}",
-            "max=${b.maxCombo}",
-            "mode=\"${b.mode.charName}\"",
-            "accuracy=${this.accuracy}",
-            "combo=${this.maxCombo}",
-            "rank=\"${this.rank.ifEmpty { "F" }.lowercase()}\"",
-            "performance=${this.pp.roundToInt()}",
-            if (this.mods.isNotEmpty()) "mods=\"${this.mods.toAcronyms()}\"" else null
-        )
-
-        return """
-            <Score
-              ${attributes.joinToString("\n              ")}
-            />
-            """.trimIndent()
+        return buildString {
+            appendLine("<Score")
+            appendLine("  bid=${b.beatmapID}")
+            appendLine("  sid=${b.beatmapsetID}")
+            appendLine("  preview=\"${previewName}\"")
+            appendLine("  star=${"%.2f".format(b.starRating)}")
+            appendLine("  max=${b.maxCombo}")
+            appendLine("  mode=\"${b.mode.charName}\"")
+            appendLine("  accuracy=$accuracy")
+            appendLine("  combo=$maxCombo")
+            appendLine("  rank=\"${rank.ifEmpty { "F" }.lowercase()}\"")
+            appendLine("  performance=${pp.roundToInt()}")
+            if (mods.isNotEmpty()) appendLine("  mods=\"${mods.toAcronyms()}\"")
+            append("/>")
+        }
     }
 
     private fun PoolParam.getMapPoolText(): String {
         val b = beatmapApiService.getBeatmap(beatmapID)
-        val sb = StringBuilder()
 
-        sb.append(beatmapID).append(',')
-        if (b.beatmapset != null) {
-            sb.append(b.beatmapset!!.artistUnicode).append(' ').append('-').append(' ')
-            sb.append(b.beatmapset!!.titleUnicode).append(' ')
-            sb.append('(').append(b.beatmapset!!.creator).append(')').append(' ')
-        }
-        sb.append('[').append(b.difficultyName).append(']').append(',')
+        return buildString {
+            append(beatmapID).append(',')
+            if (b.beatmapset != null) {
+                append(b.beatmapset!!.artistUnicode).append(' ').append('-').append(' ')
+                append(b.beatmapset!!.titleUnicode).append(' ')
+                append('(').append(b.beatmapset!!.creator).append(')').append(' ')
+            }
+            append('[').append(b.difficultyName).append(']').append(',')
 
-        if (mod == null || mod.trim {it <= ' '} .isEmpty()) {
-            sb.append(String.format("%.2f", b.starRating)).append(',')
-                .append(String.format("%d", b.bpm.roundToInt())).append(',')
-                .append(String.format("%d", floor((b.totalLength / 60.0)).roundToInt()))
+            if (mod == null || mod.trim { it <= ' ' }.isEmpty()) {
+                append(String.format("%.2f", b.starRating)).append(',')
+                    .append(String.format("%d", b.bpm.roundToInt())).append(',')
+                    .append(String.format("%d", floor((b.totalLength / 60.0)).roundToInt()))
+                    .append(':')
+                    .append(String.format("%02d", (b.totalLength % 60f).roundToInt()))
+                    .append(',')
+                append(b.maxCombo).append(',')
+                    .append(b.cs).append(',')
+                    .append(b.ar).append(',')
+                    .append(b.od)
+
+                return@buildString
+            }
+
+            val mods = mod.toLazerMods()
+
+            val a = beatmapApiService.getAttributes(beatmapID, b.mode, mods)
+            val newTotalLength = BeatmapUtil.applyLength(b.totalLength, mods).toFloat()
+
+            append(String.format("%.2f", a.starRating)).append(',')
+                .append(String.format("%d", BeatmapUtil.applyBPM(b.bpm, mods).roundToInt())).append(',')
+                .append(String.format("%d", floor((newTotalLength / 60.0)).roundToInt()))
                 .append(':')
-                .append(String.format("%02d", (b.totalLength % 60f).roundToInt()))
+                .append(String.format("%02d", (newTotalLength % 60.0).roundToInt()))
                 .append(',')
-            sb.append(b.maxCombo).append(',')
-                .append(b.cs).append(',')
-                .append(b.ar).append(',')
-                .append(b.od)
-
-            return sb.toString()
+            append(a.maxCombo).append(',')
+                .append(String.format("%.2f", BeatmapUtil.applyCS(b.cs!!, mods, b.mode))).append(',')
+                .append(String.format("%.2f", BeatmapUtil.applyAR(b.ar!!, mods))).append(',')
+                .append(String.format("%.2f", BeatmapUtil.applyOD(b.od!!, mods, b.mode)))
         }
-
-        val mods = mod.toLazerMods()
-
-        val a = beatmapApiService.getAttributes(beatmapID, b.mode, mods)
-        val newTotalLength = BeatmapUtil.applyLength(b.totalLength, mods).toFloat()
-
-        sb.append(String.format("%.2f", a.starRating)).append(',')
-            .append(String.format("%d", BeatmapUtil.applyBPM(b.bpm, mods).roundToInt())).append(',')
-            .append(String.format("%d", floor((newTotalLength / 60.0)).roundToInt()))
-            .append(':')
-            .append(String.format("%02d", (newTotalLength % 60.0).roundToInt()))
-            .append(',')
-        sb.append(a.maxCombo).append(',')
-            .append(String.format("%.2f", BeatmapUtil.applyCS(b.cs!!, mods, b.mode))).append(',')
-            .append(String.format("%.2f", BeatmapUtil.applyAR(b.ar!!, mods))).append(',')
-            .append(String.format("%.2f", BeatmapUtil.applyOD(b.od!!, mods, b.mode)))
-
-        return sb.toString()
     }
-    
+
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<GetItemsParam>): Boolean {
         val m = Instruction.GET_MAP.matcher(messageText)
         val m2 = Instruction.GET_NEWBIE_MAP.matcher(messageText)
