@@ -175,6 +175,9 @@ import kotlin.math.sqrt
             otherBests = other?.let { scoreApiService.getBestScores(it.userID, mode) }
         }
 
+        beatmapApiService.applyAlias(myBests)
+        beatmapApiService.applyAlias(otherBests.orEmpty())
+
         return SkillParam(isVs, me, myBests, other, otherBests, mode)
     }
 

@@ -6,7 +6,6 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.orElse
 import com.now.nowbot.model.filter.ScoreFilter
-import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -504,7 +503,7 @@ class ScorePRService(
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
         fun getE5ParamForFilteredScore(user: OsuUser, history: OsuUser? = null, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
-            beatmapApiService.applyBeatmapExtend(score)
+            //beatmapApiService.applyBeatmapExtend(score)
 
             val original = score.beatmap.originalDetails.toMap()
 
@@ -529,21 +528,8 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score)
+            beatmapApiService.applyAlias(score)
             return getE5ParamAfterExtended(user, history, score, score.ranking, panel, beatmapApiService, calculateApiService)
-        }
-
-        fun getE5Param(
-            user: OsuUser,
-            history: OsuUser? = null,
-            score: LazerScore,
-            beatmap: Beatmap,
-            position: Int? = null,
-            panel: String,
-            beatmapApiService: OsuBeatmapApiService,
-            calculateApiService: OsuCalculateApiService,
-        ): PanelE5Param {
-            beatmapApiService.applyBeatmapExtend(score, beatmap)
-            return getE5ParamAfterExtended(user, history, score, position ?: score.ranking, panel, beatmapApiService, calculateApiService)
         }
 
         private fun getE5ParamAfterExtended(

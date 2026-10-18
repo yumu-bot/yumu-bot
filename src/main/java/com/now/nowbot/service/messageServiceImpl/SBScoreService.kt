@@ -285,6 +285,7 @@ class SBScoreService(
                 // 实际上 SB 服内的成绩只能拿谱面最近 100 个和最高 100 个，事实上 SS 功能是失效的
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                 // asyncDownloadBackground(param)
+                beatmapApiService.applyAlias(scores)
 
                 val body = mapOf(
                     "user" to user,
@@ -297,13 +298,13 @@ class SBScoreService(
                 MessageChain(imageService.getPanel(body, "A5"))
             } else {
                 val score = scores.first()
+                beatmapApiService.applyAlias(score)
+                beatmapApiService.applyBeatmapExtend(score, map)
 
-                val e5Param = ScorePRService.getE5Param(
+                val e5Param = ScorePRService.getE5ParamForFilteredScore(
                     user,
                     null,
                     score,
-                    map,
-                    null,
                     "S",
                     beatmapApiService,
                     osuCalculateApiService

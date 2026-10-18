@@ -180,6 +180,9 @@ class SBTodayBPService(
         osuCalculateApiService.applyStarToScores(dataMap)
         BeatmapUtil.applyBeatmapChanges(dataMap)
 
+        // 别名要在筛选之前挂到整批成绩上，筛选后的子集才不会漏别名
+        osuBeatmapApiService.applyAlias(dataMap)
+
         val filteredScores = ScoreFilter.filterScores(dataMap, conditions)
 
         if (filteredScores.isEmpty()) {

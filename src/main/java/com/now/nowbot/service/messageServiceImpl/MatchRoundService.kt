@@ -89,6 +89,9 @@ import java.util.regex.Matcher
 
         val mrParam = getParam(matchID, round, keyword)
 
+        // 对局面板直接传 round.beatmap，这里给它所属的谱面集挂上别名
+        mrParam.round.beatmap?.let { beatmapApiService.applyAlias(it) }
+
         val image = try {
             imageService.getPanel(mrParam.toMap(), "F4")
         } catch (e: Exception) {

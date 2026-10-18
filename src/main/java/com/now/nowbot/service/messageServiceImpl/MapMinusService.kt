@@ -146,6 +146,9 @@ import kotlin.math.absoluteValue
             // skillDao.saveAndUpdateSkill(map, param.mode, mapMinus)
         }
 
+        // 谱面卡直接传 beatmap，这里给它所属的谱面集挂上别名
+        beatmapApiService.applyAlias(map)
+
         val body = mapOf(
             "beatmap" to map,
             "map_minus" to mapMinus,

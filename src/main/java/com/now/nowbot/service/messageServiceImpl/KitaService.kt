@@ -66,6 +66,9 @@ class KitaService(
 
         beatmap = beatmapApiService.getBeatmapFromDatabase(bid)
 
+        // 谱面卡直接传 beatmap，这里给它所属的谱面集挂上别名
+        beatmapApiService.applyAlias(beatmap)
+
         if (hasBG) {
             try {
                 val image = imageService.getPanelDelta(beatmap, round, mod, position, true)

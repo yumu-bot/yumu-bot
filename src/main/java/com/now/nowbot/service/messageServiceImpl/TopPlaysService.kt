@@ -10,6 +10,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
@@ -24,11 +25,12 @@ import java.util.regex.Matcher
 
 @Service("TOP_PLAYS")
 class TopPlaysService(
-    private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
     private val groupDao: GroupDao,
     private val imageService: ImageService,
+    private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
 ): MessageService<TopPlaysService.TopPlaysParam> {
 
     data class TopPlaysParam(
@@ -109,12 +111,13 @@ class TopPlaysService(
             top.scores.drop(50)
         }
 
-        calculateApiService.applyStarToScores(scores)
-
 
         if (scores.isEmpty()) {
             throw NoSuchElementException.Score()
         }
+
+        calculateApiService.applyStarToScores(scores)
+        beatmapApiService.applyAlias(scores)
 
         val image = imageService.getPanel(mapOf(
             "first_score_rank" to firstScoreRank,

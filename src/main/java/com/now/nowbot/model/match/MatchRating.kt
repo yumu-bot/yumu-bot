@@ -48,6 +48,10 @@ class MatchRating(
         rounds = applyParams(fullRounds, ratingParam)
         scores = rounds.flatMap { it.scores }
 
+        // 比赛类面板会直接渲染 round.beatmap / score，别名要提前挂到谱面集上
+        beatmapApiService.applyAlias(scores)
+        beatmapApiService.applyAliasForBeatmaps(rounds.mapNotNull { it.beatmap })
+
         // 有可用成绩的才能进这个分组
         val hasScoreSet = scores.map { it.userID }.toSet()
         players = fullPlayers.filterKeys { it in hasScoreSet }

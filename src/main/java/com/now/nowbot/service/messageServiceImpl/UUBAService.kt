@@ -117,6 +117,7 @@ class UUBAService(
         beatmapApiService.applyBeatmapExtend(bests)
         calculateApiService.applyStarToScores(bests)
         BeatmapUtil.applyBeatmapChanges(bests)
+        beatmapApiService.applyAlias(bests)
 
         return BAParam(user, bests, isMyself.get(), emptyList(), 2)
 

@@ -224,6 +224,9 @@ class MapStatisticsService(
     }
 
     fun MapStatisticsParam.getPanelRParam(): PanelRParam {
+        // 谱面集卡直接传 beatmapset，别名要提前挂上
+        beatmapApiService.applyAlias(beatmapset)
+
         val ppList = getPPList(beatmap, expected, calculateApiService)
         val ppDistribution = getPPDistribution(beatmap, expected, calculateApiService)
 

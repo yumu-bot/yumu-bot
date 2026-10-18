@@ -179,9 +179,37 @@ interface OsuBeatmapApiService {
         return getBeatmapsetAndTopBeatmapFromAnyID(inputType, inputID, groupIDFn)
     }
 
+    fun applyAlias(score: LazerScore) {
+        applyAlias(listOf(score))
+    }
+
     fun applyAlias(scores: Collection<LazerScore>)
 
     fun applyAlias(scoresMap: Map<*, LazerScore>) {
         applyAlias(scoresMap.values)
+    }
+
+    /**
+     * 给谱面集挂别名。用于只渲染谱面集卡、没有成绩可挂载的面板。
+     */
+    fun applyAlias(beatmapset: Beatmapset)
+
+    /**
+     * 批量给谱面集挂别名，一次查库。
+     */
+    fun applyAlias(beatmapsets: List<Beatmapset>)
+
+    /**
+     * 给谱面挂别名，实际挂到它所属的谱面集上。用于只渲染谱面卡（没有成绩）的面板。
+     */
+    fun applyAlias(beatmap: Beatmap) {
+        beatmap.beatmapset?.let { applyAlias(it) }
+    }
+
+    /**
+     * 批量给谱面挂别名。不能和 [applyAlias] 的 List 重载同名，否则擦除后签名冲突。
+     */
+    fun applyAliasForBeatmaps(beatmaps: Collection<Beatmap>) {
+        applyAlias(beatmaps.mapNotNull { it.beatmapset }.distinctBy { it.beatmapsetID })
     }
 }

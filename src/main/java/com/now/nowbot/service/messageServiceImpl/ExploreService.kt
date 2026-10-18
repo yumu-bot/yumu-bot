@@ -317,6 +317,13 @@ class ExploreService(
     }
 
     private fun ExploreParam.getImage(): ByteArray {
+        // 探索类面板会直接把 beatmap / beatmapset 列表交给渲染模块，别名要提前挂到谱面集上
+        when (this) {
+            is MostPlayedParam -> beatmapApiService.applyAliasForBeatmaps(mostPlayed)
+            is MyBeatmapsetParam -> beatmapApiService.applyAlias(beatmapsets)
+            is SearchParam -> beatmapApiService.applyAlias(search.beatmapsets)
+        }
+
         return when(this) {
             is MostPlayedParam -> imageService.getPanel(this.toMap(), "A12")
             is MyBeatmapsetParam -> imageService.getPanel(this.toMap(), "A13")

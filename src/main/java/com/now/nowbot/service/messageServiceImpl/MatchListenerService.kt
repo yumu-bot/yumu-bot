@@ -264,6 +264,9 @@ class MatchListenerService(
 
             BeatmapUtil.applyBeatmapChanges(bm, event.mods)
 
+            // 谱面卡直接传 beatmap，这里给它所属的谱面集挂上别名
+            beatmapApiService.applyAlias(bm)
+
             val param = PanelE7Param(
                 mr, event.mode, event.mods, event.users, bm,
                 beatmapApiService.getBeatmapObjectGrouping26(bm), BeatmapUtil.getDetailMap(bm)

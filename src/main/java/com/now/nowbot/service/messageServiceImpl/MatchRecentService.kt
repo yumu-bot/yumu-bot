@@ -212,13 +212,12 @@ class MatchRecentService(
         val body = if (filteredScores.size == 1) {
             val score = filteredScores.first()
 
-            // extend 会整体替换 score.beatmap，星数/PP 必须在其之后串行执行
-            // 缺的东西太多
-            beatmapApiService.applyBeatmapExtendFromAPI(score)
+            beatmapApiService.applyBeatmapExtend(score)
             calculateApiService.applyStarToScore(score)
             calculateApiService.applyPPToScore(score)
+            beatmapApiService.applyAlias(score)
 
-            val e5 = ScorePRService.getE5Param(
+            val e5 = ScorePRService.getE5ParamForFilteredScore(
                 user, null, score, "MR", beatmapApiService, calculateApiService
             ).toMap().toMutableMap()
 
@@ -226,10 +225,10 @@ class MatchRecentService(
 
             e5
         } else {
-            // extend 会整体替换 score.beatmap，星数/PP 必须在其之后串行执行
             beatmapApiService.applyBeatmapExtend(filteredScores)
             calculateApiService.applyStarToScores(filteredScores)
             calculateApiService.applyPPToScores(filteredScores)
+            beatmapApiService.applyAlias(filteredScores)
 
 
             mapOf(

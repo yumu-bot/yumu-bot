@@ -60,6 +60,9 @@ class GetPoolService(
             throw MapPoolException(MapPoolException.Type.GP_Map_Empty)
         }
 
+        // 图池面板直接传 beatmap，这里给这些谱面所属的谱面集挂上别名
+        beatmapApiService.applyAliasForBeatmaps(mapPool.modPools.flatMap { it.beatmaps })
+
         val body = mapOf(
             "pool" to mapPool, "mode" to param.mode.shortName
         )

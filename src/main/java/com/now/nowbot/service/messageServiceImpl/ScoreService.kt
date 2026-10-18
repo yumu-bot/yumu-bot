@@ -810,7 +810,11 @@ import kotlin.time.Duration.Companion.seconds
 
                 MessageChain(imageService.getPanel(body, "A5"))
             } else {
-                val e5Param = ScorePRService.getE5Param(user, null, scores.first(), map, null, "S", beatmapApiService, calculateApiService)
+                val score = scores.first()
+                beatmapApiService.applyBeatmapExtendForSameScore(listOf(score), map)
+                calculateApiService.applyStarToScores(listOf(score))
+
+                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, null, score, "S", beatmapApiService, calculateApiService)
 
                 MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
             }

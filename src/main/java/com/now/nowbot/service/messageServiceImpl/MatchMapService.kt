@@ -49,7 +49,27 @@ class MatchMapService(
         val beatmap: Beatmap,
         val density: IntArray,
         val original: Map<String, Any>,
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as PanelE7Param
+
+            if (match.match.latestEventID != other.match.match.latestEventID) return false
+            if (beatmap.beatmapID != other.beatmap.beatmapID) return false
+            if (mods !== other.mods) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = match.match.latestEventID.hashCode()
+            result = 31 * result + beatmap.beatmapID.hashCode()
+            result = 31 * result + mods.hashCode()
+            return result
+        }
+    }
 
     override fun isHandle(
         event: MessageEvent,
@@ -91,6 +111,10 @@ class MatchMapService(
 
     override fun handleMessage(event: MessageEvent, param: MatchMapParam): ServiceCallStatistic? {
         val e7Param = getPanelE7Param(param, beatmapApiService, calculateApiService)
+
+        // 谱面卡直接传 beatmap，这里给它所属的谱面集挂上别名
+        beatmapApiService.applyAlias(e7Param.beatmap)
+
         val image = imageService.getPanel(e7Param, "E7")
 
         try {

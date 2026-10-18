@@ -279,6 +279,9 @@ import kotlin.time.Duration.Companion.days
         val mapPool = MapPoolDto(name, mode, dataMap, beatmapApiService, calculateApiService)
         if (mapPool.modPools.isEmpty()) throw TipsRuntimeException(MapPoolException.Type.GP_Map_Empty.message)
 
+        // 图池面板直接传 beatmap，这里给这些谱面所属的谱面集挂上别名
+        beatmapApiService.applyAliasForBeatmaps(mapPool.modPools.flatMap { it.beatmaps })
+
         val body = mapOf(
             "pool" to mapPool, "mode" to mode.shortName
         )
@@ -650,6 +653,9 @@ import kotlin.time.Duration.Companion.days
                 } else {
                     val ss = scoreApiService.getBeatmapScores(bid, uid, mode)
 
+                    // 别名要在筛选之前挂到整批成绩上，筛选后的子集才不会漏别名
+                    beatmapApiService.applyAlias(ss)
+
                     ss.filterMod(ms) {
                         throw TipsRuntimeException(NoSuchElementException.BeatmapScoreFiltered(bid))
                     }
@@ -813,6 +819,10 @@ import kotlin.time.Duration.Companion.days
 
             val ppList = MapStatisticsService.getPPList(beatmap, expected, calculateApiService)
             val ppDist = MapStatisticsService.getPPDistribution(beatmap, expected, calculateApiService)
+
+            // 谱面集卡直接传 beatmapset，没有成绩可以带别名
+            beatmapApiService.applyAlias(beatmapset)
+
             val panel = PanelRParam(beatmapset, beatmap, expected, ppList, ppDist, beatmap.originalDetails.toMap())
 
             imageService.getPanel(panel, "R")
@@ -863,6 +873,10 @@ import kotlin.time.Duration.Companion.days
             scores.forEachIndexed { i, score ->
                 score.ranking = i + 1
             }
+
+            // 谱面卡直接传 beatmap，这里给它所属的谱面集挂上别名
+            beatmapApiService.applyAlias(beatmap)
+
             val body = mapOf(
                 "beatmap" to beatmap,
                 "scores" to scores,
@@ -998,6 +1012,10 @@ import kotlin.time.Duration.Companion.days
             discussion.addDifficulty4DiscussionDetails(diffs)
 
             val param = NominationService.getParam(beatmapset, discussion)
+
+            // 谱面集卡直接传 beatmapset，没有成绩可以带别名
+            beatmapApiService.applyAlias(beatmapset)
+
             return@getImageOrThrow imageService.getPanel(param.toMap(), "N")
         }
     }

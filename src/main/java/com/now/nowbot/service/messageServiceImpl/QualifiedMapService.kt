@@ -94,6 +94,9 @@ import java.util.regex.Matcher
 
             search.beatmapsets = split.first
 
+            // 过审谱面卡直接传 beatmapset 列表，别名要提前挂上
+            beatmapApiService.applyAlias(search.beatmapsets)
+
             val img = imageService.getPanel(mapOf(
                 "search" to search,
                 "page" to split.second,

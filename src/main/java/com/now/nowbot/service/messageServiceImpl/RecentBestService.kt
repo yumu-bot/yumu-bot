@@ -147,9 +147,10 @@ class RecentBestService(
     private fun List<LazerScore>.extend(): List<LazerScore> {
 
         beatmapApiService.applyBeatmapExtend(this)
-        beatmapApiService.applyVersion(this)
         BeatmapUtil.applyBeatmapChanges(this)
         calculateApiService.applyStarToScores(this)
+        beatmapApiService.applyVersion(this)
+        beatmapApiService.applyAlias(this)
 
         return this.sortedByDescending {
             return@sortedByDescending when(it.rank) {

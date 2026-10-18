@@ -20,8 +20,6 @@ import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.exchangeToBody
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -107,6 +105,9 @@ class MapPoolService(
     }
 
     private fun MessageEvent.replyAsync(data: MapPoolDto, mode: OsuMode) {
+        // 图池面板直接传 beatmap，这里给这些谱面所属的谱面集挂上别名
+        beatmapApiService.applyAliasForBeatmaps(data.modPools.flatMap { it.beatmaps })
+
         val body = mapOf("pool" to data, "mode" to mode.shortName)
 
         val image = imageService.getPanel(body, "H")
@@ -155,7 +156,7 @@ class MapPoolService(
         }
     }
 
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(MapPoolService::class.java)
-    }
+//    companion object {
+//        private val log: Logger = LoggerFactory.getLogger(MapPoolService::class.java)
+//    }
 }

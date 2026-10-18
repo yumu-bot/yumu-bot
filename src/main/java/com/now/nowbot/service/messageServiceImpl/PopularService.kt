@@ -373,6 +373,9 @@ class PopularService(
             p.maxRetry.user = maxRetryPlayers[p.maxRetry.userID]
         }
 
+        // 流行谱面卡直接传 beatmap，别名要提前挂到谱面集上
+        beatmapApiService.applyAliasForBeatmaps(beatmaps.values)
+
         val panelTData = PanelTData(info, shown, bestPerformance, modAttr, modMaxPercent, ppAttr, ppMaxPercent)
 
         val message: MessageChain = try {

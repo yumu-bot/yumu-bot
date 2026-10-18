@@ -13,6 +13,7 @@ import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.web.QuickplayLeaderboardItem
@@ -30,6 +31,7 @@ import java.util.regex.Matcher
 class QuickplayInfoService(
     private val userApiService: OsuUserApiService,
     private val matchApiService: OsuMatchApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
     private val groupDao: GroupDao,
 ): MessageService<QuickplayInfoService.QuickplayInfoParam> {
@@ -118,6 +120,9 @@ class QuickplayInfoService(
         val (maxPage, surrounding) = getSurrounding(current.rank, user.userID, user.mode, current.poolID)
 
         val rooms = matchApiService.getRooms(targetInfos, 25)
+
+        // 房间面板会直接传 beatmapset 列表，别名要提前挂上
+        beatmapApiService.applyAlias(rooms.flatMap { it.beatmapsets })
 
         return QuickplayInfoParam(user, current, surrounding, rooms, variant, maxPage)
     }

@@ -175,15 +175,16 @@ class BestHistoryRecoverService(
                 map[id]?.let { score -> index to score}
             }.toMap()
 
+        // extend 会整体替换 score.beatmap，星数必须在其之后串行执行
+        beatmapApiService.applyBeatmapExtend(scores)
+        calculateApiService.applyStarToScores(scores)
+        beatmapApiService.applyAlias(scores)
+
         val snapshotPP = scores.map { (index, score) ->
             score.pp * FastPower095.pow(index - 1)
         }.sum() + DataUtil.getBonusPP(user.beatmapPlaycount)
 
         return if (scores.size > 1) {
-
-            // extend 会整体替换 score.beatmap，星数必须在其之后串行执行
-            beatmapApiService.applyBeatmapExtend(scores)
-            calculateApiService.applyStarToScores(scores)
 
             val body = mapOf(
                 "user" to user.apply {

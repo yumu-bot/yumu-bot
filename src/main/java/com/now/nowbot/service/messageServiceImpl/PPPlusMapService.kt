@@ -70,6 +70,9 @@ class PPPlusMapService(
 
         map.applyDimensions(param.mods)
 
+        // 谱面卡直接传 beatmap，这里给它所属的谱面集挂上别名
+        beatmapApiService.applyAlias(map)
+
         val dataMap = mapOf(
             "isUser" to false,
             "me" to map,

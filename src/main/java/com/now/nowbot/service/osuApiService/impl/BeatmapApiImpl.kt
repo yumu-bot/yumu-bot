@@ -625,17 +625,27 @@ class BeatmapApiImpl(
     override fun applyAlias(scores: Collection<LazerScore>) {
         if (scores.isEmpty()) return
 
-        // 一整批成绩里谱面集标题会大量重复，先按「去掉歌曲后缀并标准化」的标题分组：
-        // 处理过的标题只算一次，既省掉逐条成绩的重复正则，又能让整个批次只查一次库。
-        val scoreGroup = scores.groupBy { it.beatmapset.title.removeSongSuffix().formatted() }
+        applyAlias(scores.map { it.beatmapset })
+    }
 
-        val titleAliases = aliasDao.getAliasesByNormalizedTitles(scoreGroup.keys)
+    override fun applyAlias(beatmapset: Beatmapset) {
+        applyAlias(listOf(beatmapset))
+    }
 
-        scoreGroup.forEach { (title, sameTitleScores) ->
+    override fun applyAlias(beatmapsets: List<Beatmapset>) {
+        if (beatmapsets.isEmpty()) return
+
+        // 一整批谱面集里标题会大量重复，先按「去掉歌曲后缀并标准化」的标题分组：
+        // 处理过的标题只算一次，既省掉逐条的重复正则，又能让整个批次只查一次库。
+        val setGroup = beatmapsets.groupBy { it.title.removeSongSuffix().formatted() }
+
+        val titleAliases = aliasDao.getAliasesByNormalizedTitles(setGroup.keys)
+
+        setGroup.forEach { (title, sameTitleSets) ->
             val aliases = titleAliases[title]
 
             if (!aliases.isNullOrEmpty()) {
-                sameTitleScores.forEach { it.beatmapset.aliases = aliases }
+                sameTitleSets.forEach { it.aliases = aliases }
             }
         }
     }
@@ -1622,10 +1632,6 @@ class BeatmapApiImpl(
                     hitLength = lite.hitLength
                     bpm = lite.bpm
                     convert = lite.convert
-
-                    // lite 可能已经打过模组（ar/cs/od/bpm 是模组后的值），
-                    // 必须把它的原始快照带过来，否则新实例会把模组值当成原始值。
-                    inheritOriginalDetails(lite)
                 }
             } else {
                 extended.copy().apply {

@@ -100,6 +100,9 @@ class GroupLeaderBoardService(
         event: MessageEvent,
         param: GroupLeaderBoardParam
     ): ServiceCallStatistic {
+        // 谱面卡直接传 beatmap，没有成绩可以带别名，这里给它所属的谱面集挂上
+        beatmapApiService.applyAlias(param.beatmap)
+
         val image = imageService.getPanel(param, "A16")
 
         event.replyAsync(image)
@@ -179,6 +182,9 @@ class GroupLeaderBoardService(
 
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, cleanBeatmap)
                 calculateApiService.applyPPToScoresWithSameBeatmap(scores)
+
+                // 别名要在筛选之前挂到整批成绩上，筛选后的子集才不会漏别名
+                beatmapApiService.applyAlias(scores)
 
                 val filteredScores = ScoreFilter.filterScores(scores, conditions)
                     .ifEmpty { throw NoSuchElementException.GroupBeatmapScoreFiltered(beatmap.previewName) }

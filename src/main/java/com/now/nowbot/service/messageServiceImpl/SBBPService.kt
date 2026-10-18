@@ -193,6 +193,9 @@ class SBBPService(
             osuBeatmapApiService.applyBeatmapExtend(scores)
         }
 
+        // 别名要在筛选之前挂到整批成绩上，筛选后的子集才不会漏别名
+        osuBeatmapApiService.applyAlias(scores)
+
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {

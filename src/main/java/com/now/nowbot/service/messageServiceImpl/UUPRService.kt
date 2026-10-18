@@ -202,6 +202,9 @@ class UUPRService(
             scores = range2.getRecentsFromOsuUser(mode.data.orElse(), false, hasCondition, isPass)
         }
 
+        // 别名要在筛选之前挂到整批成绩上，筛选后的子集才不会漏别名
+        beatmapApiService.applyAlias(scores)
+
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {

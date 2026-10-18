@@ -63,6 +63,9 @@ class ViewService(
         beatmapApiService.getBeatmapFileString(beatmapID, noSave = !beatmap.hasLeaderBoard)
             ?: throw NoSuchElementException.BeatmapCache(beatmapID)
 
+        // 谱面卡直接传 beatmap，这里给它所属的谱面集挂上别名
+        beatmapApiService.applyAlias(beatmap)
+
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
 
         val row = if (isOfficial) {

@@ -142,6 +142,7 @@ class ScorePRCardService(
         calculateApiService.applyStarToScore(score)
         calculateApiService.applyPPToScore(score)
         BeatmapUtil.applyBeatmapChanges(score)
+        beatmapApiService.applyAlias(score)
 
         val image = imageService.getPanelGamma(score)
 

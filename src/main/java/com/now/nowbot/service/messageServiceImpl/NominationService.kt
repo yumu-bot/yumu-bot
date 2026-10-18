@@ -70,6 +70,9 @@ import kotlin.math.floor
     }
 
     override fun handleMessage(event: MessageEvent, param: NominationParam): ServiceCallStatistic? {
+        // 谱面集卡直接传 beatmapset，别名要提前挂上
+        beatmapApiService.applyAlias(param.beatmapset)
+
         val image: ByteArray = imageService.getPanel(param.toMap(), "N")
 
         try {
@@ -97,6 +100,9 @@ import kotlin.math.floor
     }
 
     override fun reply(event: MessageEvent, param: NominationParam): MessageChain? {
+        // 谱面集卡直接传 beatmapset，别名要提前挂上
+        beatmapApiService.applyAlias(param.beatmapset)
+
         val image: ByteArray =  imageService.getPanel(param.toMap(), "N")
 
         return MessageChainBuilder().addImage(image).build()
