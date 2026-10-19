@@ -65,7 +65,7 @@ class RunTimeService(
         dailyStatisticsService.collectPercentiles()
     }
 
-    // 每天凌晨5点22更新玩家百分比
+    // 每天凌晨5点25更新玩家百分比缓存
     @Scheduled(cron = "0 25 5 * * *")
     fun refreshPercent() {
         percentileCacheProvider.refreshCache()

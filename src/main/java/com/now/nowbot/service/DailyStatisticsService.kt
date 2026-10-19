@@ -74,9 +74,14 @@ class DailyStatisticsService(
     fun collectPercentiles() {
         Thread.ofVirtual().name("DailyStat-Percentiles").start {
             val startTime = System.currentTimeMillis()
-            userInfoDao.percentilesDailyUpsert()
-            val endTime = System.currentTimeMillis()
-            log.info("更新玩家百分比完成, 耗时: ${DataUtil.time2HMS(endTime - startTime)}")
+            try {
+                val updated = userInfoDao.percentilesDailyUpsert()
+                val endTime = System.currentTimeMillis()
+                log.info("更新玩家百分比完成, 更新 $updated 条, 耗时: ${DataUtil.time2HMS(endTime - startTime)}")
+            } catch (e: Exception) {
+                // 虚拟线程里的异常不会冒泡到调度器，必须在这里记录。
+                log.error("更新玩家百分比失败", e)
+            }
         }
     }
 

@@ -3,6 +3,7 @@ package com.now.nowbot.cache
 import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.mapper.OsuUserInfoPercentilesLiteRepository
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 
 @Component
 class PercentileCacheProvider(
@@ -29,7 +30,9 @@ class PercentileCacheProvider(
 
     @CanIgnoreReturnValue
     fun refreshCache(): Map<Byte, Int> {
-        val all = percentileRepository.findAll()
+        // 只读取最近 7 天的数据；更旧的行由每日任务清理。
+        val cutoff = LocalDateTime.now().minusDays(7)
+        val all = percentileRepository.findAllByUpdatedAtAfter(cutoff)
 
         // 按模式分组处理
         val newData = all.groupBy { it.mode }

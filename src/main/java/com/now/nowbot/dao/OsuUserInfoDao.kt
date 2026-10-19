@@ -11,7 +11,6 @@ import com.now.nowbot.entity.UserGlobalRankLite.Companion.parseToRankArray
 import com.now.nowbot.entity.UserInfoLite
 import com.now.nowbot.entity.UserInfoLite.Companion.updateFrom
 import com.now.nowbot.entity.UserRankPercentLite
-import com.now.nowbot.entity.UserRankPercentLite.Companion.updateFrom
 import com.now.nowbot.entity.UserStatisticsLite
 import com.now.nowbot.entity.UserStatisticsLite.Companion.updateFrom
 import com.now.nowbot.mapper.UserGlobalRankRepository
@@ -22,12 +21,16 @@ import com.now.nowbot.model.calculate.InfoLogStatistics
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
-import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
@@ -41,64 +44,138 @@ class OsuUserInfoDao(
     private val userRankPercentRepository: UserRankPercentRepository,
 
     private val percentileCacheProvider: PercentileCacheProvider,
+    transactionManager: PlatformTransactionManager,
 ) {
     @PersistenceContext
     lateinit var entityManager: EntityManager
 
-    @Transactional
-    fun percentilesDailyUpsert(): Int {
-        log.info("正在更新玩家百分比")
-        entityManager.clear()
+    private val transactionTemplate = TransactionTemplate(transactionManager)
+    private val percentilesLock = ReentrantLock()
+    private val userLocks = ConcurrentHashMap<Long, UserLock>()
 
-        val now = LocalDate.now(ZoneOffset.UTC)
-
-        val infos = userInfoRepository.getLatestBetween(now.minusDays(1), now)
-
-        val statMap = userStatisticsRepository.getLatestBetween(now.minusDays(1), now)
-            .associateBy { it.userID to it.mode }
-
-        val exists = infos.groupBy({ it.mode }, { it.userID })
-
-        val globalMap = exists.flatMap { (mode, users) ->
-            userGlobalRankRepository.getLatest(users, mode)
-        }.associate { (it.userID to it.mode) to it.rank }
-
-        val countryMap = exists.flatMap { (mode, users) ->
-            userRankPercentRepository.getLatest(users, mode)
-        }.associate { (it.userID to it.mode) to it.countryRank }
-
-        log.info("已经获取到 ${infos.size} 条数据，正在更新")
-
-        entityManager.clear()
-
-        infos.forEachIndexed { index, info ->
-            val key = info.userID to info.mode
-
-            val stat = statMap[key] ?: return@forEachIndexed
-            val global = globalMap[key]
-            val country = countryMap[key]
-
-            upsertPercentile(info, stat, global, country)
-
-            // 每处理 1000 条数据，强制同步并清空一次缓存
-            if (index % 1000 == 0 && index > 0) {
-                entityManager.flush()
-                entityManager.clear()
-            }
-        }
-
-        log.info("更新完成。")
-
-        return infos.size
+    private class UserLock {
+        val lock = ReentrantLock()
+        var references = 0
     }
 
-    fun upsertPercentile(info: UserInfoLite, stat: UserStatisticsLite, global: Long?, country: Long?) {
+    private fun acquireUserLock(userID: Long): UserLock {
+        return userLocks.compute(userID) { _, old ->
+            (old ?: UserLock()).also { it.references++ }
+        }!!
+    }
+
+    private fun releaseUserLock(userID: Long, lock: UserLock) {
+        userLocks.computeIfPresent(userID) { _, current ->
+            if (current !== lock) {
+                current
+            } else {
+                current.references--
+                if (current.references == 0) null else current
+            }
+        }
+    }
+
+    private inline fun <T> withUserLock(userID: Long, block: () -> T): T {
+        val lock = acquireUserLock(userID)
+        lock.lock.lock()
+        try {
+            return block()
+        } finally {
+            lock.lock.unlock()
+            releaseUserLock(userID, lock)
+        }
+    }
+
+    private fun <T> withUserLocks(userIDs: Collection<Long>, block: () -> T): T {
+        val locks = userIDs.distinct().sorted().map { it to acquireUserLock(it) }
+        try {
+            locks.forEach { (_, lock) -> lock.lock.lock() }
+            return block()
+        } finally {
+            locks.asReversed().forEach { (_, lock) -> lock.lock.unlock() }
+            locks.forEach { (userID, lock) -> releaseUserLock(userID, lock) }
+        }
+    }
+
+    fun percentilesDailyUpsert(): Int {
+        if (!percentilesLock.tryLock()) {
+            log.warn("玩家百分比更新任务已在运行，跳过本次触发")
+            return 0
+        }
+
+        try {
+            log.info("正在更新玩家百分比")
+            val now = LocalDate.now(ZoneOffset.UTC)
+
+            // 以统计表为准：批量写入路径只更新 user_statistics，不会写 user_info。
+            val statsList = userStatisticsRepository.getLatestBetween(now.minusDays(1), now)
+            if (statsList.isEmpty()) {
+                log.info("没有需要更新百分比的玩家数据。")
+                return 0
+            }
+
+            val infoMap = userInfoRepository.getLatestBetween(now.minusDays(1), now)
+                .associateBy { it.userID to it.mode }
+
+            val exists = statsList.groupBy({ it.mode }, { it.userID })
+
+            val globalMap = exists.flatMap { (mode, users) ->
+                userGlobalRankRepository.getLatest(users, mode)
+            }.associate { (it.userID to it.mode) to it.rank }
+
+            val countryMap = exists.flatMap { (mode, users) ->
+                userRankPercentRepository.getLatest(users, mode)
+            }.associate { (it.userID to it.mode) to it.countryRank }
+
+            log.info("已经获取到 ${statsList.size} 条数据，正在更新")
+
+            var updated = 0
+            statsList.chunked(1000).forEach { chunk ->
+                runCatching {
+                    transactionTemplate.executeWithoutResult {
+                        entityManager.clear()
+                        chunk.forEach { stat ->
+                            val key = stat.userID to stat.mode
+                            upsertPercentile(infoMap[key], stat, globalMap[key], countryMap[key])
+                        }
+                        entityManager.flush()
+                    }
+                }.onSuccess {
+                    updated += chunk.size
+                }.onFailure { e ->
+                    // 每个批次使用独立事务，单批失败不会影响其他玩家。
+                    log.error("更新玩家百分比失败，本批 ${chunk.size} 条已跳过", e)
+                }
+            }
+
+            runCatching {
+                percentileRepository.deleteOlderThan(LocalDateTime.now().minusDays(PERCENTILE_RETENTION_DAYS))
+            }.onFailure { e ->
+                log.warn("清理过期玩家百分比失败", e)
+            }
+
+            // 等所有事务提交后再刷新缓存，避免 05:25 的定时任务读到旧数据。
+            runCatching {
+                percentileCacheProvider.refreshCache()
+            }.onFailure { e ->
+                log.error("刷新玩家百分比缓存失败", e)
+            }
+
+            log.info("更新完成，共更新 $updated 条玩家百分比数据。")
+            return updated
+        } finally {
+            percentilesLock.unlock()
+        }
+    }
+
+    fun upsertPercentile(info: UserInfoLite?, stat: UserStatisticsLite, global: Long?, country: Long?) {
         percentileRepository.upsert(
-            userID = info.userID,
-            mode = info.mode,
+            userID = stat.userID,
+            mode = stat.mode,
             updatedAt = LocalDateTime.now(),
-            globalRank = global,
-            countryRank = country,
+            // 0 不是合法名次，传 null 让 COALESCE 保留旧值。
+            globalRank = global?.takeIf { it > 0 },
+            countryRank = country?.takeIf { it > 0 },
             level = stat.levelCurrent * 100 + stat.levelProgress,
             rankCountScore = 3 * (stat.countSS + stat.countSSH) + 2 * (stat.countSH + stat.countS) + stat.countA,
             playCount = stat.playCount,
@@ -106,21 +183,19 @@ class OsuUserInfoDao(
             playTime = stat.playTime,
             rankedScore = stat.rankedScore,
             totalScore = stat.totalScore,
-            beatmapPlaycount = info.beatmapPlaycount,
+            beatmapPlaycount = info?.beatmapPlaycount ?: 0,
             replaysWatched = stat.replaysWatched,
             maximumCombo = stat.maxCombo,
-            achievementsCount = info.achievementsCount
+            achievementsCount = info?.achievementsCount ?: 0
         )
     }
 
     fun getPercentiles(user: OsuUser, mode: OsuMode): Map<String, Double> {
-        // sb 服的模式转换
-        val modeValue: Byte = when(mode.modeValue) {
-            4.toByte(), 8.toByte() -> 0.toByte()
-            5.toByte() -> 1.toByte()
-            6.toByte() -> 2.toByte()
-            (-1).toByte() -> user.mode.modeValue
-            else -> mode.modeValue
+        // sb 服的模式转换，复用 OsuMode 自己的映射规则（含 mania 7k -> mania）。
+        val modeValue: Byte = if (mode == OsuMode.DEFAULT) {
+            user.mode.safeModeValue
+        } else {
+            mode.safeModeValue
         }
 
         val stats = percentileCacheProvider.cachedData.get()[modeValue]
@@ -204,9 +279,13 @@ class OsuUserInfoDao(
     fun upsertUserTodayAsync(user: OsuUser) {
         Thread.startVirtualThread {
             runCatching {
-                upsertUserToday(user)
+                withUserLock(user.userID) {
+                    transactionTemplate.executeWithoutResult {
+                        upsertUserToday(user)
+                    }
+                }
             }.onFailure { e ->
-                log.info("玩家数据存储：存储失败：", e)
+                log.error("玩家数据存储：存储失败：", e)
             }
         }
     }
@@ -223,7 +302,7 @@ class OsuUserInfoDao(
             runCatching {
                 saveUsersToday(users)
             }.onFailure { e ->
-                log.info("玩家数据存储：批量存储失败：", e)
+                log.error("玩家数据存储：批量存储失败：", e)
             }
         }
     }
@@ -232,35 +311,37 @@ class OsuUserInfoDao(
      * 这里的 users 必须是 isVariant = true 后获取的
      */
     fun saveUsersToday(users: List<MicroUser>) {
-        val countryRanks = userRankPercentRepository.getLatestCountryRanks(users.map { it.userID }.toSet())
-            .associate { (it.userID to it.mode) to it.countryRank }
+        if (users.isEmpty()) return
 
-        users.flatMap { user ->
-            val rulesets = user.rulesets ?: return@flatMap emptyList()
+        withUserLocks(users.map { it.userID }) {
+            transactionTemplate.executeWithoutResult {
+                users.flatMap { user ->
+                    val rulesets = user.rulesets ?: return@flatMap emptyList()
 
-            buildList {
-                rulesets.osu?.let { add(Triple(user.userID, OsuMode.OSU, it)) }
-                rulesets.taiko?.let { add(Triple(user.userID, OsuMode.TAIKO, it)) }
-                rulesets.fruits?.let { add(Triple(user.userID, OsuMode.CATCH, it)) }
-                rulesets.mania?.let { add(Triple(user.userID, OsuMode.MANIA, it)) }
-            }}
-            .filter { (_, _, stat) ->
-                (stat.playCount ?: 0L) > 0L && (stat.playTime ?: 0L) > 0L
+                    buildList {
+                        rulesets.osu?.let { add(Triple(user.userID, OsuMode.OSU, it)) }
+                        rulesets.taiko?.let { add(Triple(user.userID, OsuMode.TAIKO, it)) }
+                        rulesets.fruits?.let { add(Triple(user.userID, OsuMode.CATCH, it)) }
+                        rulesets.mania?.let { add(Triple(user.userID, OsuMode.MANIA, it)) }
+                    }
+                }
+                    .filter { (_, _, stat) ->
+                        (stat.playCount ?: 0L) > 0L && (stat.playTime ?: 0L) > 0L
+                    }
+                    .groupBy { it.second }.forEach { (mode, triples) ->
+                        val stats = triples.map { (userID, _, stat) -> Pair(userID, stat) }
+
+                        batchUpsertUserStatistics(mode, stats)
+                        batchUpsertGlobalRank(mode, stats)
+
+                        // 批量接口的统计对象里已经有最新的国家排名，不能再用旧表里的值。
+                        val percents = triples.map { (userID, _, stat) ->
+                            Triple(userID, stat, stat.countryRank ?: 0L)
+                        }
+
+                        batchUpsertPercent(mode, percents)
+                    }
             }
-            .groupBy { it.second }.forEach { (mode, triples) ->
-            // 组装 Statistics 批量数据
-            val stats = triples.map { (userID, _, stat) -> Pair(userID, stat) }
-
-            batchUpsertUserStatistics(mode, stats)
-
-            // 组装 Percent 批量数据
-            val percents = triples.map { (userID, _, stat) ->
-                val country = countryRanks[userID to mode.modeValue] ?: 0L
-
-                Triple(userID, stat, country)
-            }
-
-            batchUpsertPercent(mode, percents)
         }
     }
 
@@ -276,20 +357,21 @@ class OsuUserInfoDao(
         val closest = userGlobalRankRepository.getClosestFromDate(user.userID, mode, target)
         val percent = userRankPercentRepository.getLatest(user.userID, mode, target)
 
-        return fromArchive(info, stats, ranks, percent, closest?.rank)
+        return fromArchive(info, stats, ranks, percent, closest?.rank, target)
     }
 
     fun getClosestFromTarget(userID: Long, mode: OsuMode, targetPP: Double): OsuUser? {
         val stats = userStatisticsRepository.getClosestFromTarget(userID, mode.modeValue, targetPP) ?: return null
 
-        val targetDate = stats.updatedAt
+        // createdAt 才是这条数据真正开始生效的日期；updatedAt 可能只是覆盖到今天。
+        val targetDate = stats.createdAt
 
         val info = userInfoRepository.getClosestFromDate(userID, mode.modeValue, targetDate)
-        val ranks = userGlobalRankRepository.getBetween(userID, mode.modeValue, targetDate.minusDays(90), targetDate)
+        val ranks = userGlobalRankRepository.getBetween(userID, mode.modeValue, targetDate.minusDays(89), targetDate)
         val closest = userGlobalRankRepository.getClosestFromDate(userID, mode.modeValue, targetDate)
         val percent = userRankPercentRepository.getClosestFromDate(userID, mode.modeValue, targetDate)
 
-        return fromArchive(info, stats, ranks, percent, closest?.rank)
+        return fromArchive(info, stats, ranks, percent, closest?.rank, targetDate)
     }
 
     fun getPP(userID: Long, mode: OsuMode): Float? {
@@ -367,115 +449,110 @@ class OsuUserInfoDao(
         }
     }
 
-    private fun upsertPercent(userID: Long, mode: OsuMode, statistics: Statistics, countryRank: Long = 0L) {
+    /**
+     * 批量接口只返回 statistics，不返回 rankHistory；这里把 statistics.globalRank 补成 user_rank 的当日快照，
+     * 否则只走批量路径的玩家永远没有全球排名，百分比表里的 global_rank 也会一直是 NULL。
+     */
+    private fun batchUpsertGlobalRank(mode: OsuMode, inputs: List<Pair<Long, Statistics>>) {
         val today = LocalDate.now(ZoneOffset.UTC)
-        val latest = userRankPercentRepository.getLatest(userID, mode.modeValue)
+        val incoming = inputs.mapNotNull { (userID, statistics) ->
+            val rank = statistics.globalRank?.takeIf { it > 0 } ?: return@mapNotNull null
+            userID to rank
+        }.toMap()
 
-        if (latest != null) {
-            // 无需更新数据
-            if (latest.countryRank >= countryRank && countryRank >= 0L) {
+        if (incoming.isEmpty()) return
 
-                if (latest.date.isBefore(today)) {
-                    // 更新时间
-                    userRankPercentRepository.upsert(latest.updateFrom(userID, mode, countryRank, statistics))
+        val latestMap = userGlobalRankRepository.getLatest(incoming.keys, mode.modeValue)
+            .associateBy { it.userID }
+
+        val entitiesToSave = mutableListOf<UserGlobalRankLite>()
+
+        incoming.forEach { (userID, rank) ->
+            val latest = latestMap[userID]
+            when {
+                latest == null || latest.date.isBefore(today) -> {
+                    entitiesToSave.add(
+                        UserGlobalRankLite(
+                            userID = userID,
+                            rank = rank,
+                            mode = mode.modeValue,
+                            date = today,
+                        )
+                    )
                 }
 
-                return
+                latest.date == today && latest.rank != rank -> {
+                    latest.rank = rank
+                    entitiesToSave.add(latest)
+                }
             }
+        }
 
-            val entity = latest.updateFrom(userID, mode, countryRank, statistics).apply {
-                this.date = today
-            }
-
-            userRankPercentRepository.upsert(entity)
-        } else {
-            // 新增
-            val entity = UserRankPercentLite().updateFrom(userID, mode, countryRank, statistics).apply {
-                this.date = today
-            }
-
-            userRankPercentRepository.save(entity)
+        if (entitiesToSave.isNotEmpty()) {
+            userGlobalRankRepository.saveAll(entitiesToSave)
         }
     }
 
-    private fun upsertPercent(user: OsuUser) {
+    private fun upsertPercentSnapshot(
+        userID: Long,
+        mode: OsuMode,
+        countryRank: Long,
+        globalRankPercent: Double?,
+        latest: UserRankPercentLite? = userRankPercentRepository.getLatest(userID, mode.modeValue),
+    ) {
         val today = LocalDate.now(ZoneOffset.UTC)
-        val latest = userRankPercentRepository.getLatest(user.userID, user.mode.modeValue)
 
-        val countryRank = user.countryRank
-
-        if (latest != null) {
-            // 无需更新数据
-            if (latest.countryRank >= countryRank && countryRank >= 0L) {
-
-                if (latest.date.isBefore(today)) {
-                    // 更新时间
-                    userRankPercentRepository.upsert(latest.updateFrom(user) ?: return)
-                }
-
-                return
-            }
-
-            val entity = latest.updateFrom(user)?.apply {
-                this.date = today
-            } ?: return
-
-            userRankPercentRepository.upsert(entity)
+        // 0 不是有效的国家排名，沿用上一条非 0 数据，避免把有效名次覆盖成 0。
+        val resolvedCountryRank = if (countryRank > 0) {
+            countryRank
         } else {
-            // 新增
-            val entity = UserRankPercentLite().updateFrom(user)?.apply {
-                this.date = today
-            } ?: return
-
-            userRankPercentRepository.save(entity)
+            latest?.countryRank?.takeIf { it > 0 } ?: 0L
         }
+        val resolvedGlobalPercent = globalRankPercent ?: latest?.globalRankPercent ?: 1.0
+
+        if (latest != null && latest.date == today) {
+            // 今天已有快照：只更新今天的行，保留原来的 created 语义。
+            latest.countryRank = resolvedCountryRank
+            latest.globalRankPercent = resolvedGlobalPercent
+            userRankPercentRepository.upsert(latest)
+        } else {
+            // 每天一行；跨天时新建实体，绝不修改旧行的 date。
+            val entity = UserRankPercentLite(
+                userID = userID,
+                globalRankPercent = resolvedGlobalPercent,
+                countryRank = resolvedCountryRank,
+                mode = mode.modeValue,
+                date = today,
+            )
+            userRankPercentRepository.upsert(entity)
+        }
+    }
+
+    private fun upsertPercent(userID: Long, mode: OsuMode, statistics: Statistics, countryRank: Long = 0L) {
+        upsertPercentSnapshot(userID, mode, countryRank, statistics.globalRankPercent)
+    }
+
+    private fun upsertPercent(user: OsuUser) {
+        val statistics = user.statistics ?: return
+        upsertPercentSnapshot(user.userID, user.mode, user.countryRank, statistics.globalRankPercent)
     }
 
     private fun batchUpsertPercent(mode: OsuMode, inputs: List<Triple<Long, Statistics, Long>>) {
         if (inputs.isEmpty()) return
 
-        val today = LocalDate.now(ZoneOffset.UTC)
-        val userIDs = inputs.map { it.first }.toSet()
-
-        val latestMap = userRankPercentRepository.getLatestBatch(userIDs, mode.modeValue)
+        val latestMap = userRankPercentRepository.getLatestBatch(inputs.map { it.first }.toSet(), mode.modeValue)
             .associateBy { it.userID }
 
-        val entitiesToUpsert = mutableListOf<UserRankPercentLite>()
-
-        for ((userID, statistics, countryRank) in inputs) {
-            val latest = latestMap[userID]
-
-            if (latest == null) {
-                // 1. 无历史记录：新建实体 (id 为 null -> INSERT)
-                val entity = UserRankPercentLite().updateFrom(userID, mode, countryRank, statistics).apply {
-                    this.date = today
-                }
-                entitiesToUpsert.add(entity)
-            } else if (latest.date.isBefore(today)) {
-                // 2. 跨天：如果不相等（或名次有变化），必须创建全新的实体，不能复用 latest (id 为 null -> INSERT)
-                // 注意：如果只要跨天就必须留存一条今天的新快照，直接 New 实体即可；
-                // 如果只有排名变好/数据变化才新增，可以在这里加上条件判断
-                val isChanged = latest.countryRank != countryRank
-
-                if (isChanged) {
-                    val entity = UserRankPercentLite().updateFrom(userID, mode, countryRank, statistics).apply {
-                        this.date = today
-                    }
-                    entitiesToUpsert.add(entity)
-                }
-            } else {
-                // 3. 今天已存在记录：数据变化时复用 latest 实体进行更新 (带有今天的 id -> UPDATE)
-                if (latest.countryRank != countryRank) {
-                    val entity = latest.updateFrom(userID, mode, countryRank, statistics).apply {
-                        this.date = today
-                    }
-                    entitiesToUpsert.add(entity)
-                }
-            }
-        }
-
-        if (entitiesToUpsert.isNotEmpty()) {
-            userRankPercentRepository.saveAll(entitiesToUpsert)
+        // 同一个 userID 只处理一次。
+        inputs.associateBy { it.first }.forEach { (userID, input) ->
+            val (_, statistics, countryRank) = input
+            upsertPercentSnapshot(
+                userID = userID,
+                mode = mode,
+                countryRank = countryRank,
+                globalRankPercent = statistics.globalRankPercent,
+                latest = latestMap[userID],
+            )
         }
     }
 
@@ -483,125 +560,155 @@ class OsuUserInfoDao(
         val today = LocalDate.now(ZoneOffset.UTC)
         val latest = userInfoRepository.getLatest(user.userID, user.mode.modeValue)
 
-        val achievementsCount = user.userAchievementsCount
-
-        if (latest != null) {
-            // 无需更新数据
-            if (latest.achievementsCount >= achievementsCount && achievementsCount >= 0L) {
-
-                if (latest.updatedAt.isBefore(today)) {
-                    // 更新时间
-                    userInfoRepository.update(latest.id!!, today)
-                }
-
-                return
-            }
-
-            val entity = latest.updateFrom(user).apply {
-                this.updatedAt = today
-            }
-
-            userInfoRepository.upsert(entity)
-        } else {
-            // 新增
+        if (latest == null) {
             val entity = UserInfoLite().updateFrom(user).apply {
                 this.createdAt = today
                 this.updatedAt = today
             }
-
             userInfoRepository.save(entity)
+            return
+        }
+
+        val changed = user.beatmapPlaycount > latest.beatmapPlaycount ||
+                user.userAchievementsCount > latest.achievementsCount
+
+        when {
+            latest.updatedAt == today -> {
+                if (changed) {
+                    latest.updateFrom(user)
+                    latest.updatedAt = today
+                    userInfoRepository.upsert(latest)
+                }
+            }
+
+            latest.updatedAt.isBefore(today) -> {
+                if (changed) {
+                    closeUserInfo(latest, today)
+                    val entity = UserInfoLite().updateFrom(user).apply {
+                        this.createdAt = today
+                        this.updatedAt = today
+                    }
+                    userInfoRepository.save(entity)
+                } else {
+                    userInfoRepository.update(latest.id!!, today)
+                }
+            }
+        }
+    }
+
+    private fun closeUserInfo(latest: UserInfoLite, today: LocalDate) {
+        val yesterday = today.minusDays(1)
+        if (latest.updatedAt.isBefore(yesterday) && !latest.createdAt.isAfter(yesterday)) {
+            // 旧快照的覆盖范围最多补到昨天，今天由新快照接上，避免日期断层。
+            userInfoRepository.update(latest.id!!, yesterday)
         }
     }
 
     private fun upsertUserStatistics(userID: Long, mode: OsuMode, statistics: Statistics) {
+        upsertStatisticsSnapshot(userID, mode, statistics)
+    }
+
+    private fun upsertUserStatistics(user: OsuUser) {
+        val statistics = user.statistics ?: return
+        if ((statistics.totalHits ?: 0L) == 0L) return
+        if (user.mode.isDefault) return
+
+        upsertStatisticsSnapshot(user.userID, user.mode, statistics)
+    }
+
+    private fun upsertStatisticsSnapshot(userID: Long, mode: OsuMode, statistics: Statistics) {
         val today = LocalDate.now(ZoneOffset.UTC)
         val latest = userStatisticsRepository.getLatest(userID, mode.modeValue)
 
-        val totalHits = statistics.totalHits ?: 0L
-
-        if (latest != null) {
-            // 无需更新数据
-            if (latest.totalHits >= totalHits && totalHits >= 0L) {
-
-                if (latest.updatedAt.isBefore(today)) {
-                    // 更新时间
-                    userStatisticsRepository.update(latest.id!!, today)
-                }
-
-                return
-            }
-
-            val entity = latest.updateFrom(userID, mode, statistics).apply {
-                this.updatedAt = today
-            }
-
-            userStatisticsRepository.upsert(entity)
-        } else {
-            // 新增
+        if (latest == null) {
             val entity = UserStatisticsLite().updateFrom(userID, mode, statistics).apply {
                 this.createdAt = today
                 this.updatedAt = today
             }
-
             userStatisticsRepository.save(entity)
+            return
+        }
+
+        val changed = statisticsChanged(latest, statistics)
+
+        when {
+            latest.updatedAt == today -> {
+                if (changed) {
+                    latest.updateFrom(userID, mode, statistics)
+                    latest.updatedAt = today
+                    userStatisticsRepository.upsert(latest)
+                }
+            }
+
+            latest.updatedAt.isBefore(today) -> {
+                if (changed) {
+                    closeUserStatistics(latest, today)
+                    val entity = UserStatisticsLite().updateFrom(userID, mode, statistics).apply {
+                        this.createdAt = today
+                        this.updatedAt = today
+                    }
+                    userStatisticsRepository.save(entity)
+                } else {
+                    userStatisticsRepository.update(latest.id!!, today)
+                }
+            }
         }
     }
 
-    private fun upsertUserStatistics(user: OsuUser) {
-        val today = LocalDate.now(ZoneOffset.UTC)
-        val latest = userStatisticsRepository.getLatest(user.userID, user.mode.modeValue)
-
-        val newTotalHits = user.totalHits
-
-        if (latest != null) {
-            // 无需更新数据
-            if (latest.totalHits >= newTotalHits && newTotalHits >= 0L) {
-
-                if (latest.updatedAt.isBefore(today)) {
-                    // 更新时间
-                    userStatisticsRepository.update(latest.id!!, today)
-                }
-
-                return
-            }
-
-            val entity = latest.updateFrom(user)?.apply {
-                this.updatedAt = today
-            } ?: return
-
-            userStatisticsRepository.upsert(entity)
-        } else {
-            // 新增
-            val entity = UserStatisticsLite().updateFrom(user)?.apply {
-                this.createdAt = today
-                this.updatedAt = today
-            } ?: return
-
-            userStatisticsRepository.save(entity)
+    private fun closeUserStatistics(latest: UserStatisticsLite, today: LocalDate) {
+        val yesterday = today.minusDays(1)
+        if (latest.updatedAt.isBefore(yesterday) && !latest.createdAt.isAfter(yesterday)) {
+            userStatisticsRepository.update(latest.id!!, yesterday)
         }
+    }
+
+    /**
+     * 单条记录的变更判定。只比较能可靠判断“确实推进了”的字段，避免把批量接口缺失的字段当成 0 写回。
+     */
+    private fun statisticsChanged(latest: UserStatisticsLite, statistics: Statistics): Boolean {
+        fun increased(old: Long, value: Long?): Boolean = value != null && value > old
+        fun changed(old: Float, value: Double?): Boolean =
+            value != null && value > 0.0 && abs(value - old) > 1e-4
+
+        return increased(latest.totalHits, statistics.totalHits) ||
+                increased(latest.playCount, statistics.playCount) ||
+                increased(latest.playTime, statistics.playTime) ||
+                increased(latest.rankedScore, statistics.rankedScore) ||
+                increased(latest.totalScore, statistics.totalScore) ||
+                changed(latest.pp, statistics.pp) ||
+                changed(latest.accuracy, statistics.accuracy) ||
+                statistics.countSSH > latest.countSSH ||
+                statistics.countSS > latest.countSS ||
+                statistics.countSH > latest.countSH ||
+                statistics.countS > latest.countS ||
+                statistics.countA > latest.countA ||
+                statistics.replaysWatchedByOthers > latest.replaysWatched ||
+                statistics.maxCombo > latest.maxCombo ||
+                statistics.levelCurrent > latest.levelCurrent ||
+                (statistics.levelCurrent == latest.levelCurrent && statistics.levelProgress > latest.levelProgress)
     }
 
     private fun batchUpsertUserStatistics(mode: OsuMode, inputs: List<Pair<Long, Statistics>>) {
         if (inputs.isEmpty() || mode.modeValue !in 0..3) return
 
         val today = LocalDate.now(ZoneOffset.UTC)
+        val yesterday = today.minusDays(1)
         val distinctInputs = inputs.associateBy({ it.first }, { it.second })
         val userIDs = distinctInputs.keys
 
         val latestMap = userStatisticsRepository.getLatestBatch(userIDs, mode.modeValue)
             .associateBy { it.userID }
 
-        val entitiesToInsert = mutableListOf<UserStatisticsLite>()
-        val entitiesToUpdate = mutableListOf<Long>()
+        val entitiesToSave = mutableListOf<UserStatisticsLite>()
+        val idsToClose = mutableListOf<Long>()
+        val idsToTouch = mutableListOf<Long>()
 
         distinctInputs.forEach { (userID, statistics) ->
             val latest = latestMap[userID]
-            val currentTotalHits = statistics.totalHits ?: 0L
 
             when {
-                // 1. 无历史记录：直接新增今天的记录
                 latest == null -> {
-                    entitiesToInsert.add(
+                    entitiesToSave.add(
                         UserStatisticsLite().apply {
                             updateFrom(userID, mode, statistics)
                             createdAt = today
@@ -610,11 +717,19 @@ class OsuUserInfoDao(
                     )
                 }
 
-                // 2. 跨天（历史最新记录是在今天之前）
+                latest.updatedAt == today -> {
+                    if (statisticsChanged(latest, statistics)) {
+                        latest.updateFrom(userID, mode, statistics)
+                        latest.updatedAt = today
+                        entitiesToSave.add(latest)
+                    }
+                }
+
                 latest.updatedAt.isBefore(today) -> {
-                    if (latest.totalHits != currentTotalHits) {
-                        // 数据有变动：新建今天的数据行（id 为 null，实现 INSERT 新历史）
-                        entitiesToInsert.add(
+                    if (statisticsChanged(latest, statistics)) {
+                        // 旧快照补到昨天，新快照从今天开始。
+                        latest.id?.let { idsToClose.add(it) }
+                        entitiesToSave.add(
                             UserStatisticsLite().apply {
                                 updateFrom(userID, mode, statistics)
                                 createdAt = today
@@ -622,63 +737,59 @@ class OsuUserInfoDao(
                             }
                         )
                     } else {
-                        // 数据无变动：仅记录 ID，后续只刷新旧记录的 updatedAt，不覆盖整行数据
-                        latest.id?.let { entitiesToUpdate.add(it) }
+                        // 数据没有变化，只把旧记录的覆盖范围延长到今天。
+                        latest.id?.let { idsToTouch.add(it) }
                     }
                 }
-
-                // 3. 今天已存在记录，且今天的数据有更新
-                latest.totalHits != currentTotalHits -> {
-                    // 修改今天的记录（带有今天的 id，saveAll 会执行 UPDATE 更新今天这行）
-                    latest.updateFrom(userID, mode, statistics)
-                    latest.updatedAt = today
-                    entitiesToInsert.add(latest)
-                }
-
-                // 4. 今天已存在记录且数据未变动：不做任何操作
-                else -> {}
             }
         }
 
-        if (entitiesToInsert.isNotEmpty()) {
-            userStatisticsRepository.saveAll(entitiesToInsert)
+        if (entitiesToSave.isNotEmpty()) {
+            userStatisticsRepository.saveAll(entitiesToSave)
         }
 
-        if (entitiesToUpdate.isNotEmpty()) {
-            userStatisticsRepository.updateBatchUpdatedAt(entitiesToUpdate, today)
+        if (idsToClose.isNotEmpty()) {
+            userStatisticsRepository.updateBatchUpdatedAt(idsToClose, yesterday)
+        }
+
+        if (idsToTouch.isNotEmpty()) {
+            userStatisticsRepository.updateBatchUpdatedAt(idsToTouch, today)
         }
     }
 
     companion object {
         private val log = LoggerFactory.getLogger(OsuUserInfoDao::class.java)
+        private const val PERCENTILE_RETENTION_DAYS = 7L
 
         private fun fromArchive(
             info: UserInfoLite?,
             stats: UserStatisticsLite?,
             ranks: List<UserGlobalRankLite>?,
             percent: UserRankPercentLite?,
-            closestRank: Long? = null
+            closestRank: Long? = null,
+            targetDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         ): OsuUser? {
-            if (info == null) {
-                return null
-            }
+            // 批量路径可能只写了 statistics，没有 user_info；此时仍然应该能还原历史数据。
+            val userID = info?.userID ?: stats?.userID ?: percent?.userID ?: return null
+            val mode = info?.mode ?: stats?.mode ?: percent?.mode ?: return null
 
-            val rankArray = ranks?.parseToRankArray()
-
+            val rankArray = ranks?.parseToRankArray(targetDate)
             val latestRank = rankArray?.lastOrNull()
+            val shortName = mode.toOsuMode().shortName
 
-            return OsuUser(info.userID).apply {
-                this.beatmapPlaycount = info.beatmapPlaycount
-                this.userAchievementsCount = info.achievementsCount
-                this.mode = info.mode.toOsuMode()
+            return OsuUser(userID).apply {
+                this.beatmapPlaycount = info?.beatmapPlaycount ?: 0
+                this.userAchievementsCount = info?.achievementsCount ?: 0
+                this.mode = mode.toOsuMode()
 
                 if (!rankArray.isNullOrEmpty()) {
-                    this.rankHistory = OsuUser.RankHistory(info.mode.toOsuMode().shortName, rankArray)
+                    this.rankHistory = OsuUser.RankHistory(shortName, rankArray)
                 }
 
                 if (stats != null) {
                     this.statistics = InfoLogStatistics().apply {
-                        this.logTime = stats.updatedAt.atStartOfDay()
+                        // createdAt 才是快照开始日期；updatedAt 可能只是“数据仍有效至今”。
+                        this.logTime = stats.createdAt.atStartOfDay()
 
                         this.rankedScore = stats.rankedScore
                         this.totalScore = stats.totalScore

@@ -5,6 +5,7 @@ import com.now.nowbot.entity.OsuUserInfoPercentilesLite
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
@@ -31,10 +32,10 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
             play_time = EXCLUDED.play_time,
             ranked_score = EXCLUDED.ranked_score,
             total_score = EXCLUDED.total_score,
-            beatmap_playcount = EXCLUDED.beatmap_playcount,
+            beatmap_playcount = GREATEST(EXCLUDED.beatmap_playcount, osu_user_info_percent.beatmap_playcount),
             replays_watched = EXCLUDED.replays_watched,
             maximum_combo = EXCLUDED.maximum_combo,
-            achievements_count = EXCLUDED.achievements_count
+            achievements_count = GREATEST(EXCLUDED.achievements_count, osu_user_info_percent.achievements_count)
         """, nativeQuery = true
     ) fun upsert(
         userID: Long,
@@ -54,4 +55,16 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
         maximumCombo: Int,
         achievementsCount: Int
     ): Int
+
+    @Modifying
+    @Transactional
+    @Query(
+        """
+        DELETE FROM osu_user_info_percent
+        WHERE updated_at < :cutoff
+        """, nativeQuery = true
+    )
+    fun deleteOlderThan(@Param("cutoff") cutoff: LocalDateTime): Int
+
+    fun findAllByUpdatedAtAfter(cutoff: LocalDateTime): List<OsuUserInfoPercentilesLite>
 }

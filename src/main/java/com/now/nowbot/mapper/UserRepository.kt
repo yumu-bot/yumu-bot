@@ -36,7 +36,7 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
     @Query("""
         select * from user_info
         where user_id = :userID and mode = :mode
-        order by updated_at desc limit 1
+        order by updated_at desc, id desc limit 1
     """, nativeQuery = true)
     fun getLatest(
         userID: Long,
@@ -68,7 +68,7 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
     @Query("""
         select * from user_info
         where user_id = :userID and mode = :mode and updated_at between :from and :to
-        order by updated_at desc limit 1
+        order by updated_at desc, id desc limit 1
     """, nativeQuery = true)
     fun getLatestBetween(
         userID: Long,
@@ -82,7 +82,7 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
     SELECT DISTINCT ON (user_id, mode) *
     FROM user_info
     WHERE updated_at BETWEEN :from AND :to
-    ORDER BY user_id, mode, updated_at DESC
+    ORDER BY user_id, mode, updated_at DESC, id DESC
 """,
         nativeQuery = true
     )
@@ -127,7 +127,8 @@ interface UserInfoRepository : JpaRepository<UserInfoLite, Long> {
                 WHEN :target BETWEEN created_at AND updated_at THEN 0
                 WHEN :target < created_at THEN ABS(created_at - :target)
                 ELSE ABS(updated_at - :target)
-            END
+            END,
+            id DESC
         LIMIT 1
         """,
         nativeQuery = true
@@ -160,7 +161,7 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     @Query("""
         select * from user_statistics
         where user_id = :userID and mode = :mode
-        order by updated_at desc limit 1
+        order by updated_at desc, id desc limit 1
     """, nativeQuery = true)
     fun getLatest(
         userID: Long,
@@ -170,7 +171,7 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     @Query("""
         select * from user_statistics
         where user_id = :userID and mode = :mode and updated_at between :from and :to
-        order by updated_at desc limit 1
+        order by updated_at desc, id desc limit 1
     """, nativeQuery = true)
     fun getLatestBetween(
         userID: Long,
@@ -187,7 +188,7 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
         FROM user_statistics 
         WHERE user_id = :userID 
         AND updated_at BETWEEN :from AND :to
-        ORDER BY mode, updated_at DESC
+        ORDER BY mode, updated_at DESC, id DESC
     """, nativeQuery = true
     )
     fun getLatestPlayCounts(
@@ -204,8 +205,8 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
            mode 
     FROM user_statistics 
     WHERE user_id = :userID 
-      AND updated_at BETWEEN :from AND :to
-    ORDER BY user_id, mode, updated_at DESC
+      AND mode = :mode
+    ORDER BY user_id, mode, updated_at DESC, id DESC
 """, nativeQuery = true
     )
     fun getLatestPlayCounts(
@@ -218,7 +219,7 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     SELECT DISTINCT ON (user_id, mode) *
     FROM user_statistics
     WHERE updated_at BETWEEN :from AND :to
-    ORDER BY user_id, mode, updated_at DESC
+    ORDER BY user_id, mode, updated_at DESC, id DESC
 """,
         nativeQuery = true
     )
@@ -243,7 +244,7 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
         value = """
         SELECT * FROM user_statistics
         WHERE user_id = :userID AND mode = :mode
-        ORDER BY ABS(pp - :target)
+        ORDER BY ABS(pp - :target), id DESC
         LIMIT 1
     """,
         nativeQuery = true
@@ -300,7 +301,7 @@ interface UserStatisticsRepository: JpaRepository<UserStatisticsLite, Long> {
     @Query(value = """
         SELECT * FROM (
             SELECT s.*, 
-                   ROW_NUMBER() OVER(PARTITION BY s.user_id ORDER BY s.updated_at DESC) as rn
+                   ROW_NUMBER() OVER(PARTITION BY s.user_id ORDER BY s.updated_at DESC, s.id DESC) as rn
             FROM user_statistics s
             WHERE s.user_id IN (:userIDs) AND s.mode = :mode
         ) t WHERE t.rn = 1
