@@ -57,7 +57,7 @@ enum class ScoreClassifier(
 
     ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|acc?)".toRegex(), FilterValueType.DECIMAL, "[%％]?".toRegex()),
 
-    COMBO("(combo|连击|cb?)".toRegex(), FilterValueType.DECIMAL, "[xX]?".toRegex()),
+    COMBO("(combo|连击|cb)".toRegex(), FilterValueType.DECIMAL, "[xX]?".toRegex()),
 
     PERFECT("(perfect|320|305|彩|完美|pf)".toRegex(), FilterValueType.DECIMAL),
 
@@ -91,7 +91,7 @@ enum class ScoreClassifier(
 
     CONVERT("(convert|cv|转谱?)".toRegex(), FilterValueType.NAME),
 
-    CLIENT("(client|z|v|version|版本?)".toRegex(), FilterValueType.NAME),
+    CLIENT("(client|v|version|版本?)".toRegex(), FilterValueType.NAME),
 
     CREATED_TIME("(date|(created|score)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|(成绩(创建)?|创建)?(时间)?|st|ct|ca|ti)".toRegex(), FilterValueType.TIME);
 

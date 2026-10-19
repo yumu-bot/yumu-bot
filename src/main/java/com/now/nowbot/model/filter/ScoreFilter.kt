@@ -9,6 +9,7 @@ import com.now.nowbot.model.osu.LazerMod.Companion.toLazerModAcronyms
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
@@ -45,7 +46,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     GENRE("(genre|g|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    LANGUAGE("(languages?|l|la|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+    LANGUAGE("(languages?|l|la|lang|语[言种]?|文字?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
     DIFFICULTY("(difficult(y|ies)|diff|d|难度名?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
@@ -73,7 +74,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|acc?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)[%％]?".toRegex()),
 
-    COMBO("(combo|连击|cb?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL[xX]?)".toRegex()),
+    COMBO("(combo|连击|cb)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL[xX]?)".toRegex()),
 
     PERFECT("(perfect|320|305|彩|完美|pf)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
@@ -107,7 +108,9 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     CONVERT("(convert|cv|转谱?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    CLIENT("(client|z|v|version|版本?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+    CLIENT("(client|v|version|版本?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+
+    CATEGORY("(type|category|status|类型?|[分种]类|状态?|z|$PATTERN_STAR)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
     CREATED_TIME("(date|(created|score)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|(成绩(创建)?|创建)?(时间)?|st|ct|ca|ti)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
 
@@ -457,6 +460,8 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     "stable", "s", "st", "stb" -> !it.isLazer
                     else -> !it.isLazer
                 }
+
+                CATEGORY -> fit(operator, DataUtil.getStatus(it.beatmap.status), DataUtil.getStatus(str))
 
                 CREATED_TIME -> fitTime(operator, it.endedTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond(), str)
 

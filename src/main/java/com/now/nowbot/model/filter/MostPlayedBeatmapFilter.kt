@@ -37,7 +37,7 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
 
     MODE("(mode|模式?|m)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_MODE)".toRegex()),
 
-    CATEGORY("(type|category|status|类型?|[分种]类|状态?|v|z|$PATTERN_STAR)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+    CATEGORY("(type|category|status|类型?|[分种]类|状态?|z|$PATTERN_STAR)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
     GENRE("(genre|g|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
