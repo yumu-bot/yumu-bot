@@ -1,6 +1,8 @@
 package com.now.nowbot.model.filter
 
 import com.now.nowbot.util.command.LEVEL_MAYBE
+import com.now.nowbot.util.command.PATTERN_DURATION_NUMBER
+import com.now.nowbot.util.command.PATTERN_LANGUAGE_VALUE
 import com.now.nowbot.util.command.PATTERN_STAR
 import org.intellij.lang.annotations.Language
 
@@ -8,8 +10,9 @@ enum class ScoreClassifier(
     @param:Language("RegExp") override val prefix: Regex,
     override val valueType: FilterValueType,
     @param:Language("RegExp") override val suffix: Regex? = null,
+    @param:Language("RegExp") override val valueRegex: Regex? = null,
 ): CommandClassifier {
-    CREATOR("(creator|host|c|谱师|作者|谱|主)".toRegex(), FilterValueType.NAME),
+    CREATOR("(creator|host|c|h|谱师|作者|谱|主)".toRegex(), FilterValueType.NAME),
 
     GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)".toRegex(), FilterValueType.NAME),
 
@@ -29,7 +32,11 @@ enum class ScoreClassifier(
 
     GENRE("(genre|g|曲?风|风格|流派?)".toRegex(), FilterValueType.NAME),
 
-    LANGUAGE("(languages?|l|la|曲?风|风格|流派?)".toRegex(), FilterValueType.NAME),
+    LANGUAGE(
+        "(languages?|l|la|lang|语[言种]?|文字?)".toRegex(),
+        FilterValueType.NAME,
+        valueRegex = Regex("^$PATTERN_LANGUAGE_VALUE"),
+    ),
 
     DIFFICULTY("(difficult(y|ies)|diff|d|难度名?)".toRegex(), FilterValueType.NAME),
 
@@ -51,7 +58,11 @@ enum class ScoreClassifier(
 
     RANK("(rank(ing|s)?|评[价级]?|k)".toRegex(), FilterValueType.NAME),
 
-    LENGTH("(length|drain|long|duration|长度|时?长|lh|h)".toRegex(), FilterValueType.TIME),
+    LENGTH(
+        "(length|drain|time|长度?|时[长间]|l)".toRegex(),
+        FilterValueType.TIME,
+        valueRegex = Regex("^(?:$PATTERN_DURATION_NUMBER|[:：])"),
+    ),
 
     BPM("(bpm|曲速|速度|bm)".toRegex(), FilterValueType.DECIMAL),
 
@@ -93,6 +104,6 @@ enum class ScoreClassifier(
 
     CLIENT("(client|v|version|版本?)".toRegex(), FilterValueType.NAME),
 
-    CREATED_TIME("(date|(created|score)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|(成绩(创建)?|创建)?(时间)?|st|ct|ca|ti)".toRegex(), FilterValueType.TIME);
+    CREATED_TIME("(date|at|creat(ed)?(\\s*(at|time))?|earn(ed)?(\\s*(at|time))?|score\\s*(at|time)|(成绩(创建)?|创建)(时间)?|st|ct|ca|ti)".toRegex(), FilterValueType.TIME);
 
 }

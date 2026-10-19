@@ -49,4 +49,13 @@ interface CommandClassifier {
     val prefix: Regex
     val valueType: FilterValueType
     val suffix: Regex?
+
+    /**
+     * 可选的 value 首段校验。
+     *
+     * 同一个 prefix 可能对应多个分类器（例如 ScoreClassifier 的 `l` 既可能是
+     * LANGUAGE 也可能是 LENGTH），提取器会在选中候选前用这个正则检查 value。
+     * 为 null 时不限制。
+     */
+    val valueRegex: Regex? get() = null
 }

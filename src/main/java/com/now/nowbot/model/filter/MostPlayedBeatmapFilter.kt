@@ -7,6 +7,7 @@ import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 
@@ -31,7 +32,7 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
 
     STAR("(stars?|rating|sr|r|星数?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)$PATTERN_STAR$LEVEL_MAYBE".toRegex()),
 
-    LENGTH("(length|drain|time|长度|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE($PATTERN_COLON$PATTERN_NUMBER_MORE)?)".toRegex()),
+    LENGTH("(length|drain|time|长度?|时[长间]|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_DURATION)".toRegex()),
 
     // GENERAL("(general|bool(ean)?|常规?|总览?|布尔值?|值|e)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
@@ -41,7 +42,7 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
 
     GENRE("(genre|g|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    LANGUAGE("(languages?|l|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+    LANGUAGE("(languages?|l|la|lang|语[言种]?|文字?)(?<n>$PATTERN_OPERATOR_WITH_SPACE(?=$PATTERN_LANGUAGE_VALUE)$PATTERN_ANYTHING_MORE)".toRegex()),
 
     // 独有
     COUNT("(counts?|n|游玩(次数)?|游|玩|次数)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
@@ -104,7 +105,7 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
                 DIFFICULTY -> fit(operator, b.difficultyName, str)
                 STAR -> fit(operator, b.starRating.toBigDecimal(), decimal)
                 LENGTH -> {
-                    val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
+                    val seconds = TimeParser.parseDurationSeconds(str)
 
                     fit(operator, b.totalLength.toLong(), seconds)
                 }

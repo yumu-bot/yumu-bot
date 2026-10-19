@@ -171,6 +171,36 @@ const val PATTERN_COLON: String = "[:：]"
 
 val REGEX_COLON = Regex(PATTERN_COLON)
 
+/**
+ * 中文数词：支持常见的整数写法，例如 三、十、二十三、一百零五、两千、一万。
+ * 廿、卅 会在 [com.now.nowbot.util.TimeParser] 中归一化为 二十、三十。
+ */
+@Language("RegExp")
+const val PATTERN_CHINESE_NUMBER: String = "[零〇一二三四五六七八九十百千万亿两廿卅]+"
+
+/**
+ * 时长中的数字部分：阿拉伯数字或中文数词。
+ */
+@Language("RegExp")
+const val PATTERN_DURATION_NUMBER: String = "(?:$PATTERN_NUMBER_MORE|$PATTERN_CHINESE_NUMBER)"
+
+/**
+ * 时长：纯秒数、mm:ss / hh:mm:ss，或带单位（3m30s、3分30秒、三分三十秒）。
+ * 数字部分必须以阿拉伯数字或中文数词开头，避免把 l=en 这类语言条件误判成 LENGTH。
+ */
+@Language("RegExp")
+const val PATTERN_DURATION: String =
+    "(?i)(?:$PATTERN_DURATION_NUMBER(?:$PATTERN_COLON$PATTERN_DURATION_NUMBER){0,2}" +
+        "|(?:$PATTERN_DURATION_NUMBER(?:hours?|hrs?|h|minutes?|mins?|m|seconds?|secs?|s|days?|d|小时|时|分钟|分|秒|天|日))+)"
+
+/**
+ * 语言条件的值：必须以字母或中文开头，但不能以中文数词开头。
+ * 这样 l=3 / l=三分 会留给 LENGTH，而 l=en / l=中文 仍然归 LANGUAGE。
+ */
+@Language("RegExp")
+const val PATTERN_LANGUAGE_VALUE: String =
+    "(?![零〇一二三四五六七八九十百千万亿两廿卅])\\p{L}"
+
 @Language("RegExp")
 const val PATTERN_QUESTION: String = "[?？]"
 

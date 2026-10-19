@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 
 enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
-    CREATOR("(creator|host|c|谱师|作者|谱|主)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
+    CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
     GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
@@ -46,7 +46,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     GENRE("(genre|g|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    LANGUAGE("(languages?|l|la|lang|语[言种]?|文字?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+    LANGUAGE("(languages?|l|la|lang|语[言种]?|文字?)(?<n>$PATTERN_OPERATOR_WITH_SPACE(?=$PATTERN_LANGUAGE_VALUE)$PATTERN_ANYTHING_MORE)".toRegex()),
 
     DIFFICULTY("(difficult(y|ies)|diff|d|难度名?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
@@ -68,7 +68,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     RANK("(rank(ing|s)?|评[价级]?|k)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    LENGTH("(length|drain|long|duration|长度|时?长|lh|h)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
+    LENGTH("(length|drain|time|长度?|时[长间]|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_DURATION)".toRegex()),
 
     BPM("(bpm|曲速|速度|bm)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
@@ -112,7 +112,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     CATEGORY("(type|category|status|类型?|[分种]类|状态?|z|$PATTERN_STAR)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    CREATED_TIME("(date|(created|score)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|(成绩(创建)?|创建)?(时间)?|st|ct|ca|ti)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
+    CREATED_TIME("(date|at|creat(ed)?(\\s*(at|time))?|earn(ed)?(\\s*(at|time))?|score\\s*(at|time)|(成绩(创建)?|创建)(时间)?|st|ct|ca|ti)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
 
     RANGE(PATTERN_RANGE.toRegex());
     
@@ -375,7 +375,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 }
 
                 LENGTH -> {
-                    val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
+                    val seconds = TimeParser.parseDurationSeconds(str)
 
                     fit(operator, it.beatmap.totalLength.toLong(), seconds)
                 }

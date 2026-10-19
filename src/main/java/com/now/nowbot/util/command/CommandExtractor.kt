@@ -306,10 +306,11 @@ fun StripContext.extractByClassifiers(classifiers: Iterable<CommandClassifier>) 
 
         val leftText = this.text.substring(0, earliestOpIndex)
         val rightText = this.text.substring(earliestOpIndex + matchedSymbol.length)
+        val trimmedRightText = rightText.trimStart()
 
         // 2. 往左寻找分类器中的 prefix（跳过空白字符，紧贴运算符左侧的非空内容）
         var bestClassifier: CommandClassifier? = null
-        var bestPrefixStart = -1
+        var bestPrefixStart = Int.MAX_VALUE
 
         // 先把 leftText 末尾的空白字符 trimEnd 掉，拿到紧贴 operator 的最右侧非空文本
         val trimmedLeftText = leftText.trimEnd()
@@ -323,7 +324,13 @@ fun StripContext.extractByClassifiers(classifiers: Iterable<CommandClassifier>) 
 
                     // 核心条件：匹配项必须刚好在 trimmedLeftText 的末尾结束
                     if (lastMatch.range.last == trimmedLeftText.lastIndex) {
-                        if (lastMatch.range.first > bestPrefixStart) {
+                        // 同一个 prefix 可能有多个含义，用 value 首段决定选哪一个
+                        if (classifier.valueRegex?.containsMatchIn(trimmedRightText) == false) {
+                            continue
+                        }
+
+                        // 优先取更长的 prefix：created time 应优先匹配 CREATED_TIME，而不是末尾的 time/LENGTH
+                        if (lastMatch.range.first < bestPrefixStart) {
                             bestPrefixStart = lastMatch.range.first
                             bestClassifier = classifier
                         }
@@ -333,13 +340,24 @@ fun StripContext.extractByClassifiers(classifiers: Iterable<CommandClassifier>) 
         }
 
         if (bestClassifier != null) {
-            // 预先搜寻右侧文本中下一个 prefix 的起始位置，作为 value 的截断边界
+            // 预先搜寻右侧文本中下一个 prefix 的起始位置，作为 value 的截断边界。
+            // prefix 后面必须紧跟 operator，避免把 value 内部的字母（如 en 里的 e）当成下一个条件。
             var nextPrefixIndex = rightText.length
             for (c in classifiers) {
-                c.prefix.find(rightText)?.let {
-                    if (it.range.first < nextPrefixIndex) {
-                        nextPrefixIndex = it.range.first
+                var fromIndex = 0
+                while (fromIndex <= rightText.length) {
+                    val match = c.prefix.find(rightText, fromIndex) ?: break
+                    val afterPrefix = rightText.substring(match.range.last + 1).trimStart()
+                    val isNextCondition = afterPrefix.isNotEmpty() &&
+                            sortedSymbols.any { afterPrefix.startsWith(it) }
+
+                    if (isNextCondition) {
+                        if (match.range.first < nextPrefixIndex) {
+                            nextPrefixIndex = match.range.first
+                        }
+                        break
                     }
+                    fromIndex = match.range.first + 1
                 }
             }
 

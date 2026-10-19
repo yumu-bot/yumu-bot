@@ -9,6 +9,7 @@ import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTags
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTime
 import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 import java.time.ZoneOffset
@@ -16,7 +17,7 @@ import java.time.ZoneOffset
 // 完全版本的 beatmapset
 enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
-    CREATOR("(creator|host|c|谱师|作者|谱|主)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
+    CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
     GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
@@ -36,7 +37,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     GENRE("(genre|g|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    LANGUAGE("(languages?|l|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+    LANGUAGE("(languages?|l|la|lang|语[言种]?|文字?)(?<n>$PATTERN_OPERATOR_WITH_SPACE(?=$PATTERN_LANGUAGE_VALUE)$PATTERN_ANYTHING_MORE)".toRegex()),
 
     DIFFICULTY("(difficult(y|ies)|diff|d|难度名?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
@@ -54,7 +55,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     HP("(hp|health\\s*(point)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    LENGTH("(length|drain|long|duration|长度|时?长|lh|h)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
+    LENGTH("(length|drain|time|长度?|时[长间]|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_DURATION)".toRegex()),
 
     BPM("(bpm|曲速|速度|bm)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
@@ -66,9 +67,9 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     TOTAL("(notes?|total|all|ttl|(hit)?objects?|tt|n|(物件|音符)数?|总数?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    CREATED_TIME("((created)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|创建(时间)?|ct|ca)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
+    CREATED_TIME("(at|(creat(ed)?|earn(ed)?)(\\s*(at|time))?|创建(时间)?|ct|ca)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
 
-    RANKED_TIME("((ranked)?\\s*(at|time)|rank(ed)?\\s*(at|time)?|上架(时间)?|rt|ra)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
+    RANKED_TIME("(at|rank(ed)?(\\s*(at|time))?|上架(时间)?|rt|ra)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
 
     PLAY_COUNT("(play\\s*counts?|游玩(次数)?|pc)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
@@ -165,7 +166,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.hp?.toBigDecimal(), decimal)
                 }.contains(true)
                 LENGTH -> {
-                    val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
+                    val seconds = TimeParser.parseDurationSeconds(str)
 
                     bs.map {
                         fit(operator, it.totalLength.toLong(), seconds)

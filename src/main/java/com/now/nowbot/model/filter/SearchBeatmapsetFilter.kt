@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 import kotlin.collections.filter
@@ -41,7 +42,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     HP("(hp|health\\s*(point)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_DECIMAL)".toRegex()),
 
-    LENGTH("(length|drain|time|长度|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE($PATTERN_COLON$PATTERN_NUMBER_MORE)?)".toRegex()),
+    LENGTH("(length|drain|time|长度?|时[长间]|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_DURATION)".toRegex()),
 
     BOOLEAN("(general|bool(ean)?|常规?|总览?|布尔值?|值|e)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
@@ -51,7 +52,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     GENRE("(genre|g|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
-    LANGUAGE("(languages?|l|曲?风|风格|流派?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
+    LANGUAGE("(languages?|l|la|lang|语[言种]?|文字?)(?<n>$PATTERN_OPERATOR_WITH_SPACE(?=$PATTERN_LANGUAGE_VALUE)$PATTERN_ANYTHING_MORE)".toRegex()),
 
     RANK("(rank(ing|s)?|评[价级]?|k)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_ANYTHING_MORE)".toRegex()),
 
@@ -115,7 +116,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                         CS -> "q" to "cs${op}${text}"
                         OD -> "q" to "od${op}${text}"
                         HP -> "q" to "hp${op}${text}"
-                        LENGTH -> "q" to "length${op}${text}"
+                        LENGTH -> "q" to "length${op}${TimeParser.parseDurationSeconds(text)}"
                         ANY -> "q" to text
                         MODE -> "m" to text.toOsuMode().modeValue.toString()
                         CATEGORY -> {
