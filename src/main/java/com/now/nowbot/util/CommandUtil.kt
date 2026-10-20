@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component
 /**
  * 把 [com.now.nowbot.util.command.CommandExtractor] 剥离后的 [StripContext] 补成一个可直接使用的上下文。
  *
- * 只负责「脚手架」性质的两件事：补模式、补玩家。
- * 具体的业务判断（范围怎么用、模式是否合法）留给组件。
+ * 只负责「脚手架」性质的三件事：补模式、补玩家、补范围。
+ * 具体的业务判断（模式是否合法、越界怎么处理）留给组件。
  */
 @Component
 class CommandUtil(
@@ -146,6 +146,84 @@ class CommandUtil(
         }
 
         return lookupUser(text, type) ?: notFound(onNull)
+    }
+
+    /**
+     * 把本次指令里的范围换算成列表接口直接能用的 offset / limit。
+     *
+     * 只读 [StripContext] 里已经提取好的 `RANGE`（`3`、`3-5`、`#3-5`、`＃3-5` 都行），
+     * 不会再去 [StripContext.text] 里补抠；需要补抠时先调用 [getUserID]。
+     * 同一个 ctx 里有多段范围时取最后一段，和 [extractRangeToken] 的取值方式保持一致。
+     *
+     * 换算规则：
+     * - 没有范围、或范围里连起点都认不出来：返回 `defaultOffset to defaultLimit`；
+     * - 只有一个 `0`：语义是「全部取走」，返回 `0 to max`；
+     * - `3-5`：`2 to 3`；
+     * - `5-3`：`2 to 3`，反着写同样当作范围，和 [com.now.nowbot.util.DataUtil.parseRange2Offset] 一致；
+     * - 只有一个非 0 数字时由 [multiple] 决定它的含义：
+     *   - `false`（默认）：`30` 是「第 30 个」，返回 `29 to 1`；
+     *   - `true`：`30` 是「取 30 条」，返回 `defaultOffset to 30`；
+     * - 起点小于 1 时按 1 处理，offset 不会是负数。
+     *
+     * @param defaultOffset 没有范围时的 offset，也是 [multiple] 为 true 时取条数的起点，默认 0
+     * @param defaultLimit 没有范围时的 limit，默认 1
+     * @param multiple 只有一个数字时，是否把它当成「条数」而不是「第几个」
+     * @param max 单写一个 `0` 时要取走的条数，默认 200
+     */
+    fun getRange(
+        ctx: StripContext,
+        defaultOffset: Int = 0,
+        defaultLimit: Int = 1,
+        multiple: Boolean = false,
+        max: Int = 200,
+    ): Pair<Int, Int> {
+        val range = parseRange(ctx[ExtractType.RANGE].lastOrNull())
+            ?: return defaultOffset to defaultLimit
+
+        val start = range.first
+        val end = range.second?.takeIf { it > 0 }
+
+        // 只有一个 0：意思是「全部取走」
+        if (end == null && start <= 0) return 0 to max
+
+        // 单数字：multiple 决定它是「第 N 个」还是「从默认起点取 N 条」
+        if (end == null) {
+            val count = start.coerceAtLeast(1)
+
+            return if (multiple) defaultOffset to count else count - 1 to 1
+        }
+
+        val from = start.coerceAtLeast(1)
+
+        return if (end <= from) {
+            end - 1 to from - end + 1
+        } else {
+            from - 1 to end - from + 1
+        }
+    }
+
+    /**
+     * 把范围 token 拆成起止数字，规则和 [InstructionUtil] 里的 parseRange 一致：
+     * 去掉 `#` / `＃`，按横线（含全角、波浪号）切分，只认能转成整数的部分。
+     *
+     * `3-5` 是 `3 to 5`，`30` 是 `30 to null`，`-5` 也按 `5 to null` 处理。
+     *
+     * @return 起点和终点（终点可能没有）；连起点都认不出来时返回 null
+     */
+    private fun parseRange(text: String?): Pair<Int, Int?>? {
+        if (text.isNullOrBlank()) return null
+
+        val tokens = text
+            .removePrefix(CHAR_HASH.toString())
+            .removePrefix(CHAR_HASH_FULL.toString())
+            .trim()
+            .split(REGEX_HYPHEN)
+            .dropWhile { it.isEmpty() }
+            .map { it.trim().toIntOrNull() }
+
+        val start = tokens.getOrNull(0) ?: return null
+
+        return start to tokens.getOrNull(1)
     }
 
     /** `uid=123` 是外部直接指定的玩家，值可能是纯数字，也可能是带前缀的原文。 */
