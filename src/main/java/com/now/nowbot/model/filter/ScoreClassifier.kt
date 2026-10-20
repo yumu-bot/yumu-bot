@@ -96,7 +96,7 @@ enum class ScoreClassifier(
 
     MISSED_DROP("(miss(ed)?\\s*drop|漏中果?|md)".toRegex(), FilterValueType.DECIMAL),
 
-    MISSED_DROPLET("(miss(ed)?\\s*droplet|漏小?果?|ml".toRegex(), FilterValueType.DECIMAL),
+    MISSED_DROPLET("(miss(ed)?\\s*droplet|漏小?果?|ml)".toRegex(), FilterValueType.DECIMAL),
 
     GOOD("(good|200|绿|gd|良好)".toRegex(), FilterValueType.DECIMAL),
 

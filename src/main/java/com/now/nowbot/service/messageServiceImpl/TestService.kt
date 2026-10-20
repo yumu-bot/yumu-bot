@@ -9,6 +9,7 @@ import com.now.nowbot.util.CommandUtil
 import com.now.nowbot.util.command.CommandExtractor
 import com.now.nowbot.util.command.ExtractType
 import com.now.nowbot.util.command.OsuModeExtractor
+import com.now.nowbot.util.command.PATTERN_EXCLAMATION
 import com.now.nowbot.util.command.RangeExtractor
 import com.now.nowbot.util.command.ScoreClassifierExtractor
 import com.now.nowbot.util.command.StripContext
@@ -36,13 +37,17 @@ import org.springframework.stereotype.Service
 class TestService(
     private val commandUtil: CommandUtil,
 ) : MessageService<String> {
+
+    val instruction = "yuumu"
+
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: MessageService.DataValue<String>
     ): Boolean {
-        if (messageText.contains("!yuumu") && event.isSuperAdmin()) {
-            data.value = messageText.replaceFirst("!yuumu", "")
+        if (messageText.contains(instruction) && event.isSuperAdmin()) {
+            data.value = messageText.replaceFirst(PATTERN_EXCLAMATION.toRegex(), "")
+                .replaceFirst(instruction, "")
             return true
         } else {
             return false
