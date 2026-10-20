@@ -1,10 +1,9 @@
 package com.now.nowbot.util.command
 
 import com.now.nowbot.model.enums.Operator
-import com.now.nowbot.model.filter.BeatmapsetFilter
 import com.now.nowbot.model.filter.CommandClassifier
+import com.now.nowbot.model.filter.FilterValueType
 import com.now.nowbot.model.filter.ScoreClassifier
-import com.now.nowbot.model.filter.ScoreFilter
 
 enum class ExtractType {
     QQ,
@@ -137,29 +136,313 @@ class StripPipeline(initialText: String) {
     }
 }
 
-// 4. DSL 入口
-fun stripPipeline(input: String, block: StripPipeline.() -> Unit): StripContext {
-    val pipeline = StripPipeline(input)
-    pipeline.block()
-    return pipeline.context
-}
-
 operator fun CommandExtractor.plus(next: CommandExtractor): CommandExtractor = CommandExtractor { ctx ->
     this.process(ctx)
     next.process(ctx)
 }
+
+/// === 剥离引擎 ===
+
+/**
+ * 一个可以被剥离器认出来的「参数头」。
+ *
+ * 有两种形态，可以出现在同一行的任意位置、任意顺序：
+ *
+ * - 名字形式：`名字 + 运算符 + 值`，例如 `pp>=600`、`title='My Song'`；
+ *   运算符左边的整段连续内容（不含空白）就是参数名，必须完整等于 [namePattern]。
+ * - 符号形式：`符号 + 值`，例如 `:m`、`: m`、`#3-5`；符号本身即字段名，
+ *   符号与值之间允许若干空格。
+ *
+ * 值的收尾规则见 [readValue]：
+ * - 允许空格的类型（NAME / ANY）一路向后吞，直到运算符、冒号、引号，
+ *   或者「下一个参数名 + 运算符」为止；
+ * - 其余类型只吃一段不含空格的连续文本。
+ * 单/双引号包裹的值优先级最高，引号直接锚定范围。
+ *
+ * 没被任何参数头认领的内容原样留在 [StripContext.text] 里。
+ */
+class HeadSpec(
+    val name: String,
+    /** 名字形式：整段参数名必须与之完全匹配；为 null 表示不支持名字形式 */
+    val namePattern: String? = null,
+    /** 符号形式：候选符号集合，同义符号可以给多个（`:` / `：`）；为 null 表示不支持符号形式 */
+    val symbols: List<String>? = null,
+    val valueType: FilterValueType,
+    /** 值的首段校验，同一个参数名有多种含义时用来挑候选 */
+    val valueCheck: String? = null,
+    /** 值末尾可以被吞掉的后缀，例如 `%`、`x` */
+    val suffix: String? = null,
+    val emit: (StripContext, Operator, String) -> Unit,
+) {
+    internal val nameMatcher: Regex? = namePattern?.let(::Regex)
+    internal val valueRegex: Regex? = valueCheck?.let(::Regex)
+
+    /** 候选符号按长度降序，长符号优先，避免短符号抢先匹配 */
+    internal val symbolCandidates: List<String> = symbols.orEmpty().sortedByDescending(String::length)
+
+    /** 后缀一律贴着值的末尾匹配，避免 `[%％]?` 这类可空正则在开头空匹配把值吃光 */
+    internal val suffixRegex: Regex? = suffix?.let { Regex("(?:$it)\$") }
+
+    /** 同一个后缀，但只要求从当前位置开始匹配：用来把字符集之外的后缀（`%`、`x`、`★`）也吞进 token */
+    internal val suffixHeadRegex: Regex? = suffix?.let { Regex("(?:$it)") }
+
+    internal fun suffixAt(text: String, at: Int): MatchResult? =
+        suffixHeadRegex?.matchAt(text, at)?.takeIf { it.value.isNotEmpty() }
+
+    internal fun accepts(value: String): Boolean {
+        if (value.isEmpty()) return false
+        if (!valueType.isValidLength(value)) return false
+        val check = valueRegex ?: return true
+        return check.find(value) != null
+    }
+}
+
+/**
+ * 符号形式的参数头。符号本身就代表字段，不需要参数名和运算符。
+ *
+ * 一项可以携带多个同义符号，等价于 `PATTERN_COLON` 那种 `[:：]` 的写法。
+ */
+enum class SymbolHead(
+    vararg symbols: String,
+    val type: ExtractType,
+    val valueType: FilterValueType = FilterValueType.WORD,
+) {
+    MODE(":", "：", type = ExtractType.MODE),
+    RANGE("#", "＃", type = ExtractType.RANGE),
+    ;
+
+    /** 该头认的所有符号，按长度降序，长符号优先 */
+    val symbols: List<String> = symbols.sortedByDescending(String::length)
+}
+
+private fun SymbolHead.toHeadSpec() = HeadSpec(
+    name = type.name,
+    symbols = symbols,
+    valueType = valueType,
+    emit = { ctx, _, value -> ctx[type] = value },
+)
+
+private fun CommandClassifier.toHeadSpec() = HeadSpec(
+    name = name,
+    namePattern = prefix.pattern,
+    valueType = valueType,
+    valueCheck = valueRegex?.pattern,
+    suffix = suffix?.pattern,
+    emit = { ctx, operator, value -> ctx[Pair(name, operator)] = value },
+)
+
+/**
+ * 按 [heads] 一次性扫描整行，把所有认出来的参数从 [StripContext.text] 里摘掉。
+ */
+fun StripContext.extractByHeads(heads: List<HeadSpec>) {
+    if (heads.isEmpty() || text.isEmpty()) return
+
+    val hits = ArrayList<TokenHit>()
+    var i = 0
+    while (i < text.length) {
+        // 参数头只能从词首开始，避免把单词内部的片段误认成参数名
+        if (i > 0 && text[i - 1].isLetterOrDigit()) {
+            i++
+            continue
+        }
+        val hit = matchHead(text, i, heads)
+        if (hit == null) {
+            i++
+            continue
+        }
+        hits.add(hit)
+        i = hit.end
+    }
+
+    if (hits.isEmpty()) return
+
+    // 倒序删除，前面 token 的下标才不会失效
+    for (index in hits.indices.reversed()) {
+        val hit = hits[index]
+        text = text.removeRange(hit.start, hit.end)
+    }
+    for (hit in hits) {
+        hit.head.emit(this, hit.operator, hit.value)
+    }
+    collapseWhitespace()
+}
+
+inline fun <reified E> StripContext.extractByClassifier()
+        where E : Enum<E>, E : CommandClassifier {
+    extractByClassifiers(enumValues<E>().toList())
+}
+
+fun StripContext.extractByClassifiers(classifiers: Iterable<CommandClassifier>) {
+    extractByHeads(classifiers.map { it.toHeadSpec() })
+}
+
+fun StripContext.extractBySymbols(heads: Iterable<SymbolHead>) {
+    extractByHeads(heads.map { it.toHeadSpec() })
+}
+
+fun StripContext.extractBySymbols(vararg heads: SymbolHead) {
+    extractBySymbols(heads.toList())
+}
+
+/// === 扫描细节 ===
+
+private class ValueSpan(val value: String, val end: Int)
+
+private class TokenHit(
+    val head: HeadSpec,
+    val operator: Operator,
+    val value: String,
+    val start: Int,
+    val end: Int,
+)
+
+/** 运算符的起首字符，用来判断参数名的右边界 */
+private const val OPERATOR_START_CHARS = "<>＜＞=＝!！≥≤"
+
+private val NAME_STOP_CHARS = setOf(':', '：', '\'', '"')
+
+/**
+ * 所有符号头使用的字符，一律视为值的硬边界。
+ *
+ * 符号有自己的主人（`#` 就是 RANGE），不该被名字类的值顺手吞掉。
+ * 这样「先跑名字类还是先跑符号类」就不再影响结果了。
+ */
+private val RESERVED_SYMBOLS: Set<Char> =
+    SymbolHead.entries.flatMap { head -> head.symbols.flatMap { it.toList() } }.toSet()
+
+// 提取所有 Operator 的符号，并按长度降序排列（优先匹配 ==, >=, <=, != 等）
+private val sortedSymbols = Operator.entries
+    .flatMap { it.symbols }
+    .sortedByDescending { it.length }
+
+private fun isOperatorStart(c: Char) = OPERATOR_START_CHARS.indexOf(c) >= 0
+
+private fun skipSpaces(text: String, from: Int): Int {
+    var i = from
+    while (i < text.length && text[i].isWhitespace()) i++
+    return i
+}
+
+private fun symbolAt(text: String, at: Int): String? {
+    if (at >= text.length) return null
+    for (symbol in sortedSymbols) {
+        if (text.startsWith(symbol, at)) return symbol
+    }
+    return null
+}
+
+/** 在 [at] 处匹配 [candidates] 里最长的一个符号；候选需已按长度降序 */
+private fun symbolAt(text: String, at: Int, candidates: List<String>): String? {
+    if (at >= text.length) return null
+    for (symbol in candidates) {
+        if (text.startsWith(symbol, at)) return symbol
+    }
+    return null
+}
+
+/** 参数名的右边界：连续的非空白、非运算符、非冒号引号内容 */
+private fun nameRunEnd(text: String, from: Int): Int {
+    var i = from
+    while (i < text.length) {
+        val c = text[i]
+        if (c.isWhitespace() || isOperatorStart(c) || c in NAME_STOP_CHARS) break
+        i++
+    }
+    return i
+}
+
+private fun matchHead(text: String, start: Int, heads: List<HeadSpec>): TokenHit? {
+    // 1. 符号形式：符号 + 若干空格 + 值
+    for (head in heads) {
+        val symbol = symbolAt(text, start, head.symbolCandidates) ?: continue
+
+        val span = readValue(text, start + symbol.length, head, heads) ?: continue
+        if (!head.accepts(span.value)) continue
+        return TokenHit(head, Operator.EQ, span.value, start, span.end)
+    }
+
+    // 2. 名字形式：参数名 + 若干空格 + 运算符 + 值
+    val runEnd = nameRunEnd(text, start)
+    if (runEnd == start) return null
+
+    val name = text.substring(start, runEnd)
+    val opPos = skipSpaces(text, runEnd)
+    val operatorSymbol = symbolAt(text, opPos) ?: return null
+    val operator = Operator.getOperator(operatorSymbol)
+
+    val valueFrom = opPos + operatorSymbol.length
+    for (head in heads) {
+        val matcher = head.nameMatcher ?: continue
+        if (!matcher.matches(name)) continue
+
+        val span = readValue(text, valueFrom, head, heads) ?: continue
+        if (!head.accepts(span.value)) continue
+        return TokenHit(head, operator, span.value, start, span.end)
+    }
+    return null
+}
+
+private fun readValue(text: String, from: Int, head: HeadSpec, heads: List<HeadSpec>): ValueSpan? {
+    val start = skipSpaces(text, from)
+    if (start >= text.length) return null
+
+    // 引号优先级最高，直接锚定范围
+    val first = text[start]
+    if (first == '\'' || first == '"') {
+        val close = text.indexOf(first, start + 1)
+        if (close < 0) return null
+        val value = stripSuffix(text.substring(start + 1, close), head)
+        return if (value.isEmpty()) null else ValueSpan(value, close + 1)
+    }
+
+    var end = start
+    if (head.valueType.allowsSpace) {
+        // 一直向后吞，直到下一个参数头
+        while (end < text.length && !isBoundary(text, end, heads)) end++
+    } else {
+        while (end < text.length && !text[end].isWhitespace() && head.valueType.isValidChar(text[end])) end++
+        // 后缀（`%`、`x`、`★`）不在字符集里，单独再吞一次，避免留在剩余文本里
+        head.suffixAt(text, end)?.let { end += it.value.length }
+    }
+    if (end == start) return null
+
+    val value = stripSuffix(text.substring(start, end), head)
+    return if (value.isEmpty()) null else ValueSpan(value, end)
+}
+
+private fun stripSuffix(raw: String, head: HeadSpec): String {
+    val regex = head.suffixRegex ?: return raw.trim()
+    val match = regex.find(raw) ?: return raw.trim()
+    return raw.substring(0, match.range.first).trim()
+}
+
+/** 值是否应该在这里收尾 */
+private fun isBoundary(text: String, at: Int, heads: List<HeadSpec>): Boolean {
+    val c = text[at]
+    if (isOperatorStart(c) || c in NAME_STOP_CHARS || c in RESERVED_SYMBOLS) return true
+
+    // 只有词首才可能开始一个新的参数名
+    if (at > 0 && text[at - 1].isLetterOrDigit()) return false
+    return startsNamedHead(text, at, heads)
+}
+
+/** 这里是否是一个「已知参数名 + 运算符」的开头 */
+private fun startsNamedHead(text: String, at: Int, heads: List<HeadSpec>): Boolean {
+    val runEnd = nameRunEnd(text, at)
+    if (runEnd == at) return false
+
+    val name = text.substring(at, runEnd)
+    if (symbolAt(text, skipSpaces(text, runEnd)) == null) return false
+    return heads.any { it.nameMatcher?.matches(name) == true }
+}
+
+/// === 现成的剥离组件 ===
 
 val userIDGroupRegex = Regex("""u(?:ser)?id\s*${PATTERN_EQUAL}\s*${PATTERN_UID}""")
 
 val qqGroupRegex = Regex("""group\s*${PATTERN_EQUAL}\s*${PATTERN_QQ}""")
 
 val qqRegex = Regex("""qq\s*${PATTERN_EQUAL}\s*${PATTERN_QQ}""")
-
-val modeRegex = Regex("""${PATTERN_COLON}\s*${PATTERN_MODE}""")
-
-val rangeRegex = Regex("""${PATTERN_HASH}\s*(${PATTERN_NUMBER_1_100}\s*${PATTERN_HYPHEN}?\s*${PATTERN_NUMBER_1_100}?)""")
-
-/// ===
 
 val UserIDExtractor = CommandExtractor { ctx ->
     ctx.extractPattern(ExtractType.USER_ID, userIDGroupRegex)
@@ -174,255 +457,62 @@ val QQExtractor = CommandExtractor { ctx ->
 }
 
 val OsuModeExtractor = CommandExtractor { ctx ->
-    ctx.extractPattern(ExtractType.MODE, modeRegex)
+    ctx.extractBySymbols(SymbolHead.MODE)
 }
 
 val RangeExtractor = CommandExtractor { ctx ->
-    ctx.extractPattern(ExtractType.RANGE, rangeRegex)
+    ctx.extractBySymbols(SymbolHead.RANGE)
 }
 
 val ScoreClassifierExtractor = CommandExtractor { ctx ->
     ctx.extractByClassifier<ScoreClassifier>()
 }
 
-@Deprecated("use ScoreClassifierExtractor instead.")
-val ScoreFilterExtractor = CommandExtractor { ctx ->
-    ctx.extractByEnumFilters(
-        filters = ScoreFilter.entries.dropLast(1),
-        getRegex = { it.regex },
-        loop = true
-    )
-}
-
-val BeatmapsetExtractor = CommandExtractor { ctx ->
-    ctx.extractByEnumFilters(
-        filters = BeatmapsetFilter.entries.dropLast(1),
-        getRegex = { it.regex },
-        loop = true
-    )
-}
-
-fun <T : Enum<T>> StripContext.extractByEnumFilters(
-    filters: Iterable<T>,
-    getRegex: (T) -> Regex,
-    loop: Boolean = true
-) {
-    extractByFilters(
-        filters = filters,
-        getRegex = getRegex,
-        getName = { it.name },
-        loop = loop
-    )
-}
-
-/**
- * 通用单次/循环剥离函数
- *
- * @param filters 需要匹配的 Filter 列表（例如 ScoreFilter.entries.dropLast(1)）
- * @param getRegex 获取 Filter 对应的 Regex 的 lambda
- * @param getName 获取 Filter 对应的 名称（Key） 的 lambda
- * @param loop 是否开启循环剥离（直至无新匹配为止）
- */
-fun <T> StripContext.extractByFilters(
-    filters: Iterable<T>,
-    getRegex: (T) -> Regex,
-    getName: (T) -> String,
-    loop: Boolean = true
-) {
-    var matchedInThisRound: Boolean
-
-    do {
-        matchedInThisRound = false
-
-        for (filter in filters) {
-            val regex = getRegex(filter)
-            val matchResult = regex.find(this.text)
-
-            if (matchResult != null) {
-                // 1. 优先获取组 n 的内容
-                val rawNValue = try {
-                    matchResult.groups["n"]?.value ?: matchResult.value
-                } catch (_: IllegalArgumentException) {
-                    matchResult.value
-                }
-
-                // 2. 从 rawNValue 中提取操作符与纯数值
-                val rawTrimmed = rawNValue.trim()
-                val opMatch = Regex(PATTERN_OPERATOR).find(rawTrimmed)
-                val opStr = opMatch?.value?.trim() ?: ""
-                val cleanValue = rawTrimmed.removePrefix(opStr).trim()
-
-                // 3. 解析成 Operator 枚举
-                val operator = Operator.getOperator(opStr)
-
-                // 4. 存入 syntaxes 容器：Key 为 Pair(filterName, operator)
-                val filterName = getName(filter)
-                this[Pair(filterName, operator)] = cleanValue
-
-                // 5. 剥离匹配文本并标记发生过匹配
-                this.clearFirst(matchResult.value)
-                matchedInThisRound = true
-            }
-        }
-    } while (loop && matchedInThisRound)
-
-    // 整理多余空格
-    this.collapseWhitespace()
-}
-
-inline fun <reified E> StripContext.extractByClassifier()
-        where E : Enum<E>, E : CommandClassifier {
-    extractByClassifiers(enumValues<E>().toList())
-}
-
-// 提取所有 Operator 的符号，并按长度降序排列（优先匹配 ==, >=, <=, != 等）
-private val sortedSymbols = Operator.entries
-    .flatMap { it.symbols }
-    .sortedByDescending { it.length }
-
-fun StripContext.extractByClassifiers(classifiers: Iterable<CommandClassifier>) {
-    var matchedInThisRound: Boolean
-
-    do {
-        matchedInThisRound = false
-
-        // 1. 优先寻找字符串里含有任意 operator 的位置（包含全角归一化字符处理）
-        var earliestOpIndex = -1
-        var matchedSymbol = ""
-
-        for (symbol in sortedSymbols) {
-            val idx = this.text.indexOf(symbol)
-            if (idx != -1 && (earliestOpIndex == -1 || idx < earliestOpIndex)) {
-                earliestOpIndex = idx
-                matchedSymbol = symbol
-            }
-        }
-
-        // 找不到任何 operator 则直接结束
-        if (earliestOpIndex == -1 || matchedSymbol.isEmpty()) break
-
-        // 解析出具体的 Operator 枚举（利用你自定义的 getOperator 归一化解析）
-        val operator = Operator.getOperator(matchedSymbol)
-
-        val leftText = this.text.substring(0, earliestOpIndex)
-        val rightText = this.text.substring(earliestOpIndex + matchedSymbol.length)
-        val trimmedRightText = rightText.trimStart()
-
-        // 2. 往左寻找分类器中的 prefix（跳过空白字符，紧贴运算符左侧的非空内容）
-        var bestClassifier: CommandClassifier? = null
-        var bestPrefixStart = Int.MAX_VALUE
-
-        // 先把 leftText 末尾的空白字符 trimEnd 掉，拿到紧贴 operator 的最右侧非空文本
-        val trimmedLeftText = leftText.trimEnd()
-
-        if (trimmedLeftText.isNotEmpty()) {
-            for (classifier in classifiers) {
-                // 寻找在 trimmedLeftText 结尾处能否匹配上 prefix
-                val matches = classifier.prefix.findAll(trimmedLeftText).toList()
-                if (matches.isNotEmpty()) {
-                    val lastMatch = matches.last()
-
-                    // 核心条件：匹配项必须刚好在 trimmedLeftText 的末尾结束
-                    if (lastMatch.range.last == trimmedLeftText.lastIndex) {
-                        // 同一个 prefix 可能有多个含义，用 value 首段决定选哪一个
-                        if (classifier.valueRegex?.containsMatchIn(trimmedRightText) == false) {
-                            continue
-                        }
-
-                        // 优先取更长的 prefix：created time 应优先匹配 CREATED_TIME，而不是末尾的 time/LENGTH
-                        if (lastMatch.range.first < bestPrefixStart) {
-                            bestPrefixStart = lastMatch.range.first
-                            bestClassifier = classifier
-                        }
-                    }
-                }
-            }
-        }
-
-        if (bestClassifier != null) {
-            // 预先搜寻右侧文本中下一个 prefix 的起始位置，作为 value 的截断边界。
-            // prefix 后面必须紧跟 operator，避免把 value 内部的字母（如 en 里的 e）当成下一个条件。
-            var nextPrefixIndex = rightText.length
-            for (c in classifiers) {
-                var fromIndex = 0
-                while (fromIndex <= rightText.length) {
-                    val match = c.prefix.find(rightText, fromIndex) ?: break
-                    val afterPrefix = rightText.substring(match.range.last + 1).trimStart()
-                    val isNextCondition = afterPrefix.isNotEmpty() &&
-                            sortedSymbols.any { afterPrefix.startsWith(it) }
-
-                    if (isNextCondition) {
-                        if (match.range.first < nextPrefixIndex) {
-                            nextPrefixIndex = match.range.first
-                        }
-                        break
-                    }
-                    fromIndex = match.range.first + 1
-                }
-            }
-
-            // 3. 往右根据 valueType 逐个字符寻找特定字符
-            var valueEndIndex = 0
-            val rawValueBuilder = StringBuilder()
-
-            for (i in rightText.indices) {
-                // 碰到了下一个 prefix
-                if (i >= nextPrefixIndex) break
-
-                val char = rightText[i]
-
-                if (!bestClassifier.valueType.isValidChar(char)) {
-                    break
-                }
-
-                rawValueBuilder.append(char)
-                valueEndIndex = i + 1
-            }
-
-            var cleanValue = rawValueBuilder.toString().trim()
-
-            // 4. 处理 suffix（如果结尾有 suffix，也要从 value 里扣除）
-            bestClassifier.suffix?.let { suffixRegex ->
-                val suffixMatch = suffixRegex.find(cleanValue)
-                if (suffixMatch != null) {
-                    cleanValue = cleanValue.substring(0, suffixMatch.range.first).trim()
-                }
-            }
-
-            // 存入 syntaxes 容器，Key 为 Pair(classifier.name, operator)
-            this[Pair(bestClassifier.name, operator)] = cleanValue
-
-            // 5. 从原字符串中删去匹配到的字符（Prefix + Operator + Value/Suffix），避免二次污染
-            val fullMatchEnd = earliestOpIndex + matchedSymbol.length + valueEndIndex
-            this.text = this.text.removeRange(bestPrefixStart, fullMatchEnd).trim()
-
-            matchedInThisRound = true
-        } else {
-            // 如果找到了 operator，但向左没有找到任何对应的 classifier prefix，
-            // 移除当前运算符避免无限死循环
-            this.text = this.text.removeRange(earliestOpIndex, earliestOpIndex + matchedSymbol.length).trim()
-        }
-
-    } while (matchedInThisRound)
-
-    this.collapseWhitespace()
-}
-
 fun main() {
-    println(rangeRegex.pattern)
-//    val ctx = StripContext("pp>=600 acc>98.5% bid=123456 residual")
-//
-//    // 执行提取
-//    ScoreFilterExtractor.process(ctx)
-//
-//    println("剩余文本: \"${ctx.text}\"") // 输出: "residual"
-//
-//    // 查询 syntaxes 中的结果
-//    val ppGte = ctx[Pair(ScoreFilter.PERFORMANCE.name, Operator.GE)]
-//    val accGt = ctx[Pair(ScoreFilter.ACCURACY.name, Operator.GT)]
-//    val bidEq = ctx[Pair(ScoreFilter.BID.name, Operator.EQ)]
-//
-//    println("PP >= : $ppGte")  // 输出: [600]
-//    println("ACC > : $accGt")  // 输出: [98.5]
-//    println("BID = : $bidEq")  // 输出: [123456]
+    val samples = listOf(
+        "!bp pp>=600 acc>98.5% title='My Song' :m #3-5 residual",
+        "pp>=600",
+        "pp >= 600",
+        ":  m",
+        "#3-5",
+        "combo>500x sr>6.5★",
+        "l=en",
+        "l=3:30",
+        "title=My Song",
+        "title=My Song acc>98",
+        "bid=123456 sid=789",
+        "mod=+hr",
+        "pp>=",
+        "replay=true pp>=600",
+        "title=Song #3",
+        "pp>=600 #3-5 :m",
+        // 全角同义符号
+        "：m ＃3-5",
+        "!bp ：m ＃3-5 pp>=600",
+        // NAME 限长 3~15；WORD / ANY 不限长
+        "title=abcdefghijklmnop",
+        "tag=ab",
+        "diff=Reform Extra",
+        "replay=0 cv=std",
+    )
+
+    // 正序 / 逆序各跑一遍，用来确认「顺序不影响结果」
+    fun run(sample: String, extractors: List<CommandExtractor>): StripContext {
+        val ctx = StripContext(sample)
+        extractors.forEach { it.process(ctx) }
+        return ctx
+    }
+
+    val forward = listOf(ScoreClassifierExtractor, OsuModeExtractor, RangeExtractor)
+    val backward = forward.reversed()
+
+    for (sample in samples) {
+        val a = run(sample, forward)
+        val b = run(sample, backward)
+
+        val parsed = a.syntaxes.entries.joinToString(", ") { "${it.key.first}${it.key.second}${it.value}" }
+        val extra = a.extracted.entries.joinToString(", ") { "${it.key}${it.value}" }
+        val same = a.text == b.text && a.syntaxes == b.syntaxes && a.extracted == b.extracted
+        println("$sample\n  -> [$parsed] [$extra] 剩余=\"${a.text}\"" + if (same) "" else "\n  !! 顺序敏感: 逆序剩余=\"${b.text}\"")
+    }
 }

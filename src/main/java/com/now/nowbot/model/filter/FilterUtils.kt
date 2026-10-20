@@ -23,24 +23,50 @@ fun <E : Enum<E>> List<List<String>>.getFirstMatch(filter: E): String? {
     return this.getMatches(filter).firstOrNull()
 }
 
-enum class FilterValueType {
-    ANY, DECIMAL, INTEGER, NAME, TIME, MOD;
+/**
+ * 参数的「值」长什么样。
+ *
+ * [allowsSpace] 决定剥离器用什么方式给值收尾：
+ * - 允许空格的值（NAME / ANY）会一直向后吞，直到撞上运算符、冒号、引号，
+ *   或者「下一个参数名 + 运算符」。歌曲名这类含空格的值靠这个才能完整保留。
+ * - 不允许空格的值只吃一段连续的、符合字符集的文本。
+ *
+ * [minLength] / [maxLength] 按字符数限制值的长度，剥离器会在摘掉后缀之后再校验，
+ * 长度不合法的参数视为没认出来，原样留在剩余文本里。
+ */
+enum class FilterValueType(
+    val allowsSpace: Boolean,
+    val minLength: Int = 0,
+    val maxLength: Int = Int.MAX_VALUE,
+) {
+    ANY(true),
+    /** 曲名、谱师这类文本值，长度限定 3~15 个字符 */
+    NAME(true, minLength = 3, maxLength = 15),
+    /** 不含空格的一段任意文本，不限长度：`:m` 的 `m`、`#3-5` 的 `3-5`、`replay=0` 的 `0` */
+    WORD(false),
+    DECIMAL(false),
+    INTEGER(false),
+    TIME(false),
+    MOD(false);
 
-    private val nameChars = setOf('_', '-', '[', ']', '(', ')')
+    /** 值长度是否落在该类型的允许区间内 */
+    fun isValidLength(value: CharSequence): Boolean = value.length in minLength..maxLength
+
     private val timeChars: Set<Char> = setOf(
         ':', '：', '-', '/',
         '年','月','日','天','分','钟','秒','小','时',
     )
 
-    fun isValidChar(c: Char): Boolean {
-        return c.isWhitespace() || when (this) {
-            INTEGER -> c.isDigit()
-            DECIMAL -> c.isDigit() || c == '.' || c == ','
-            TIME -> c.isLetterOrDigit() || c in timeChars
-            MOD -> c.isLetterOrDigit() || c == '+'
-            NAME -> c.isLetterOrDigit() || c in nameChars
-            ANY -> true
-        }
+    /**
+     * 仅对 [allowsSpace] 为 false 的类型生效；空格本身不参与判断，
+     * 由剥离器在遇到空白时直接收尾。
+     */
+    fun isValidChar(c: Char): Boolean = when (this) {
+        INTEGER -> c.isDigit()
+        DECIMAL -> c.isDigit() || c == '.' || c == ','
+        TIME -> c.isLetterOrDigit() || c in timeChars
+        MOD -> c.isLetterOrDigit() || c == '+'
+        ANY, NAME, WORD -> true
     }
 }
 
