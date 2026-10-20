@@ -857,7 +857,7 @@ class AliasService(
     }
 
     /**
-     * !aj 无参数：直接返回最近更新的标题和别名，不进入等待回复的会话。
+     * !aj 无参数：按别名创建时间直接返回最近有新增别名的标题，不进入等待回复的会话。
      */
     private fun listRecentTitles(event: MessageEvent) {
         adjustSessions.invalidate(event.subject.contactID)
@@ -870,7 +870,7 @@ class AliasService(
         }
 
         val text = buildString {
-            appendLine("最近更新的 ${recent.size} 个含有多个别名的标题：")
+            appendLine("最近新增别名的 ${recent.size} 个标题：")
             recent.forEachIndexed { index, item ->
                 val aliases = item.aliases.joinToString(", ", "[", "]")
                 appendLine("${index + 1}. ${item.title}: $aliases")

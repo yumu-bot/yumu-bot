@@ -23,16 +23,7 @@ class AliasTitle(
     var aliases: MutableList<Alias> = mutableListOf(),
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    var createdAt: OffsetDateTime = OffsetDateTime.now(),
-
-    /**
-     * 最近一次别名变动（添加、删除、排序、审核）的时间。
-     *
-     * 列默认值是为了兼容 ddl-auto=update 时已经存在的数据行；
-     * 所有写操作都会在 [com.now.nowbot.dao.AliasDao] 里显式刷新这个字段。
-     */
-    @Column(name = "updated_at", nullable = false, columnDefinition = "timestamp with time zone default now()")
-    var updatedAt: OffsetDateTime = OffsetDateTime.now()
+    var createdAt: OffsetDateTime = OffsetDateTime.now()
 ) {
     val primaryAlias: Alias?
         get() = aliases.firstOrNull()

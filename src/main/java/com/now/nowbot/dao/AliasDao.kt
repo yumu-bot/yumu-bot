@@ -13,7 +13,6 @@ import jakarta.transaction.Transactional
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import java.time.Duration
-import java.time.OffsetDateTime
 
 @Component
 class AliasDao(
@@ -130,9 +129,9 @@ class AliasDao(
     }
 
     /**
-     * 按最近更新时间倒序取若干个含有多个别名的标题及其全部别名，供 `!aj` 无参数时展示。
+     * 按别名创建时间倒序取若干个含有多个别名的标题及其全部别名，供 `!aj` 无参数时展示。
      *
-     * 只有一个别名的标题无法调整顺序，查询时已经排除。
+     * 排序依据是标题下最新创建的别名时间；只有一个别名的标题无法调整顺序，查询时已经排除。
      * 这是管理员指令，返回的别名包含待审核项。
      */
     @Transactional
@@ -170,7 +169,6 @@ class AliasDao(
 
         title.aliases.clear()
         title.aliases.addAll(ordered)
-        title.updatedAt = OffsetDateTime.now()
         titleRepository.save(title)
 
         invalidateTitleCache(titleName)
@@ -247,7 +245,6 @@ class AliasDao(
             } else {
                 aliasTitle.aliases.add(alias)  // 加在末尾
             }
-            aliasTitle.updatedAt = OffsetDateTime.now()
             titleRepository.save(aliasTitle)
         }
 
@@ -283,7 +280,6 @@ class AliasDao(
 
         var imported = 0
         var skipped = 0
-        val updatedTitles = HashSet<AliasTitle>()
 
         trimmedMapping.forEach { (titleName, aliasValue) ->
             val title = titles.getOrPut(titleName) { AliasTitle(name = titleName) }
@@ -295,7 +291,6 @@ class AliasDao(
             // 导入的别名视为已通过审核
             if (approved && !alias.approved) {
                 alias.approved = true
-                updatedTitles += title
             }
 
             val exists = title.aliases.any { it.id == alias.id || it.value == alias.value }
@@ -304,13 +299,9 @@ class AliasDao(
                 skipped++
             } else {
                 title.aliases.add(alias)
-                updatedTitles += title
                 imported++
             }
         }
-
-        val now = OffsetDateTime.now()
-        updatedTitles.forEach { it.updatedAt = now }
 
         // 先保存别名拿到 ID，再保存标题与别名的绑定关系
         aliasRepository.saveAll(aliases.values)
@@ -343,7 +334,6 @@ class AliasDao(
 
         title.aliases.removeAll { it.id == alias.id }
 
-        title.updatedAt = OffsetDateTime.now()
         titleRepository.save(title)
 
         // 如果这个别名已经没有任何标题引用了，就顺手删掉，避免留下孤儿数据
@@ -380,7 +370,6 @@ class AliasDao(
         // 按 id 删除，避免值比较的差异导致实际没删掉
         val removedIds = removed.map { it.id }.toSet()
         title.aliases.removeAll { it.id in removedIds }
-        title.updatedAt = OffsetDateTime.now()
         titleRepository.save(title)
 
         // 如果这些别名已经没有任何标题引用了，就顺手删掉，避免留下孤儿数据
@@ -410,7 +399,6 @@ class AliasDao(
         val aliasValues = title.aliases.map { it.value }
 
         title.aliases.clear()
-        title.updatedAt = OffsetDateTime.now()
         titleRepository.save(title)
 
         // 如果这些别名已经没有任何标题引用了，就顺手删掉，避免留下孤儿数据
@@ -471,14 +459,10 @@ class AliasDao(
      */
     @Transactional
     fun reviewAliases(approvedIds: Collection<Long>, rejectedIds: Collection<Long>): Pair<Int, Int> {
-        val now = OffsetDateTime.now()
         var approved = 0
         if (approvedIds.isNotEmpty()) {
             val aliases = aliasRepository.findAllById(approvedIds)
-            aliases.forEach { alias ->
-                alias.approved = true
-                alias.titles.forEach { it.updatedAt = now }
-            }
+            aliases.forEach { alias -> alias.approved = true }
             aliasRepository.saveAll(aliases)
             approved = aliases.size
         }
@@ -491,7 +475,6 @@ class AliasDao(
             aliases.forEach { alias ->
                 alias.titles.forEach { title ->
                     title.aliases.removeAll { it.id == alias.id || it.value == alias.value }
-                    title.updatedAt = now
                 }
             }
             titleRepository.flush()
@@ -532,7 +515,6 @@ class AliasDao(
         }
 
         // 5. 保存并返回更新后的 Title 实体
-        title.updatedAt = OffsetDateTime.now()
         val saved = titleRepository.save(title)
 
         invalidateTitleCache(title.name)
@@ -553,7 +535,6 @@ class AliasDao(
         name = name,
         aliases = approvedAliases.toMutableList(),
         createdAt = createdAt,
-        updatedAt = updatedAt,
     )
 }
 
