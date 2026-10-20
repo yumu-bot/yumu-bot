@@ -249,9 +249,16 @@ object StringUtil {
         return (match * 2.0) / (cs.length + ts.length - ((stringLength - 1.0) * 2.0))
     }
 
-    // 严格匹配 feat. / ft. / featuring / cover 及其之后的内容，同时绝对不会误伤单词内部的 feat（如 Defeat）
-    val featPattern = Regex(
-        "(?<![a-zA-Z])\\b(?:[(\\[-]\\s*)?(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b.*$",
+    // 1. (歌手 Cover) 形式：从 '(' 开始，包含 'cover' / 'covered by' 及其之后的所有内容
+    // 2. feat. / ft. 形式：从 feat / ft 开始及其之后的所有内容
+    val featAndCoverPattern = Regex(
+        "(?<![a-zA-Z])\\b(?:" +
+                // 模式 A: 带括号/连字符开头的 Cover，允许括号内有翻唱歌手名 (e.g. "(Poicyss' Pearto Cover...")
+                "(?:[(\\[-]\\s*[^)\\]]*?\\b(?:covered?\\s+by|cover)s?\\b.*$)" +
+                "|" +
+                // 模式 B: 传统的 feat. / ft. / featuring / 裸 cover 逻辑
+                "(?:(?:[(\\[-]\\s*)?(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b.*$)" +
+                ")",
         RegexOption.IGNORE_CASE
     )
 
@@ -317,18 +324,17 @@ object StringUtil {
 
         var result = this
 
-        // 先移除 feat. / ft. 及其之后的内容
-        result = result.replace(featPattern, "")
+        // 1. 移除 (歌手 Cover) 以及 feat. / ft. 及其之后的所有内容
+        result = result.replace(featAndCoverPattern, "")
 
-        // 再循环移除末尾的版本后缀
-        // 阶段 1：循环剥离尾部所有「带括号的版本标记」
+        // 2. 阶段 1：循环剥离尾部所有「带括号的版本标记」
         while (true) {
             val next = result.orEmpty().replace(versionParenPattern, "")
             if (next == result) break
             result = next
         }
 
-        // 阶段 2：循环剥离尾部所有「裸版本标记」
+        // 3. 阶段 2：循环剥离尾部所有「裸版本标记」
         while (true) {
             val next = result.orEmpty().replace(versionBarePattern, "")
             if (next == result) break
