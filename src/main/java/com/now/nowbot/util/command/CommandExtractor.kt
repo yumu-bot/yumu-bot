@@ -438,7 +438,10 @@ private fun startsNamedHead(text: String, at: Int, heads: List<HeadSpec>): Boole
 
 /// === 现成的剥离组件 ===
 
-val userIDGroupRegex = Regex("""u(?:ser)?id\s*${PATTERN_EQUAL}\s*${PATTERN_UID}""")
+/**
+ * `uid=123` / `userid=123`。只捕获数字部分，方便 [StripContext.extractPattern] 直接存成 ID。
+ */
+val userIDGroupRegex = Regex("""u(?:ser)?id\s*${PATTERN_EQUAL}\s*(${PATTERN_NUMBER_MORE})""")
 
 val qqGroupRegex = Regex("""group\s*${PATTERN_EQUAL}\s*${PATTERN_QQ}""")
 
