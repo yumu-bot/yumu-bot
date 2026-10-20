@@ -365,6 +365,9 @@ class SBScorePRService(
 
             osuCalculateApiService.applyPPToScores(scores)
 
+            // 必须在 extend 之后：extend 会替换 score.beatmapset，提前挂的别名会丢
+            osuBeatmapApiService.applyAlias(scores)
+
             val image = imageService.getPanel(body, "A5")
             return MessageChain(image)
         } else {

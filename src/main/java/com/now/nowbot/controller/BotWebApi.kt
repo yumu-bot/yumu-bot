@@ -653,9 +653,6 @@ import kotlin.time.Duration.Companion.days
                 } else {
                     val ss = scoreApiService.getBeatmapScores(bid, uid, mode)
 
-                    // 别名要在筛选之前挂到整批成绩上，筛选后的子集才不会漏别名
-                    beatmapApiService.applyAlias(ss)
-
                     ss.filterMod(ms) {
                         throw TipsRuntimeException(NoSuchElementException.BeatmapScoreFiltered(bid))
                     }
@@ -674,6 +671,9 @@ import kotlin.time.Duration.Companion.days
 
                     beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                     calculateApiService.applyStarToScores(scores)
+
+                    // 必须在 extend 之后：extend 会替换 score.beatmapset，提前挂的别名会丢
+                    beatmapApiService.applyAlias(scores)
 
                     // asyncDownloadBackground()
 

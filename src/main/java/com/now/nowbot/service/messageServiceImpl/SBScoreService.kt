@@ -298,8 +298,9 @@ class SBScoreService(
                 MessageChain(imageService.getPanel(body, "A5"))
             } else {
                 val score = scores.first()
-                beatmapApiService.applyAlias(score)
                 beatmapApiService.applyBeatmapExtend(score, map)
+                // 必须在 extend 之后：extend 会替换 score.beatmapset，提前挂的别名会丢
+                beatmapApiService.applyAlias(score)
 
                 val e5Param = ScorePRService.getE5ParamForFilteredScore(
                     user,

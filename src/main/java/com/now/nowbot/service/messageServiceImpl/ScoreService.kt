@@ -368,8 +368,8 @@ import kotlin.time.Duration.Companion.seconds
 
         val ms = data.mods?.ifEmpty { mods } ?: mods
 
-        beatmapApiService.applyAlias(data.scores)
-
+        // 别名不能在这里挂：渲染前 applyBeatmapExtend 会用谱面自带的 beatmapset 覆盖 score.beatmapset，
+        // 把这里挂上的别名冲掉。改到 getMessageChain 里，extend 之后再挂。
         val filtered = data.scores.filterMod(ms) {
             throw NoSuchElementException.BeatmapScoreFiltered(data.map.previewName)
         }
@@ -797,6 +797,9 @@ import kotlin.time.Duration.Companion.seconds
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                 calculateApiService.applyStarToScores(scores)
 
+                // 必须在 extend 之后：extend 会替换 score.beatmapset，提前挂的别名会丢
+                beatmapApiService.applyAlias(scores)
+
                 // asyncDownloadBackground()
 
                 val body = mapOf(
@@ -813,6 +816,9 @@ import kotlin.time.Duration.Companion.seconds
                 val score = scores.first()
                 beatmapApiService.applyBeatmapExtendForSameScore(listOf(score), map)
                 calculateApiService.applyStarToScores(listOf(score))
+
+                // 同上，extend 之后再挂别名
+                beatmapApiService.applyAlias(score)
 
                 val e5Param = ScorePRService.getE5ParamForFilteredScore(user, null, score, "S", beatmapApiService, calculateApiService)
 
