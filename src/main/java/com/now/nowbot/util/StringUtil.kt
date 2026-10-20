@@ -249,15 +249,26 @@ object StringUtil {
         return (match * 2.0) / (cs.length + ts.length - ((stringLength - 1.0) * 2.0))
     }
 
-    // 1. (歌手 Cover) 形式：从 '(' 开始，包含 'cover' / 'covered by' 及其之后的所有内容
-    // 2. feat. / ft. 形式：从 feat / ft 开始及其之后的所有内容
+    // 1. (歌手 Cover) / [歌手 Cover] 形式：从括号开始，包含 'cover' / 'covered by' 及其之后的所有内容
+    // 2. (feat. 歌手) 形式：从括号开始，包含 feat / ft 及其之后的所有内容
+    // 3. feat. / ft. 形式：从 feat / ft 开始及其之后的所有内容
+    // 4. - 歌手 Cover 形式：从连字符开始，包含 'cover' / 'covered by' 及其之后的所有内容
     val featAndCoverPattern = Regex(
-        "(?<![a-zA-Z])\\b(?:" +
-                // 模式 A: 带括号/连字符开头的 Cover，允许括号内有翻唱歌手名 (e.g. "(Poicyss' Pearto Cover...")
-                "(?:[(\\[-]\\s*[^)\\]]*?\\b(?:covered?\\s+by|cover)s?\\b.*$)" +
+        "(?:" +
+                // 模式 A: 括号开头的 Cover，允许括号内有翻唱歌手名 (e.g. "(Poicyss' Pearto Cover...")
+                // 括号本身就是非单词字符，不能在它前面加 \b，否则 "(" 前是空格时 \b 不成立，整个模式只能退而匹配裸露的 "cover)"
+                "(?:[(\\[]\\s*[^)\\]]*?\\b(?:covered?\\s+by|cover)s?\\b.*$)" +
                 "|" +
-                // 模式 B: 传统的 feat. / ft. / featuring / 裸 cover 逻辑
-                "(?:(?:[(\\[-]\\s*)?(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b.*$)" +
+                // 模式 B: 括号开头且紧跟 feat / cover (e.g. "(feat. Alice)")
+                "(?:[(\\[]\\s*(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b.*$)" +
+                "|" +
+                // 模式 C: 连字符开头或裸 feat / cover。
+                // 这两种情况前面必须是空格等非字母字符，避免误伤 "defeat"、"discover"、"foo-bar cover"
+                "(?<![a-zA-Z])(?:" +
+                "-\\s*(?:[^)\\]]*?\\b(?:covered?\\s+by|cover)s?\\b|(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b).*$" +
+                "|" +
+                "\\b(?:feat\\.?|ft\\.?|featuring|covered?\\s+by|cover)\\b.*$" +
+                ")" +
                 ")",
         RegexOption.IGNORE_CASE
     )

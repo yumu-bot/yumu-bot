@@ -2,6 +2,7 @@ package com.now.nowbot.mapper
 
 import com.now.nowbot.entity.Alias
 import com.now.nowbot.entity.AliasTitle
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -40,6 +41,18 @@ interface TitleRepository : JpaRepository<AliasTitle, Long> {
     fun findByNameInWithAliases(@Param("names") names: Collection<String>): List<AliasTitle>
 
     fun findByName(name: String): AliasTitle?
+
+    /**
+     * 按最近更新时间倒序取含有多个别名的标题，供 `!aj` 无参数时展示。
+     *
+     * 只有一个别名的标题无法调整顺序，直接在查询里排除，
+     * 这样即使最近更新的标题大多是单别名，也能凑满 [Pageable] 请求的数量。
+     *
+     * 这里刻意不 JOIN FETCH aliases：分页和集合抓取一起用会导致 Hibernate 在内存里分页，
+     * 实际返回的标题数量可能少于 limit 条。别名由 DAO 在事务内逐个补取。
+     */
+    @Query("SELECT t FROM AliasTitle t WHERE SIZE(t.aliases) > 1 ORDER BY t.updatedAt DESC, t.id DESC")
+    fun findRecentTitles(pageable: Pageable): List<AliasTitle>
 
     @Query("SELECT DISTINCT t FROM AliasTitle t JOIN t.aliases a WHERE a.value = :aliasValue")
     fun findByAliasValue(@Param("aliasValue") aliasValue: String): List<AliasTitle>

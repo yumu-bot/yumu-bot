@@ -13,6 +13,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             自己去官网听算了。
             """.trimIndent())
 
+    class Alias(title: Any = ""):
+        NoSuchElementException("""「$title」下没有别名。""".trimIndent())
+
     class Beatmap(name: Any):
         NoSuchElementException("没有找到谱面 $name。")
 

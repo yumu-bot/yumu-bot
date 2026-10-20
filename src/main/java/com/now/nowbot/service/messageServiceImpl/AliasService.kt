@@ -70,6 +70,16 @@ class AliasService(
         .build()
 
     /**
+     * 以 event.subject.contactID 为键的 !aj 会话。
+     *
+     * 和 [manualSessions] 一样用 Caffeine 的 expireAfterWrite 自动清理超时会话。
+     */
+    private val adjustSessions: Cache<Long, AdjustSession> = Caffeine.newBuilder()
+        .expireAfterWrite(ADJUST_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .maximumSize(ADJUST_SESSION_MAX_SIZE)
+        .build()
+
+    /**
      * 每个联系人最近一次 !am 请求的编号。
      *
      * 新 !am 一发起就更新编号并清掉旧会话；谱面查询是异步完成的，
@@ -121,10 +131,12 @@ class AliasService(
         val manualAlias: String? = null,
         /** !aw 后面直接给出的审核编号（支持 1,2,5-10 这样的闭区间）。 */
         val reviewSelection: String? = null,
+        /** !aj 后面直接给出的新顺序（用于重复输入 !aj 2,1,3）。 */
+        val adjustSelection: String? = null,
     )
 
     enum class AliasOperation {
-        ADD, DELETE, REVIEW, IMPORT, MANUAL, MANUAL_ALIAS
+        ADD, DELETE, REVIEW, IMPORT, MANUAL, MANUAL_ALIAS, ADJUST
     }
 
     /**
@@ -141,6 +153,21 @@ class AliasService(
         /** 发起 !am 时的权限状态。管理员发起的补录直接生效，普通用户发起的需要审核。 */
         val approved: Boolean,
         /** 会话过期时间，使用 MANUAL_TIMEOUT_SECONDS 计算。 */
+        val expireAt: Long,
+    )
+
+    /**
+     * 一次 !aj 调整别名顺序的会话。
+     *
+     * 记录开始调整时的别名快照，用户回复编号后按这份快照重排；
+     * 如果期间数据库里的别名集合已经变化，DAO 会拒绝写入并提示重新查询。
+     */
+    private data class AdjustSession(
+        val title: String,
+        val aliases: List<String>,
+        /** 发起 !aj 的用户。直接回复编号时只认这位用户。 */
+        val requester: Long,
+        /** 会话过期时间，使用 ADJUST_TIMEOUT_SECONDS 计算。 */
         val expireAt: Long,
     )
 
@@ -417,8 +444,8 @@ class AliasService(
             }
 
             append("回复 OK 或者 1 确认本次操作，回复其他内容则撤回本次操作。")
-            append("\n确认之前再次发送 !aa 会直接保存本次添加。")
-            append("\n${ADD_TIMEOUT_SECONDS} 秒内不回复同样视为默认保存。")
+            append("\n确认之前再次发送 !aa 其他参数 会直接保存这一次的结果。")
+            append("\n${ADD_TIMEOUT_SECONDS} 秒内不回复同样默认视为保存。")
         }
 
         val session = AddSession(
@@ -602,6 +629,7 @@ class AliasService(
         // 即使这次查询谱面失败，也不会再回退到上一个未完成的会话。
         manualRequestIDs[key] = requestID
         manualSessions.invalidate(key)
+        adjustSessions.invalidate(key)
 
         val beatmapset = runCatching {
             beatmapApiService.getBeatmap(beatmapID).beatmapset
@@ -661,7 +689,7 @@ class AliasService(
         // 已经被更新的 !am 替换掉的请求不再发送谱面预览
         if (manualSessions.getIfPresent(key) !== session) return
 
-        event.replyAsync(preview)
+        event.replyAndRecallAsync(preview, 60.seconds)
     }
 
     /**
@@ -690,16 +718,28 @@ class AliasService(
     }
 
     /**
-     * 不是指令的普通消息：先看是否有等待确认的 !aa，再看 !am 会话是否在等待别名。
+     * 不是指令的普通消息：先看是否有等待确认的 !aa，再看 !aj / !am 会话。
      *
      * !aa 的会话也按「群 + 发送人」区分，只认发起人自己的回复；
      * 命中时把事件交给等待中的线程，由它决定是保存还是撤回。
+     *
+     * !aj 只接受发起 !aj 的用户：数字和逗号序列用于调整顺序，
+     * 其它内容（包括 OK）按放弃处理；没有会话或不是发起人时继续看 !am。
      *
      * !am 只接受发起 !am 的用户，避免同群的其他人正常聊天时误保存。
      * 回复 OK 取消；没有会话或不是发起人时返回 false，消息继续按普通聊天处理。
      */
     override fun handlePassiveMessage(event: MessageEvent, messageText: String): Boolean {
         if (handleAddSessionReply(event)) return true
+
+        val adjust = currentAdjustSession(event)
+        if (adjust != null && adjust.requester == event.sender.contactID) {
+            val text = messageText.trim()
+            if (text.isNotEmpty()) {
+                applyAdjustSelection(event, adjust, text)
+                return true
+            }
+        }
 
         val session = currentManualSession(event) ?: return false
 
@@ -786,11 +826,203 @@ class AliasService(
 
         event.replyAsync(
             if (approved) {
-                "保存成功！已将「$alias」保存为「${session.title}」的别名。"
+                "保存成功！「${session.title}」 -> 「$alias」"
             } else {
-                "已提交审核！已将「$alias」提交为「${session.title}」的别名，请等待管理员审核。"
+                "已提交审核！「${session.title}」 -> 「$alias」"
             }
         )
+    }
+
+    /**
+     * 调整单个标题下别名的顺序（!aj），只有超级管理员可用。
+     *
+     * - 不带参数：列出最近更新的 [ADJUST_RECENT_SIZE] 个标题及别名；
+     * - 带 BID 或标题：列出该标题下的全部别名（含待审核），并开启 60 秒的调整会话；
+     * - 带编号（例如 !aj 2,1,3）：直接应用到当前会话，等价于回复编号。
+     */
+    private fun adjust(event: MessageEvent, param: AliasParam) {
+        val selection = param.adjustSelection
+        if (selection != null) {
+            applyAdjustByCommand(event, selection)
+            return
+        }
+
+        val target = param.targets.firstOrNull()
+        if (target == null) {
+            listRecentTitles(event)
+            return
+        }
+
+        startAdjustSession(event, target)
+    }
+
+    /**
+     * !aj 无参数：直接返回最近更新的标题和别名，不进入等待回复的会话。
+     */
+    private fun listRecentTitles(event: MessageEvent) {
+        adjustSessions.invalidate(event.subject.contactID)
+
+        val recent = aliasDao.getRecentTitles(ADJUST_RECENT_SIZE)
+
+        if (recent.isEmpty()) {
+            event.replyAsync("还没有含有多个别名的标题。")
+            return
+        }
+
+        val text = buildString {
+            appendLine("最近更新的 ${recent.size} 个含有多个别名的标题：")
+            recent.forEachIndexed { index, item ->
+                val aliases = item.aliases.joinToString(", ", "[", "]")
+                appendLine("${index + 1}. ${item.title}: $aliases")
+            }
+        }.trimEnd()
+
+        event.replyAsync(text)
+    }
+
+    /**
+     * 查询标题下的别名，并开启等待用户回复编号的 !aj 会话。
+     */
+    private fun startAdjustSession(event: MessageEvent, target: AliasTarget) {
+        val title = getStandardizedTitle(target)
+        val aliases = aliasDao.getAliasesByTitleIncludingUnapproved(title)
+
+        if (aliases.isEmpty()) {
+            throw NoSuchElementException.Alias(title)
+        }
+
+        if (aliases.size == 1) {
+            throw IllegalArgumentException.WrongException.AliasAdjustSingle(title, aliases.single())
+        }
+
+        val key = event.subject.contactID
+
+        // 同一联系人只保留一个等待回复的会话；!aj 和 !am 不能同时进行。
+        manualSessions.invalidate(key)
+        adjustSessions.invalidate(key)
+
+        val session = AdjustSession(
+            title = title,
+            aliases = aliases,
+            requester = event.sender.contactID,
+            expireAt = System.currentTimeMillis() + ADJUST_TIMEOUT_SECONDS * 1_000,
+        )
+
+        adjustSessions.put(key, session)
+
+        val prompt = buildString {
+            appendLine("「$title」下的别名：")
+            aliases.forEachIndexed { index, alias -> appendLine("${index + 1}: $alias") }
+            appendLine()
+            appendLine("请回复调整后的顺序（数字用逗号分隔，例如 2,1,3）。")
+            appendLine("没有覆盖到的别名会按原来的顺序排在最后。")
+            appendLine("回复 0 放弃本次修改。")
+            append("60 秒内不回复同样视为放弃。")
+        }
+
+        event.replyAndRecallAsync(prompt, ADJUST_TIMEOUT_SECONDS.seconds)
+    }
+
+    /**
+     * 处理「!aj 2,1,3」：把编号直接应用到当前会话。
+     */
+    private fun applyAdjustByCommand(event: MessageEvent, rawSelection: String) {
+        val session = currentAdjustSession(event)
+
+        if (session == null) {
+            event.replyAsync("当前没有正在进行的 !aj 会话，请先发送「!aj <BID 或标题>」查询别名。")
+            return
+        }
+
+        applyAdjustSelection(event, session, rawSelection)
+    }
+
+    /**
+     * 解析并应用用户回复的新顺序。
+     *
+     * 编号只允许出现数字和逗号类分隔符：
+     * - 重复编号只保留第一次出现的位置；
+     * - 超出范围的编号忽略；
+     * - 没有被选中的别名按原来的顺序排在最后；
+     * - 输入 0、空回复或含非法字符时放弃本次修改。
+     */
+    private fun applyAdjustSelection(event: MessageEvent, session: AdjustSession, rawSelection: String) {
+        val key = event.subject.contactID
+
+        // 先抢占会话，避免并发回复重复应用
+        if (!adjustSessions.asMap().remove(key, session)) {
+            event.replyAsync("本次 !aj 会话已经结束，请重新发送「!aj <BID 或标题>」。")
+            return
+        }
+
+        val selection = parseAdjustSelection(rawSelection, session.aliases.size)
+
+        if (selection == null) {
+            event.replyAsync("已放弃操作。")
+            return
+        }
+
+        val selected = selection.toSet()
+        val ordered = selection.map { session.aliases[it - 1] } +
+                session.aliases.filterIndexed { index, _ -> index + 1 !in selected }
+
+        if (ordered == session.aliases) {
+            event.replyAsync("别名顺序没有变化。")
+            return
+        }
+
+        if (!aliasDao.reorderAliases(session.title, ordered)) {
+            event.replyAsync("别名列表已经发生变化，请重新发送「!aj <BID 或标题>」查看最新顺序。")
+            return
+        }
+
+        val text = buildString {
+            appendLine("「${session.title}」的别名顺序已更新：")
+            ordered.forEachIndexed { index, alias -> appendLine("${index + 1}: $alias") }
+        }.trimEnd()
+
+        event.replyAsync(text)
+    }
+
+    /**
+     * 解析 !aj 的位置序列。
+     *
+     * @return 1-based 的位置，已去重并保持输入顺序；返回 null 表示放弃本次修改。
+     */
+    private fun parseAdjustSelection(raw: String, size: Int): List<Int>? {
+        val input = raw.trim()
+
+        if (input.isEmpty() || !input.matches(ADJUST_SELECTION)) return null
+
+        val tokens = input.split(ADJUST_SELECTION_SEPARATOR).filter { it.isNotEmpty() }
+        if (tokens.isEmpty()) return null
+
+        val numbers = tokens.mapNotNull { it.toIntOrNull() }
+        if (numbers.size != tokens.size) return null
+
+        // 0 视作放弃，和其它编号写在一起也按放弃处理
+        if (numbers.any { it == 0 }) return null
+
+        val selection = numbers.filter { it in 1..size }.distinct()
+
+        return selection.ifEmpty { null }
+    }
+
+    /**
+     * 取出当前联系人的 !aj 会话。
+     *
+     * Caffeine 负责自动清理，这里再用 expireAt 显式判断一次，避免临界时间点上拿到刚过期的会话。
+     */
+    private fun currentAdjustSession(event: MessageEvent): AdjustSession? {
+        val key = event.subject.contactID
+        val session = adjustSessions.getIfPresent(key) ?: return null
+
+        if (session.expireAt <= System.currentTimeMillis()) {
+            adjustSessions.asMap().remove(key, session)
+            return null
+        }
+
+        return session
     }
 
     /**
@@ -830,15 +1062,15 @@ class AliasService(
             appendLine("删除别名：")
             targets.forEach { target ->
                 if (target.alias == null) {
-                    appendLine("${target.title} -> 全部别名")
+                    appendLine("「${target.title}」 -> 全部别名")
                 } else {
-                    appendLine("${target.title} -> ${target.alias}")
+                    appendLine("「${target.title}」 -> 「${target.alias}」")
                 }
             }
 
             if (param.discarded > 0) {
                 val from = formatDiscardedFrom(param.discardedFrom)
-                appendLine("一次最多只能删除 $ALIAS_BATCH_SIZE 条，已主动抛弃后面的 ${param.discarded} 条$from。")
+                appendLine("一次最多只能删除 $ALIAS_BATCH_SIZE 条，其后的 ${param.discarded} 条$from。")
             }
         }
 
@@ -876,8 +1108,7 @@ class AliasService(
         val aliases = aliasDao.getAliasesByTitleIncludingUnapproved(title)
 
         if (aliases.isEmpty()) {
-            event.replyAsync("「$title」下没有别名。")
-            return
+            throw NoSuchElementException.Alias(title)
         }
 
         AsyncMessageUtil.doubleCheck(
@@ -1435,6 +1666,27 @@ class AliasService(
             return true
         }
 
+        val adjust = Instruction.ALIAS_ADJUST.matcher(messageText)
+        if (adjust.find()) {
+            // 调整顺序会直接写入数据库，只允许超级管理员
+            if (event.isNotSuperAdmin()) return false
+
+            val input = adjust.group(FLAG_DATA)?.trim()?.takeIf { it.isNotBlank() }
+            val session = currentAdjustSession(event)
+
+            data.value = when {
+                // 不带参数：直接列出最近更新的标题
+                input == null -> AliasParam(emptyList(), AliasOperation.ADJUST)
+                // 已有会话且输入的是数字/逗号序列：当作新顺序直接应用
+                session != null && input.matches(ADJUST_SELECTION) ->
+                    AliasParam(emptyList(), AliasOperation.ADJUST, adjustSelection = input)
+                // 否则按 BID 或标题开启新的查询
+                else -> AliasParam(listOf(parseAliasTarget(input, null)), AliasOperation.ADJUST)
+            }
+
+            return true
+        }
+
         val review = Instruction.ALIAS_REVIEW.matcher(messageText)
         if (review.find()) {
             // 审核需要管理员，否则不回应
@@ -1463,6 +1715,7 @@ class AliasService(
             AliasOperation.IMPORT -> importAliases(event, param)
             AliasOperation.MANUAL -> manual(event, param)
             AliasOperation.MANUAL_ALIAS -> manualAlias(event, param.manualAlias)
+            AliasOperation.ADJUST -> adjust(event, param)
         }
 
         return ServiceCallStatistic.building(event)
@@ -1490,6 +1743,21 @@ class AliasService(
          * !am 会话缓存的容量上限。
          */
         private const val MANUAL_SESSION_MAX_SIZE = 10_000L
+
+        /**
+         * !aj 无参数时展示的最近更新标题数量。
+         */
+        private const val ADJUST_RECENT_SIZE = 5
+
+        /**
+         * !aj 调整顺序会话的有效期（秒）。
+         */
+        private const val ADJUST_TIMEOUT_SECONDS = 60L
+
+        /**
+         * !aj 会话缓存的容量上限。
+         */
+        private const val ADJUST_SESSION_MAX_SIZE = 10_000L
 
         /**
          * !aa 二次确认会话的有效期（秒）。超时后默认保存。
@@ -1552,5 +1820,15 @@ class AliasService(
          * 闭区间：`5-10`、`5~10` 等，头尾都包含。区间符号和 [PATTERN_HYPHEN] 一致。
          */
         private val SELECTION_RANGE = Regex("(\\d+)\\s*$PATTERN_HYPHEN\\s*(\\d+)")
+
+        /**
+         * !aj 新顺序只接受数字和逗号类分隔符，其它字符一律视为放弃。
+         */
+        private val ADJUST_SELECTION = Regex("[\\d\\s,，、]+")
+
+        /**
+         * !aj 编号之间的分隔符：空白、半角逗号、中文逗号、顿号。
+         */
+        private val ADJUST_SELECTION_SEPARATOR = Regex("[\\s,，、]+")
     }
 }

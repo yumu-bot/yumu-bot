@@ -45,6 +45,12 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class Alias(alias: String?):
             WrongException("请输入正确的别名！${alias}")
 
+        class AliasAdjustSingle(title: String, alias: String):
+            WrongException("""
+                「$title」 -> 「$alias」
+                该标题只有一个别名，无法调整位置。
+            """.trimIndent())
+
         class AliasPair:
             WrongException("""
                 参数数量不匹配！请按「标题 = 别名」成对输入，多组之间用逗号等分隔。

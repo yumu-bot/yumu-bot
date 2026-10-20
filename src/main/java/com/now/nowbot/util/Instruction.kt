@@ -1118,6 +1118,15 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
     }),
 
+    // !alias adjust [BID/标题/编号] / !aj ...
+    // 不带参数：列出最近更新的 5 个标题及其别名。
+    // 带 BID 或标题：列出该标题下的别名，等待用户回复编号来调整顺序。
+    // 带编号（例如 !aj 2,1,3）：直接应用到当前会话，效果等同于直接回复编号。
+    ALIAS_ADJUST(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("alias\\s*(adjust|order|sort)", "aj", "别名(调整|排序)")
+        appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)
+    }),
+
     // !alias review [编号] / !aw [编号]
     // 不带参数：列出待审核的别名，再回复编号（支持 1,2,5-10 这样的闭区间）。
     // 带参数：直接用这些编号处理本次展示的待审核别名，例如 !aw 1,2,5-10。
