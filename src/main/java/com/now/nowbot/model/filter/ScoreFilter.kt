@@ -252,13 +252,13 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 GREAT -> fitCountOrPercent(operator, it.statistics.great, decimal, it.maximumStatistics.great)
                 GOOD -> it.mode == OsuMode.MANIA && fitCountOrPercent(operator, it.statistics.good, decimal, it.maximumStatistics.good)
 
-                OK -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
+                OK -> if (it.mode.safeModeValue != 2.toByte()) {
                     fitCountOrPercent(operator, it.statistics.ok, decimal, it.maximumStatistics.ok)
                 } else {
                     fitCountOrPercent(operator, it.statistics.ok, decimal, it.maximumStatistics.largeTickHit)
                 }
 
-                MEH -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
+                MEH -> if (it.mode.safeModeValue != 2.toByte()) {
                     fitCountOrPercent(operator, it.statistics.meh, decimal, it.maximumStatistics.meh)
                 } else {
                     fitCountOrPercent(operator, it.statistics.meh, decimal, it.maximumStatistics.smallTickHit)
@@ -273,13 +273,13 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         it.statistics.miss - it.statistics.largeTickMiss
                     }
 
-                    (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && fitCountOrPercent(operator, compare, decimal, it.maximumStatistics.great)
+                    (it.mode.safeModeValue == 2.toByte())  && fitCountOrPercent(operator, compare, decimal, it.maximumStatistics.great)
                 }
 
-                MISSED_DROP -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.largeTickHit > 0 &&
+                MISSED_DROP -> (it.mode.safeModeValue == 2.toByte())  && it.maximumStatistics.largeTickHit > 0 &&
                         fitCountOrPercent(operator, it.statistics.largeTickMiss, decimal, it.maximumStatistics.largeTickHit)
 
-                MISSED_DROPLET -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.smallTickHit > 0 &&
+                MISSED_DROPLET -> (it.mode.safeModeValue == 2.toByte())  && it.maximumStatistics.smallTickHit > 0 &&
                         fitCountOrPercent(operator, it.statistics.smallTickMiss, decimal, it.maximumStatistics.smallTickHit)
 
                 MOD -> fitMod(operator, str, it.mods)

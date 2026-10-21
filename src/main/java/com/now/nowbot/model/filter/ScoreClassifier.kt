@@ -142,7 +142,9 @@ enum class ScoreClassifier(
     // Z
     CATEGORY("(type|category|status|类型?|[分种]类|状态?|z|$PATTERN_STAR)".toRegex(), FilterValueType.ANY),
 
-    CREATED_TIME("(date|at|creat(ed)?(\\s*(at|time))?|earn(ed)?(\\s*(at|time))?|score\\s*(at|time)|(成绩(创建)?|创建)(时间)?|st|ct|ca|ti)".toRegex(), FilterValueType.TIME);
+    CREATED_TIME("(date|at|creat(ed)?(\\s*(at|time))?|earn(ed)?(\\s*(at|time))?|score\\s*(at|time)|(成绩(创建)?|创建)(时间)?|st|ct|ca|ti)".toRegex(), FilterValueType.TIME),
+
+    ALIAS("(alias(es)?|别名|外号|昵称)".toRegex(), FilterValueType.ANY);
 
     companion object {
         /**
@@ -216,6 +218,7 @@ enum class ScoreClassifier(
             val double = condition.double
             val str = condition.condition
             val decimal = condition.decimal
+            val boolean = condition.boolean
 
             return when (filter) {
                 CREATOR -> fit(operator, it.beatmapset.creator, str)
@@ -237,7 +240,8 @@ enum class ScoreClassifier(
 
                 BID -> fit(operator, it.beatmapID, long)
                 SID -> fit(operator, it.beatmapset.beatmapsetID, long)
-                TITLE -> (fit(operator, it.beatmapset.title, str)
+                TITLE -> (fitAlias(operator, it.beatmapset.aliases, condition.string)
+                        || fit(operator, it.beatmapset.title, str)
                         || fit(operator, it.beatmapset.titleUnicode, str))
                 ARTIST -> (fit(operator, it.beatmapset.artist, str)
                         || fit(operator, it.beatmapset.artistUnicode, str))
@@ -313,13 +317,13 @@ enum class ScoreClassifier(
                 GREAT -> fitCountOrPercent(operator, it.statistics.great, decimal, it.maximumStatistics.great)
                 GOOD -> it.mode == OsuMode.MANIA && fitCountOrPercent(operator, it.statistics.good, decimal, it.maximumStatistics.good)
 
-                OK -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
+                OK -> if (it.mode.safeModeValue != 2.toByte()) {
                     fitCountOrPercent(operator, it.statistics.ok, decimal, it.maximumStatistics.ok)
                 } else {
                     fitCountOrPercent(operator, it.statistics.ok, decimal, it.maximumStatistics.largeTickHit)
                 }
 
-                MEH -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
+                MEH -> if (it.mode.safeModeValue != 2.toByte()) {
                     fitCountOrPercent(operator, it.statistics.meh, decimal, it.maximumStatistics.meh)
                 } else {
                     fitCountOrPercent(operator, it.statistics.meh, decimal, it.maximumStatistics.smallTickHit)
@@ -334,13 +338,13 @@ enum class ScoreClassifier(
                         it.statistics.miss - it.statistics.largeTickMiss
                     }
 
-                    (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && fitCountOrPercent(operator, compare, decimal, it.maximumStatistics.great)
+                    (it.mode.safeModeValue == 2.toByte()) && fitCountOrPercent(operator, compare, decimal, it.maximumStatistics.great)
                 }
 
-                MISSED_DROP -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.largeTickHit > 0 &&
+                MISSED_DROP -> (it.mode.safeModeValue == 2.toByte()) && it.maximumStatistics.largeTickHit > 0 &&
                         fitCountOrPercent(operator, it.statistics.largeTickMiss, decimal, it.maximumStatistics.largeTickHit)
 
-                MISSED_DROPLET -> (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) && it.maximumStatistics.smallTickHit > 0 &&
+                MISSED_DROPLET -> (it.mode.safeModeValue == 2.toByte()) && it.maximumStatistics.smallTickHit > 0 &&
                         fitCountOrPercent(operator, it.statistics.smallTickMiss, decimal, it.maximumStatistics.smallTickHit)
 
                 MOD -> fitMod(operator, str, it.mods)
@@ -364,13 +368,9 @@ enum class ScoreClassifier(
                     total != 0 && fit(operator, total, long)
                 }
 
-                CONVERT -> when (str.trim().lowercase()) {
-                    "true", "t", "yes", "y" -> it.beatmap.convert == true
-                    "false", "f", "no", "not", "n" -> it.beatmap.convert == false
-                    else -> it.beatmap.convert == false
-                }
+                CONVERT -> it.beatmap.convert == boolean
 
-                CLIENT -> when (str.trim().lowercase()) {
+                CLIENT -> when (str.lowercase()) {
                     "lazer", "l", "lz", "lzr" -> it.isLazer
                     "stable", "s", "st", "stb" -> !it.isLazer
                     else -> !it.isLazer
@@ -379,6 +379,7 @@ enum class ScoreClassifier(
                 CATEGORY -> fit(operator, DataUtil.getStatus(it.beatmap.status), DataUtil.getStatus(str))
 
                 CREATED_TIME -> fitTime(operator, it.endedTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond(), str)
+                ALIAS -> fitAlias(operator, it.beatmapset.aliases, condition.string)
             }
         }
     }
