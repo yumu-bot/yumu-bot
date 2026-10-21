@@ -68,9 +68,10 @@ class CommandUtil(
      * 1. `ctx[ExtractType.USER_ID]`（`uid=123`）：直接采用，并且和 at 一样不再把剩余文本
      *    当名字，但仍会尝试从剩余文本里补一个范围；
      * 2. `event.hasAt()`：把被 at 的 QQ 从 [BindDao] 的绑定里换成 osu! ID；
-     * 3. 剩余文本是「名字」或「名字 + 范围」，也处理「玩家名和范围重名」的歧义
+     * 3. `ctx[ExtractType.QQ]`（`qq=123456`）：同样从 [BindDao] 的绑定里换成 osu! ID；
+     * 4. 剩余文本是「名字」或「名字 + 范围」，也处理「玩家名和范围重名」的歧义
      *    （例如 `osu happy 2` 里的 `2` 既可能是名的一部分，也可能是范围）；
-     * 4. 没有给名字（文本为空，或只剩一个范围）：使用发送者自己的绑定。
+     * 5. 没有给名字（文本为空，或只剩一个范围）：使用发送者自己的绑定。
      *
      * 名字与范围的歧义规则：
      * - extractor 已经拿到 range 时，剩下的整段文本就是名字；
@@ -91,11 +92,14 @@ class CommandUtil(
     fun getUserID(
         ctx: StripContext,
         event: MessageEvent,
-        onNull: () -> Unit = {},
+        onNull: (Boolean) -> Unit = {},
         type: BanchoType = BanchoType.OFFICIAL
     ): Long? {
         val text = ctx.text.trim()
         val hasRange = ctx.exists(ExtractType.RANGE)
+        
+        val isMyself = event.targets.contains(event.sender.contactID) || 
+                (ctx[ExtractType.QQ].map { it.toLongOrNull() ?: -1L }.contains(event.sender.contactID))
 
         // 0. uid= 直接给了 osu! ID，和 at 一样跳过名字解析
         getContextUserID(ctx)?.let { userID ->
@@ -112,24 +116,33 @@ class CommandUtil(
                 extractRangeToken(ctx, text)
             }
 
-            return lookupBindID(event.target, type) ?: notFound(onNull)
+            return lookupBindID(event.target, type) ?: notFound(onNull, isMyself)
+        }
+
+        // 1.5 qq= 指定了玩家，和 at / uid= 一样不再把剩余文本当名字
+        getContextQQ(ctx)?.let { qq ->
+            if (!hasRange) {
+                extractRangeToken(ctx, text)
+            }
+
+            return lookupBindID(qq, type) ?: notFound(onNull, isMyself)
         }
 
         // 2. 没有名字：文本为空，或 extractor 拿走了整段范围
         if (text.isEmpty()) {
-            return lookupBindID(event.sender.contactID, type) ?: notFound(onNull)
+            return lookupBindID(event.sender.contactID, type) ?: notFound(onNull, isMyself)
         }
 
         // 3. 范围已经明确，剩下的就是名字
         if (hasRange) {
-            return lookupUser(text, type) ?: notFound(onNull)
+            return lookupUser(text, type) ?: notFound(onNull, isMyself)
         }
 
         // 4. 整段就是一个范围，玩家是自己
         if (RANGE_TOKEN_REGEX.matches(text)) {
             addRange(ctx, text)
 
-            return lookupBindID(event.sender.contactID, type) ?: notFound(onNull)
+            return lookupBindID(event.sender.contactID, type) ?: notFound(onNull, isMyself)
         }
 
         // 5. 尝试把开头 / 结尾的范围拆出去，名字能查到才认
@@ -145,7 +158,7 @@ class CommandUtil(
             }
         }
 
-        return lookupUser(text, type) ?: notFound(onNull)
+        return lookupUser(text, type) ?: notFound(onNull, isMyself)
     }
 
     /**
@@ -231,6 +244,11 @@ class CommandUtil(
         return ctx[ExtractType.USER_ID].firstNotNullOfOrNull(::parseUserID)
     }
 
+    /** `qq=123456` 里存的是 QQ 号，需要再换成绑定的 osu! ID。 */
+    private fun getContextQQ(ctx: StripContext): Long? {
+        return ctx[ExtractType.QQ].firstNotNullOfOrNull(::parseUserID)
+    }
+
     private fun parseUserID(value: String): Long? {
         val raw = value.trim()
 
@@ -258,8 +276,8 @@ class CommandUtil(
         }
     }
 
-    private fun notFound(onNull: () -> Unit): Long? {
-        onNull()
+    private fun notFound(onNull: (Boolean) -> Unit, boolean: Boolean): Long? {
+        onNull(boolean)
 
         return null
     }

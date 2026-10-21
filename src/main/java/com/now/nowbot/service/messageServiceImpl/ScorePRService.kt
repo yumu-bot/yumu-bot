@@ -4,8 +4,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.Companion.orElse
-import com.now.nowbot.model.filter.ScoreFilter
+import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -23,18 +22,21 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.FLAG_ANY
-import com.now.nowbot.util.command.FLAG_RANGE
-import com.now.nowbot.util.command.REGEX_HYPHEN
+import com.now.nowbot.util.command.LazerModExtractor
+import com.now.nowbot.util.command.OsuModeExtractor
+import com.now.nowbot.util.command.QQExtractor
+import com.now.nowbot.util.command.RangeExtractor
+import com.now.nowbot.util.command.ScoreClassifierExtractor
+import com.now.nowbot.util.command.StripPipeline
+import com.now.nowbot.util.command.UserIDExtractor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
 @Service("SCORE_PR")
@@ -46,6 +48,7 @@ class ScorePRService(
     private val calculateApiService: OsuCalculateApiService,
     private val infoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
+    private val commandUtil: CommandUtil,
     private val restrict: NewbieRestrictService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
@@ -125,7 +128,7 @@ class ScorePRService(
             }
 
 
-        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow, isCompact = false) ?: return false
+        val param = getParam(event, matcher, isMultiple, isPass, isShow, isCompact = false) ?: return false
 
         restrict.checkAsync(event, param.scores)
 
@@ -202,7 +205,7 @@ class ScorePRService(
             return null
         }
 
-        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow, isCompact = true)
+        val param = getParam(event, matcher, isMultiple, isPass, isShow, isCompact = true)
 
         return param
     }
@@ -219,7 +222,6 @@ class ScorePRService(
      */
     private fun getParam(
         event: MessageEvent,
-        messageText: String,
         matcher: Matcher,
         isMultiple: Boolean,
         isPass: Boolean,
@@ -231,92 +233,107 @@ class ScorePRService(
         // 避免指令冲突
         if (any.contains("&sb", ignoreCase = true)) return null
 
-        val isMyself = AtomicBoolean(true) // 处理 range
-        val mode = InstructionUtil.getMode(matcher)
+        // 指令已经把玩家名、模式、范围、条件全部收进 any 里，这里统一剥离。
+        val pipeline = StripPipeline(any)
+            .apply(OsuModeExtractor)
+            .apply(LazerModExtractor)
+            .apply(UserIDExtractor)
+            .apply(QQExtractor)
+            .apply(ScoreClassifierExtractor)
+            .apply(RangeExtractor)
+            .trim()
 
-        val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
+        val context = pipeline.context
 
-        id.setZeroToRange100()
-
-        val conditions = any.asConditions(ScoreFilter.regexes)
-
-        // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull().orEmpty()
-        val hasRangeInConditions = rangeInConditions.isNotEmpty()
-        val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
-
-        if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
-            throw IllegalArgumentException.WrongException.Cabbage()
-        }
-
-        val ranges = if (hasRangeInConditions) {
-            rangeInConditions
-        } else {
-            matcher.group(FLAG_RANGE)?.split(REGEX_HYPHEN)
-        }
-
-        val user: OsuUser
-        val scores: Map<Int, LazerScore>
-
-        // 高效的获取方式
-        if (id.data != null) {
-            val id2 = if (id.start != null) {
-                id
-            } else {
-                val start = ranges?.firstOrNull()?.toIntOrNull()
-                val end = if (ranges?.size == 2) {
-                    ranges.last().toIntOrNull()
+        val userID = commandUtil.getUserID(
+            context,
+            event,
+            onNull = { isMyself ->
+                if (isMyself) {
+                    throw BindException.NotBindException.YouNotBind()
                 } else {
-                    null
+                    throw BindException.NotBindException.UserNotBind()
                 }
+            },
+        ) ?: throw BindException.NotBindException.UserNotBind()
 
-                InstructionRange(id.data!!, start, end)
-            }
+        // 新解析器只回退到群模式；个人模式仍按绑定里的模式补，保持和旧指令一致。
+        val mode = commandUtil.getMode(context, event)
+            .takeUnless { it == OsuMode.DEFAULT }
+            ?: bindDao.getBindModeFromID(userID)?.takeUnless { it == OsuMode.DEFAULT }
+            ?: OsuMode.DEFAULT
 
+        val hasCondition = pipeline.hasMatch
 
-            val async = AsyncMethodExecutor.awaitPair(
-                { userApiService.getOsuUser(id2.data!!, mode.data!!) },
-                { id2.getRecentsFromUserID(mode.data.orElse(), isMultiple, hasCondition, isPass) }
-            )
-
-            user = async.first
-            scores = async.second
-        } else {
-            // 经典的获取方式
-
-            val range = InstructionUtil.getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "re")
-            range.setZeroToRange100()
-
-            val range2 = if (range.start != null) {
-                range
-            } else {
-                val start = ranges?.firstOrNull()?.toIntOrNull()
-                val end = if (ranges?.size == 2) {
-                    ranges.last().toIntOrNull()
-                } else {
-                    null
-                }
-
-                InstructionRange(range.data!!, start, end)
-            }
-
-            user = range2.data!!
-
-            scores = range2.getRecentsFromOsuUser(mode.data.orElse(), isMultiple, hasCondition, isPass)
+        // 和旧的 InstructionRange.getOffsetAndLimit 对齐：
+        // 有筛选条件且未给范围时，先取 100 条回来筛；#0 取 100 条。
+        val defaultLimit = when {
+            hasCondition -> 200
+            isMultiple -> 20
+            else -> 1
         }
+
+        val (offset, limit) = commandUtil.getRange(
+            context,
+            defaultOffset = 0,
+            defaultLimit = defaultLimit,
+            multiple = isMultiple,
+            max = 200,
+        )
+
+        val async = AsyncMethodExecutor.awaitPair(
+            { userApiService.getOsuUser(userID, mode) },
+            { scoreApiService.getScore(userID, mode, offset, limit, isPass) },
+        )
+
+        val user: OsuUser = async.first
+        val scores: List<LazerScore> = async.second
+
+        if (scores.isEmpty()) {
+            if (isPass) {
+                if (offset > 0) {
+                    throw NoSuchElementException.PassedScoreWithOffset(user.username, mode, offset)
+                } else {
+                    throw NoSuchElementException.PassedScore(user.username, mode)
+                }
+            } else {
+                if (offset > 0) {
+                    throw NoSuchElementException.RecentScoreWithOffset(user.username, mode, offset)
+                } else {
+                    throw NoSuchElementException.RecentScore(user.username, mode)
+                }
+            }
+        }
+
+        calculateApiService.applyStarToScores(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         beatmapApiService.applyBeatmapExtend(scores)
 
-        // 别名现在要参与筛选，必须在 filterScores 之前挂到 beatmapset 上
+        // 别名现在要参与筛选，必须在 classify 之前挂到 beatmapset 上
         beatmapApiService.applyAlias(scores)
 
-        val filteredScores = ScoreFilter.filterScores(scores, conditions)
+        // 必须先按原数组（含 offset）把「名次 -> 成绩」固化下来，再交给 classify 筛选。
+        // classify 的 Map 重载会按成绩筛值、键（名次）原样保留，因此不会丢掉原数组的位置信息。
+        val scoresByRank: Map<Int, LazerScore> = buildMap(scores.size) {
+            scores.forEachIndexed { index, score -> put(index + offset + 1, score) }
+        }
+
+        val filteredScores = scoresByRank.classify(context)
 
         if (filteredScores.isEmpty()) {
-            if (isPass) {
-                throw NoSuchElementException.PassedScoreFiltered(user.username, user.mode)
+            if (hasCondition) {
+                if (isPass) {
+                    throw NoSuchElementException.PassedScore(user.username, user.mode)
+                } else {
+                    throw NoSuchElementException.RecentScore(user.username, user.mode)
+                }
             } else {
-                throw NoSuchElementException.RecentScoreFiltered(user.username, user.mode)
+                if (isPass) {
+                    throw NoSuchElementException.PassedScoreFiltered(user.username, user.mode)
+                } else {
+                    throw NoSuchElementException.RecentScoreFiltered(user.username, user.mode)
+                }
             }
         }
 
@@ -325,114 +342,6 @@ class ScorePRService(
         return ScorePRParam(user, historyUser, filteredScores, isPass, isShow, isCompact)
     }
 
-
-    private fun <T> InstructionRange<T>.getOffsetAndLimit(
-        isMultiple: Boolean,
-        isSearch: Boolean = false,
-    ): Pair<Int, Int> {
-        val offset: Int
-        val limit: Int
-
-        if (isSearch && this.start == null) {
-            offset = 0
-            limit = 100
-        } else if (isMultiple) {
-            offset = getOffset(0, true)
-            limit = getLimit(20, true)
-        } else {
-            offset = getOffset(0, false)
-            limit = getLimit(1, false)
-        }
-
-        return offset to limit
-    }
-
-    private fun InstructionRange<Long>.getRecentsFromUserID(
-        mode: OsuMode,
-        isMultiple: Boolean,
-        isSearch: Boolean = false,
-        isPass: Boolean = false,
-    ): Map<Int, LazerScore> {
-        val o = this.getOffsetAndLimit(isMultiple, isSearch)
-
-        val offset: Int = o.first
-        val limit: Int = o.second
-
-        val scores = scoreApiService.getScore(this.data!!, mode, offset, limit, isPass)
-
-        // 检查查到的数据是否为空
-        if (scores.isEmpty()) {
-            val name = bindDao.getUsername(this.data!!)
-
-            if (isPass) {
-                if (offset > 0) {
-                    throw NoSuchElementException.PassedScoreWithOffset(name, mode, offset)
-                } else {
-                    throw NoSuchElementException.PassedScore(name, mode)
-                }
-            } else {
-                if (offset > 0) {
-                    throw NoSuchElementException.RecentScoreWithOffset(name, mode, offset)
-                } else {
-                    throw NoSuchElementException.RecentScore(name, mode)
-                }
-            }
-        }
-
-        calculateApiService.applyStarToScores(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
-
-        return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
-    }
-
-    private fun InstructionRange<OsuUser>.getRecentsFromOsuUser(
-        mode: OsuMode,
-        isMultiple: Boolean,
-        isSearch: Boolean = false,
-        isPass: Boolean = false,
-    ): Map<Int, LazerScore> {
-
-        val offset: Int
-        val limit: Int
-
-        if (isSearch && this.start == null) {
-            offset = 0
-            limit = 100
-        } else if (isMultiple) {
-            offset = getOffset(0, true)
-            limit = getLimit(20, true)
-        } else {
-            offset = getOffset(0, false)
-            limit = getLimit(1, false)
-        }
-
-        val scores = scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
-
-        calculateApiService.applyStarToScores(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
-
-        // 检查查到的数据是否为空
-        if (scores.isEmpty()) {
-            val name = data!!.username
-            val mode = data!!.mode
-
-            if (isPass) {
-                if (offset > 0) {
-                    throw NoSuchElementException.PassedScoreWithOffset(name, mode, offset)
-                } else {
-                    throw NoSuchElementException.PassedScore(name, mode)
-                }
-            } else {
-                if (offset > 0) {
-                    throw NoSuchElementException.RecentScoreWithOffset(name, mode, offset)
-                } else {
-                    throw NoSuchElementException.RecentScore(name, mode)
-                }
-            }
-        }
-
-        return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
-    }
 
 //    private fun ScorePRParam.asyncImage() = run {
 //        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))

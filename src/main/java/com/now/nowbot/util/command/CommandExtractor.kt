@@ -9,9 +9,10 @@ enum class ExtractType {
     QQ,
     QQ_GROUP,
     RANGE,
+    MOD,
     MODE,
     USER_ID,
-    FLAG
+    STARRY
 }
 
 data class StripContext(
@@ -107,11 +108,34 @@ fun interface CommandExtractor {
 class StripPipeline(initialText: String) {
     val context = StripContext(text = initialText)
 
+    /**
+     * 是否至少有一个剥离组件真的匹配到了东西。
+     *
+     * 判定标准是「[context] 被改动过」：剩余文本变短，或者 extracted / syntaxes 里多出了值。
+     * 只做清理、不做提取的组件（例如 [trim]）不会把它置为 true。
+     */
+    var hasMatch: Boolean = false
+        private set
+
     // 执行一个剥离组件
     fun apply(extractor: CommandExtractor): StripPipeline {
+        val textBefore = context.text
+        val extractedBefore = context.extracted.valueCount()
+        val syntaxesBefore = context.syntaxes.valueCount()
+
         extractor.process(context)
+
+        if (context.text != textBefore ||
+            context.extracted.valueCount() != extractedBefore ||
+            context.syntaxes.valueCount() != syntaxesBefore
+        ) {
+            hasMatch = true
+        }
         return this
     }
+
+    /** 所有剥离组件都没匹配到任何东西，即从头到尾没有剥离、也没有提取。 */
+    fun matchedNothing(): Boolean = !hasMatch
 
     // 组合扩展：通用正则剥离组件
     fun stripPattern(
@@ -135,6 +159,9 @@ class StripPipeline(initialText: String) {
         return this
     }
 }
+
+/** context 里一共记录了多少个值，用来判断一次 [StripPipeline.apply] 有没有提取到东西 */
+private fun Map<*, List<String>>.valueCount(): Int = values.sumOf { it.size }
 
 operator fun CommandExtractor.plus(next: CommandExtractor): CommandExtractor = CommandExtractor { ctx ->
     this.process(ctx)
@@ -209,6 +236,8 @@ enum class SymbolHead(
 ) {
     MODE(":", "：", type = ExtractType.MODE),
     RANGE("#", "＃", type = ExtractType.RANGE),
+    MOD("+", "＋", type = ExtractType.MOD),
+    STAR("#", "＃", type = ExtractType.STARRY),
     ;
 
     /** 该头认的所有符号，按长度降序，长符号优先 */
@@ -461,6 +490,10 @@ val QQExtractor = CommandExtractor { ctx ->
 
 val OsuModeExtractor = CommandExtractor { ctx ->
     ctx.extractBySymbols(SymbolHead.MODE)
+}
+
+val LazerModExtractor = CommandExtractor { ctx ->
+    ctx.extractBySymbols(SymbolHead.MOD)
 }
 
 val RangeExtractor = CommandExtractor { ctx ->

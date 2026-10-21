@@ -29,62 +29,32 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     SCORE_PASS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("p", "pass")
-        appendModeQQUIDNameRange()
-        appendIgnore(PATTERN_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendSpace()
-        appendIgnore(PATTERN_HYPHEN)
-        appendRange()
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
     }),
 
     SCORE_PASS_SHOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("pw", "pass(es)?\\s*show")
-        appendModeQQUIDNameRange()
-        appendIgnore(PATTERN_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendSpace()
-        appendIgnore(PATTERN_HYPHEN)
-        appendRange()
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
     }),
 
     SCORE_PASSES(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ps", "passes")
-        appendModeQQUIDNameRange()
-        appendIgnore(PATTERN_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendSpace()
-        appendIgnore(PATTERN_HYPHEN)
-        appendRange()
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
     }),
 
     SCORE_RECENT(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("r", "recent")
-        appendModeQQUIDNameRange()
-        appendIgnore(PATTERN_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendSpace()
-        appendIgnore(PATTERN_HYPHEN)
-        appendRange()
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
     }),
 
     SCORE_RECENT_SHOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("rw", "recents?\\s*show")
-        appendModeQQUIDNameRange()
-        appendIgnore(PATTERN_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendSpace()
-        appendIgnore(PATTERN_HYPHEN)
-        appendRange()
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
     }),
 
     SCORE_RECENTS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("rs", "recents")
-        appendModeQQUIDNameRange()
-        appendIgnore(PATTERN_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendSpace()
-        appendIgnore(PATTERN_HYPHEN)
-        appendRange()
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
     }),
 
     PR_CARD(CommandPatternBuilder.create {

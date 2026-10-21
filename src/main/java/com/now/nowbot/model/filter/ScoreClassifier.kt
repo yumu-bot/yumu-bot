@@ -175,6 +175,35 @@ enum class ScoreClassifier(
         }
 
         /**
+         * 与 [Collection.classify] 相同，但保留键值对：只按成绩筛值，键（名次、行号等）原样带出。
+         *
+         * 用于「先固定位置、再筛选成绩」的场景，避免筛选后从结果反推位置而丢掉原集合的信息。
+         */
+        fun <K> Map<K, LazerScore>.classify(ctx: StripContext): Map<K, LazerScore> {
+            return classify(ctx.syntaxes)
+        }
+
+        /**
+         * 按值筛选 [LazerScore]，保留原键与遍历顺序。
+         *
+         * 先复制成 [LinkedHashMap] 再筛值，因此返回的 map 可以继续增删；没有成绩条件时返回原 map 的副本。
+         */
+        fun <K> Map<K, LazerScore>.classify(
+            syntaxes: Map<Pair<String, Operator>, List<String>>
+        ): Map<K, LazerScore> {
+            val filtered: MutableMap<K, LazerScore> = LinkedHashMap(this)
+            val predicates = parsePredicates(syntaxes)
+
+            if (predicates.isNotEmpty()) {
+                filtered.values.removeIf { score ->
+                    !predicates.all { predicate -> predicate(score) }
+                }
+            }
+
+            return filtered
+        }
+
+        /**
          * 将 [StripContext.syntaxes] 解析为一组可复用的谓词函数 (Score -> Boolean)。
          *
          * 同一个键（同一分类器 + 同一运算符）下的多个值：
