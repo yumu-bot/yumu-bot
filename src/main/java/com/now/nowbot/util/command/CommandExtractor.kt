@@ -15,11 +15,95 @@ enum class ExtractType {
     STARRY
 }
 
-data class StripContext(
-    var text: String,
+/**
+ * 剩余内容里的一个字符。
+ *
+ * [index] 是它在原始指令文本（[StripContext.rawText]）里的下标；
+ * 剥离过程中只删元素，不会重建字符串，所以这个下标始终有效，可直接用来排序。
+ */
+data class ResidualChar(val char: Char, val index: Int)
+
+/**
+ * 原文里下标连续的一段剩余内容。
+ *
+ * 被剥掉的参数会在两段之间留下断点，所以 [start] 不一定等于上一段的 [end]。
+ * [start] / [end] 是原文坐标；折叠空白时 [text] 会比 `end - start` 短。
+ * 片段按 [start] 天然升序，见 [StripContext.segments]。
+ */
+data class ResidualSegment(val start: Int, val text: String, val end: Int = start + text.length)
+
+class StripContext(
+    rawText: String,
     val extracted: MutableMap<String, MutableList<String>> = mutableMapOf(),
     val syntaxes: MutableMap<Pair<String, Operator>, MutableList<String>> = mutableMapOf(),
 ) {
+    /** 剥离前的完整文本，[residual] 里的下标都以它为准。 */
+    var rawText: String = rawText
+        private set
+
+    /**
+     * 还没被剥掉的字符，按原文本顺序保存。
+     *
+     * 逐次剥离只从这里删除元素，不把剩下的字符重新拼成一个字符串，
+     * 因此每段的 [ResidualChar.index] 始终指向原文位置。
+     */
+    val residual: MutableList<ResidualChar> = rawText.toResidual()
+
+    /**
+     * 剩余字符按当前顺序拼成的文本，兼容旧代码。
+     *
+     * 它不区分字符在原文里是否连续；需要区分时用 [segments] 或 [separatedText]。
+     */
+    val text: String
+        get() = buildString(residual.size) { residual.forEach { append(it.char) } }
+
+    /**
+     * 剩余内容按原位置切成的连续片段。
+     *
+     * `abc<被剥掉的参数>def` 会得到 `abc`、`def` 两段，而不是粘在一起的 `abcdef`；
+     * 单纯折叠空白造成的下标缺口不算断点，所以 `my  name` 仍然是一段。
+     * 各段按 [ResidualSegment.start] 升序，等价于原文顺序。
+     */
+    val segments: List<ResidualSegment>
+        get() {
+            if (residual.isEmpty()) return emptyList()
+
+            val result = ArrayList<ResidualSegment>()
+            var start = residual[0].index
+            val value = StringBuilder()
+
+            for (i in residual.indices) {
+                val current = residual[i]
+
+                if (i > 0) {
+                    val previous = residual[i - 1]
+                    val gap = rawText.substring(previous.index + 1, current.index)
+
+                    // 只有真的剥掉了非空白内容才算断点；折叠空白留下的缺口仍属同一段
+                    if (gap.any { !it.isWhitespace() }) {
+                        result.add(ResidualSegment(start, value.toString(), previous.index + 1))
+                        start = current.index
+                        value.setLength(0)
+                    }
+                }
+
+                value.append(current.char)
+            }
+
+            result.add(ResidualSegment(start, value.toString(), residual.last().index + 1))
+
+            return result
+        }
+
+    /**
+     * 片段之间补一个空格后再拼起来，避免两段残文直接粘成一个词。
+     * 保底解析玩家名时用这个，不要用 [text]。
+     */
+    val separatedText: String
+        get() = segments.joinToString(" ") { it.text }
+            .replace(REGEX_SPACE_MORE, " ")
+            .trim()
+
     fun exists(key: String): Boolean = extracted[key].isNullOrEmpty().not()
 
     // 快速获取某类提取结果
@@ -55,23 +139,81 @@ data class StripContext(
     }
 
     fun clearFirst(text: String) {
-        this.text = this.text.replaceFirst(text, "")
+        val at = this.text.indexOf(text)
+        if (at >= 0) removeResidual(at, at + text.length)
     }
 
     fun clearFirst(regex: Regex) {
-        this.text = this.text.replaceFirst(regex, "")
+        val match = regex.find(text) ?: return
+        removeResidual(match.range.first, match.range.last + 1)
     }
 
     fun clear(regex: Regex) {
-        this.text = this.text.replace(regex, "")
+        val ranges = regex.findAll(text).map { it.range }.toList()
+
+        // 倒序删除，前面 match 的下标才不会失效
+        for (range in ranges.asReversed()) {
+            removeResidual(range.first, range.last + 1)
+        }
     }
 
     fun reset(text: String) {
-        this.text = text
+        rawText = text
+        residual.clear()
+        residual.addAll(text.toResidual())
     }
 
     fun collapseWhitespace() {
-        this.text = this.text.replace(REGEX_SPACE_MORE, " ").trim()
+        if (residual.isEmpty()) return
+
+        val collapsed = ArrayList<ResidualChar>(residual.size)
+        var pendingSpace: ResidualChar? = null
+
+        for (rc in residual) {
+            if (rc.char.isWhitespace()) {
+                // 一段空白只留第一个字符，并统一成空格；开头的空白直接丢掉
+                if (pendingSpace == null && collapsed.isNotEmpty()) {
+                    pendingSpace = rc.copy(char = ' ')
+                }
+            } else {
+                pendingSpace?.let(collapsed::add)
+                pendingSpace = null
+                collapsed.add(rc)
+            }
+        }
+
+        // 结尾的 pendingSpace 不加入，等价于 trim
+        residual.clear()
+        residual.addAll(collapsed)
+    }
+
+    /**
+     * 按「当前拼接文本」[text] 的下标区间删除剩余字符。
+     *
+     * [text] 与 [residual] 一一对应，所以区间可以直接当 [residual] 的下标使用。
+     */
+    fun removeResidual(start: Int, end: Int) {
+        if (start >= end) return
+        residual.subList(start.coerceAtLeast(0), end.coerceAtMost(residual.size)).clear()
+    }
+
+    /**
+     * 已经被消费掉的片段数（例如 [com.now.nowbot.util.CommandUtil.getUserID] 认作玩家名的那一段）。
+     *
+     * 段本身会从 [residual] 删除；这里只保留计数，让调用方还能知道「删除前是不是多段」。
+     */
+    var removedSegments: Int = 0
+        private set
+
+    /**
+     * 按原文坐标删除一整段剩余内容，并累加 [removedSegments]。
+     *
+     * 与 [removeResidual] 不同，[ResidualSegment.start] / [ResidualSegment.end] 是原文下标，
+     * 不受之前删掉了多少字符影响，适合把某一段消费掉之后精确移除它。
+     */
+    fun removeSegment(segment: ResidualSegment) {
+        residual.removeAll { it.index in segment.start until segment.end }
+        removedSegments++
     }
 
     fun extractPattern(
@@ -101,12 +243,16 @@ data class StripContext(
     }
 }
 
+/** 把一段原文摊成带原下标的字符列表 */
+private fun String.toResidual(): MutableList<ResidualChar> =
+    mapIndexedTo(ArrayList(length)) { index, char -> ResidualChar(char, index) }
+
 fun interface CommandExtractor {
     fun process(context: StripContext)
 }
 
 class StripPipeline(initialText: String) {
-    val context = StripContext(text = initialText)
+    val context = StripContext(rawText = initialText)
 
     /**
      * 是否至少有一个剥离组件真的匹配到了东西。
@@ -186,7 +332,7 @@ operator fun CommandExtractor.plus(next: CommandExtractor): CommandExtractor = C
  * - 其余类型只吃一段不含空格的连续文本。
  * 单/双引号包裹的值优先级最高，引号直接锚定范围。
  *
- * 没被任何参数头认领的内容原样留在 [StripContext.text] 里。
+ * 没被任何参数头认领的内容原样留在 [StripContext.residual] 里。
  */
 class HeadSpec(
     val name: String,
@@ -261,9 +407,11 @@ private fun CommandClassifier.toHeadSpec() = HeadSpec(
 )
 
 /**
- * 按 [heads] 一次性扫描整行，把所有认出来的参数从 [StripContext.text] 里摘掉。
+ * 按 [heads] 一次性扫描整行，把所有认出来的参数从 [StripContext.residual] 里摘掉。
  */
 fun StripContext.extractByHeads(heads: List<HeadSpec>) {
+    // 先取一份快照：text 是计算属性，循环里反复取会把剩余字符重复拼很多遍
+    val text = this.text
     if (heads.isEmpty() || text.isEmpty()) return
 
     val hits = ArrayList<TokenHit>()
@@ -288,7 +436,7 @@ fun StripContext.extractByHeads(heads: List<HeadSpec>) {
     // 倒序删除，前面 token 的下标才不会失效
     for (index in hits.indices.reversed()) {
         val hit = hits[index]
-        text = text.removeRange(hit.start, hit.end)
+        removeResidual(hit.start, hit.end)
     }
     for (hit in hits) {
         hit.head.emit(this, hit.operator, hit.value)
@@ -549,6 +697,16 @@ fun main() {
         val parsed = a.syntaxes.entries.joinToString(", ") { "${it.key.first}${it.key.second}${it.value}" }
         val extra = a.extracted.entries.joinToString(", ") { "${it.key}${it.value}" }
         val same = a.text == b.text && a.syntaxes == b.syntaxes && a.extracted == b.extracted
-        println("$sample\n  -> [$parsed] [$extra] 剩余=\"${a.text}\"" + if (same) "" else "\n  !! 顺序敏感: 逆序剩余=\"${b.text}\"")
+
+        // 剩余字符必须仍能按 index 指回原文，否则位置信息就失效了
+        val positionsOk = a.residual.all { a.rawText[it.index] == it.char }
+        val segments = a.segments.joinToString(" | ") { "${it.start}..${it.end}\"${it.text}\"" }
+
+        println(
+            "$sample\n  -> [$parsed] [$extra] 剩余=\"${a.text}\"" +
+                    " 分段=[$segments] 名字=\"${a.separatedText}\"" +
+                    " 位置=${if (positionsOk) "OK" else "BROKEN"}" +
+                    if (same) "" else "\n  !! 顺序敏感: 逆序剩余=\"${b.text}\""
+        )
     }
 }

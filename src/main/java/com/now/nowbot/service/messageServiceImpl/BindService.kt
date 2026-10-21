@@ -18,6 +18,7 @@ import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
+import com.now.nowbot.util.command.REGEX_OSU_USERNAME
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -270,7 +271,7 @@ class BindService(
             bot.getStrangerInfo(event.sender.contactID, false)?.data?.nickname
         } ?: return null
 
-        return usernameRegex.findAll(nickname)
+        return REGEX_OSU_USERNAME.findAll(nickname)
             .map { it.value.trim() }
             .filter { candidate ->
                 candidate.length >= 3 && candidate.any { it.isLetterOrDigit() }
@@ -304,8 +305,6 @@ class BindService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BindService::class.java)
-
-        private val usernameRegex = Regex("""[A-Za-z0-9 _\[\].\-]{3,15}""")
 
         private val userIDRegex = Regex("\\d{7,10}|\\d{1,5}")
 

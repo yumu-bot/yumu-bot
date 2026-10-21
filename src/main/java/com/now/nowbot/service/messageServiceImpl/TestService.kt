@@ -1,7 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.Operator.Companion.getText
+import com.now.nowbot.model.filter.ScoreClassifier
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
@@ -101,6 +103,15 @@ class TestService(
             .onFailure { log.debug("CommandUtil.getUserID 失败：{}", it.message) }
             .getOrNull()
 
+        // 别名补写依赖 getUserID 的结果：解析失败时剩余文本不该被当成别名
+        val alias = if (userID != null) {
+            commandUtil.addResidualAliases(utilCtx)
+
+            utilCtx[Pair(ScoreClassifier.ALIAS.name, Operator.EQ)]
+        } else {
+            emptyList()
+        }
+
         val range = runCatching { commandUtil.getRange(utilCtx) }
             .onFailure { log.debug("CommandUtil.getRange 失败：{}", it.message) }
             .getOrNull()
@@ -120,6 +131,7 @@ class TestService(
             appendLine("【CommandUtil】")
             appendLine("mode     = ${mode?.let { "${it.name}/${it.shortName}" } ?: "null"}")
             appendLine("userID   = ${userID ?: "null"}")
+            appendLine("alias    = ${alias.ifEmpty { listOf("(无)") }.joinToString("、")}")
             appendLine("range    = ${range?.let { (offset, limit) -> "offset=$offset, limit=$limit" } ?: "null"}")
             appendLine("ctx.RANGE = ${utilCtx[ExtractType.RANGE]}")
         }
@@ -137,6 +149,8 @@ class TestService(
     /** 把 [StripContext] 里的三类结果摊平成几行文本。 */
     private fun describe(ctx: StripContext): String = buildString {
         appendLine("剩余文本：\"${ctx.text}\"")
+        appendLine("剩余片段：${ctx.segments.joinToString(" | ") { "[${it.start},${it.end})\"${it.text}\"" }}")
+        appendLine("保底名字：\"${ctx.separatedText}\"")
 
         appendLine("syntaxes：")
         if (ctx.syntaxes.isEmpty()) {

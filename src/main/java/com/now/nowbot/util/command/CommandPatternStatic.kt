@@ -275,6 +275,12 @@ const val PATTERN_USERNAME_SEPARATOR: String = "[0-9a-zA-Z\\[\\]\\-\\s\\n_,，|:
 @Language("RegExp")
 const val PATTERN_USERNAME: String = "[0-9a-zA-Z\\[\\]\\-\\s_]"
 
+/** osu! 用户名规则：3-15 位，可用字母、数字、空格、下划线、方括号、点和连字符。 */
+@Language("RegExp")
+const val PATTERN_OSU_USERNAME: String = "[A-Za-z0-9 _\\[\\].\\-]{3,15}"
+
+val REGEX_OSU_USERNAME = Regex(PATTERN_OSU_USERNAME)
+
 @Language("RegExp")
 const val PATTERN_MOD: String = "([1-9a-zA-Z][a-zA-Z]|[vV]2)"
 

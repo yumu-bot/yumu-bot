@@ -2,9 +2,11 @@ package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.GroupDao
+import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
+import com.now.nowbot.model.filter.ScoreClassifier
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
@@ -69,20 +71,25 @@ class CommandUtil(
      *    当名字，但仍会尝试从剩余文本里补一个范围；
      * 2. `event.hasAt()`：把被 at 的 QQ 从 [BindDao] 的绑定里换成 osu! ID；
      * 3. `ctx[ExtractType.QQ]`（`qq=123456`）：同样从 [BindDao] 的绑定里换成 osu! ID；
-     * 4. 剩余文本是「名字」或「名字 + 范围」，也处理「玩家名和范围重名」的歧义
-     *    （例如 `osu happy 2` 里的 `2` 既可能是名的一部分，也可能是范围）；
-     * 5. 没有给名字（文本为空，或只剩一个范围）：使用发送者自己的绑定。
+     * 4. 剩余文本按 [StripContext.segments] 拆成候选名字逐段查找：每段先 trim，只有符合
+     *    [REGEX_OSU_USERNAME] 的段才参与查询，长段优先；不像名字的段直接跳过（不联网）；
+     *    同时处理「玩家名和范围重名」的歧义（例如 `osu happy 2` 里的 `2` 既可能是名的一部分，
+     *    也可能是范围）；
+     * 5. 没有给名字（文本为空，或只剩一个范围）：使用发送者自己的绑定；
+     *    有名字但所有候选段都不符合 [REGEX_OSU_USERNAME] 时按查不到处理，不再拼成一整段去查。
      *
      * 名字与范围的歧义规则：
-     * - extractor 已经拿到 range 时，剩下的整段文本就是名字；
+     * - extractor 已经拿到 range 时，剩下的候选名字逐段尝试；
      * - 没有 range 时，文本整体是范围则把玩家当自己；
-     * - 否则尝试把开头 / 结尾的范围 token 拆出去，**只有名字部分真的能查到**才承认它是范围；
-     * - 名字拆不出来或查不到，就把整段文本当名字查。
+     * - 否则逐段尝试把开头 / 结尾的范围 token 拆出去，**只有名字部分真的能查到**才承认它是范围；
+     * - 名字拆不出来或查不到，就把候选名字从长到短依次查一遍。
      *
      * 名字查找先走 [BindDao] 的本地缓存，再走 [OsuUserApiService]；
      * 远端异常在这里吞掉并记日志，不让查名字失败影响指令本身。
      *
-     * 本方法不会改写 [StripContext.text]，只会按需补写 `RANGE`。
+     * 本方法不会重建 [StripContext.text]；命中玩家名的那个残余片段会从
+     * [StripContext.residual] 移除（避免后续 [addResidualAliases] 把玩家名误当别名），
+     * 并按需补写 `RANGE`。
      *
      * @param onNull 最终没有解析到玩家时调用（包含 at 的用户没有绑定、名字查不到、
      *               自己也没有绑定的情况）。默认什么都不做；调用方可以传 `{ throw ... }`
@@ -95,7 +102,8 @@ class CommandUtil(
         onNull: (Boolean) -> Unit = {},
         type: BanchoType = BanchoType.OFFICIAL
     ): Long? {
-        val text = ctx.text.trim()
+        // 用分离后的文本，避免被剥掉的部分把两段残文粘成一个查不到的名字
+        val text = ctx.separatedText
         val hasRange = ctx.exists(ExtractType.RANGE)
         
         val isMyself = event.targets.contains(event.sender.contactID) || 
@@ -133,9 +141,17 @@ class CommandUtil(
             return lookupBindID(event.sender.contactID, type) ?: notFound(onNull, isMyself)
         }
 
-        // 3. 范围已经明确，剩下的就是名字
+        // 残余可能被剥成多段：逐段 trim 后必须像一个 osu! 用户名才参与查询，长段优先。
+        // 全部不合格时 nameCandidates 为空，后面的查询会直接失败，不会把垃圾文本当名字发出去。
+        val nameCandidates = ctx.segments
+            .map { it to it.text.trim() }
+            .filter { (_, name) -> name.isNotEmpty() && REGEX_OSU_USERNAME.matches(name) }
+            .distinctBy { (_, name) -> name }
+            .sortedByDescending { (_, name) -> name.length }
+
+        // 3. 范围已经明确，剩下的候选名字从长到短依次尝试
         if (hasRange) {
-            return lookupUser(text, type) ?: notFound(onNull, isMyself)
+            return lookupFirstUser(ctx, nameCandidates, type) ?: notFound(onNull, isMyself)
         }
 
         // 4. 整段就是一个范围，玩家是自己
@@ -145,27 +161,111 @@ class CommandUtil(
             return lookupBindID(event.sender.contactID, type) ?: notFound(onNull, isMyself)
         }
 
-        // 5. 尝试把开头 / 结尾的范围拆出去，名字能查到才认
-        val split = splitNameWithRange(text)
+        // 5. 逐段尝试把开头 / 结尾的范围拆出去，名字能查到才认。
+        // 不能拿整段 separatedText 去拆：`yanmaizhou329 1-5` 和别名可能被剥成两段，
+        // 整段拆不出来，但第一段自己是可以拆出「名字 + 范围」的。
+        for (segment in ctx.segments.sortedByDescending { it.text.trim().length }) {
+            val split = splitNameWithRange(segment.text.trim()) ?: continue
+            val splitName = split.first.trim()
 
-        if (split != null) {
-            val userID = lookupUser(split.first, type)
+            // 拆出来的名字也必须像用户名，否则不浪费一次查询
+            if (!REGEX_OSU_USERNAME.matches(splitName)) continue
 
-            if (userID != null) {
-                addRange(ctx, split.second)
+            val userID = lookupUser(splitName, type) ?: continue
 
-                return userID
+            addRange(ctx, split.second)
+            ctx.removeSegment(segment)
+
+            return userID
+        }
+
+        // 5.5 范围自己单独成了一段时，逐段拆不出来，但仍可能从整段 separatedText 拆出
+        // 「名字 + 范围」；命中后只移除名字所在的片段，单独的 range 片段留给 RANGE 记录。
+        val wholeSplit = splitNameWithRange(text)
+
+        if (wholeSplit != null) {
+            val splitName = wholeSplit.first.trim()
+
+            if (REGEX_OSU_USERNAME.matches(splitName)) {
+                val userID = lookupUser(splitName, type)
+
+                if (userID != null) {
+                    addRange(ctx, wholeSplit.second)
+                    removeSegmentsContainedIn(ctx, splitName)
+
+                    return userID
+                }
             }
         }
 
-        return lookupUser(text, type) ?: notFound(onNull, isMyself)
+        return lookupFirstUser(ctx, nameCandidates, type) ?: notFound(onNull, isMyself)
+    }
+
+    /**
+     * 把 [getUserID] 之后仍然剩下的多段文本当作谱面别名条件写回 [ctx]。
+     *
+     * 只在剩余内容原本有至少两段时生效：单段残文更可能是没解析出来的玩家名，应该留给调用方报错，
+     * 不能悄悄变成别名去筛成绩。已经被 [getUserID] 消费掉的玩家名段也计入这个段数，
+     * 所以「玩家名 + 一个别名」在名字被移除后仍然会保留别名。每段会先 trim，
+     * 然后只要满足下面任意一条即可：
+     * - 至少 1 个中文字符；
+     * - 至少 2 个英文字母；
+     * - 数字既不算中文也不算英文（不参与计数）。
+     *
+     * 合格的段写入 `ScoreClassifier.ALIAS` 的 `=` 条件，键为
+     * `Pair(ScoreClassifier.ALIAS.name, Operator.EQ)`；同一个键下多个值在
+     * [ScoreClassifier] 里取并集，所以多段别名是“命中任意一个即可”。
+     *
+     * 必须在本轮 [getUserID] 结束后调用：先把残文里的玩家名 / 范围解析掉，剩下的才可能是别名。
+     *
+     * @return 实际新增的别名数量
+     */
+    fun addResidualAliases(ctx: StripContext): Int {
+        val segments = ctx.segments
+
+        // 玩家名段已经被 getUserID 删除；把它加回来才能判断删除前是否多段。
+        if (segments.size + ctx.removedSegments < 2) return 0
+
+        val key = Pair(ScoreClassifier.ALIAS.name, Operator.EQ)
+        var added = 0
+
+        for (segment in segments) {
+            val alias = segment.text.trim()
+
+            if (!isAliasCondition(alias)) continue
+            if (alias in ctx[key]) continue
+
+            ctx[key] = alias
+            added++
+        }
+
+        return added
+    }
+
+    /**
+     * 别名条件的最低要求：至少 1 个中文字符，或至少 2 个英文字母；数字不计入。
+     */
+    private fun isAliasCondition(text: String): Boolean {
+        if (text.isEmpty()) return false
+
+        var chinese = 0
+        var english = 0
+
+        for (c in text) {
+            when {
+                Character.UnicodeScript.of(c.code) == Character.UnicodeScript.HAN -> chinese++
+                c in 'a'..'z' || c in 'A'..'Z' -> english++
+            }
+        }
+
+        return chinese >= 1 || english >= 2
     }
 
     /**
      * 把本次指令里的范围换算成列表接口直接能用的 offset / limit。
      *
      * 只读 [StripContext] 里已经提取好的 `RANGE`（`3`、`3-5`、`#3-5`、`＃3-5` 都行），
-     * 不会再去 [StripContext.text] 里补抠；需要补抠时先调用 [getUserID]。
+     * 不会再去 [StripContext.separatedText] 里补抠；需要补抠时先调用 [getUserID]。
      * 同一个 ctx 里有多段范围时取最后一段，和 [extractRangeToken] 的取值方式保持一致。
      *
      * 换算规则：
@@ -321,6 +421,39 @@ class CommandUtil(
 
         if (RANGE_TOKEN_REGEX.matches(head)) {
             return tokens.drop(1).joinToString(" ") to head
+        }
+
+        return null
+    }
+
+    /** 删除 trimmed 后整段都包含在 [name] 里的残余片段（用于整段拆出名字后清理 residual）。 */
+    private fun removeSegmentsContainedIn(ctx: StripContext, name: String) {
+        for (segment in ctx.segments) {
+            val value = segment.text.trim()
+
+            if (value.isNotEmpty() && name.contains(value)) {
+                ctx.removeSegment(segment)
+            }
+        }
+    }
+
+    /**
+     * 按顺序尝试候选名字，命中即返回；列表为空时直接返回 null。
+     *
+     * 命中后会立刻把对应的残余片段从 [ctx] 移除：该段已经被当作玩家名消费掉，
+     * 如果继续留在 residual 里，后面的 [addResidualAliases] 会把它误当成别名。
+     */
+    private fun lookupFirstUser(
+        ctx: StripContext,
+        candidates: List<Pair<ResidualSegment, String>>,
+        type: BanchoType,
+    ): Long? {
+        for ((segment, name) in candidates) {
+            lookupUser(name, type)?.let {
+                ctx.removeSegment(segment)
+
+                return it
+            }
         }
 
         return null

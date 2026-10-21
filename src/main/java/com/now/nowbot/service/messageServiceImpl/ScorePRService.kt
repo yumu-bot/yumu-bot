@@ -263,7 +263,11 @@ class ScorePRService(
             ?: bindDao.getBindModeFromID(userID)?.takeUnless { it == OsuMode.DEFAULT }
             ?: OsuMode.DEFAULT
 
-        val hasCondition = pipeline.hasMatch
+        // getUserID 之后剩下的多段残文可能是别名；补写的条件同样算“有筛选条件”，
+        // 否则 defaultLimit 会停在 1，别名还没机会筛选就被截断了。
+        commandUtil.addResidualAliases(context)
+
+        val hasCondition = pipeline.hasMatch || context.syntaxes.isNotEmpty()
 
         // 和旧的 InstructionRange.getOffsetAndLimit 对齐：
         // 有筛选条件且未给范围时，先取 100 条回来筛；#0 取 100 条。
@@ -307,10 +311,7 @@ class ScorePRService(
 
         calculateApiService.applyStarToScores(scores)
         BeatmapUtil.applyBeatmapChanges(scores)
-
         beatmapApiService.applyBeatmapExtend(scores)
-
-        // 别名现在要参与筛选，必须在 classify 之前挂到 beatmapset 上
         beatmapApiService.applyAlias(scores)
 
         // 必须先按原数组（含 offset）把「名次 -> 成绩」固化下来，再交给 classify 筛选。
