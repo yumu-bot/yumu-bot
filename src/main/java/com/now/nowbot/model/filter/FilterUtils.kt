@@ -64,6 +64,17 @@ enum class FilterValueType(
     TIME(false),
     MOD(false);
 
+    /**
+     * 是否为范围型值。
+     *
+     * DECIMAL、INTEGER、TIME 这类值重复出现时通常是在收紧范围
+     * （如 `pp>=600 pp>=700`），配合范围/排除运算符时取交集；
+     * 如果是等值运算符（`=`、`==`），则仍然是在列举可接受的值，取并集。
+     * 文本、模组、排名等非范围型值始终取并集。
+     */
+    val isRangeType: Boolean
+        get() = this == DECIMAL || this == INTEGER || this == TIME
+
     /** 值长度是否落在该类型的允许区间内 */
     fun isValidLength(value: CharSequence): Boolean = value.length in minLength..maxLength
 

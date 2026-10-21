@@ -150,7 +150,9 @@ enum class ScoreClassifier(
          *
          * [StripContext.syntaxes] 里保存的是 `(分类器名, 运算符) -> 值列表`，
          * 分类器名对应 [ScoreClassifier.name]，值在提取阶段已经去掉了后缀（如 `%`、`x`、`★`）。
-         * 同一个键下的多个值之间、不同键之间都是「且」的关系；没有任何成绩条件时返回原列表。
+         * 同一个键下的多个值：范围型参数（DECIMAL/INTEGER/TIME）在 `>`、`>=`、`<`、`<=`、`!=`
+         * 下取交集，在 `=`、`==` 下取并集；非范围型参数始终取并集。
+         * 不同键之间始终取交集。没有任何成绩条件时返回原列表。
          */
         fun Collection<LazerScore>.classify(ctx: StripContext): List<LazerScore> {
             return classify(ctx.syntaxes)
@@ -172,6 +174,15 @@ enum class ScoreClassifier(
 
         /**
          * 将 [StripContext.syntaxes] 解析为一组可复用的谓词函数 (Score -> Boolean)。
+         *
+         * 同一个键（同一分类器 + 同一运算符）下的多个值：
+         * - 范围型（[FilterValueType.DECIMAL]、[FilterValueType.INTEGER]、[FilterValueType.TIME]）
+         *   且运算符为 `>`、`>=`、`<`、`<=`、`!=` 时取交集，
+         *   例如 `pp>=600 pp>=700` 等价于 `pp>=700`；
+         * - 范围型但运算符为 `=`、`==` 时取并集，例如 `bid=1 bid=2` 表示两个谱面都可以；
+         * - 非范围型始终取并集，例如 `title=A title=B`、`mod=HD mod=HR`。
+         *
+         * 不同键各生成一个谓词，最终在 [classify] 中取交集。
          */
         private fun parsePredicates(
             syntaxes: Map<Pair<String, Operator>, List<String>>
@@ -181,11 +192,19 @@ enum class ScoreClassifier(
             for ((key, values) in syntaxes) {
                 val (name, operator) = key
                 val filter = entries.firstOrNull { it.name == name } ?: continue
+                val conditions = values.map(::Condition)
 
-                for (value in values) {
-                    val condition = Condition(value)
+                if (conditions.isEmpty()) continue
 
-                    predicates.add { score -> fitScore(score, operator, filter, condition) }
+                val intersection = filter.valueType.isRangeType &&
+                    operator != Operator.EQ && operator != Operator.XQ
+
+                predicates.add { score ->
+                    if (intersection) {
+                        conditions.all { condition -> fitScore(score, operator, filter, condition) }
+                    } else {
+                        conditions.any { condition -> fitScore(score, operator, filter, condition) }
+                    }
                 }
             }
 
