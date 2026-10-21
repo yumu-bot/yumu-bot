@@ -1,6 +1,21 @@
 package com.now.nowbot.model.filter
 
+import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerModAcronyms
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.util.StringUtil.standardised
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.REGEX_OPERATOR_WITH_SPACE
+import com.now.nowbot.util.command.REGEX_SPACE_MORE
+import java.math.BigDecimal
+import java.math.MathContext
+import java.math.RoundingMode
+import java.time.Instant
+import java.time.ZoneId
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 
 /**
  * 根据 Enum 的 ordinal 获取对应的匹配结果列表
@@ -75,6 +90,7 @@ interface CommandClassifier {
     val prefix: Regex
     val valueType: FilterValueType
     val suffix: Regex?
+        get() = null
 
     /**
      * 可选的 value 首段校验。
@@ -83,5 +99,279 @@ interface CommandClassifier {
      * LANGUAGE 也可能是 LENGTH），提取器会在选中候选前用这个正则检查 value。
      * 为 null 时不限制。
      */
-    val valueRegex: Regex? get() = null
+    val valueRegex: Regex?
+        get() = null
+}
+
+/**
+ * @param compare 被比较的数据
+ * @param to 输入的数据，这里认为你已经在外面 standardized 了，否则开销是 O(N^2)
+ */
+fun fit(
+    operator: Operator,
+    compare: Any?,
+    to: Any?,
+): Boolean {
+    return !(compare == null || to == null) && when (compare) {
+        is Number if to is Number -> {
+            if (isIntegral(compare) && isIntegral(to)) {
+                compareLongs(operator, compare.toLong(), to.toLong())
+            } else if (compare is BigDecimal && to is BigDecimal) {
+                compareDecimals(operator, compare, to)
+            } else if (to is BigDecimal) {
+                compareDecimals(operator, compare.toString().toBigDecimal(), to)
+            } else {
+                compareDecimals(operator, BigDecimal(compare.toDouble()), BigDecimal(to.toDouble()))
+            }
+        }
+
+        is String if to is String -> {
+            val cs = compare.standardised()
+
+            when (operator) {
+                Operator.XQ -> to.equals(cs, ignoreCase = true)
+                Operator.EQ -> cs.contains(to, ignoreCase = true)
+                Operator.NE -> !cs.contains(to, ignoreCase = true)
+                Operator.GT -> to.contains(cs, ignoreCase = true) && to.length > cs.length
+                Operator.GE -> to.contains(cs, ignoreCase = true) && to.length >= cs.length
+                Operator.LT -> cs.contains(to, ignoreCase = true) && to.length < cs.length
+                Operator.LE -> cs.contains(to, ignoreCase = true) && to.length <= cs.length
+            }
+        }
+
+        is Boolean if to is Boolean -> {
+            when (operator) {
+                Operator.XQ, Operator.EQ -> compare == to
+                Operator.NE -> compare != to
+                else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
+            }
+        }
+
+        is Enum<*> if to is Enum<*> -> {
+            compareLongs(operator, compare.ordinal.toLong(), to.ordinal.toLong())
+        }
+
+        is List<*> if to is List<*> -> {
+            val cs = compare.filterNotNull().toSet()
+            val ts = to.filterNotNull().toSet()
+
+            when (operator) {
+                Operator.XQ -> cs == ts
+                Operator.EQ -> cs.containsAll(ts)
+                Operator.NE -> !cs.containsAll(ts)
+                Operator.GT -> ts.containsAll(cs) && ts.size > cs.size
+                Operator.GE -> ts.containsAll(cs) && ts.size >= cs.size
+                Operator.LT -> cs.containsAll(ts) && cs.size < ts.size
+                Operator.LE -> cs.containsAll(ts) && cs.size <= ts.size
+            }
+        }
+
+        is Comparable<*> if compare::class == to::class -> {
+            @Suppress("UNCHECKED_CAST")
+            val c = compare as Comparable<Any>
+            val cmp = c.compareTo(to)
+            when (operator) {
+                Operator.XQ, Operator.EQ -> cmp == 0
+                Operator.NE -> cmp != 0
+                Operator.GT -> cmp > 0
+                Operator.GE -> cmp >= 0
+                Operator.LT -> cmp < 0
+                Operator.LE -> cmp <= 0
+            }
+        }
+
+        else -> false
+    }
+}
+
+private fun isIntegral(n: Number): Boolean =
+    n is Long || n is Int || n is Short || n is Byte
+
+// 辅助方法：Long 集中比较
+private fun compareLongs(operator: Operator, c: Long, t: Long): Boolean {
+    return when (operator) {
+        Operator.XQ, Operator.EQ -> c == t
+        Operator.NE -> c != t
+        Operator.GT -> c > t
+        Operator.GE -> c >= t
+        Operator.LT -> c < t
+        Operator.LE -> c <= t
+    }
+}
+
+private val epsilon = BigDecimal("0.0001")
+
+private fun compareDecimals(
+    operator: Operator,
+    compare: BigDecimal,
+    to: BigDecimal
+): Boolean {
+    val dig = to.stripTrailingZeros().scale().coerceIn(0, 6)
+
+    return when (operator) {
+        Operator.EQ, Operator.NE -> {
+            // 1. 加上 epsilon 进行尾数纠偏，再 FLOOR 截断到 dig 位
+            // 8.9999996 + 0.000001 -> 9.0000006 -> FLOOR(0) -> 9.0
+            val correctedCompare = compare + epsilon
+            val normCompare = correctedCompare.setScale(dig, RoundingMode.FLOOR)
+            val normTo = to.setScale(dig, RoundingMode.FLOOR)
+
+            val isEqual = normCompare.compareTo(normTo) == 0
+            if (operator == Operator.EQ) isEqual else !isEqual
+        }
+
+        Operator.XQ -> {
+            // 2. 多放大 1 位精度，同样先加 epsilon 纠偏再截断
+            val extendedDig = (dig + 1).coerceAtMost(6)
+
+            val correctedCompare = compare + epsilon
+            val normCompare = correctedCompare.setScale(extendedDig, RoundingMode.FLOOR)
+            val normTo = to.setScale(extendedDig, RoundingMode.FLOOR)
+
+            normCompare.compareTo(normTo) == 0
+        }
+
+        Operator.LE -> compare <= to + epsilon
+        Operator.LT -> compare < to - epsilon
+        Operator.GE -> compare >= to - epsilon
+        Operator.GT -> compare > to + epsilon
+    }
+}
+
+fun fitTags(operator: Operator, tags: String, to: String): Boolean {
+    if (tags.isBlank() || to.isBlank()) return false
+
+    val tagList = tags.replace('_', ' ')
+        .split(REGEX_SPACE_MORE)
+        .filter { it.isNotEmpty() }
+    val toList = to.split(REGEX_SPACE_MORE)
+        .filter { it.isNotEmpty() }
+
+    return when {
+        toList.size == 1 -> {
+            val target = toList.first()
+            tagList.any { tag -> fit(operator, tag, target) }
+        }
+
+        else -> {
+            fit(operator, tagList, toList)
+        }
+    }
+}
+
+/**
+ * 公用方法
+ * 在 to 含有小数点时，按 compare 占 total 的百分比来处理。在其他情况时，按 compare 整数来处理。
+ */
+fun fitCountOrPercent(operator: Operator, compare: Number?, to: BigDecimal, total: Number?): Boolean {
+    if (compare == null) return false
+
+    val cleanedTo = to.setScale(6, RoundingMode.HALF_UP).stripTrailingZeros()
+
+    // 2. 判定是否含有有效小数：只需看剔除尾随 0 后的 scale 是否 > 0
+    val hasDecimal = cleanedTo.scale() > 0
+
+    // 3. 判断是否满足百分比模式条件：含有有效小数 且 在 [0.0, 1.0] 之间 且 不是 XQ
+    val isPercentMode = hasDecimal
+            && cleanedTo >= BigDecimal.ZERO
+            && cleanedTo <= BigDecimal.ONE
+            && operator != Operator.XQ
+
+    return if (isPercentMode) {
+        val totalBd = BigDecimal(total.toString())
+        if (totalBd.abs() < epsilon) {
+            false
+        } else {
+            val compareBd = BigDecimal(compare.toString())
+
+            val ratio = compareBd.divide(totalBd, MathContext.DECIMAL64)
+                .setScale(6, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+
+            // 传入高精度的 fit / compareDecimals 函数进行比对
+            fit(operator, ratio, cleanedTo)
+        }
+    } else {
+        // 整数模式：直接转为 Long 比较
+        fit(operator, compare.toLong(), cleanedTo.toLong())
+    }
+}
+
+fun fitTime(operator: Operator, compare: Long?, to: String): Boolean {
+    val time = TimeParser.process(to) // 返回的是 ZonedDateTime
+    val timeInstant = time.toInstant() // 转换为 UTC 瞬时点
+
+    val nowInstant = Instant.now() // 获取当前 UTC 瞬时点
+
+    if (nowInstant.isBefore(timeInstant)) {
+        throw UnsupportedOperationException.InvalidFuture()
+    }
+    val isRelative = TimeParser.isRelativeTime(to)
+
+    val toSec = timeInstant.toEpochMilli() / 1000L
+
+    val sec = compare ?: 0L
+
+    return when (operator) {
+        Operator.GT -> {
+            if (isRelative) sec < toSec else sec > toSec
+        }
+        Operator.GE -> {
+            if (isRelative) sec <= toSec else sec >= toSec
+        }
+        Operator.LT -> {
+            if (isRelative) sec > toSec else sec < toSec
+        }
+        Operator.LE -> {
+            if (isRelative) sec >= toSec else sec <= toSec
+        }
+
+        else -> {
+            // 1. 将毫秒值重新解析为当前时区的日期时间
+            val zonedDateTime = Instant.ofEpochMilli(toSec)
+                .atZone(ZoneId.systemDefault())
+
+            // 2. 强制对齐到 0 点 (例如 15:30:25 -> 00:00:00)
+            val startOfDay = zonedDateTime.toLocalDate().atStartOfDay(ZoneId.systemDefault())
+            val startSec = startOfDay.toInstant().toEpochMilli() / 1000L
+
+            when(operator) {
+                Operator.EQ -> sec in startSec until (startSec + 1.days.inWholeSeconds)
+                Operator.XQ -> sec in startSec until (startSec + 1.hours.inWholeSeconds)
+                Operator.NE -> sec !in startSec until (startSec + 1.days.inWholeSeconds)
+            }
+        }
+    }
+}
+
+fun fitMod(operator: Operator, compare: String, to: List<LazerMod>): Boolean {
+    val com = compare.toLazerModAcronyms().toSet()
+    val too = to
+        .map { it.acronym }.filter { it != LazerMod.Classic.type }.toSet()
+
+    return if (compare.isEmpty() || compare.contains(LazerMod.NoMod.type, ignoreCase = true)) {
+        when (operator) {
+            Operator.XQ, Operator.EQ -> too.isEmpty()
+            Operator.NE, Operator.GE, Operator.GT -> too.isNotEmpty()
+            else -> false
+        }
+    } else if (compare.contains(LazerMod.FreeMod.type, ignoreCase = true)) {
+        when (operator) {
+            Operator.XQ, Operator.EQ -> too.isNotEmpty()
+            Operator.NE, Operator.LE, Operator.LT -> too.isEmpty()
+            else -> false
+        }
+    } else {
+        val ins = com.intersect(too)
+
+        when (operator) {
+            Operator.XQ -> com == too
+            Operator.EQ,
+            Operator.GE -> ins.size == com.size
+            Operator.GT -> ins.size == com.size && com.size < too.size
+            Operator.LE -> ins.size == too.size
+            Operator.LT -> ins.size == too.size && com.size > too.size
+            Operator.NE -> ins.isEmpty()
+        }
+    }
 }

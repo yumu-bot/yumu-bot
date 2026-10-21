@@ -1,8 +1,6 @@
 package com.now.nowbot.model.filter
 
 import com.now.nowbot.model.enums.*
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fitCountOrPercent
 import com.now.nowbot.model.maimai.MaiScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.*

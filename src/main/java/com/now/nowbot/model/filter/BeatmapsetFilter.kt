@@ -4,9 +4,6 @@ import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.OsuGenre
 import com.now.nowbot.model.enums.OsuLanguage
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTags
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTime
 import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.TimeParser

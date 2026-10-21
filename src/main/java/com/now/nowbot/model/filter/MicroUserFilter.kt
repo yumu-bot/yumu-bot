@@ -1,8 +1,6 @@
 package com.now.nowbot.model.filter
 
 import com.now.nowbot.model.enums.Operator
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTime
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.*

@@ -1,8 +1,6 @@
 package com.now.nowbot.model.filter
 
 import com.now.nowbot.model.enums.*
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
-import com.now.nowbot.model.filter.ScoreFilter.Companion.fitCountOrPercent
 import com.now.nowbot.model.maimai.MaiSong
 import com.now.nowbot.model.maimai.MaiSong.MaiChart.MaiNote
 import com.now.nowbot.util.command.*
