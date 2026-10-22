@@ -110,7 +110,7 @@ class LeaderBoardService(
             // 单成绩模式
             val score: LazerScore = param.scores.first()
 
-            val user = score.user.toOsuUser()
+            val user = score.user.toOsuUser(param.mode)
 
             val e5Param = ScorePRService.getE5ParamForFilteredScore(user, null, score, "L", beatmapApiService, calculateApiService)
 

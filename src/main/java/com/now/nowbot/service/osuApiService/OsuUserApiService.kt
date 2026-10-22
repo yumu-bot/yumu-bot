@@ -11,6 +11,7 @@ import com.now.nowbot.service.web.Quickplay
 import com.now.nowbot.service.web.QuickplayLeaderboardItem
 import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import org.springframework.web.client.HttpClientErrorException
 
 interface OsuUserApiService {
@@ -76,6 +77,14 @@ interface OsuUserApiService {
         isBackground: Boolean = false,
         isAsyncSave: Boolean = true
     ): List<MicroUser>
+
+    fun getMicroOsuUser(userID: Long, mode: OsuMode): OsuUser {
+        return getMicroOsuUserOrNull(userID, mode) ?: throw NoSuchElementException.Player(userID.toString())
+    }
+
+    fun getMicroOsuUserOrNull(userID: Long, mode: OsuMode): OsuUser? {
+        return getMicroUsers(listOf(userID), isVariant = true, isBackground = false, isAsyncSave = true).firstOrNull()?.toOsuUser(mode)
+    }
 
     fun getFriendList(user: BindUser): List<LazerFriend>
 
