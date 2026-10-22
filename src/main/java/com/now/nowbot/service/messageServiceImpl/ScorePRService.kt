@@ -263,16 +263,12 @@ class ScorePRService(
             ?: bindDao.getBindModeFromID(userID)?.takeUnless { it == OsuMode.DEFAULT }
             ?: OsuMode.DEFAULT
 
-        // getUserID 之后剩下的多段残文可能是别名；补写的条件同样算“有筛选条件”，
-        // 否则 defaultLimit 会停在 1，别名还没机会筛选就被截断了。
         commandUtil.addResidualAliases(context)
 
         val hasCondition = pipeline.hasMatch || context.syntaxes.isNotEmpty()
 
-        // 和旧的 InstructionRange.getOffsetAndLimit 对齐：
-        // 有筛选条件且未给范围时，先取 100 条回来筛；#0 取 100 条。
         val defaultLimit = when {
-            hasCondition -> 200
+            hasCondition -> 100
             isMultiple -> 20
             else -> 1
         }
@@ -282,7 +278,7 @@ class ScorePRService(
             defaultOffset = 0,
             defaultLimit = defaultLimit,
             multiple = isMultiple,
-            max = 200,
+            max = 100,
         )
 
         val async = AsyncMethodExecutor.awaitPair(
@@ -314,8 +310,6 @@ class ScorePRService(
         beatmapApiService.applyBeatmapExtend(scores)
         beatmapApiService.applyAlias(scores)
 
-        // 必须先按原数组（含 offset）把「名次 -> 成绩」固化下来，再交给 classify 筛选。
-        // classify 的 Map 重载会按成绩筛值、键（名次）原样保留，因此不会丢掉原数组的位置信息。
         val scoresByRank: Map<Int, LazerScore> = buildMap(scores.size) {
             scores.forEachIndexed { index, score -> put(index + offset + 1, score) }
         }
@@ -342,11 +336,6 @@ class ScorePRService(
 
         return ScorePRParam(user, historyUser, filteredScores, isPass, isShow, isCompact)
     }
-
-
-//    private fun ScorePRParam.asyncImage() = run {
-//        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
-//    }
 
     private fun ScorePRParam.getMessageChain(): MessageChain {
         try {

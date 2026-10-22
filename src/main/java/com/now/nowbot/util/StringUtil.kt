@@ -366,6 +366,33 @@ object StringUtil {
             .replace(REGEX_NOT_LETTER, "")
     }
 
+    private val PARTICLES = arrayOf(
+        "似的", "一样", "一般", "着呢", "罢了", "而已",
+        "的", "地", "得", "所", "之", "了", "吗", "呢", "吧", "啊", "呀", "哇", "哪", "嘛"
+    )
+
+    fun String?.removeParticle(): String {
+        if (this.isNullOrEmpty()) return ""
+
+        val sb = StringBuilder(length)
+        var i = 0
+        while (i < length) {
+            var matched = false
+            for (p in PARTICLES) {
+                if (regionMatches(i, p, 0, p.length)) {
+                    i += p.length
+                    matched = true
+                    break
+                }
+            }
+            if (!matched) {
+                sb.append(this[i])
+                i++
+            }
+        }
+        return sb.toString()
+    }
+
     /**
      * 就是之前的 getStandardisedString 方法
      */

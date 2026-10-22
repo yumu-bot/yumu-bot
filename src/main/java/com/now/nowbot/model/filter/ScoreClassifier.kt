@@ -278,7 +278,8 @@ enum class ScoreClassifier(
                 TAG -> fitTags(operator, it.beatmapset.tags, str)
 
                 ANY -> {
-                    fitTags(operator, it.beatmapset.tags, str)
+                    fitAlias(operator, it.beatmapset.aliases, condition.string)
+                            || fitTags(operator, it.beatmapset.tags, str)
                             || fit(operator, it.beatmapset.title, str)
                             || fit(operator, it.beatmapset.titleUnicode, str)
                             || fit(operator, it.beatmapset.artist, str)

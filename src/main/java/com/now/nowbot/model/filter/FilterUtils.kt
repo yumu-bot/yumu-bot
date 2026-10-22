@@ -6,6 +6,7 @@ import com.now.nowbot.model.osu.LazerMod.Companion.toLazerModAcronyms
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.StringUtil.formatted
+import com.now.nowbot.util.StringUtil.removeParticle
 import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.REGEX_OPERATOR_WITH_SPACE
@@ -279,9 +280,9 @@ fun fitTags(operator: Operator, tags: String, to: String): Boolean {
 fun fitAlias(operator: Operator, aliases: List<String>?, string: String): Boolean {
     if (aliases.isNullOrEmpty()) return false
 
-    val to = string.formatted()
+    val to = string.formatted().removeParticle()
 
-    return aliases.any { alias -> fit(operator, alias.formatted(), to) }
+    return aliases.any { alias -> fit(operator, alias.formatted().removeParticle(), to) }
 }
 
 /**

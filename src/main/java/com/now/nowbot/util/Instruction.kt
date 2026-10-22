@@ -141,7 +141,7 @@ enum class Instruction(val pattern: Pattern) {
 
     SCORE_PR(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p|通过成绩)|(?<recent>(recent|r|最近成绩)))((?<s>s)|(?<w>(show|w)))?")
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
+        appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING, MORE)
     }),
 
     RECENT_BEST(CommandPatternBuilder.create {
