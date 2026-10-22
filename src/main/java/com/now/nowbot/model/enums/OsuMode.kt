@@ -43,10 +43,18 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
         get() = this.isNotDefaultOrNull()
 
     /**
-     * 当且仅当这是转谱组合时（主模式搭配输入的其他模式）
+     * 当且仅当二者可以共存时：同一模式（含 relax、7K 等变体），或其中一方是 osu!standard。
+     *
+     * 用 [safeModeValue] 比较：osu!standard（0）可以被所有模式转换；
+     * 其他主模式（1..3）只能和同族的模式互相转换。
      */
     fun isConvertAble(mode: OsuMode?): Boolean {
-        return this.safeModeValue == 0.toByte() && (mode?.safeModeValue != 0.toByte())
+        if (mode == null) return false
+
+        val value = safeModeValue
+        val other = mode.safeModeValue
+
+        return value == 0.toByte() || other == 0.toByte() || value == other
     }
 
     /**

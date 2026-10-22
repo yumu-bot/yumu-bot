@@ -2,6 +2,7 @@ package com.now.nowbot.model.filter
 
 import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.NanoUser
 import com.now.nowbot.model.osu.LazerMod.Companion.toLazerModAcronyms
@@ -13,6 +14,7 @@ import com.now.nowbot.util.StringUtil.standardised
 import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.REGEX_OPERATOR_WITH_SPACE
 import com.now.nowbot.util.command.REGEX_SPACE_MORE
+import com.now.nowbot.util.command.StripContext
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode

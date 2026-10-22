@@ -1,5 +1,6 @@
 package com.now.nowbot.throwable.botRuntimeException
 
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
@@ -101,6 +102,15 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
 
         class Mode:
             WrongException("请输入正确的游戏模式！")
+
+        /**
+         * 指令里明确指定的模式和筛选条件暗示的模式对不上，且两者之间不能互相转谱。
+         */
+        class ModeConflict(mode: OsuMode, condition: OsuMode):
+            WrongException("""
+                模式冲突：你指定了「${mode.fullName}」，但筛选条件只能用于「${condition.fullName}」。
+                请统一模式，或去掉其中一方。
+            """.trimIndent())
 
         class Operator:
             WrongException("请输入正确的逻辑运算符！")

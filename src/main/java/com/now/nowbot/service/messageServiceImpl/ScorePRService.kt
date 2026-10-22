@@ -1,9 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
@@ -47,7 +45,6 @@ class ScorePRService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val infoDao: OsuUserInfoDao,
-    private val bindDao: BindDao,
     private val commandUtil: CommandUtil,
     private val restrict: NewbieRestrictService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
@@ -255,13 +252,9 @@ class ScorePRService(
                     throw BindException.NotBindException.UserNotBind()
                 }
             },
-        ) ?: throw BindException.NotBindException.UserNotBind()
+        ) ?: throw NoSuchElementException.Player()
 
-        // 新解析器只回退到群模式；个人模式仍按绑定里的模式补，保持和旧指令一致。
-        val mode = commandUtil.getMode(context, event)
-            .takeUnless { it == OsuMode.DEFAULT }
-            ?: bindDao.getBindModeFromID(userID)?.takeUnless { it == OsuMode.DEFAULT }
-            ?: OsuMode.DEFAULT
+        val mode = commandUtil.getMode(context, event, userID)
 
         commandUtil.addResidualAliases(context)
 
@@ -314,9 +307,9 @@ class ScorePRService(
             scores.forEachIndexed { index, score -> put(index + offset + 1, score) }
         }
 
-        val filteredScores = scoresByRank.classify(context)
+        val classified = scoresByRank.classify(context)
 
-        if (filteredScores.isEmpty()) {
+        if (classified.isEmpty()) {
             if (hasCondition) {
                 if (isPass) {
                     throw NoSuchElementException.PassedScore(user.username, user.mode)
@@ -334,7 +327,7 @@ class ScorePRService(
 
         val historyUser = infoDao.getHistoryUser(user)
 
-        return ScorePRParam(user, historyUser, filteredScores, isPass, isShow, isCompact)
+        return ScorePRParam(user, historyUser, classified, isPass, isShow, isCompact)
     }
 
     private fun ScorePRParam.getMessageChain(): MessageChain {

@@ -3,10 +3,9 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.Companion.orElse
-import com.now.nowbot.model.filter.ScoreFilter
+import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -23,16 +22,14 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.StringUtil.asConditions
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
 @Service("BP") class BPService(
@@ -44,6 +41,7 @@ import java.util.regex.Matcher
     private val infoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
     private val restrict: NewbieRestrictService,
+    private val commandUtil: CommandUtil
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
     data class BPParam(
@@ -65,7 +63,7 @@ import java.util.regex.Matcher
         val isMultiple = matcher.group("s").isNullOrBlank().not()
         val isShow = matcher.group("w").isNullOrBlank().not()
 
-        val param = getParam(event, messageText, matcher, isMultiple, isShow, isCompact = false) ?: return false
+        val param = getParam(event, matcher, isMultiple, isShow, isCompact = false) ?: return false
 
         restrict.checkAsync(event, param.scores)
 
@@ -119,7 +117,7 @@ import java.util.regex.Matcher
             return null
         }
 
-        val param = getParam(event, messageText, matcher, isMultiple, isShow, isCompact = true)
+        val param = getParam(event, matcher, isMultiple, isShow, isCompact = true)
 
         return param
     }
@@ -133,12 +131,101 @@ import java.util.regex.Matcher
      * 封装主获取方法
      * 请在 matcher.find() 后使用
      */
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isShow: Boolean, isCompact: Boolean): BPParam? {
+    private fun getParam(event: MessageEvent, matcher: Matcher, isMultiple: Boolean, isShow: Boolean, isCompact: Boolean): BPParam? {
         val any: String = matcher.group(FLAG_ANY) ?: ""
 
         // 避免指令冲突
         if (any.contains("&sb", ignoreCase = true)) return null
 
+        val pipeline = StripPipeline(any)
+            .apply(OsuModeExtractor)
+            .apply(LazerModExtractor)
+            .apply(UserIDExtractor)
+            .apply(QQExtractor)
+            .apply(ScoreClassifierExtractor)
+            .apply(RangeExtractor)
+            .trim()
+
+        val context = pipeline.context
+
+        val userID = commandUtil.getUserID(
+            context,
+            event,
+            onNull = { isMyself ->
+                if (isMyself) {
+                    throw BindException.NotBindException.YouNotBind()
+                } else {
+                    throw BindException.NotBindException.UserNotBind()
+                }
+            },
+        ) ?: throw NoSuchElementException.Player()
+
+        val mode = commandUtil.getMode(context, event, userID)
+
+        commandUtil.addResidualAliases(context)
+
+        val hasCondition = pipeline.hasMatch || context.syntaxes.isNotEmpty()
+
+        val defaultLimit = when {
+            hasCondition -> 100
+            isMultiple -> 20
+            else -> 1
+        }
+
+        val (offset, limit) = commandUtil.getRange(
+            context,
+            defaultOffset = 0,
+            defaultLimit = defaultLimit,
+            multiple = isMultiple,
+            max = 200,
+        )
+
+        val async = AsyncMethodExecutor.awaitPair(
+            { userApiService.getOsuUser(userID, mode) },
+            { scoreApiService.getBestScores(userID, mode, offset, limit) },
+        )
+
+        val user: OsuUser = async.first
+        val scores: List<LazerScore> = async.second
+
+        if (scores.isEmpty()) {
+            if (offset > 0) {
+                if (mode.isNotDefault) {
+                    throw NoSuchElementException.BestScoreWithModeAndOffset(user.username, mode, offset)
+                } else {
+                    throw NoSuchElementException.BestScoreWithOffset(user.username, offset)
+                }
+            } else {
+                throw NoSuchElementException.BestScoreWithMode(user.username, mode)
+            }
+        }
+
+        calculateApiService.applyStarToScores(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
+        beatmapApiService.applyBeatmapExtend(scores)
+        beatmapApiService.applyAlias(scores)
+
+        val scoresByRank: Map<Int, LazerScore> = buildMap(scores.size) {
+            scores.forEachIndexed { index, score -> put(index + offset + 1, score) }
+        }
+
+        val classified = scoresByRank.classify(context)
+
+        if (classified.isEmpty()) {
+            if (hasCondition) {
+                throw NoSuchElementException.BestScoreFiltered(user.username)
+            } else {
+                throw NoSuchElementException.BestScore(user.username)
+            }
+        }
+
+        val historyUser = infoDao.getHistoryUser(user)
+
+
+        return BPParam(user, historyUser, classified, isShow, isCompact)
+
+
+        /*
         val isMyself = AtomicBoolean(true) // 处理 range
         val mode = InstructionUtil.getMode(matcher)
 
@@ -238,6 +325,8 @@ import java.util.regex.Matcher
         }
 
         return BPParam(user, historyUser, filteredScores, isShow, isCompact)
+
+         */
     }
 
     private fun <T> InstructionRange<T>.getOffsetAndLimit(

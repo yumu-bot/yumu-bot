@@ -107,7 +107,7 @@ class TestService(
         val alias = if (userID != null) {
             commandUtil.addResidualAliases(utilCtx)
 
-            utilCtx[Pair(ScoreClassifier.ALIAS.name, Operator.EQ)]
+            utilCtx[Pair(ScoreClassifier.ALIASES.name, Operator.EQ)]
         } else {
             emptyList()
         }

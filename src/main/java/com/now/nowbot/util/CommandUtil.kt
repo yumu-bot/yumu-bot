@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreClassifier
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.util.command.*
@@ -30,36 +31,104 @@ class CommandUtil(
     private val log = LoggerFactory.getLogger(CommandUtil::class.java)
 
     /**
-     * 取得本次指令最终生效的模式。
+     * 取得本次指令最终生效的模式，优先级从高到低：
      *
-     * 优先使用 [StripContext] 里已经提取出的模式；没提取到（或提取出的值认不出来）时，
-     * 回退到 [GroupDao.getGroupMode]，并在回退成功时把群模式补写回 [ctx]，
-     * 让后面直接读 `ctx[ExtractType.MODE]` 的组件也能看到同一份结果。
+     * 1. 指令里显式指定的模式（`ctx[ExtractType.MODE]`，如 `m=c`）；
+     * 2. 成绩条件反推（[inferModeFromSyntaxes]）：`mf>=1`、`彩率>=0.5` 这类只有某个模式
+     *    才有的条件，命中时采用；
+     * 3. 群组设定（[GroupDao.getGroupMode]）；
+     * 4. 玩家的绑定模式（[BindDao.getBindModeFromID]），需要 [userID]；
+     * 5. 都没有时为 [OsuMode.DEFAULT]。
+     *
+     * 第 1、2 步同时命中且互不相容（既不是同一模式，也不能互相转谱）时，
+     * 抛出 [IllegalArgumentException.WrongException.ModeConflict]，提示用户统一模式。
+     *
+     * 第 3、4 步命中时会把模式补写回 [ctx]，让后面直接读 `ctx[ExtractType.MODE]`
+     * 的组件也能看到同一份结果。
      *
      * @param event 可以为空；为空时 [GroupDao.getGroupMode] 会返回 [OsuMode.DEFAULT]
-     * @return 最终生效的模式，都没有时为 [OsuMode.DEFAULT]
+     * @param userID 解析出的玩家 osu! ID；为空时跳过第 4 步
+     * @return 最终生效的模式
      */
-    fun getMode(ctx: StripContext, event: MessageEvent? = null): OsuMode {
+    fun getMode(
+        ctx: StripContext,
+        event: MessageEvent? = null,
+        userID: Long? = null,
+    ): OsuMode {
+        // 1. 指令里显式指定的模式
         val extracted = ctx[ExtractType.MODE]
             .filter { it.isNotBlank() }
             .map { it.toOsuMode() }
             .firstOrNull { it.isNotDefault }
 
-        if (extracted.isNotDefaultOrNull()) {
+        // 2. 条件本身指明了模式
+        val inferred = inferModeFromSyntaxes(ctx.syntaxes)
+
+        if (extracted.isNotDefaultOrNull() && inferred != null) {
+            if (!extracted.isConvertAble(inferred)) {
+                throw IllegalArgumentException.WrongException.ModeConflict(extracted, inferred)
+            }
+
             return extracted
         }
 
+        if (extracted.isNotDefaultOrNull()) return extracted
+        if (inferred != null) return inferred
+
+        // 3. 群组设定
         val groupMode = groupDao.getGroupMode(event)
 
         if (groupMode.isNotDefaultOrNull()) {
             ctx[ExtractType.MODE] = groupMode.shortName
+            return groupMode
         }
 
-        return groupMode
+        // 4. 玩家绑定
+        val bindMode = userID?.let { bindDao.getBindModeFromID(it) }
+
+        if (bindMode.isNotDefaultOrNull()) {
+            ctx[ExtractType.MODE] = bindMode.shortName
+            return bindMode
+        }
+
+        return OsuMode.DEFAULT
     }
 
     enum class BanchoType {
         OFFICIAL, PPYSB
+    }
+
+    /**
+     * 能反推出模式的成绩条件，按优先级排列。
+     *
+     * 漏大果 / 漏中果 / 漏小果只有 osu!catch 才有，
+     * 彩率 / 黄彩比只有 osu!mania 才有。
+     */
+    private val SCORE_MODE_HINTS: List<Pair<ScoreClassifier, OsuMode>> = listOf(
+        ScoreClassifier.MISSED_FRUIT to OsuMode.CATCH,
+        ScoreClassifier.MISSED_DROP to OsuMode.CATCH,
+        ScoreClassifier.MISSED_DROPLET to OsuMode.CATCH,
+        ScoreClassifier.RATE to OsuMode.MANIA,
+    )
+
+    /**
+     * 从成绩筛选条件里反推模式，没有提示时返回 null。
+     *
+     * 漏大果 / 漏中果 / 漏小果只有 osu!catch 才有，
+     * 彩率 / 黄彩比只有 osu!mania 才有。
+     * 多个提示同时出现时按 [SCORE_MODE_HINTS] 的顺序取第一个，保持原来的 if / else-if 语义。
+     *
+     * @param syntaxes 解析结果，键为 `(分类器名, 运算符)`，通常直接来自 [StripContext.syntaxes]
+     */
+    private fun inferModeFromSyntaxes(
+        syntaxes: Map<Pair<String, Operator>, List<String>>,
+    ): OsuMode? {
+        if (syntaxes.isEmpty()) return null
+
+        val names = HashSet<String>(syntaxes.size)
+        for ((name, _) in syntaxes.keys) names.add(name)
+
+        return SCORE_MODE_HINTS.firstOrNull { (classifier, _) -> classifier.name in names }?.second
     }
 
 
@@ -212,8 +281,8 @@ class CommandUtil(
      * - 至少 2 个英文字母；
      * - 数字既不算中文也不算英文（不参与计数）。
      *
-     * 合格的段写入 `ScoreClassifier.ALIAS` 的 `=` 条件，键为
-     * `Pair(ScoreClassifier.ALIAS.name, Operator.EQ)`；同一个键下多个值在
+     * 合格的段写入 `ScoreClassifier.ALIASES` 的 `=` 条件，键为
+     * `Pair(ScoreClassifier.ALIASES.name, Operator.EQ)`；同一个键下多个值在
      * [ScoreClassifier] 里取并集，所以多段别名是“命中任意一个即可”。
      *
      * 必须在本轮 [getUserID] 结束后调用：先把残文里的玩家名 / 范围解析掉，剩下的才可能是别名。
@@ -226,7 +295,7 @@ class CommandUtil(
         // 玩家名段已经被 getUserID 删除；把它加回来才能判断删除前是否多段。
         if (segments.size + ctx.removedSegments < 2) return 0
 
-        val key = Pair(ScoreClassifier.ALIAS.name, Operator.EQ)
+        val key = Pair(ScoreClassifier.ALIASES.name, Operator.EQ)
         var added = 0
 
         for (segment in segments) {

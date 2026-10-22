@@ -43,6 +43,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class BestScore(name: String):
         NoSuchElementException("无法获取玩家 $name 的最好成绩...")
 
+    class BestScoreWithOffset(name: Any, offset: Int):
+        NoSuchElementException("无法获取玩家 $name #$offset 之后的最好成绩...")
+
     class BestScoreWithMode(name: Any, mode: OsuMode):
         NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 内的最好成绩...")
 
