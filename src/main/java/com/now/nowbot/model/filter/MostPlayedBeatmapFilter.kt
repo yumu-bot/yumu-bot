@@ -11,9 +11,14 @@ import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 
 enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
-    CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
+    // H：只匹配谱面集作者
+    HOST("(host|h|作者|主)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
-    GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
+    // C：匹配谱面谱师
+    MAPPER("(creator|mapper|map|charter|c|谱师?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
+
+    // U：匹配谱面谱师，但排除作者本人
+    GUEST("((gd(er)?|guest\\s*diff(er)?)|guest|gu|客串(谱师)?|客)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex()),
 
     BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
@@ -84,11 +89,14 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
             val s = b.beatmapset!!
 
             return when (filter) {
-                CREATOR -> fit(operator, s.creator, str)
-                GUEST -> {
-                    if (long <= 0) throw RuntimeException("抱歉，本功能暂时只能输入第一位客串谱师的编号 (UID)！")
+                HOST -> fit(operator, s.creator, str)
 
-                    fit(operator, b.mapperID, long)
+                MAPPER -> b.mappers.any { mapper -> fitMapper(operator, mapper, long, str) }
+
+                GUEST -> {
+                    val isHost = (s.creatorID == long) || fit(operator, s.creator, str)
+
+                    !isHost && b.mappers.any { mapper -> fitMapper(operator, mapper, long, str) }
                 }
 
                 BID -> fit(operator, b.beatmapID, long)

@@ -14,8 +14,12 @@ import java.time.ZoneOffset
 /**
  * [BeatmapsetFilter] 的名字形式分类器。
  *
- * 条目顺序与 [BeatmapsetFilter] 保持一致（末尾的 RANGE 由 [com.now.nowbot.util.command.SymbolHead.RANGE] 处理），
- * 因此可以按 ordinal / name 与过滤器条目一一对应。
+ * 开头的 [HOST]、[MAPPER]、[GUEST] 与 [BeatmapsetFilter] 开头的同名条目同义（前缀与
+ * [ScoreClassifier] 的同名条目合并）：
+ * [HOST] 只匹配谱面集作者，[MAPPER] 匹配谱面谱师，[GUEST] 额外排除作者。
+ *
+ * 其余条目顺序与 [BeatmapsetFilter] 保持一致（末尾的 RANGE 由
+ * [com.now.nowbot.util.command.SymbolHead.RANGE] 处理）。
  */
 enum class BeatmapsetClassifier(
     @param:Language("RegExp") override val prefix: Regex,
@@ -23,9 +27,13 @@ enum class BeatmapsetClassifier(
     @param:Language("RegExp") override val suffix: Regex? = null,
     @param:Language("RegExp") override val valueRegex: Regex? = null,
 ): CommandClassifier {
-    CREATOR("(creator|host|c|h|谱师|作者|谱|主)".toRegex(), FilterValueType.NAME),
+    // H
+    HOST("(host|h|作者|主)".toRegex(), FilterValueType.NAME),
 
-    GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)".toRegex(), FilterValueType.NAME),
+    // C
+    MAPPER("(creator|mapper|map|charter|c|谱师?)".toRegex(), FilterValueType.NAME),
+
+    GUEST("((gd(er)?|guest\\s*diff(er)?)|guest|gu|客串(谱师)?|客)".toRegex(), FilterValueType.NAME),
 
     BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)".toRegex(), FilterValueType.INTEGER),
 
@@ -142,13 +150,24 @@ enum class BeatmapsetClassifier(
             val bs = s.beatmaps.orEmpty()
 
             return when (filter) {
-                CREATOR -> fit(operator, s.creator, str)
-                GUEST -> {
-                    if (long <= 0) throw RuntimeException("抱歉，本功能暂时只能输入第一位客串谱师的编号 (UID)！")
+                HOST -> fit(operator, s.creator, str)
 
-                    bs.map {
-                        fit(operator, it.mapperID, long)
-                    }.contains(true)
+                MAPPER -> if (bs.isEmpty()) {
+                    fit(operator, s.creator, str)
+                } else {
+                    bs.any { beatmap ->
+                        beatmap.mappers.any { mapper -> fitMapper(operator, mapper, long, str) }
+                    }
+                }
+
+                GUEST -> if (bs.isEmpty()) {
+                    false
+                } else {
+                    val isHost = (s.creatorID == long) || fit(operator, s.creator, str)
+
+                    !isHost && bs.any { beatmap ->
+                        beatmap.mappers.any { mapper -> fitMapper(operator, mapper, long, str) }
+                    }
                 }
 
                 BID -> bs.map {

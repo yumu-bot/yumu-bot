@@ -11,6 +11,9 @@ import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.LEVEL_MAYBE
 import com.now.nowbot.util.command.PATTERN_DURATION_NUMBER
 import com.now.nowbot.util.command.PATTERN_LANGUAGE_VALUE
+import com.now.nowbot.util.command.PATTERN_NAME
+import com.now.nowbot.util.command.PATTERN_NUMBER_MORE
+import com.now.nowbot.util.command.PATTERN_OPERATOR_WITH_SPACE
 import com.now.nowbot.util.command.PATTERN_STAR
 import com.now.nowbot.util.command.StripContext
 import org.intellij.lang.annotations.Language
@@ -24,17 +27,26 @@ enum class ScoreClassifier(
     @param:Language("RegExp") override val suffix: Regex? = null,
     @param:Language("RegExp") override val valueRegex: Regex? = null,
 ): CommandClassifier {
-    // C H
-    CREATOR("(creator|host|c|h|谱师|作者|谱|主)".toRegex(), FilterValueType.NAME),
+    // H
+    HOST("(host|h|作者|主)".toRegex(), FilterValueType.NAME),
+
+    // C
+    MAPPER("(creator|mapper|map|charter|c|谱师?)".toRegex(), FilterValueType.NAME),
+
+    GUEST("((gd(er)?|guest\\s*diff(er)?)|guest|gu|客串(谱师)?|客)".toRegex(), FilterValueType.NAME),
 
     // U
-    GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)".toRegex(), FilterValueType.NAME),
+    PLAYER("(((us|play)ers?)|u|玩家)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NAME)".toRegex(), FilterValueType.NAME),
 
     // B
     BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)".toRegex(), FilterValueType.INTEGER),
 
     // S
     SID("((beatmap\\s*)?setid|sid|s|(谱面)?集编号)".toRegex(), FilterValueType.INTEGER),
+
+    SCORE_ID("(score[\\s_]*id|eid|(成绩)(编号|号)?)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex(),
+        FilterValueType.INTEGER
+    ),
 
     // T
     TITLE("(title|name|song|t|歌?曲名|歌曲|标题)".toRegex(), FilterValueType.ANY),
@@ -250,9 +262,9 @@ enum class ScoreClassifier(
             val boolean = condition.boolean
 
             return when (filter) {
-                CREATOR -> fit(operator, it.beatmapset.creator, str)
+                HOST -> fit(operator, it.beatmapset.creator, str)
 
-                GUEST -> if (! it.beatmap.owners.isNullOrEmpty()) {
+                MAPPER -> if (it.beatmap.owners.isNullOrEmpty().not()) {
                     if (long > 0L) {
                         val ids = it.beatmap.owners!!.map { fit(operator, it.userID, long) }.toSet()
                         val names = it.beatmap.owners!!.map { fit(operator, it.username, str) }.toSet()
@@ -267,8 +279,28 @@ enum class ScoreClassifier(
                     fit(operator, it.beatmapset.creator, str)
                 }
 
+                GUEST -> if (it.beatmap.owners.isNullOrEmpty().not()) {
+                    val isHost = (it.beatmapset.creatorID == long) || fit(operator, it.beatmapset.creator, str)
+
+                    !isHost && if (long > 0L) {
+                        val ids = it.beatmap.owners!!.map { fit(operator, it.userID, long) }.toSet()
+                        val names = it.beatmap.owners!!.map { fit(operator, it.username, str) }.toSet()
+
+                        ids.contains(element = true) || names.contains(element = true)
+                    } else {
+                        val names = it.beatmap.owners!!.map { fit(operator, it.username, str) }.toSet()
+
+                        names.contains(element = true)
+                    }
+                } else {
+                    false
+                }
+
+                PLAYER -> fit(operator, it.userID, long) || fit(operator, it.user.username, str)
+
                 BID -> fit(operator, it.beatmapID, long)
                 SID -> fit(operator, it.beatmapset.beatmapsetID, long)
+                SCORE_ID -> fit(operator, it.scoreID, long)
                 TITLE -> (fitAlias(operator, it.beatmapset.aliases, condition.string)
                         || fit(operator, it.beatmapset.title, str)
                         || fit(operator, it.beatmapset.titleUnicode, str))

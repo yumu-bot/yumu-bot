@@ -1,7 +1,9 @@
 package com.now.nowbot.model.filter
 
+import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.NanoUser
 import com.now.nowbot.model.osu.LazerMod.Companion.toLazerModAcronyms
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
@@ -114,6 +116,79 @@ interface CommandClassifier {
      */
     val valueRegex: Regex?
         get() = null
+}
+
+/**
+ * [CommandClassifier] 的通用筛选逻辑。
+ *
+ * 与 [ScoreClassifier] 的 `classify` 保持同一套语义：
+ * - [StripContext.syntaxes] 的键为 `(分类器名, 运算符)`，值为该条件的所有取值；
+ * - 同一个键下的多个值：范围型参数（DECIMAL/INTEGER/TIME）在 `>`、`>=`、`<`、`<=`、`!=`
+ *   下取交集，在 `=`、`==` 下取并集；非范围型参数始终取并集；
+ * - 不同键之间始终取交集。
+ *
+ * 各分类器只需要提供 `fit(item, operator, classifier, condition)` 即可复用这套规则。
+ */
+internal fun <T, C : CommandClassifier> Collection<T>.classifyBy(
+    syntaxes: Map<Pair<String, Operator>, List<String>>,
+    classifiers: Collection<C>,
+    fitter: (T, Operator, C, Condition) -> Boolean,
+): List<T> {
+    val predicates = parseClassifyPredicates(syntaxes, classifiers, fitter)
+    if (predicates.isEmpty()) return toList()
+
+    return filter { item ->
+        predicates.all { predicate -> predicate(item) }
+    }
+}
+
+/**
+ * 与 [classifyBy] 相同，但保留键值对：只按值筛选，键（名次、行号等）原样带出。
+ */
+internal fun <K, T, C : CommandClassifier> Map<K, T>.classifyValuesBy(
+    syntaxes: Map<Pair<String, Operator>, List<String>>,
+    classifiers: Collection<C>,
+    fitter: (T, Operator, C, Condition) -> Boolean,
+): Map<K, T> {
+    val filtered: MutableMap<K, T> = LinkedHashMap(this)
+    val predicates = parseClassifyPredicates(syntaxes, classifiers, fitter)
+
+    if (predicates.isNotEmpty()) {
+        filtered.values.removeIf { item ->
+            !predicates.all { predicate -> predicate(item) }
+        }
+    }
+
+    return filtered
+}
+
+private fun <T, C : CommandClassifier> parseClassifyPredicates(
+    syntaxes: Map<Pair<String, Operator>, List<String>>,
+    classifiers: Collection<C>,
+    fitter: (T, Operator, C, Condition) -> Boolean,
+): List<(T) -> Boolean> {
+    val predicates = mutableListOf<(T) -> Boolean>()
+
+    for ((key, values) in syntaxes) {
+        val (name, operator) = key
+        val classifier = classifiers.firstOrNull { it.name == name } ?: continue
+        val conditions = values.map(::Condition)
+
+        if (conditions.isEmpty()) continue
+
+        val intersection = classifier.valueType.isRangeType &&
+            operator != Operator.EQ && operator != Operator.XQ
+
+        predicates.add { item ->
+            if (intersection) {
+                conditions.all { condition -> fitter(item, operator, classifier, condition) }
+            } else {
+                conditions.any { condition -> fitter(item, operator, classifier, condition) }
+            }
+        }
+    }
+
+    return predicates
 }
 
 /**
@@ -283,6 +358,15 @@ fun fitAlias(operator: Operator, aliases: List<String>?, string: String): Boolea
     val to = string.formatted().removeParticle()
 
     return aliases.any { alias -> fit(operator, alias.formatted().removeParticle(), to) }
+}
+
+/**
+ * 谱师匹配：[long] 是 UID，[str] 是用户名。
+ *
+ * 只有输入了 UID 时才比较 UID，用户名始终参与比较，因此 `c=名字` 和 `c=123456` 都能命中。
+ */
+internal fun fitMapper(operator: Operator, mapper: IDUser, long: Long, str: String): Boolean {
+    return (long > 0L && fit(operator, mapper.userID, long)) || fit(operator, mapper.username, str)
 }
 
 /**
