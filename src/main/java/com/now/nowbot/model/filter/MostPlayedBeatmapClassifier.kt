@@ -1,5 +1,12 @@
 package com.now.nowbot.model.filter
 
+import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.enums.OsuGenre
+import com.now.nowbot.model.enums.OsuLanguage
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 
@@ -58,4 +65,76 @@ enum class MostPlayedBeatmapClassifier(
     ),
 
     COUNT("(counts?|n|游玩(次数)?|游|玩|次数)".toRegex(), FilterValueType.INTEGER),
+    ;
+
+    companion object {
+        fun Collection<Beatmap>.classify(ctx: StripContext): List<Beatmap> {
+            return classify(ctx.syntaxes)
+        }
+
+        fun Collection<Beatmap>.classify(
+            syntaxes: Map<Pair<String, Operator>, List<String>>
+        ): List<Beatmap> {
+            return classifyBy(syntaxes, entries) { beatmap, operator, filter, condition ->
+                fitMostPlayedBeatmap(beatmap, operator, filter, condition)
+            }
+        }
+
+        fun <K> Map<K, Beatmap>.classify(ctx: StripContext): Map<K, Beatmap> {
+            return classify(ctx.syntaxes)
+        }
+
+        fun <K> Map<K, Beatmap>.classify(
+            syntaxes: Map<Pair<String, Operator>, List<String>>
+        ): Map<K, Beatmap> {
+            return classifyValuesBy(syntaxes, MostPlayedBeatmapClassifier.entries) { beatmap, operator, filter, condition ->
+                fitMostPlayedBeatmap(beatmap, operator, filter, condition)
+            }
+        }
+
+        private fun fitMostPlayedBeatmap(
+            b: Beatmap,
+            operator: Operator,
+            filter: MostPlayedBeatmapClassifier,
+            condition: Condition,
+        ): Boolean {
+            val long = condition.long
+            val decimal = condition.decimal
+            val str = condition.condition
+
+            val s = b.beatmapset!!
+
+            return when (filter) {
+                CREATOR -> fit(operator, s.creator, str)
+                GUEST -> {
+                    if (long <= 0) throw RuntimeException("抱歉，本功能暂时只能输入第一位客串谱师的编号 (UID)！")
+
+                    fit(operator, b.mapperID, long)
+                }
+
+                BID -> fit(operator, b.beatmapID, long)
+                SID -> fit(operator, s.beatmapsetID, long)
+                TITLE -> (fit(operator, s.title, str) || fit(operator, s.titleUnicode, str))
+                ARTIST -> (fit(operator, s.artist, str) || fit(operator, s.artistUnicode, str))
+                SOURCE -> fit(operator, s.source, str)
+                ANY -> fit(operator, s.title, str)
+                        || fit(operator, s.titleUnicode, str)
+                        || fit(operator, s.artist, str)
+                        || fit(operator, s.artistUnicode, str)
+                        || fit(operator, s.source, str)
+                DIFFICULTY -> fit(operator, b.difficultyName, str)
+                STAR -> fit(operator, b.starRating.toBigDecimal(), decimal)
+                LENGTH -> {
+                    val seconds = TimeParser.parseDurationSeconds(str)
+
+                    fit(operator, b.totalLength.toLong(), seconds)
+                }
+                MODE -> fit(operator, b.mode.modeValue.toInt(), str.toOsuMode().modeValue.toInt())
+                CATEGORY -> fit(operator, DataUtil.getStatus(b.status), DataUtil.getStatus(str))
+                GENRE -> fit(operator, s.genreID.toInt(), OsuGenre.getByte(str)?.toInt())
+                LANGUAGE -> fit(operator, s.languageID.toInt(), OsuLanguage.getByte(str)?.toInt())
+                COUNT -> fit(operator, b.currentPlayCount?.toLong(), long)
+            }
+        }
+    }
 }

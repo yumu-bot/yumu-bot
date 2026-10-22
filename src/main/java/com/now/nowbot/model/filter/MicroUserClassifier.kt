@@ -1,7 +1,12 @@
 package com.now.nowbot.model.filter
 
+import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.osu.MicroUser
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
+import java.time.ZoneOffset
+import kotlin.math.roundToLong
 
 /**
  * [MicroUserFilter] 的名字形式分类器。
@@ -95,7 +100,105 @@ enum class MicroUserClassifier(
 
     PLAY_COUNT("(play\\s*counts?|(游玩)?次数|pc)".toRegex(), FilterValueType.INTEGER),
 
-    PLAY_TIME("(play\\s*times?|(游玩)?次数|pt)".toRegex(), FilterValueType.INTEGER),
+    PLAY_TIME("(play\\s*times?|(游玩)?时间|pt)".toRegex(), FilterValueType.INTEGER),
 
     TOTAL_HITS("(total\\s*hits?|总?击打次?数|tth|th)".toRegex(), FilterValueType.INTEGER),
+    ;
+
+    companion object {
+        fun Collection<MicroUser>.classify(ctx: StripContext): List<MicroUser> {
+            return classify(ctx.syntaxes)
+        }
+
+        fun Collection<MicroUser>.classify(
+            syntaxes: Map<Pair<String, Operator>, List<String>>
+        ): List<MicroUser> {
+            return classifyBy(syntaxes, entries) { user, operator, filter, condition ->
+                fitUser(user, operator, filter, condition)
+            }
+        }
+
+        fun <K> Map<K, MicroUser>.classify(ctx: StripContext): Map<K, MicroUser> {
+            return classify(ctx.syntaxes)
+        }
+
+        fun <K> Map<K, MicroUser>.classify(
+            syntaxes: Map<Pair<String, Operator>, List<String>>
+        ): Map<K, MicroUser> {
+            return classifyValuesBy(syntaxes, MicroUserClassifier.entries) { user, operator, filter, condition ->
+                fitUser(user, operator, filter, condition)
+            }
+        }
+
+        private fun fitUser(
+            it: MicroUser,
+            operator: Operator,
+            filter: MicroUserClassifier,
+            condition: Condition,
+        ): Boolean {
+            val long = condition.long
+            val double = condition.double
+            val boolean = condition.boolean
+            val str = condition.condition
+
+            return when (filter) {
+                USERNAME -> fit(operator, it.username, str)
+                ID -> fit(operator, it.userID, long)
+                ACTIVE -> fit(operator, it.isActive, boolean)
+                BOT -> fit(operator, it.isBot, boolean)
+                ONLINE -> fit(operator, it.isOnline, boolean)
+                DELETE -> fit(operator, it.isDeleted, boolean)
+                SUPPORTER -> fit(operator, it.isSupporter, boolean)
+                LAST_VISIT -> fitTime(operator, it.lastVisitTime?.toEpochSecond(ZoneOffset.UTC), str)
+                PM_ONLY -> fit(operator, it.pmFriendsOnly, boolean)
+                COUNTRY -> if (str.length <= 2) {
+                    fit(operator, it.country?.code, str)
+                } else {
+                    fit(operator, it.country?.name, str)
+                }
+                MUTUAL -> fit(operator, it.isMutual, boolean)
+                TEAM -> if (long >= 0L) {
+                    fit(operator, it.team?.id?.toLong(), long)
+                            || fit(operator, it.team?.name, str)
+                            || fit(operator, it.team?.shortName, str)
+                } else {
+                    fit(operator, it.team?.name, str)
+                            || fit(operator, it.team?.shortName, str)
+                }
+
+                SUPPORT_LEVEL -> fit(operator, (it.supportLevel ?: (-1).toByte()).toLong(), long)
+                PP -> fit(operator, it.statistics?.pp?.roundToLong(), long)
+                ACCURACY -> {
+                    val acc = when {
+                        double > 10000.0 || double <= 0.0 -> throw IllegalArgumentException.WrongException.Henan()
+                        double > 100.0 -> double / 10000.0
+                        double > 1.0 -> double / 100.0
+                        else -> double
+                    } // 0-1
+
+                    fit(operator, it.statistics?.accuracy, acc)
+                }
+
+                COMBO -> fit(operator, it.statistics?.maxCombo?.toLong(), long)
+                LEVEL -> fit(operator, it.statistics?.levelCurrent?.toLong(), long)
+                SS -> fit(operator, it.statistics?.countSS?.toLong(), long)
+                SSH -> fit(operator, it.statistics?.countSSH?.toLong(), long)
+                S -> fit(operator, it.statistics?.countS?.toLong(), long)
+                SH -> fit(operator, it.statistics?.countSH?.toLong(), long)
+                A -> fit(operator, it.statistics?.countA?.toLong(), long)
+                RANKING -> {
+                    val rk = if (long == -1L) {
+                        Long.MAX_VALUE
+                    } else {
+                        long
+                    }
+
+                    fit(operator, it.statistics?.globalRank ?: Long.MAX_VALUE, rk)
+                }
+                PLAY_COUNT -> fit(operator, it.statistics?.playCount, long)
+                PLAY_TIME -> fit(operator, it.statistics?.playTime, long)
+                TOTAL_HITS -> fit(operator, it.statistics?.totalHits, long)
+            }
+        }
+    }
 }

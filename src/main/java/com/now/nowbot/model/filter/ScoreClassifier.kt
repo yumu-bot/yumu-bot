@@ -144,7 +144,7 @@ enum class ScoreClassifier(
 
     CREATED_TIME("(date|at|creat(ed)?(\\s*(at|time))?|earn(ed)?(\\s*(at|time))?|score\\s*(at|time)|(成绩(创建)?|创建)(时间)?|st|ct|ca|ti)".toRegex(), FilterValueType.TIME),
 
-    ALIAS("(alias(es)?|别名|外号|昵称)".toRegex(), FilterValueType.ANY);
+    ALIASES("(alias(es)?|别名|外号|昵称)".toRegex(), FilterValueType.ANY);
 
     companion object {
         /**
@@ -409,7 +409,7 @@ enum class ScoreClassifier(
                 CATEGORY -> fit(operator, DataUtil.getStatus(it.beatmap.status), DataUtil.getStatus(str))
 
                 CREATED_TIME -> fitTime(operator, it.endedTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond(), str)
-                ALIAS -> fitAlias(operator, it.beatmapset.aliases, condition.string)
+                ALIASES -> fitAlias(operator, it.beatmapset.aliases, condition.string)
             }
         }
     }

@@ -1,7 +1,15 @@
 package com.now.nowbot.model.filter
 
+import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.enums.OsuGenre
+import com.now.nowbot.model.enums.OsuLanguage
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
+import com.now.nowbot.model.osu.Beatmapset
+import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
+import java.time.ZoneOffset
 
 /**
  * [BeatmapsetFilter] 的名字形式分类器。
@@ -84,4 +92,144 @@ enum class BeatmapsetClassifier(
     PLAY_COUNT("(play\\s*counts?|游玩(次数)?|pc)".toRegex(), FilterValueType.INTEGER),
 
     FAVOURITE("(favou?rites?|favou?r|fav|fv|收藏(次数)?|收|藏)".toRegex(), FilterValueType.INTEGER),
+
+    ALIASES("(alias(es)?|al|别名|外号|昵称)".toRegex(), FilterValueType.ANY),
+    ;
+
+    companion object {
+        /**
+         * 使用已经解析好的 [ctx] 筛选谱面集。
+         *
+         * 同一谱面集下的任意一张谱面满足条件，即视为该谱面集满足条件。
+         */
+        fun Collection<Beatmapset>.classify(ctx: StripContext): List<Beatmapset> {
+            return classify(ctx.syntaxes)
+        }
+
+        fun Collection<Beatmapset>.classify(
+            syntaxes: Map<Pair<String, Operator>, List<String>>
+        ): List<Beatmapset> {
+            return classifyBy(syntaxes, entries) { beatmapset, operator, filter, condition ->
+                fitBeatmapset(beatmapset, operator, filter, condition)
+            }
+        }
+
+        /**
+         * 与 [Collection.classify] 相同，但保留键值对。
+         */
+        fun <K> Map<K, Beatmapset>.classify(ctx: StripContext): Map<K, Beatmapset> {
+            return classify(ctx.syntaxes)
+        }
+
+        fun <K> Map<K, Beatmapset>.classify(
+            syntaxes: Map<Pair<String, Operator>, List<String>>
+        ): Map<K, Beatmapset> {
+            return classifyValuesBy(syntaxes, BeatmapsetClassifier.entries) { beatmapset, operator, filter, condition ->
+                fitBeatmapset(beatmapset, operator, filter, condition)
+            }
+        }
+
+        private fun fitBeatmapset(
+            s: Beatmapset,
+            operator: Operator,
+            filter: BeatmapsetClassifier,
+            condition: Condition,
+        ): Boolean {
+            val long = condition.long
+            val decimal = condition.decimal
+            val str = condition.condition
+
+            val bs = s.beatmaps.orEmpty()
+
+            return when (filter) {
+                CREATOR -> fit(operator, s.creator, str)
+                GUEST -> {
+                    if (long <= 0) throw RuntimeException("抱歉，本功能暂时只能输入第一位客串谱师的编号 (UID)！")
+
+                    bs.map {
+                        fit(operator, it.mapperID, long)
+                    }.contains(true)
+                }
+
+                BID -> bs.map {
+                    fit(operator, it.beatmapID, long)
+                }.contains(true)
+                SID -> fit(operator, s.beatmapsetID, long)
+                TITLE -> fitAlias(operator, s.aliases, condition.string)
+                        || fit(operator, s.title, str)
+                        || fit(operator, s.titleUnicode, str)
+                ARTIST -> fit(operator, s.artist, str)
+                        || fit(operator, s.artistUnicode, str)
+                SOURCE -> fit(operator, s.source, str)
+                TAG -> fitTags(operator, s.tags, str)
+
+                ANY -> {
+                    fitAlias(operator, s.aliases, condition.string)
+                            || fitTags(operator, s.tags, str)
+                            || fit(operator, s.title, str)
+                            || fit(operator, s.titleUnicode, str)
+                            || fit(operator, s.artist, str)
+                            || fit(operator, s.artistUnicode, str)
+                            || fit(operator, s.source, str)
+                }
+                GENRE -> fit(operator, s.genreID.toInt(), OsuGenre.getByte(str)?.toInt() ?: return false)
+                LANGUAGE -> fit(operator, s.languageID.toInt(), OsuLanguage.getByte(str)?.toInt() ?: return false)
+                DIFFICULTY -> bs.map {
+                    fit(operator, it.difficultyName, str)
+                }.contains(true)
+                STAR -> bs.map {
+                    fit(operator, it.starRating.toBigDecimal(), decimal)
+                }.contains(true)
+                MODE -> bs.map {
+                    fit(operator, it.modeInt!!, str.toOsuMode().modeValue)
+                }.contains(true)
+                CATEGORY -> bs.map {
+                    fit(operator, it.ranked, DataUtil.getStatusByte(str) ?: return false)
+                }.contains(true)
+                AR -> bs.map {
+                    fit(operator, it.ar?.toBigDecimal(), decimal)
+                }.contains(true)
+                CS -> bs.map {
+                    fit(operator, it.cs?.toBigDecimal(), decimal)
+                }.contains(true)
+                OD -> bs.map {
+                    fit(operator, it.od?.toBigDecimal(), decimal)
+                }.contains(true)
+                HP -> bs.map {
+                    fit(operator, it.hp?.toBigDecimal(), decimal)
+                }.contains(true)
+                LENGTH -> {
+                    val seconds = TimeParser.parseDurationSeconds(str)
+
+                    bs.map {
+                        fit(operator, it.totalLength.toLong(), seconds)
+                    }.contains(true)
+                }
+                BPM -> bs.map {
+                    fit(operator, it.bpm, decimal)
+                }.contains(true)
+                CIRCLE -> bs.map {
+                    fit(operator, it.circles!!.toLong(), long)
+                }.contains(true)
+                SLIDER -> bs.map {
+                    fit(operator, it.sliders!!.toLong(), long)
+                }.contains(true)
+                SPINNER -> bs.map {
+                    fit(operator, it.spinners!!.toLong(), long)
+                }.contains(true)
+                TOTAL -> {
+                    bs.map {
+                        val total = it.totalNotes
+
+                        total != 0 && fit(operator, total, long)
+                    }.contains(true)
+                }
+                CREATED_TIME -> fitTime(operator, s.submittedDate.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond(), str)
+                RANKED_TIME -> fitTime(operator, s.rankedDate?.atZoneSameInstant(ZoneOffset.UTC)?.toEpochSecond() ?: return false, str)
+                PLAY_COUNT -> fit(operator, s.playCount, long)
+                FAVOURITE -> fit(operator, s.favouriteCount, long)
+                ALIASES -> fitAlias(operator, s.aliases, condition.string)
+            }
+        }
+    }
 }

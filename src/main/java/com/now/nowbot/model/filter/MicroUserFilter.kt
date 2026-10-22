@@ -59,7 +59,7 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
 
     PLAY_COUNT("(play\\s*counts?|(游玩)?次数|pc)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    PLAY_TIME("(play\\s*times?|(游玩)?次数|pt)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
+    PLAY_TIME("(play\\s*times?|(游玩)?时间|pt)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
     TOTAL_HITS("(total\\s*hits?|总?击打次?数|tth|th)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 

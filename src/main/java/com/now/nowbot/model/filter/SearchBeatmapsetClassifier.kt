@@ -1,5 +1,12 @@
 package com.now.nowbot.model.filter
 
+import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.enums.Operator.Companion.getText
+import com.now.nowbot.model.enums.OsuGenre
+import com.now.nowbot.model.enums.OsuLanguage
+import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
+import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 
@@ -66,4 +73,188 @@ enum class SearchBeatmapsetClassifier(
     ),
 
     RANK("(rank(ing|s)?|评[价级]?|k)".toRegex(), FilterValueType.ANY),
+    ;
+
+    companion object {
+        /**
+         * 搜索条件最终不是用来筛选本地谱面集，而是拼成 ppy API 的查询参数，
+         * 因此这里的 classify 返回的是 `参数名 -> 参数值`。
+         */
+        fun classify(
+            ctx: StripContext,
+            overwrite: Map<String, Any> = mapOf(),
+            overwritten: Map<String, Any> = mapOf(),
+        ): Map<String, Any> {
+            return buildQuery(ctx.syntaxes, overwrite, overwritten)
+        }
+
+        fun classify(
+            syntaxes: Map<Pair<String, Operator>, List<String>>,
+            overwrite: Map<String, Any> = mapOf(),
+            overwritten: Map<String, Any> = mapOf(),
+        ): Map<String, Any> {
+            return buildQuery(syntaxes, overwrite, overwritten)
+        }
+
+        fun buildQuery(
+            ctx: StripContext,
+            overwrite: Map<String, Any> = mapOf(),
+            overwritten: Map<String, Any> = mapOf(),
+        ): Map<String, Any> {
+            return buildQuery(ctx.syntaxes, overwrite, overwritten)
+        }
+
+        /**
+         * 后面的所有键值对，除了 q= 查询字段，其他键均只保留第一次出现的值
+         * @param overwrite 需要覆盖的部分。
+         * @param overwritten 被覆盖的部分。
+         */
+        fun buildQuery(
+            syntaxes: Map<Pair<String, Operator>, List<String>>,
+            overwrite: Map<String, Any> = mapOf(),
+            overwritten: Map<String, Any> = mapOf(),
+        ): Map<String, Any> {
+            val con = entries.flatMap { filter ->
+                syntaxes
+                    .filter { (key, _) -> key.first == filter.name }
+                    .flatMap { (key, values) ->
+                        val operator = key.second
+
+                        values.flatMap { value ->
+                            fitBeatmapset(operator, filter, Condition(value))
+                        }
+                    }
+            }
+
+            val pairs: List<Pair<String, Any>> = overwrite.toList() + con + overwritten.toList()
+
+            return pairs.mergePairs()
+        }
+
+        private fun fitBeatmapset(
+            operator: Operator,
+            filter: SearchBeatmapsetClassifier,
+            condition: Condition,
+        ): List<Pair<String, Any>> {
+            val text = condition.condition
+            val op = operator.getText()
+
+            return when (filter) {
+                BOOLEAN -> SearchBooleans.getSearchBooleans(text).map { it.getQuery() }
+
+                else -> {
+                    val con: Pair<String, String>? = when (filter) {
+                        BOOLEAN -> null
+                        CREATOR -> "q" to "creator=\"\"${text}\"\""
+                        BID -> "q" to text
+                        SID -> "q" to text
+                        TITLE -> "q" to "title=\"\"${text}\"\""
+                        ARTIST -> "q" to "artist=\"\"${text}\"\""
+                        SOURCE -> "q" to "source=\"\"${text}\"\""
+                        DIFFICULTY -> "q" to "difficulty=\"\"${text}\"\""
+                        STAR -> "q" to "star${op}${text}"
+                        AR -> "q" to "ar${op}${text}"
+                        CS -> "q" to "cs${op}${text}"
+                        OD -> "q" to "od${op}${text}"
+                        HP -> "q" to "hp${op}${text}"
+                        LENGTH -> "q" to "length${op}${TimeParser.parseDurationSeconds(text)}"
+                        ANY -> "q" to text
+                        MODE -> "m" to text.toOsuMode().modeValue.toString()
+                        CATEGORY -> {
+                            val s = DataUtil.getStatus(text)
+
+                            s?.let { "s" to it }
+                        }
+
+                        GENRE -> {
+                            val g = OsuGenre.getByte(text)?.toString()
+
+                            g?.let { "g" to it }
+                        }
+
+                        LANGUAGE -> {
+                            val l = OsuLanguage.getByte(text)?.toString()
+
+                            l?.let { "l" to it }
+                        }
+
+                        RANK -> {
+                            val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
+
+                            val cr = rankArray.indexOf(
+                                when (text.uppercase()) {
+                                    "SSH" -> "XH"
+                                    "SS" -> "X"
+                                    else -> text.uppercase()
+                                }
+                            )
+
+                            rankArray.getOrNull(index = cr)?.let { "r" to it }
+                        }
+                    }
+
+                    listOfNotNull(con)
+                }
+            }
+        }
+
+        /**
+         * 合并所有键值对。
+         */
+        private fun List<Pair<String, Any>>.mergePairs(): Map<String, Any> {
+            return this
+                .groupBy { it.first }
+                .mapValues { (key, pairs) ->
+                    when (key) {
+                        "q" -> pairs.joinToString(" ") { it.second.toString() }
+                        "c", "e" -> pairs.joinToString(",") { it.second.toString() }
+                        else -> pairs.first().second
+                    }
+                }
+        }
+
+        internal enum class SearchBooleans {
+            RECOMMENDED, CONVERTS, FOLLOWER, SPOTLIGHTS, FEATURED_ARTIST, EXPLICIT, HAS_VIDEO, HAS_STORYBOARD, PLAYED, UNPLAYED;
+
+            fun getQuery(): Pair<String, String> {
+                return when (this) {
+                    RECOMMENDED -> "c" to "recommended"
+                    CONVERTS -> "c" to "converts"
+                    FOLLOWER -> "c" to "follows"
+                    SPOTLIGHTS -> "c" to "spotlights"
+                    FEATURED_ARTIST -> "c" to "featured_artists"
+                    EXPLICIT -> "nsfw" to "false"
+                    HAS_VIDEO -> "e" to "video"
+                    HAS_STORYBOARD -> "e" to "storyboard"
+                    PLAYED -> "played" to "played"
+                    UNPLAYED -> "played" to "unplayed"
+                }
+            }
+
+            companion object {
+                fun getSearchBooleans(inputs: String): List<SearchBooleans> {
+                    return inputs.split(REGEX_SEPARATOR_NO_SPACE)
+                        .filter { it.isNotBlank() }
+                        .mapNotNull { getSearchBoolean(it) }
+                }
+
+                fun getSearchBoolean(input: String): SearchBooleans? {
+                    return when (input.dropWhile { it.isWhitespace() }.trim()) {
+                        "recommended", "recommend", "r" -> RECOMMENDED
+                        "converts", "convert", "cv", "c" -> CONVERTS
+                        "follower", "follow", "followmapper", "f", "m" -> FOLLOWER
+                        "spotlights", "spotlight", "spot", "light", "s", "l" -> SPOTLIGHTS
+                        "featured", "artist", "feature", "featuredartist", "fa", "a" -> FEATURED_ARTIST
+                        "explicit", "nsfw", "e", "x", "h" -> EXPLICIT
+                        "hasvideo", "video", "v" -> HAS_VIDEO
+                        "hasstoryboard", "storyboard", "sb", "b" -> HAS_STORYBOARD
+                        "played", "play", "p" -> PLAYED
+                        "unplayed", "unplay", "notplayed", "notplay", "n", "u" -> UNPLAYED
+
+                        else -> null
+                    }
+                }
+            }
+        }
+    }
 }
