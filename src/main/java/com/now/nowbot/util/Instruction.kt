@@ -211,12 +211,7 @@ enum class Instruction(val pattern: Pattern) {
 
     BP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(bestperformance|best|bp|b|最[好佳]成绩)((?<s>s)|(?<w>show|w))?")
-        appendModeQQUIDNameRange()
-        appendIgnore(PATTERN_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendSpace()
-        appendIgnore(PATTERN_HYPHEN)
-        appendRange()
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING, MORE)
     }),
 
     SB_BP(CommandPatternBuilder.create {

@@ -385,6 +385,9 @@ import kotlin.time.Duration.Companion.days
                 val ranks = ((offset + 1)..scores.size).toList()
 
                 if (isMultipleScore) {
+                    // 别名要在渲染之前挂到整批成绩上，A5 的卡面才能显示外号
+                    beatmapApiService.applyAlias(scores)
+
                     data = imageService.getPanel(
                         mapOf(
                             "user" to user, "scores" to scores, "rank" to ranks, "panel" to "PS"
@@ -420,6 +423,9 @@ import kotlin.time.Duration.Companion.days
 
                 if (isMultipleScore) {
                     val ranks = ((offset + 1)..scores.size).toList()
+
+                    // 别名要在渲染之前挂到整批成绩上，A5 的卡面才能显示外号
+                    beatmapApiService.applyAlias(scores)
 
                     data = imageService.getPanel(
                         mapOf(

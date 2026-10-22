@@ -13,7 +13,7 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
 
     ID("((user\\s*)?id|uid|(玩家)?编号|id|i)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    ACTIVE("(active|活跃|e)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_BOOLEAN)".toRegex()),
+    ACTIVE("(active|活跃|act|e)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_BOOLEAN)".toRegex()),
 
     BOT("((ro)?bot|机器人?|人机|b)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_BOOLEAN)".toRegex()),
 
@@ -27,7 +27,7 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
 
     LAST_VISIT("(last\\s*visit(\\s*time)?|last|visit|time|seen|上线(时间)?|vt|t)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_TIME)".toRegex()),
 
-    PM_ONLY("(pm\\s*only|(好友)?私信|陌生人(私信)?|y)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_BOOLEAN)".toRegex()),
+    PM_ONLY("(pm\\s*only|(好友)?私信|陌生人(私信)?|pm|y)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_BOOLEAN)".toRegex()),
 
     COUNTRY("(country(\\s*(name|code))?|code|国家|地区|c)(?<n>$PATTERN_OPERATOR_WITH_SPACE\\w{2,})".toRegex()),
 
@@ -45,15 +45,15 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
 
     LEVEL("(levels?|等?级|经验|lv|l)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    SSH("(rank\\s*(ss|x)h|rssh|rxh|xh)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
+    SSH("(rank\\s*(ss|x)h|rssh|rxh|xh|xx)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    SS("(rank\\s*(ss|x)|rss|rx|x)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
+    SS("(rank\\s*(ss|x)|rss|rx|x|ss)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    SH("(rank\\s*sh|rsh|rh)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
+    SH("(rank\\s*sh|rsh|rh|sh)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
     S("(rank\\s*s|rs|s)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
-    A("(rank\\s*a|ra)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
+    A("(rank\\s*a|ra|a)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 
     RANKING("((global\\s*)?rank(\\s*ing)?|(全球)?排名|k)(?<n>$PATTERN_OPERATOR_WITH_SPACE$PATTERN_NUMBER_MORE)".toRegex()),
 

@@ -99,12 +99,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("b", "best")
-        appendModeQQUIDNameRange()
-        appendIgnore(PATTERN_OPERATOR)
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_BUT_NO_HASH_STARS, MORE)
-        appendSpace()
-        appendIgnore(PATTERN_HYPHEN)
-        appendRange()
+        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING, MORE)
     }),
 
     BP_SHOW(CommandPatternBuilder.create {

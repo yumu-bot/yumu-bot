@@ -2,23 +2,33 @@ package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.GroupDao
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.isNotDefaultOrNull
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.filter.ScoreClassifier
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerModAcronyms
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.command.*
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 
 /**
  * 把 [com.now.nowbot.util.command.CommandExtractor] 剥离后的 [StripContext] 补成一个可直接使用的上下文。
  *
- * 只负责「脚手架」性质的三件事：补模式、补玩家、补范围。
+ * 只负责「脚手架」性质的四件事：补模式、补玩家、补谱面、补范围。
  * 具体的业务判断（模式是否合法、越界怎么处理）留给组件。
  */
 @Component
@@ -27,6 +37,9 @@ class CommandUtil(
     private val groupDao: GroupDao,
     private val userApiService: OsuUserApiService,
     private val sbUserApiService: SBUserApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val scoreApiService: OsuScoreApiService,
+    private val serviceCallStatisticsDao: ServiceCallStatisticsDao,
 ) {
     private val log = LoggerFactory.getLogger(CommandUtil::class.java)
 
@@ -92,6 +105,103 @@ class CommandUtil(
         }
 
         return OsuMode.DEFAULT
+    }
+
+    /**
+     * 取得本次指令指定的 mod（`+HR` / `+HDDT` 这类符号形式，由 `LazerModExtractor` 剥离）。
+     *
+     * 没有指定时返回空列表，`+NM` 返回 `[LazerMod.NoMod]`，两者要区别对待
+     * （见 `List<LazerScore>.filterMod`）。
+     */
+    fun getMods(ctx: StripContext): List<LazerMod> {
+        // `+HDHR` 会被剥成一个值，`+HD +HR` 是两个值，这里统一按 mod 缩写展开
+        return ctx[ExtractType.MOD]
+            .flatMap { it.toLazerModAcronyms() }
+            .toLazerMods()
+    }
+
+    /**
+     * 取得本次指令指向的谱面。
+     *
+     * 复现旧版 `ScoreService` 里「先定位一张谱面」的部分，**不**做条件搜索
+     * （`title=...` 这类查询留给调用方的 `SearchBeatmapsetClassifier`）。
+     *
+     * 优先级：
+     *
+     * 1. `b123` / `beatmap123`（[ExtractType.BEATMAP_ID]）：按 BID 取；
+     * 2. `s123` / `set123` / `beatmapset123`（[ExtractType.BEATMAPSET_ID]）：按 SID 取谱面集，
+     *    返回其中星数最高的难度。调用方如果要做「整套谱面里的最佳成绩」，
+     *    可以继续读 `ctx[ExtractType.BEATMAPSET_ID]`；
+     * 3. `scoreid=123` / `成绩编号=123`（[ScoreClassifier.SCORE_ID]）：按成绩 ID 取成绩，
+     *    再按成绩的 BID 取谱面；
+     * 4. 剩余文本里**最左边**的数字 token（旧指令 `appendBID()` 的 `(?<bid>\d+)`，
+     *    例如 `osu 1234567 mre`）：小于 [SCORE_ID_THRESHOLD]（1 亿）的当谱面编号，
+     *    大于 1 亿的当成绩编号，和指令说明一致。
+     *    命中时会把它从 residual 里删掉，防止 [getUserID] 把它当成玩家名、[getRange]
+     *    把它当成范围，**所以本方法必须在 [getUserID] 之前调用**；
+     * 5. 都没有时按指令说明「默认获取之前查询记录的谱面编号」：读
+     *    [ServiceCallStatisticsDao] 里最近一条 SCORE 记录（两分钟内优先，其次 24 小时内）；
+     * 6. 连历史记录都没有时，取「玩家最近的第 1 个成绩」所对应的谱面编号。
+     *    这里才解析玩家：[getUserID]（会消费玩家名所在的残段），随后把结果写回
+     *    `ctx[ExtractType.USER_ID]`，调用方接着再调用 [getUserID] 会直接命中，
+     *    不会重复查询；模式走 [getMode]（显式 > 条件反推 > 群组 > 绑定）。
+     *
+     * 所以本方法总能返回一张谱面；谱面本身查不到时交给 [OsuBeatmapApiService] /
+     * [OsuScoreApiService] 抛异常，玩家或最近成绩确实没有时抛
+     * [NoSuchElementException.Player] / [NoSuchElementException.RecentScore]。
+     *
+     * 给了成绩编号时返回该成绩：谱面有榜单时调用方可以直接用 ppy 官网成绩，
+     * 没有榜单（[Beatmap.hasLeaderBoard] 为 false）时调用方应该改从本地数据库取。
+     *
+     * @param onNull 只在落到第 6 步、需要解析玩家时才可能被调用，交给 [getUserID]
+     * @param type 同 [getUserID]，只在第 6 步解析玩家（以及写入 `ctx[ExtractType.USER_ID]`）时使用
+     * @return 第一个是谱面，第二个只有当指令给的是成绩编号时才有值（那条成绩）
+     */
+    fun getBeatmap(
+        ctx: StripContext,
+        event: MessageEvent,
+        onNull: (Boolean) -> Unit = {},
+        type: BanchoType = BanchoType.OFFICIAL,
+    ): Pair<Beatmap, LazerScore?> {
+        // 1. b123 / beatmap123
+        getContextBeatmapID(ctx)?.let { beatmapID ->
+            return beatmapApiService.getBeatmap(beatmapID) to null
+        }
+
+        // 2. s123 / set123 / beatmapset123
+        getContextBeatmapsetID(ctx)?.let { beatmapsetID ->
+            return beatmapApiService.getBeatmapset(beatmapsetID).getTopDiff() to null
+        }
+
+        // 3. scoreid=123
+        getContextScoreID(ctx)?.let { scoreID ->
+            return fetchScore(scoreID)
+        }
+
+        // 4. 剩余参数最左边的数字：旧指令的 (?<bid>\d+)
+        getResidualID(ctx)?.let { id ->
+            // 1 亿及以上当成绩编号，其余当谱面编号
+            return if (id < SCORE_ID_THRESHOLD) {
+                beatmapApiService.getBeatmap(id) to null
+            } else {
+                fetchScore(id)
+            }
+        }
+
+        // 5. 默认获取之前查询记录的谱面编号。
+        // 两分钟内同一群的 SCORE 记录优先，其次是 24 小时内的任意记录
+        val lastBeatmapID = serviceCallStatisticsDao.getLastBeatmapID(
+            event,
+            name = "SCORE",
+            from = LocalDateTime.now().minusMinutes(2L)
+        ) ?: serviceCallStatisticsDao.getLastBeatmapID(event)
+
+        if (lastBeatmapID != null) {
+            return beatmapApiService.getBeatmap(lastBeatmapID) to null
+        }
+
+        // 6. 没有可用记录时，取玩家最近的第 1 个成绩对应的谱面
+        return getRecentBeatmap(ctx, event, onNull, type)
     }
 
     enum class BanchoType {
@@ -408,6 +518,95 @@ class CommandUtil(
         return start to tokens.getOrNull(1)
     }
 
+    /** `b123` / `beatmap123`：显式谱面。 */
+    private fun getContextBeatmapID(ctx: StripContext): Long? {
+        return ctx[ExtractType.BEATMAP_ID].firstNotNullOfOrNull(::parseID)
+    }
+
+    /** `s123` / `set123` / `beatmapset123`：显式谱面集。 */
+    private fun getContextBeatmapsetID(ctx: StripContext): Long? {
+        return ctx[ExtractType.BEATMAPSET_ID].firstNotNullOfOrNull(::parseID)
+    }
+
+    /** `scoreid=123` / `成绩编号=123`：显式成绩。 */
+    private fun getContextScoreID(ctx: StripContext): Long? {
+        return getSyntaxValues(ctx, ScoreClassifier.SCORE_ID.name).firstNotNullOfOrNull(::parseID)
+    }
+
+    /**
+     * 剩余文本里最左边的纯数字 token。
+     *
+     * 这是旧指令 `appendBID()` 的语义：`(?<bid>\d+)` 紧跟在模式后面、玩家名前面。
+     * 命中时把它从 residual 里删掉，[getUserID] 就不会再把它当成名字的一部分，
+     * 也不会被 [getRange] 当成范围。
+     *
+     * 数字是谱面编号还是成绩编号由调用方按 [SCORE_ID_THRESHOLD] 判断。
+     *
+     * @return 数字；没有时返回 null（不删文本）
+     */
+    private fun getResidualID(ctx: StripContext): Long? {
+        val match = LEADING_NUMBER_REGEX.find(ctx.text) ?: return null
+        val id = match.groupValues[1].toLongOrNull()?.takeIf { it > 0 } ?: return null
+
+        ctx.removeResidual(match.range.first, match.range.last + 1)
+
+        return id
+    }
+
+    /** 按成绩 ID 取成绩，再按成绩的 BID 取谱面。 */
+    private fun fetchScore(scoreID: Long): Pair<Beatmap, LazerScore> {
+        val score = scoreApiService.getScore(scoreID)
+
+        return beatmapApiService.getBeatmap(score.beatmapID) to score
+    }
+
+    /**
+     * 默认分支的最后一级：玩家最近的第 1 个成绩所对应的谱面。
+     *
+     * [getBeatmap] 必须在 [getUserID] 之前调用，所以玩家在这里才解析；
+     * 解析结果会写回 `ctx[ExtractType.USER_ID]`，调用方随后再调用 [getUserID]
+     * 会直接命中第 0 条规则，不会再查一次名字。
+     */
+    private fun getRecentBeatmap(
+        ctx: StripContext,
+        event: MessageEvent,
+        onNull: (Boolean) -> Unit,
+        type: BanchoType,
+    ): Pair<Beatmap, LazerScore?> {
+        val userID = getUserID(ctx, event, onNull, type) ?: throw NoSuchElementException.Player()
+
+        ctx[ExtractType.USER_ID] = userID.toString()
+
+        val mode = getMode(ctx, event, userID)
+
+        val recent = scoreApiService.getRecentScore(userID, mode, 0, 1).firstOrNull()
+            ?: throw NoSuchElementException.RecentScore(
+                bindDao.getBindUserFromOsuIDOrNull(userID)?.username?.takeIf { it.isNotEmpty() }
+                    ?: userID.toString(),
+                mode
+            )
+
+        return beatmapApiService.getBeatmap(recent.beatmapID) to null
+    }
+
+    /** 取某个分类器（如 `SCORE_ID`）在 syntaxes 里的所有值。 */
+    private fun getSyntaxValues(ctx: StripContext, name: String): List<String> {
+        return ctx.syntaxes.entries
+            .filter { (key, _) -> key.first == name }
+            .flatMap { it.value }
+    }
+
+    /** 分类器里存的值可能是纯数字，也可能还带着 `b=` 这样的前缀。 */
+    private fun parseID(value: String?): Long? {
+        if (value.isNullOrBlank()) return null
+
+        val raw = value.trim()
+
+        raw.toLongOrNull()?.takeIf { it > 0 }?.let { return it }
+
+        return USER_ID_REGEX.find(raw)?.value?.toLongOrNull()?.takeIf { it > 0 }
+    }
+
     /** `uid=123` 是外部直接指定的玩家，值可能是纯数字，也可能是带前缀的原文。 */
     private fun getContextUserID(ctx: StripContext): Long? {
         return ctx[ExtractType.USER_ID].firstNotNullOfOrNull(::parseUserID)
@@ -563,13 +762,30 @@ class CommandUtil(
 
     private companion object {
         /**
+         * 裸数字在这个值以下当谱面编号，以上当成绩编号。
+         *
+         * 和指令说明一致：「大于 1 亿：视作成绩编号；小于 1 亿：视作谱面编号。
+         * 编号 1 亿的成绩是一个 2013 年的成绩。」
+         */
+        private const val SCORE_ID_THRESHOLD = 100_000_000L
+
+        /**
+         * 剩余文本里最左边的纯数字 token。
+         *
+         * 旧指令 `appendBID()` 用的是 `(?<bid>\d+)`：模式之后、玩家名之前的第一个数字。
+         * 这里额外要求它处在一个 token 的开头（前面只有空白、后面是空白或结尾），
+         * 避免把 `happy2` 这种名字里的数字当成 BID。
+         */
+        private val LEADING_NUMBER_REGEX = Regex("""^\s*(\d+)(?=\s|$)""")
+
+        /**
          * 一个完整的范围 token，可以是 `2`、`3-5`、`#3-5`，也可以带全角横线。
          *
          * 这里直接复用 [PATTERN_RANGE]，和旧指令里的范围语义保持一致（最大 200）。
          */
         private val RANGE_TOKEN_REGEX = Regex("^[#＃]?$PATTERN_RANGE$")
 
-        /** 从 `uid=123` 这类原文里兜底抠出数字。 */
+        /** 从 `uid=123`、`b=123` 这类原文里兜底抠出数字。 */
         private val USER_ID_REGEX = Regex("\\d+")
     }
 }

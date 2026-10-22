@@ -12,6 +12,8 @@ enum class ExtractType {
     MOD,
     MODE,
     USER_ID,
+    BEATMAP_ID,
+    BEATMAPSET_ID,
     STARRY
 }
 
@@ -621,14 +623,26 @@ private fun startsNamedHead(text: String, at: Int, heads: List<HeadSpec>): Boole
 /**
  * `uid=123` / `userid=123`。只捕获数字部分，方便 [StripContext.extractPattern] 直接存成 ID。
  */
-val userIDGroupRegex = Regex("""u(?:ser)?id\s*${PATTERN_EQUAL}\s*(${PATTERN_NUMBER_MORE})""")
+private val userIDGroupRegex = Regex("""u(?:ser)?id\s*${PATTERN_EQUAL}\s*(${PATTERN_NUMBER_MORE})""")
 
-val qqGroupRegex = Regex("""group\s*${PATTERN_EQUAL}\s*${PATTERN_QQ}""")
+private val qqGroupRegex = Regex("""group\s*${PATTERN_EQUAL}\s*${PATTERN_QQ}""")
 
-val qqRegex = Regex("""qq\s*${PATTERN_EQUAL}\s*${PATTERN_QQ}""")
+private val qqRegex = Regex("""qq\s*${PATTERN_EQUAL}\s*${PATTERN_QQ}""")
+
+private val beatmapIDRegex = Regex("""(?:beatmap|b)\s*(${PATTERN_NUMBER_MORE})""")
+
+private val beatmapsetIDRegex = Regex("""(?:beatmapset|set|s)\s*(${PATTERN_NUMBER_MORE})""")
 
 val UserIDExtractor = CommandExtractor { ctx ->
     ctx.extractPattern(ExtractType.USER_ID, userIDGroupRegex)
+}
+
+val BeatmapIDExtractor = CommandExtractor { ctx ->
+    ctx.extractPattern(ExtractType.BEATMAP_ID, beatmapIDRegex)
+}
+
+val BeatmapsetIDExtractor = CommandExtractor { ctx ->
+    ctx.extractPattern(ExtractType.BEATMAPSET_ID, beatmapsetIDRegex)
 }
 
 val QQGroupExtractor = CommandExtractor { ctx ->
@@ -643,8 +657,30 @@ val OsuModeExtractor = CommandExtractor { ctx ->
     ctx.extractBySymbols(SymbolHead.MODE)
 }
 
+/**
+ * 把 `+HR` 这类符号形式的 mod 桥接成一条筛选条件。
+ *
+ * [SymbolHead.MOD] 只把值写进 [StripContext.extracted]，而 [ScoreClassifier] 只看
+ * [StripContext.syntaxes]；不桥接的话 `!bp +HR` 会把 `+HR` 从指令里剥掉却完全不筛成绩，
+ * 等于这个参数被吞掉了。取 [ScoreClassifier.MOD] 的键、[Operator.EQ]，与手写 `mod=+HR` 等价。
+ *
+ * 多个 `+HR +DT` 合并成一条条件（`HRDT`），和 [com.now.nowbot.model.filter.fitMod] 一样
+ * 要求列出的 mod 全部命中；同键已有 `mod=+HD` 时并列进去，语义不变。
+ */
+fun StripContext.addModsAsCondition() {
+    val mods = this[ExtractType.MOD].filter(String::isNotBlank).distinct()
+    if (mods.isEmpty()) return
+
+    val key = ScoreClassifier.MOD.name to Operator.EQ
+    val merged = (syntaxes[key].orEmpty() + mods.joinToString("")).joinToString("")
+
+    syntaxes[key] = mutableListOf(merged)
+}
+
 val LazerModExtractor = CommandExtractor { ctx ->
     ctx.extractBySymbols(SymbolHead.MOD)
+    // `+HR` 既用来算 pp / 查指定 mod 的成绩，也要参与成绩筛选
+    ctx.addModsAsCondition()
 }
 
 val RangeExtractor = CommandExtractor { ctx ->

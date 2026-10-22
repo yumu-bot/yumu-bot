@@ -260,7 +260,7 @@ class ScorePRService(
 
         commandUtil.addResidualAliases(context)
 
-        // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、mod、玩家名、范围都不算。
+        // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、玩家名、范围不算；`+HR` 会被 LazerModExtractor 桥接成 mod 条件，算。
         val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
         val defaultLimit = when {

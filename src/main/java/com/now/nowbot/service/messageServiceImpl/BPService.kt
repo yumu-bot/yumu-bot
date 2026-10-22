@@ -1,9 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreClassifier
 import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
 import com.now.nowbot.model.filter.hasCondition
@@ -41,7 +39,6 @@ import java.util.regex.Matcher
     private val scoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
     private val infoDao: OsuUserInfoDao,
-    private val bindDao: BindDao,
     private val restrict: NewbieRestrictService,
     private val commandUtil: CommandUtil
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
@@ -166,7 +163,7 @@ import java.util.regex.Matcher
 
         commandUtil.addResidualAliases(context)
 
-        // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、mod、玩家名、范围都不算。
+        // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、玩家名、范围不算；`+HR` 会被 LazerModExtractor 桥接成 mod 条件，算。
         val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
         val defaultLimit = when {
