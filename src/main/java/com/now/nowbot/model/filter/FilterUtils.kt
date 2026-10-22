@@ -121,6 +121,22 @@ interface CommandClassifier {
 }
 
 /**
+ * [StripContext] 里是否存在 [classifiers] 中任意一个真正会用于筛选的条件。
+ *
+ * 判定口径与 [classifyBy] 完全一致：键名必须是 [classifiers] 中某个条目的 `name`，且值列表不为空。
+ * 模式、mod、玩家名、范围这些由别的剥离器提取的参数不算筛选条件
+ * （它们写在 [StripContext.extracted] 里，或者在 [classifiers] 里没有对应条目）。
+ *
+ * 调用方传入自己实际使用的分类器即可，例如 `ctx.hasCondition(ScoreClassifier.entries)`；
+ * 需要同时支持多套分类器时传合并后的集合。不要在分类器的 companion 里另写一份，
+ * 否则新增分类器时判定和 [classifyBy] 的实际行为会各改各的、逐渐对不上。
+ */
+fun StripContext.hasCondition(classifiers: Collection<CommandClassifier>): Boolean =
+    syntaxes.any { (key, values) ->
+        values.isNotEmpty() && classifiers.any { it.name == key.first }
+    }
+
+/**
  * [CommandClassifier] 的通用筛选逻辑。
  *
  * 与 [ScoreClassifier] 的 `classify` 保持同一套语义：

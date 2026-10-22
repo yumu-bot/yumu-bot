@@ -2,7 +2,9 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.filter.ScoreClassifier
 import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
+import com.now.nowbot.model.filter.hasCondition
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -258,7 +260,8 @@ class ScorePRService(
 
         commandUtil.addResidualAliases(context)
 
-        val hasCondition = pipeline.hasMatch || context.syntaxes.isNotEmpty()
+        // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、mod、玩家名、范围都不算。
+        val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
         val defaultLimit = when {
             hasCondition -> 100
@@ -312,15 +315,15 @@ class ScorePRService(
         if (classified.isEmpty()) {
             if (hasCondition) {
                 if (isPass) {
-                    throw NoSuchElementException.PassedScore(user.username, user.mode)
-                } else {
-                    throw NoSuchElementException.RecentScore(user.username, user.mode)
-                }
-            } else {
-                if (isPass) {
                     throw NoSuchElementException.PassedScoreFiltered(user.username, user.mode)
                 } else {
                     throw NoSuchElementException.RecentScoreFiltered(user.username, user.mode)
+                }
+            } else {
+                if (isPass) {
+                    throw NoSuchElementException.PassedScore(user.username, user.mode)
+                } else {
+                    throw NoSuchElementException.RecentScore(user.username, user.mode)
                 }
             }
         }

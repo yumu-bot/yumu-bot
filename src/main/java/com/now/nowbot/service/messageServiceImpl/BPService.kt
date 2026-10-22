@@ -4,7 +4,9 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.filter.ScoreClassifier
 import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
+import com.now.nowbot.model.filter.hasCondition
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -164,7 +166,8 @@ import java.util.regex.Matcher
 
         commandUtil.addResidualAliases(context)
 
-        val hasCondition = pipeline.hasMatch || context.syntaxes.isNotEmpty()
+        // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、mod、玩家名、范围都不算。
+        val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
         val defaultLimit = when {
             hasCondition -> 100
