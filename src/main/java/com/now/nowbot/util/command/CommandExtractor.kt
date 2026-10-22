@@ -473,8 +473,13 @@ private class TokenHit(
     val end: Int,
 )
 
-/** 运算符的起首字符，用来判断参数名的右边界 */
-private const val OPERATOR_START_CHARS = "<>＜＞=＝!！≥≤"
+/**
+ * 运算符的起首字符，用来判断参数名的右边界。
+ *
+ * 直接从 [Operator.allSymbols] 推导，包含全角 / 别名写法（`＞`、`＝`、`！` 等），
+ * 避免这里和运算符表两处维护、漏掉新别名。
+ */
+private val OPERATOR_START_CHARS: Set<Char> = Operator.allSymbols.mapTo(HashSet<Char>()) { it[0] }
 
 private val NAME_STOP_CHARS = setOf(':', '：', '\'', '"')
 
@@ -487,12 +492,10 @@ private val NAME_STOP_CHARS = setOf(':', '：', '\'', '"')
 private val RESERVED_SYMBOLS: Set<Char> =
     SymbolHead.entries.flatMap { head -> head.symbols.flatMap { it.toList() } }.toSet()
 
-// 提取所有 Operator 的符号，并按长度降序排列（优先匹配 ==, >=, <=, != 等）
-private val sortedSymbols = Operator.entries
-    .flatMap { it.symbols }
-    .sortedByDescending { it.length }
+// 提取所有 Operator 的符号（含全角 / 别名写法），并按长度降序排列（优先匹配 ==, >=, ＞＝ 等多字符符号）
+private val sortedSymbols = Operator.allSymbols
 
-private fun isOperatorStart(c: Char) = OPERATOR_START_CHARS.indexOf(c) >= 0
+private fun isOperatorStart(c: Char) = c in OPERATOR_START_CHARS
 
 private fun skipSpaces(text: String, from: Int): Int {
     var i = from
@@ -673,6 +676,11 @@ fun main() {
         // 全角同义符号
         "：m ＃3-5",
         "!bp ：m ＃3-5 pp>=600",
+        // 全角运算符（半角/全角混用也要能认）
+        "sr＞6.8",
+        "sr＞＝6.8 acc＞98",
+        "ar＜9",
+        "pp！＝600",
         // NAME 限长 3~15；WORD / ANY 不限长
         "title=abcdefghijklmnop",
         "tag=ab",

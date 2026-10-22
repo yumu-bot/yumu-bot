@@ -36,6 +36,34 @@ enum class Operator(val symbols: List<String>) {
             '＜' to '<'
         )
 
+        /** 半角字符 → 对应的全角别名，用于把运算符展开成所有可识别的写法 */
+        private val ALIAS_VARIANTS: Map<Char, List<Char>> =
+            ALIAS_REPLACEMENTS.entries.groupBy({ it.value }, { it.key })
+
+        /**
+         * 所有可识别的运算符写法，包含全角 / 别名变体。
+         *
+         * 例如 `>=` 会展开成 `>=`、`>＝`、`＞=`、`＞＝` 四种写法。
+         * 剥离器直接用这份表在原文里匹配，不能先做字符替换：改写文本会让剩余字符的下标失效。
+         */
+        val allSymbols: List<String> = entries
+            .flatMap { it.symbols }
+            .flatMap { expandAliases(it) }
+            .distinct()
+            .sortedByDescending(String::length)
+
+        private fun expandAliases(symbol: String): List<String> {
+            var variants = listOf("")
+
+            // 逐字符展开：运算符最长只有两个字符，所有组合最多 4 种
+            for (ch in symbol) {
+                val forms = (ALIAS_VARIANTS[ch].orEmpty() + ch).distinct()
+                variants = variants.flatMap { prefix -> forms.map { prefix + it } }
+            }
+
+            return variants
+        }
+
         /**
          * 查表法：找到字符串中匹配到的运算符
          */
