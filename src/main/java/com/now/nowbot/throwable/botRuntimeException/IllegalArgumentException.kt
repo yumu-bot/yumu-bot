@@ -14,7 +14,7 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
             WrongException("这是什么奇怪的倍速？")
 
         class StarRating:
-            WrongException("对方真的糊了那么高星的图吗？还是说你在滥用功能...")
+            WrongException("可能这个是特殊图？还是说你在滥用功能...")
 
         /*
         class FilteredScore(count: Int?):

@@ -10,6 +10,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REGEX_NUMBER_DECIMAL
 import org.springframework.stereotype.Service
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 
 @Service("OVER_SR") class OverSRService : MessageService<Double> {
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Double>): Boolean {
@@ -41,6 +42,14 @@ import kotlin.time.Duration
      private fun getMessage(star: Double): String {
          val message = StringBuilder()
          val silence: Duration = NewbieRestrictService.getSilence(star)
+
+         if (silence == Duration.ZERO) {
+             return "未超星，可以在新人群正常讨论。"
+         } else if (star > 30.0) {
+             throw IllegalArgumentException.ExceedException.StarRating()
+         } else if (silence >= 30.days) {
+             return "看起来对方不在乎这条规定。"
+         }
 
          message.append("已超星，预计禁言：")
          message.append(NewbieRestrictService.getTime(silence))
