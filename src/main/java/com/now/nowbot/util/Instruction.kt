@@ -181,7 +181,7 @@ enum class Instruction(val pattern: Pattern) {
 
     SCORE_SHOW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(score|s)\\s*(show|w)", "展示成绩")
-        appendModeBIDQQUIDNameAnyMod()
+        appendAny()
     }),
 
     UU_SCORE(CommandPatternBuilder.create {
@@ -191,7 +191,7 @@ enum class Instruction(val pattern: Pattern) {
 
     SCORES(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("scores", "ss", "多成绩")
-        appendModeBIDQQUIDNameAnyMod()
+        appendAny()
     }),
 
     SB_SCORE(CommandPatternBuilder.create {
@@ -1083,7 +1083,7 @@ enum class Instruction(val pattern: Pattern) {
     // 成对引号包裹的内容不参与拆分。冒号留给 :f 开关，不作为分隔符。
     ALIAS_ADD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("alias\\s*(add|set|new)", "aa", "(添加|新增|增加)别名")
-        // :f 表示管理员跳过二次确认直接添加，例如 !aa:f 123=abc（条目数量只对非管理员限制）
+        // :f 表示管理员跳过 60 秒撤销窗口直接添加，例如 !aa:f 123=abc（条目数量只对非管理员限制）
         appendColonCaptureGroup(FLAG_FULL, "f")
         // 允许跨行：一条消息里可以一行一组，换行由 AliasService 作为分隔符处理
         appendCaptureGroup(FLAG_DATA, PATTERN_ANYTHING, MORE)

@@ -10,7 +10,6 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.FileMessage
-import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.restrict.RestrictUtils.isNotSuperAdmin
 import com.now.nowbot.restrict.RestrictUtils.isSuperAdmin
 import com.now.nowbot.service.MessageService
@@ -21,7 +20,6 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMessageUtil
-import com.now.nowbot.util.AsyncMessageUtil.recallAndLog
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.StringUtil.formatted
@@ -41,10 +39,8 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Matcher
 import kotlin.time.Duration.Companion.seconds
@@ -90,18 +86,20 @@ class AliasService(
     private val manualRequestSequence = AtomicLong()
 
     /**
-     * 等待用户回复 OK 的 !aa 添加会话。
+     * 以「群 + 发送人」为键的 !aa 撤销会话。
      *
-     * 和 [manualSessions] 一样按「群 + 发送人」区分，用 Caffeine 的 expireAfterWrite 自动清理。
+     * 添加会在解析完参数后立即写入数据库，这里只负责记录「本次真正新增了什么」，
+     * 让用户在 [ADD_TIMEOUT_SECONDS] 秒内回复 OK 或者 1 把这次保存撤销掉。
+     *
+     * 和 [manualSessions] 一样用 Caffeine 的 expireAfterWrite 自动清理超时会话：
+     * 时间一到撤销任务就被销毁，已经保存的别名保持原样，不需要额外的定时任务。
+     *
      * 之所以不复用 [AsyncMessageUtil.doubleCheck]，是因为它只允许同时存在一个操作：
-     * 上一条还在等确认时再发 !aa 会被「操作正在进行中」顶回去，
-     * 而这里的语义是「新的 !aa 直接保存上一条，然后正常开启新的确认」。
-     *
-     * 缓存时间故意比 [ADD_TIMEOUT_SECONDS] 长：等待线程必须自己按超时处理并默认保存，
-     * 不能让 Caffeine 先把会话清掉。
+     * 上一条还在等撤销时再发 !aa 会被「操作正在进行中」顶回去，
+     * 而这里的语义是「新的 !aa 直接结束上一条的撤销窗口，然后保存新的这条」。
      */
     private val addSessions: Cache<AddSessionKey, AddSession> = Caffeine.newBuilder()
-        .expireAfterWrite(ADD_SESSION_CACHE_SECONDS, TimeUnit.SECONDS)
+        .expireAfterWrite(ADD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .maximumSize(ADD_SESSION_MAX_SIZE)
         .build()
 
@@ -121,7 +119,7 @@ class AliasService(
         val operation: AliasOperation,
         /** 添加/删除时因超过 [ALIAS_BATCH_SIZE] 而被抛弃的条目数量。 */
         val discarded: Int = 0,
-        /** 是否跳过二次确认直接执行（:f + 管理员，添加/删除通用）。 */
+        /** 是否跳过二次确认/撤销窗口直接执行（:f + 管理员，添加/删除通用）。 */
         val force: Boolean = false,
         /** 第一条被抛弃的条目，用于提示用户抛弃是从哪一条开始的。 */
         val discardedFrom: AliasTarget? = null,
@@ -177,7 +175,7 @@ class AliasService(
     )
 
     /**
-     * 一条等待保存的「标题 -> 别名」。
+     * 一条「标题 -> 别名」。
      */
     private data class AddEntry(
         val title: String,
@@ -185,10 +183,10 @@ class AliasService(
     )
 
     /**
-     * !aa 会话的键：群 + 发送人。
+     * !aa 撤销会话的键：群 + 发送人。
      *
-     * 和在用的 [AsyncMessageUtil.doubleCheck] 一致，同一个群里不同的人各自等待各自的确认，
-     * 不会互相覆盖、也不会把别人的回复当成自己的确认。
+     * 和在用的 [AsyncMessageUtil.doubleCheck] 一致，同一个群里不同的人各自处理自己的撤销，
+     * 不会互相覆盖、也不会把别人的 OK 当成自己的撤销。
      */
     private data class AddSessionKey(
         val contactID: Long,
@@ -196,29 +194,18 @@ class AliasService(
     )
 
     /**
-     * 一次等待用户回复的 !aa 添加。
+     * 一次已经保存、等待用户撤销的 !aa 添加。
      *
-     * @property entries 本次要保存的「标题 -> 别名」，已经去重。
-     * @property approved 发起人是否管理员：管理员直接生效，普通用户提交后需要审核。
-     * @property expireAt 会话过期时间，使用 [ADD_TIMEOUT_SECONDS] 计算。
+     * @property entries 本次真正新增的「标题 -> 别名」。撤销时只删这些绑定，
+     *                   原本就已经存在、本次只是跳过重复的别名不会被误删。
+     * @property approved 发起人是否管理员：只用于撤销时的提示文案。
+     * @property expireAt 撤销窗口的截止时间，使用 [ADD_TIMEOUT_SECONDS] 计算。
      */
     private class AddSession(
         val entries: List<AddEntry>,
         val approved: Boolean,
         val expireAt: Long,
-    ) {
-        /**
-         * 用户对本次添加的回复。
-         *
-         * 被新的 !aa 接管时以 null 完成，用来唤醒等待线程直接退出；
-         * 和「等待超时」一样都返回 null，由等待线程用 [claimAddSession] 区分。
-         */
-        val response = CompletableFuture<MessageEvent?>()
-
-        /** 确认消息的句柄，接管或结束时顺手撤回，避免留下过期的确认提示。 */
-        @Volatile
-        var receipt: MessageReceipt? = null
-    }
+    )
 
     /**
      * 解析 <标题或BID> = <别名>，多组之间用或换行分隔。
@@ -238,10 +225,10 @@ class AliasService(
      * 添加时管理员不受该限制，只有非管理员才会走抛弃；
      * 删除时超级管理员输入带 :f 捕获组（如 !ad:f 123=abc）时不受该限制。
      *
-     * :f 捕获组表示跳过二次确认直接执行（添加、删除同理），仅管理员生效。
+     * :f 捕获组表示跳过交互直接执行：添加时跳过 60 秒撤销窗口，删除时跳过二次确认；仅管理员生效。
      *
      * @param unlimited 为真时不限制条目数量。
-     * @param force 为真时表示跳过二次确认直接执行。
+     * @param force 为真时表示跳过交互（添加的撤销窗口 / 删除的二次确认）直接执行。
      */
     private fun parseAliasParam(
         matcher: Matcher,
@@ -398,13 +385,16 @@ class AliasService(
      *
      * 管理员（含超级管理员）添加的别名默认通过审核，普通用户添加的需要等待审核。
      *
-     * 多组参数会合并成一条确认消息；回复 OK 才会保存，回复其他内容撤回本次操作；超时同样会默认保存。
+     * 这里不再「先确认再保存」：解析完参数后立即写入数据库，并给出一个 [ADD_TIMEOUT_SECONDS] 秒的撤销窗口。
+     * 窗口内回复 OK 或者 1 会从数据库里删掉这次真正新增的绑定，回复其他内容则保持原样；
+     * 窗口过期后撤销任务由 [addSessions] 自动销毁，已经保存的别名保留。
+     *
      * 保存之后会列出具体保存了哪些「标题 -> 别名」，不会只回一句「保存成功」。
      *
-     * 确认期间再次发送 !aa 时（借鉴 !am 的会话替换）：上一条还在等待确认的添加会立即保存并给出结果，
-     * 然后新的 !aa 照常开启自己的确认，不会再被「操作正在进行中」拒绝。
+     * 撤销窗口内再次发送 !aa 时（借鉴 !am 的会话替换）：上一条的撤销窗口直接结束（已保存的内容保留），
+     * 然后新的 !aa 照常保存并开启自己的撤销窗口，不会再被「操作正在进行中」拒绝。
      *
-     * 管理员输入带 :f 捕获组（如 !aa:f 123=abc）时跳过二次确认，直接保存。
+     * 管理员输入带 :f 捕获组（如 !aa:f 123=abc）时跳过撤销窗口，直接保存。
      */
     private fun check(event: MessageEvent, param: AliasParam) {
         // 同一标题下的同一个别名只允许写一次。
@@ -420,138 +410,67 @@ class AliasService(
 
         val key = AddSessionKey(event.subject.contactID, event.sender.contactID)
 
-        // 新的 !aa 一到来，先把上一条还在等待确认的添加保存掉，避免被新请求顶掉时丢失
-        supersedeAddSession(event, key)
+        // 新的 !aa 一到来，上一条的撤销窗口就此结束；已经保存的内容保留
+        addSessions.invalidate(key)
 
-        // :f + 管理员：不确认，直接添加
+        // :f + 管理员：跳过撤销逻辑，直接添加
         // 一次可能添加很多条，结果只回条数和首尾两条，避免刷屏
         if (param.force) {
-            saveAddEntries(event, entries, approved, brief = true)
+            persistAddEntries(event, entries, approved)
+            event.replyAsync(formatSavedEntries(entries, approved, brief = true))
             return
         }
 
+        // 立刻保存，并记下本次真正新增的绑定：撤销时只删这些，原本就有的别名不会被误删
+        val added = persistAddEntries(event, entries, approved)
+
+        // 先登记撤销会话再回复：即使回复来得很快也能找到它
+        if (added.isNotEmpty()) {
+            addSessions.put(
+                key,
+                AddSession(
+                    entries = added,
+                    approved = approved,
+                    expireAt = System.currentTimeMillis() + ADD_TIMEOUT_SECONDS * 1_000,
+                ),
+            )
+        }
+
         val preview = buildString {
-            appendLine("添加别名：")
-            entries.forEach { appendLine("${it.title} -> ${it.alias}") }
+            appendLine(formatSavedEntries(entries, approved, brief = false))
+
+            // 重复的别名本来就在库里，不会重复写入，也不会进入撤销名单
+            val duplicated = entries.size - added.size
+            if (duplicated > 0) {
+                appendLine("其中 $duplicated 条已经存在，没有重复写入。")
+            }
 
             if (param.discarded > 0) {
                 val from = formatDiscardedFrom(param.discardedFrom)
                 appendLine("一次最多只能添加 $ALIAS_BATCH_SIZE 条，已主动抛弃后面的 ${param.discarded} 条$from。")
             }
 
-            if (!approved) {
-                appendLine("这些别名需要管理员审核之后才会通过。")
+            if (added.isNotEmpty()) {
+                appendLine("回复 OK 或者 1 可以撤销本次保存。")
+                append("${ADD_TIMEOUT_SECONDS} 秒内不回复则视为确认，撤销任务会自动结束。")
             }
-
-            append("回复 OK 或者 1 确认本次操作，回复其他内容则撤回本次操作。")
-            append("\n确认之前再次发送 !aa 其他参数 会直接保存这一次的结果。")
-            append("\n${ADD_TIMEOUT_SECONDS} 秒内不回复同样默认视为保存。")
         }
 
-        val session = AddSession(
-            entries = entries,
-            approved = approved,
-            expireAt = System.currentTimeMillis() + ADD_TIMEOUT_SECONDS * 1_000,
-        )
-
-        addSessions.put(key, session)
-
-        // 先登记会话再发确认消息：确认消息期间到达的新 !aa 也能找到并保存这一条
-        session.receipt = event.reply(preview)
-
-        val response = awaitAddResponse(session)
-
-        // 会话已经被新的 !aa 接管：那边已经保存并回复过，这里不再重复处理
-        if (!claimAddSession(key, session)) return
-
-        session.receipt.recallAndLog()
-
-        if (response == null) {
-            // 超时：和原来一样默认保存，只是把具体条目一起回给用户
-            saveAddEntries(
-                event,
-                entries,
-                approved,
-                if (approved) "操作超时，已默认保存本次添加：" else "操作超时，已自动提交审核：",
-            )
-            return
-        }
-
-        if (response.rawMessage.contains("OK", ignoreCase = true) || response.rawMessage.trim().toLongOrNull() == 1L) {
-            // 回复挂在确认的那条消息上，具体保存了哪些别名也一起给出来
-            saveAddEntries(response, entries, approved)
-        } else {
-            response.replyAsync("已撤回本次操作，本次添加没有保存。")
-        }
+        event.replyAsync(preview.trimEnd())
     }
 
     /**
-     * 把同一个人上一条还在等待确认的 !aa 直接保存。
+     * 把一组「标题 -> 别名」写入数据库。
      *
-     * 用 remove(key, session) 抢占会话，保证并发时只有一方能处理：
-     * 旧的等待线程醒来后会发现会话已经被认领，不会再保存一次。
+     * @return 本次真正新增的绑定；原本就已经存在（或同一句里重复写）的条目不会出现在结果里。
+     *         撤销时只删除这些新增项，不会误删用户之前就有的别名。
      */
-    private fun supersedeAddSession(event: MessageEvent, key: AddSessionKey) {
-        val session = addSessions.getIfPresent(key) ?: return
-
-        if (!addSessions.asMap().remove(key, session)) return
-
-        // 唤醒旧的等待线程，让它直接退出（被接管时不需要它再保存或提示）
-        session.response.complete(null)
-
-        session.receipt.recallAndLog()
-
-        saveAddEntries(
-            event,
-            session.entries,
-            session.approved,
-            if (session.approved) "检测到新的添加指令，上一条已自动保存：" else "检测到新的添加指令，上一条已自动提交审核：",
-        )
-    }
-
-    /**
-     * 等待用户对本次添加的回复。
-     *
-     * 返回 null 表示两种可能：等待超时（会话仍然有效），或者会话已经被新的 !aa 接管。
-     * 调用方用 [claimAddSession] 区分。
-     */
-    private fun awaitAddResponse(session: AddSession): MessageEvent? {
-        val remaining = session.expireAt - System.currentTimeMillis()
-        if (remaining <= 0) return null
-
-        return try {
-            session.response.get(remaining, TimeUnit.MILLISECONDS)
-        } catch (_: TimeoutException) {
-            null
-        } catch (_: InterruptedException) {
-            Thread.currentThread().interrupt()
-            null
-        }
-    }
-
-    /**
-     * 认领会话：返回 true 表示当前线程成功移除会话、可以继续保存或撤回。
-     *
-     * 返回 false 说明会话已经被新的 !aa 接管，当前线程什么都不该做。
-     */
-    private fun claimAddSession(key: AddSessionKey, session: AddSession): Boolean {
-        return addSessions.asMap().remove(key, session)
-    }
-
-    /**
-     * 保存一组「标题 -> 别名」，并把具体保存了什么回复给用户。
-     *
-     * @param header 结果消息的第一行；为 null 时用默认的「已保存以下 N 条别名」。
-     * @param brief 为真时只列条数、第一条和最后一条（:f 一次添加几十条时不刷屏）。
-     */
-    private fun saveAddEntries(
+    private fun persistAddEntries(
         event: MessageEvent,
         entries: List<AddEntry>,
         approved: Boolean,
-        header: String? = null,
-        brief: Boolean = false,
-    ) {
-        entries.forEach { (title, alias) ->
+    ): List<AddEntry> {
+        return entries.filter { (title, alias) ->
             aliasDao.addAliasToTitle(
                 title,
                 alias,
@@ -560,8 +479,41 @@ class AliasService(
                 from = event.sender.contactID,
             )
         }
+    }
 
-        event.replyAsync(formatSavedEntries(entries, approved, header, brief))
+    /**
+     * 撤销一次已经保存的添加：把本次真正新增的绑定从数据库里删掉。
+     *
+     * 只处理 [AddSession.entries] 里记录的条目，所以原本就存在、本次只是「跳过重复」的别名不会被误删。
+     * 删除后不再被任何标题引用的别名会由 [AliasDao.deleteAliasFromTitle] 一并清理。
+     */
+    private fun undoAddEntries(event: MessageEvent, session: AddSession) {
+        val deleted = mutableListOf<AddEntry>()
+        val missing = mutableListOf<AddEntry>()
+
+        session.entries.forEach { entry ->
+            if (aliasDao.deleteAliasFromTitle(entry.title, entry.alias)) {
+                deleted += entry
+            } else {
+                missing += entry
+            }
+        }
+
+        event.replyAsync(buildString {
+            if (deleted.isEmpty()) {
+                append("本次保存的别名已经不在库里，无需撤销。")
+            } else {
+                val action = if (session.approved) "保存" else "提交"
+                appendLine("已撤销本次$action，删除了 ${deleted.size} 条别名：")
+                deleted.forEach { appendLine("${it.title} -> ${it.alias}") }
+            }
+
+            if (missing.isNotEmpty()) {
+                if (deleted.isNotEmpty()) append('\n')
+                append("以下 ${missing.size} 条已经不存在：")
+                append(missing.joinToString("、") { "${it.title} -> ${it.alias}" })
+            }
+        })
     }
 
     /**
@@ -573,18 +525,15 @@ class AliasService(
     private fun formatSavedEntries(
         entries: List<AddEntry>,
         approved: Boolean,
-        header: String?,
         brief: Boolean,
     ): String {
         val lines = mutableListOf<String>()
 
-        val defaultHeader = if (brief) {
+        lines += if (brief) {
             if (approved) "已保存 ${entries.size} 条别名：" else "已提交审核 ${entries.size} 条别名："
         } else {
             if (approved) "已保存以下 ${entries.size} 条别名：" else "已提交以下 ${entries.size} 条别名等待审核："
         }
-
-        lines += header ?: defaultHeader
 
         if (brief) {
             if (entries.size <= 2) {
@@ -718,10 +667,10 @@ class AliasService(
     }
 
     /**
-     * 不是指令的普通消息：先看是否有等待确认的 !aa，再看 !aj / !am 会话。
+     * 不是指令的普通消息：先看是否有待撤销的 !aa，再看 !aj / !am 会话。
      *
-     * !aa 的会话也按「群 + 发送人」区分，只认发起人自己的回复；
-     * 命中时把事件交给等待中的线程，由它决定是保存还是撤回。
+     * !aa 的撤销会话也按「群 + 发送人」区分，只认发起人自己的回复；
+     * 只有回复 OK 或者 1 才会撤销（从库里删掉刚才保存的别名），其它内容当作普通聊天继续往下走。
      *
      * !aj 只接受发起 !aj 的用户：数字和逗号序列用于调整顺序，
      * 其它内容（包括 OK）按放弃处理；没有会话或不是发起人时继续看 !am。
@@ -760,26 +709,34 @@ class AliasService(
     }
 
     /**
-     * 把普通消息转交给等待确认的 !aa 会话。
+     * 处理还在撤销窗口内的 !aa：回复 OK 或者 1 就把刚才保存的别名删掉。
      *
-     * 和 [AsyncMessageUtil.doubleCheck] 一样，任何回复都算答复：
-     * 含 OK 的是确认，其余内容在等待线程里按撤回处理。
+     * 只有明确的 OK / 1 才算撤销，其它内容返回 false，
+     * 让消息继续按 !am 的别名或普通聊天处理，不会因为用户随口一句「好的」之外的话就被消费掉。
      *
-     * @return true 表示这条消息已经被 !aa 消费，不再继续当作 !am 的别名或普通聊天。
+     * 用 remove(key, session) 抢占会话，保证窗口边界上只有一次撤销真正执行。
+     *
+     * @return true 表示这条消息已经被 !aa 的撤销逻辑消费。
      */
     private fun handleAddSessionReply(event: MessageEvent): Boolean {
+        val text = event.rawMessage.trim()
+        val confirmed = text.contains("OK", ignoreCase = true) || text.toLongOrNull() == 1L
+        if (!confirmed) return false
+
         val key = AddSessionKey(event.subject.contactID, event.sender.contactID)
         val session = addSessions.getIfPresent(key) ?: return false
 
-        // 理论上等待线程会先按超时把它认领掉，这里只防御临界时间点上的残留
+        // 窗口刚好过期：Caffeine 还没清理掉，这里直接丢弃，已经保存的别名保留
         if (session.expireAt <= System.currentTimeMillis()) {
             addSessions.asMap().remove(key, session)
-            session.response.complete(null)
             return false
         }
 
-        // 完成等待中的 future；真正的保存/撤回由等待线程自己做
-        return session.response.complete(event)
+        // 抢占会话：并发回复时只有一方能走到撤销
+        if (!addSessions.asMap().remove(key, session)) return false
+
+        undoAddEntries(event, session)
+        return true
     }
 
     /**
@@ -1760,22 +1717,16 @@ class AliasService(
         private const val ADJUST_SESSION_MAX_SIZE = 10_000L
 
         /**
-         * !aa 二次确认会话的有效期（秒）。超时后默认保存。
+         * !aa 保存之后的撤销窗口（秒）。
+         *
+         * 窗口内回复 OK 或者 1 会撤销这次保存；超时后撤销会话自动销毁，已经保存的别名保留。
          */
         private const val ADD_TIMEOUT_SECONDS = 60L
 
         /**
-         * !aa 会话缓存的容量上限。
+         * !aa 撤销会话缓存的容量上限。
          */
         private const val ADD_SESSION_MAX_SIZE = 10_000L
-
-        /**
-         * !aa 会话在缓存里的保留时间（秒）。
-         *
-         * 比 [ADD_TIMEOUT_SECONDS] 长，让等待线程自己按超时处理并默认保存，
-         * 而不是会话先被缓存清掉、导致超时那次添加凭空消失。
-         */
-        private const val ADD_SESSION_CACHE_SECONDS = ADD_TIMEOUT_SECONDS * 2
 
         /**
          * 参数分隔符：,、，、;、&、|、反引号、、、PATTERN_EQUAL（=、＝）以及换行符。

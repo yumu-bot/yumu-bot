@@ -211,8 +211,14 @@ class AliasDao(
         return addAliasInternal(title, rawAliasValue, setAsPrimary, approved, from)
     }
 
+    /**
+     * 通过标题名称添加别名。
+     *
+     * @return 是否真的新增了绑定。标题下已经有这个别名时整体跳过并返回 false，
+     *         调用方（例如 !aa 的撤销逻辑）据此判断哪些条目是本次真正写进去的。
+     */
     @Transactional
-    fun addAliasToTitle(titleName: String, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean, from: Long) {
+    fun addAliasToTitle(titleName: String, rawAliasValue: String, setAsPrimary: Boolean, approved: Boolean, from: Long): Boolean {
         // 别名只做 trim，其余字符原样保存（和 deleteAliasFromTitle / deleteAliasesFromTitle 的比较规则保持一致）
         val aliasValue = rawAliasValue.trim()
 
@@ -239,6 +245,7 @@ class AliasDao(
         // 由于 aliases 已经被完整加载，Hibernate 能正确计算出当前列表的 size，
         // 从而生成正确的 position（例如当前有 2 个，新加的就是第 3 个，position = 2），不会再发生主键冲突。
         // 该标题下已经有这个别名时，整体跳过：不新增绑定，也不改任何状态。
+        var added = false
         if (!aliasTitle.aliases.contains(alias)) {
             if (setAsPrimary) {
                 aliasTitle.aliases.add(0, alias) // 插在最前面作为首选
@@ -246,9 +253,12 @@ class AliasDao(
                 aliasTitle.aliases.add(alias)  // 加在末尾
             }
             titleRepository.save(aliasTitle)
+            added = true
         }
 
         invalidateTitleCache(aliasTitle.name)
+
+        return added
     }
 
     /**
