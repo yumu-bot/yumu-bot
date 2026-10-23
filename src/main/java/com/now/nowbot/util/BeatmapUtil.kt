@@ -87,7 +87,7 @@ object BeatmapUtil {
         mods.filterIsInstance<LazerMod.DifficultyAdjust>()
             .firstNotNullOfOrNull { it.approachRate }
             ?.roundToDigits2()
-            ?.let { return it }
+            ?.let { a = it }
 
         if (mods.contains(LazerMod.HardRock)) {
             a = (a * 1.4f).coerceIn(0f, 10f)
@@ -130,16 +130,17 @@ object BeatmapUtil {
 
     fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode = OsuMode.OSU): Float {
         var o = od
+
+        mods.filterIsInstance<LazerMod.DifficultyAdjust>()
+            .firstNotNullOfOrNull { it.overallDifficulty }
+            ?.roundToDigits2()
+            ?.let { o = it }
+
         if (mods.contains(LazerMod.HardRock)) {
             o = (o * 1.4f).coerceIn(0f, 10f)
         } else if (mods.contains(LazerMod.Easy)) {
             o = (o / 2f).coerceIn(0f, 10f)
         }
-
-        mods.filterIsInstance<LazerMod.DifficultyAdjust>()
-            .firstNotNullOfOrNull { it.overallDifficulty }
-            ?.roundToDigits2()
-            ?.let { return it }
 
         // mania 模式内，模组改变速率不影响 OD
         val speed = if (mode == OsuMode.MANIA) {
@@ -163,7 +164,7 @@ object BeatmapUtil {
         mods.filterIsInstance<LazerMod.DifficultyAdjust>()
             .firstNotNullOfOrNull { it.circleSize }
             ?.roundToDigits2()
-            ?.let { return it }
+            ?.let { c = it }
 
         if (mode.safeModeValue == 0.toByte()) {
             c = mods.getKey(cs)
@@ -184,7 +185,7 @@ object BeatmapUtil {
         mods.filterIsInstance<LazerMod.DifficultyAdjust>()
             .firstNotNullOfOrNull { it.drainRate }
             ?.roundToDigits2()
-            ?.let { return it }
+            ?.let { h = it }
 
         if (mods.contains(LazerMod.HardRock)) {
             h *= 1.4f

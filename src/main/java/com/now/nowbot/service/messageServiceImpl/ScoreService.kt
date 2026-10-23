@@ -242,9 +242,6 @@ import kotlin.time.Duration.Companion.seconds
             max = 100,
         )
 
-        // 单线程内使用，普通 Boolean 即可。
-        // 只有「回落到谱面集里的其他难度」时才不记 bids：那时返回的已经不是用户问的这张谱面，
-        // 记进调用统计会让下一次无参查询的「默认谱面」被带偏。
         var isRecordCallStatistics = true
 
         val data = if (selectedScore != null) {
@@ -324,6 +321,7 @@ import kotlin.time.Duration.Companion.seconds
         beatmapApiService.applyAlias(scores)
         BeatmapUtil.applyBeatmapChanges(scores)
         calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyPPToScores(scores)
 
         val scoresByRank = scores.putRank(offset)
 
@@ -345,8 +343,6 @@ import kotlin.time.Duration.Companion.seconds
     private fun List<LazerScore>.applyFromLocal(beatmap: Beatmap) = apply {
         beatmapApiService.applyBeatmapExtendForSameScore(this, beatmap)
         beatmapApiService.applyVersion(this)
-        calculateApiService.applyStarToScores(this)
-        calculateApiService.applyPPToScores(this)
     }
 
     /**
