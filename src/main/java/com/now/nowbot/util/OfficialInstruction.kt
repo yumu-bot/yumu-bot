@@ -79,7 +79,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     SCORE(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("s", "score")
-        appendModeBIDQQUIDNameMod()
+        appendAny()
     }),
 
     UU_SCORE(CommandPatternBuilder.create {
@@ -89,12 +89,12 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     SCORE_SHOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("sw", "scores?\\s*show")
-        appendModeBIDQQUIDNameMod()
+        appendAny()
     }),
 
     SCORES(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ss", "scores")
-        appendModeBIDQQUIDNameMod()
+        appendAny()
     }),
 
     BP(CommandPatternBuilder.create {

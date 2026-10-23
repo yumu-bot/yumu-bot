@@ -252,10 +252,10 @@ import kotlin.time.Duration.Companion.seconds
             val mode = selectedScore.mode
             val user = userApiService.getOsuUser(selectedScore.userID, mode)
 
-            val scores = listOf(selectedScore)
+            beatmapApiService.applyBeatmapExtend(selectedScore, beatmap)
+            calculateApiService.applyPPToScore(selectedScore)
 
-            beatmapApiService.applyBeatmapExtend(scores)
-            calculateApiService.applyPPToScores(scores)
+            val scores = listOf(selectedScore)
 
             ScoreData(user, beatmap, scores, mode)
         } else {
@@ -286,13 +286,15 @@ import kotlin.time.Duration.Companion.seconds
                     listOf(onlineScores.maxBy { it.pp })
                 }
 
+                beatmapApiService.applyBeatmapExtendForSameScore(ss, beatmap)
+
                 ScoreData(user, beatmap, ss, mode)
             } else {
                 // 无榜 / 在线无数据：回落到本地
                 val local = scoreDao.getBeatmapScores(userID, beatmap, mode)
 
                 if (local.isNotEmpty()) {
-                    local.applyFromLocal()
+                    local.applyFromLocal(beatmap)
                     ScoreData(user, beatmap, local, mode)
                 } else if (beatmap.hasLeaderBoard) {
                     // 这个难度上没有成绩，去谱面集里的其他难度找
@@ -339,8 +341,8 @@ import kotlin.time.Duration.Companion.seconds
             isMultiple, isShow, isCompact, isRecordCallStatistics)
     }
 
-    private fun List<LazerScore>.applyFromLocal() = apply {
-        beatmapApiService.applyBeatmapExtend(this)
+    private fun List<LazerScore>.applyFromLocal(beatmap: Beatmap) = apply {
+        beatmapApiService.applyBeatmapExtendForSameScore(this, beatmap)
         beatmapApiService.applyVersion(this)
         calculateApiService.applyStarToScores(this)
         calculateApiService.applyPPToScores(this)
