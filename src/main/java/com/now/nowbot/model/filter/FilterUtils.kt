@@ -2,9 +2,7 @@ package com.now.nowbot.model.filter
 
 import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.Operator
-import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.NanoUser
 import com.now.nowbot.model.osu.LazerMod.Companion.toLazerModAcronyms
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException

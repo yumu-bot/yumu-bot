@@ -180,7 +180,7 @@ import java.util.regex.Matcher
                 }
 
                 return ScoreParam(user, map, filtered, currentMode.data!!, mods,
-                    isMultipleScore = false,
+                    isMultiple = false,
                     isShow = false
                 )
             }
@@ -235,7 +235,7 @@ import java.util.regex.Matcher
             throw NoSuchElementException.BeatmapScoreFiltered(map.previewName)
         }
 
-        return ScoreParam(user, map, filtered, mode, mods, isMultipleScore = false, isShow = false)
+        return ScoreParam(user, map, filtered, mode, mods, isMultiple = false, isShow = false)
     }
 
     private fun ScoreParam.getUUMessageChain(): MessageChain {

@@ -29,32 +29,32 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     SCORE_PASS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("p", "pass")
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
+        appendAny()
     }),
 
     SCORE_PASS_SHOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("pw", "pass(es)?\\s*show")
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
+        appendAny()
     }),
 
     SCORE_PASSES(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ps", "passes")
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
+        appendAny()
     }),
 
     SCORE_RECENT(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("r", "recent")
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
+        appendAny()
     }),
 
     SCORE_RECENT_SHOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("rw", "recents?\\s*show")
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
+        appendAny()
     }),
 
     SCORE_RECENTS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("rs", "recents")
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING_MORE, MORE)
+        appendAny()
     }),
 
     PR_CARD(CommandPatternBuilder.create {
@@ -99,7 +99,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("b", "best")
-        appendAtLeastSpaceGroup(FLAG_ANY, PATTERN_ANYTHING, MORE)
+        appendAny()
     }),
 
     BP_SHOW(CommandPatternBuilder.create {
@@ -342,7 +342,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
             appendOfficialCommandsIgnoreAll("explore", "exp", "e", "find")
             appendColonCaptureGroup(FLAG_TYPE, PATTERN_ANYTHING_BUT_NO_SPACE, MORE)
             appendSpace()
-            appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING, MORE)
+            appendAny()
             appendSpace()
             appendHashCaptureGroup(FLAG_PAGE, PATTERN_NUMBER_1_100, MAYBE)
         }

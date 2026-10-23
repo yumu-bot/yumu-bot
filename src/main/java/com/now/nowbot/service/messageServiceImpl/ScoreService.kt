@@ -1,20 +1,14 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao
-import com.now.nowbot.dao.GroupDao
 import com.now.nowbot.dao.ScoreDao
-import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
-import com.now.nowbot.model.enums.OsuMode.Companion.orElse
-import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
-import com.now.nowbot.model.filter.ScoreExtendedFilter
-import com.now.nowbot.model.filter.SearchBeatmapsetFilter
-import com.now.nowbot.model.filter.getFirstMatch
+import com.now.nowbot.model.filter.ScoreClassifier
+import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
+import com.now.nowbot.model.filter.hasCondition
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
-import com.now.nowbot.model.osu.LazerMod.Companion.filterMod
+import com.now.nowbot.model.osu.LazerScore.Companion.putRank
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.KeyboardMessage
 import com.now.nowbot.qq.message.MessageChain
@@ -30,18 +24,25 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.StringUtil.asConditions
-import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.BeatmapIDExtractor
+import com.now.nowbot.util.command.BeatmapsetIDExtractor
+import com.now.nowbot.util.command.FLAG_ANY
+import com.now.nowbot.util.command.LazerModExtractor
+import com.now.nowbot.util.command.OsuModeExtractor
+import com.now.nowbot.util.command.QQExtractor
+import com.now.nowbot.util.command.RangeExtractor
+import com.now.nowbot.util.command.ScoreClassifierExtractor
+import com.now.nowbot.util.command.StripPipeline
+import com.now.nowbot.util.command.UserIDExtractor
 import com.yumu.qq.message.Keyboard
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,9 +52,7 @@ import kotlin.time.Duration.Companion.seconds
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
-    private val dao: ServiceCallStatisticsDao,
-    private val bindDao: BindDao,
-    private val groupDao: GroupDao,
+    private val commandUtil: CommandUtil,
     private val scoreDao: ScoreDao,
     private val restrict: NewbieRestrictService,
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
@@ -64,7 +63,7 @@ import kotlin.time.Duration.Companion.seconds
         val scores: List<LazerScore>,
         val mode: OsuMode,
         val mods: List<LazerMod>,
-        val isMultipleScore: Boolean,
+        val isMultiple: Boolean,
         val isShow: Boolean = false,
         val isCompact: Boolean = false,
         val isRecordCallStatistics: Boolean = true,
@@ -75,7 +74,6 @@ import kotlin.time.Duration.Companion.seconds
         val map: Beatmap,
         val scores: List<LazerScore>,
         val mode: OsuMode,
-        val mods: List<LazerMod>? = null,
         val isMultipleScore: Boolean = false,
     )
 
@@ -109,7 +107,7 @@ import kotlin.time.Duration.Companion.seconds
             return false
         }
 
-        val param = getParam(event, messageText, matcher, isMultipleScore, isShow, isCompact = false)
+        val param = getParam(event, matcher, isMultipleScore, isShow, isCompact = false)
 
         restrict.checkAsync(event, param.scores)
 
@@ -128,7 +126,7 @@ import kotlin.time.Duration.Companion.seconds
             throw IllegalStateException.Send("谱面成绩")
         }
 
-        val scores = param.scores.toList()
+        val scores = param.scores
 
         return if (param.isRecordCallStatistics) {
             ServiceCallStatistic.builds(
@@ -172,7 +170,7 @@ import kotlin.time.Duration.Companion.seconds
         } else {
             return null
         }
-        return getParam(event, messageText, matcher, isMultipleScore, isShow, isCompact = true)
+        return getParam(event, matcher, isMultipleScore, isShow, isCompact = true)
     }
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
@@ -202,162 +200,111 @@ import kotlin.time.Duration.Companion.seconds
         return param.getMessageChain()
     }
 
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean, isShow: Boolean, isCompact: Boolean): ScoreParam {
-        val number = InstructionUtil.getBid(matcher)
-        val inputMode = InstructionUtil.getMode(matcher)
-        val mods: List<LazerMod> = InstructionUtil.getMod(matcher)
+    private fun getParam(event: MessageEvent, matcher: Matcher, isMultiple: Boolean, isShow: Boolean, isCompact: Boolean): ScoreParam {
+        val any: String = matcher.group(FLAG_ANY) ?: ""
 
-        val any = matcher.group(FLAG_NAME).orEmpty()
+        val pipeline = StripPipeline(any)
+            .apply(OsuModeExtractor)
+            .apply(LazerModExtractor)
+            .apply(BeatmapIDExtractor)
+            .apply(BeatmapsetIDExtractor)
+            .apply(UserIDExtractor)
+            .apply(QQExtractor)
+            .apply(ScoreClassifierExtractor)
+            .apply(RangeExtractor)
+            .trim()
 
-        val conditions = any.asConditions(SearchBeatmapsetFilter.regexes)
-        val (selectedScoreID, selectedUsername) = ScoreExtendedFilter.getExtend(any.asConditions(ScoreExtendedFilter.regexes))
+        val context = pipeline.context
 
-        val isMyself = AtomicBoolean(true)
+        val mods = commandUtil.getMods(context)
 
-        val name2UserID: Long? = UserIDUtil.getUserIDWithoutRange(event, matcher, inputMode, isMyself)
-        val selectedUser: OsuUser? = if (selectedUsername.isNullOrBlank()) {
-            null
-        } else runCatching {
-            userApiService.getOsuUser(selectedUsername)
-        }.getOrNull()
+        val (beatmap, selectedScore) = commandUtil.getBeatmap(
+            context,
+            event
+        )
 
-        val userID: Long? = selectedUser?.userID ?: name2UserID
+        commandUtil.addResidualAliases(context)
 
-        val selectedBeatmapID = conditions.getFirstMatch(SearchBeatmapsetFilter.BID)?.toLongOrNull()
-        val selectedBeatmapsetID = conditions.getFirstMatch(SearchBeatmapsetFilter.SID)?.toLongOrNull()
+        // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、玩家名、范围不算；`+HR` 会被 LazerModExtractor 桥接成 mod 条件，算。
+        val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
-        val isRecordCallStatistics = AtomicBoolean(true)
+        val defaultLimit = when {
+            hasCondition -> 100
+            isMultiple -> 20
+            else -> 1
+        }
 
-        val data: ScoreData = when {
-            selectedBeatmapID != null -> {
-                val d = getFromBeatmapID(selectedBeatmapID, userID, inputMode, event, messageText, matcher, mods)
+        val (offset, limit) = commandUtil.getRange(
+            context,
+            defaultOffset = 0,
+            defaultLimit = defaultLimit,
+            multiple = isMultiple,
+            max = 100,
+        )
 
-                if (d.scores.isNotEmpty()) {
-                    d
+        // 单线程内使用，普通 Boolean 即可。
+        // 只有「回落到谱面集里的其他难度」时才不记 bids：那时返回的已经不是用户问的这张谱面，
+        // 记进调用统计会让下一次无参查询的「默认谱面」被带偏。
+        var isRecordCallStatistics = true
+
+        val data = if (selectedScore != null) {
+            // SCORE_ID 模式
+            val mode = selectedScore.mode
+            val user = userApiService.getOsuUser(selectedScore.userID, mode)
+
+            val scores = listOf(selectedScore)
+
+            beatmapApiService.applyBeatmapExtend(scores)
+            calculateApiService.applyPPToScores(scores)
+
+            ScoreData(user, beatmap, scores, mode)
+        } else {
+            val userID = commandUtil.getUserID(
+                context,
+                event,
+                onNull = { isMyself ->
+                    if (isMyself) throw BindException.NotBindException.YouNotBind()
+                    else throw BindException.NotBindException.UserNotBind()
+                },
+            ) ?: throw NoSuchElementException.Player()
+
+            val mode = commandUtil.getMode(context, event, userID)
+            val user = userApiService.getOsuUser(userID, mode)
+
+            // 有榜时优先取在线分数
+            val onlineScores = if (beatmap.hasLeaderBoard) {
+                scoreApiService.getBeatmapScores(beatmap.beatmapID, userID, mode)
+            } else {
+                emptyList()
+            }
+
+            if (onlineScores.isNotEmpty()) {
+
+                val ss = if (isMultiple) {
+                    onlineScores
                 } else {
-                    getFromBeatmapset(d, event)
-                }
-            }
-
-            selectedBeatmapsetID != null -> {
-                val mode = inputMode.data.orElse()
-
-                val user = selectedUser
-                    ?: if (name2UserID != null) {
-                        userApiService.getOsuUser(name2UserID, mode)
-                    } else {
-                        userApiService.getOsuUser(bindDao.getBindFromQQ(event.target.takeIf { it > 0L } ?: event.sender.contactID))
-                    }
-
-                getFromBeatmapsetID(selectedBeatmapsetID, user, user.mode.orElse(mode), mods, event)
-            }
-
-            number in 1L ..< 1000_0000L -> {
-                val d = getFromBeatmapID(number, userID, inputMode, event, messageText, matcher, mods)
-
-                if (d.scores.isNotEmpty()) {
-                    d
-                } else {
-                    getFromBeatmapset(d, event)
-                }
-            }
-
-            selectedScoreID != null -> {
-                getFromScoreID(selectedScoreID)
-            }
-
-            number >= 1000_0000L -> {
-                getFromScoreID(number)
-            }
-
-            conditions.flatten().isNotEmpty() -> {
-                val groupMode = groupDao.getGroupMode(event)
-
-                val overwritten = if (groupMode != OsuMode.DEFAULT && inputMode.data.isDefaultOrNull()) {
-                    mapOf(
-                        "m" to groupMode.modeValue.toString()
-                    )
-                } else {
-                    emptyMap()
-                }
-
-                val query = SearchBeatmapsetFilter.buildQuery(conditions, overwritten = overwritten)
-
-                val result = beatmapApiService.searchBeatmapset(query, userID?.let {
-                    bindDao.getBindUserFromOsuIDOrNull(userID)
-                })
-
-                if (result.beatmapsets.isEmpty()) {
-                    throw NoSuchElementException.Search()
+                    listOf(onlineScores.maxBy { it.pp })
                 }
 
-                val mode = inputMode.data.orElse(result.beatmapsets.take(5).mapNotNull { it.beatmaps }.flatten().maxOfOrNull { it.mode })
+                ScoreData(user, beatmap, ss, mode)
+            } else {
+                // 无榜 / 在线无数据：回落到本地
+                val local = scoreDao.getBeatmapScores(userID, beatmap, mode)
 
-                val user = selectedUser
-                    ?: if (name2UserID != null) {
-                        userApiService.getOsuUser(name2UserID, mode)
-                    } else {
-                        userApiService.getOsuUser(bindDao.getBindFromQQ(event.target.takeIf { it > 0L } ?: event.sender.contactID))
-                    }
+                if (local.isNotEmpty()) {
+                    local.applyFromLocal()
+                    ScoreData(user, beatmap, local, mode)
+                } else if (beatmap.hasLeaderBoard) {
+                    // 这个难度上没有成绩，去谱面集里的其他难度找
+                    val fallback = findBestScoreInBeatmapset(event, user, beatmap, mode, mods)
+                        ?: throw NoSuchElementException.AnyBeatmapScore(beatmap.previewName)
 
-                getFromBeatmapsets(result.beatmapsets.take(5), user, mode, mods)
-            }
+                    // 成绩落在别的难度上时返回的 bid 已经不是用户问的这张谱面
+                    isRecordCallStatistics = fallback.map.beatmapID == beatmap.beatmapID
 
-//            any.isNotBlank() -> {
-//                val mode = inputMode.data.orElse()
-//
-//                if (name2UserID != null) {
-//                    val name2user = userApiService.getOsuUser(name2UserID, mode)
-//
-//                    val future = CompletableFuture<ScoreData>()
-//
-//                    AsyncMessageUtil.doubleCheck(event,
-//                        onCheck = {
-//                            event.reply("""
-//                                您想要查询标题为 $any 的成绩，还是想要查询玩家 ${name2user.username} 的成绩？
-//                                回复 1 查询标题，回复 2 查询玩家。
-//                            """.trimIndent())
-//                        },
-//
-//                        onSuccess = { ev ->
-//                            if (ev.rawMessage.contains("1", ignoreCase = true)) {
-//
-//
-//                                future.complete()
-//                            } else if (ev.rawMessage.contains("2", ignoreCase = true)) {
-//                                future.complete()
-//                            } else {
-//                                future.completeExceptionally(TipsException("操作已中止。"))
-//                            }
-//                        }
-//
-//                        )
-//                } else {
-//
-//                }
-//            }
-
-            else -> {
-                // 进阶备用方法：先获取之前大家使用的 bid，然后尝试获取最近成绩
-                val beforeBeatmapID = dao.getLastBeatmapID(
-                    event = event,
-                    name = "SCORE",
-                    from = LocalDateTime.now().minusMinutes(2L)
-                ) ?: dao.getLastBeatmapID(
-                    event = event,
-                )
-
-                if (beforeBeatmapID != null) {
-                    val d = getFromBefore(beforeBeatmapID, userID, inputMode, event, messageText, matcher, mods)
-
-                    if (d.scores.isNotEmpty()) {
-                        d
-                    } else {
-                        isRecordCallStatistics.set(false)
-                        getFromBeatmapset(d, event)
-                    }
+                    fallback
                 } else {
-                    getFromRecentScore(userID, inputMode, event, messageText, matcher, mods)
+                    throw NoSuchElementException.DatabaseBeatmapScore(beatmap.previewName)
                 }
             }
         }
@@ -366,441 +313,149 @@ import kotlin.time.Duration.Companion.seconds
             throw NoSuchElementException.BeatmapScore(data.map.previewName)
         }
 
-        val ms = data.mods?.ifEmpty { mods } ?: mods
+        val scores = data.scores.drop(offset).take(limit)
 
-        // 别名不能在这里挂：渲染前 applyBeatmapExtend 会用谱面自带的 beatmapset 覆盖 score.beatmapset，
-        // 把这里挂上的别名冲掉。改到 getMessageChain 里，extend 之后再挂。
-        val filtered = data.scores.filterMod(ms) {
-            throw NoSuchElementException.BeatmapScoreFiltered(data.map.previewName)
+        if (scores.isEmpty()) {
+            throw NoSuchElementException.BeatmapScoreRange(data.map.previewName)
         }
 
-        return ScoreParam(data.user, data.map, filtered, data.mode, ms,
-            isMultipleScore, isShow, isCompact, isRecordCallStatistics.get())
-    }
+        beatmapApiService.applyAlias(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
-    private fun getFromBeatmapID(beatmapID: Long, userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher, mods: List<LazerMod>): ScoreData {
-        val map = beatmapApiService.getBeatmap(beatmapID)
-        val mode: OsuMode
-        val user: OsuUser
-        val scores: List<LazerScore>
+        val scoresByRank = scores.putRank(offset)
 
-        if (!map.hasLeaderBoard) {
-            if (userID != null) {
+        val classified = scoresByRank.classify(context)
 
-                mode = inputMode.data.takeIfConvertable(map)
-                user = userApiService.getOsuUser(userID, mode)
+        if (classified.isEmpty()) {
+            val name = data.map.previewName
+            if (hasCondition) {
+                throw NoSuchElementException.BeatmapScoreFiltered(name)
             } else {
-                mode = inputMode.data.takeIfConvertable(map)
-
-                user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
+                throw NoSuchElementException.BeatmapScore(name)
             }
-
-            return getFromDatabase(user, map, mode, mods, event)
-            // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
         }
 
-        if (userID != null) {
-            mode = inputMode.data.takeIfConvertable(map)
-
-            val async = AsyncMethodExecutor.awaitPair(
-                { userApiService.getOsuUser(userID, mode) },
-                { scoreApiService.getBeatmapScores(beatmapID, userID, mode) }
-            )
-
-            user = async.first
-            scores = async.second.toList()
-        } else {
-            mode = inputMode.data.takeIfConvertable(map)
-
-            user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
-
-            scores = scoreApiService.getBeatmapScores(beatmapID, user.userID, mode)
-        }
-
-        calculateApiService.applyPPToScores(scores)
-
-        return ScoreData(user, map, scores, mode)
+        return ScoreParam(data.user, data.map, classified, data.mode, mods,
+            isMultiple, isShow, isCompact, isRecordCallStatistics)
     }
 
-    private fun getFromScoreID(scoreID: Long) : ScoreData {
-        val score = scoreApiService.getScore(scoreID)
+    private fun List<LazerScore>.applyFromLocal() = apply {
+        beatmapApiService.applyBeatmapExtend(this)
+        beatmapApiService.applyVersion(this)
+        calculateApiService.applyStarToScores(this)
+        calculateApiService.applyPPToScores(this)
+    }
 
-        val async = AsyncMethodExecutor.awaitPair(
-            { userApiService.getOsuUser(score.userID, score.mode) },
-            { beatmapApiService.getBeatmap(score.beatmapID) }
+    /**
+     * 在 [map] 所属的谱面集里找玩家成绩最好（`pp × 星数`）的一个难度。
+     *
+     * `S` / `s` 在用户指到的这个难度上没有成绩时用它兜底：成绩可能在同一谱面集的其他难度上。
+     * 返回的 [ScoreData.map] 可能不是 [map]，调用方必须据此判断要不要把 bid 记进调用统计。
+     *
+     * @return 找不到时返回 null，由调用方决定抛什么异常。
+     */
+    private fun findBestScoreInBeatmapset(
+        event: MessageEvent,
+        user: OsuUser,
+        map: Beatmap,
+        mode: OsuMode,
+        mods: List<LazerMod>,
+    ): ScoreData? {
+        event.replyAndRecallAsync(
+            listOf(
+                listOf("没有获取到您在这个难度上的成绩。", "您的成绩可能在其他难度内。"),
+                listOf("正在查询此谱面中，其他难度上相比最好的成绩。", "正在搜寻所有难度。"),
+                listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。"),
+            ).joinToString("\n") { it.random() }
         )
-
-        val user = async.first
-        val map = async.second
-        val scores = listOf(score)
-        val mode = score.mode
-        val mods = score.mods
-
-        calculateApiService.applyPPToScores(scores)
-
-        return ScoreData(user, map, scores, mode, mods)
-    }
-
-    // 备用方法：先获取最近成绩，再获取谱面
-    private fun getFromRecentScore(userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher, mods: List<LazerMod>): ScoreData {
-        event.replyAndRecallAsync("""
-            没有获取到 24 小时内的可用谱面。
-            正在查询您最近成绩所属的谱面上的最好成绩。
-        """.trimIndent(), 60.seconds)
-
-        val recent: LazerScore
-        val user: OsuUser
-
-        if (userID != null) {
-            val async = AsyncMethodExecutor.awaitPair(
-                { userApiService.getOsuUser(userID, inputMode.data.orElse()) },
-                { scoreApiService.getRecentScore(userID, inputMode.data, 0, 1) }
-            )
-
-            user = async.first
-            recent = async.second.firstOrNull()
-                ?: throw NoSuchElementException.RecentScore(user.username, user.mode)
-
-        } else {
-            user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
-
-            recent = scoreApiService.getRecentScore(user.userID, inputMode.data!!, 0, 1).firstOrNull()
-                ?: throw NoSuchElementException.RecentScore(user.username, user.mode)
-        }
-
-        val map: Beatmap = beatmapApiService.getBeatmap(recent.beatmapID)
-
-        val mode = inputMode.data.takeIfConvertable(map)
-
-        if (!map.hasLeaderBoard) {
-            return getFromDatabase(user, map, mode, mods, event)
-            // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
-        }
-
-        val scores = scoreApiService.getBeatmapScores(recent.beatmapID, user.userID, mode)
-
-        calculateApiService.applyPPToScores(scores)
-
-        return ScoreData(user, map, scores, mode)
-    }
-
-    private fun getFromBefore(beforeBeatmapID: Long, userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher, mods: List<LazerMod>): ScoreData {
-        val map = beatmapApiService.getBeatmap(beforeBeatmapID)
-
-        val mode = inputMode.data.takeIfConvertable(map)
-
-        val user: OsuUser
-        val scores: List<LazerScore>
-
-        if (!map.hasLeaderBoard) {
-            user = if (userID != null) {
-                userApiService.getOsuUser(userID, mode)
-            } else {
-                InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
-            }
-
-            return getFromDatabase(user, map, mode, mods, event)
-            // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
-        }
-
-        if (userID != null) {
-            val async = AsyncMethodExecutor.awaitPair(
-                { userApiService.getOsuUser(userID, inputMode.data!!)},
-                { scoreApiService.getBeatmapScores(beforeBeatmapID, userID, mode)}
-            )
-
-            user = async.first
-            scores = async.second
-        } else {
-            user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
-            scores = scoreApiService.getBeatmapScores(beforeBeatmapID, user.userID, mode)
-        }
-
-        return ScoreData(user, map, scores, mode)
-    }
-
-    private fun getFromBeatmapset(data: ScoreData, event: MessageEvent): ScoreData {
-        return getFromBeatmapset(data.user, data.map, data.mode, data.mods, event)
-    }
-
-    private fun getFromBeatmapsets(beatmapsets: List<Beatmapset>, user: OsuUser, mode: OsuMode, mods: List<LazerMod>?): ScoreData {
-        val excludeConverts = mode.safeModeValue != 0.toByte()
 
         val passed = beatmapApiService.getBeatmapPassed(
             user.userID,
-            beatmapsets.map { it.beatmapsetID },
+            listOf(map.beatmapsetID),
             mode,
-            excludeConverts = excludeConverts,
+            excludeConverts = !map.mode.isConvertAble(mode),
             isLegacy = null,
-            noDiffReductionMods = false
+            noDiffReductionMods = false,
         )
 
-        val beatmaps = passed.sortedByDescending { it.starRating }
-            .take(16)
-
-        val scores = mutableListOf<LazerScore>()
-
-        var count = 0
-
-        runBlocking(Dispatchers.IO) {
-            val chunkedBeatmaps = beatmaps.chunked(4)
-
-            for ((_, b4) in chunkedBeatmaps.withIndex()) {
-                // 1. 并发请求当前批次的 4 个谱面成绩
-                val b4Scores = b4.map { beatmap ->
-                    async(Dispatchers.IO) {
-                        runCatching {
-                            scoreApiService.getBeatmapScore(beatmap.beatmapID, user.userID, mode, mods)
-                        }.getOrNull()?.score
-                    }
-                }.awaitAll().filterNotNull() // 等待全部完成并过滤掉失败/null
-
-                count += b4.size
-
-                // 2. 检查是否拿到成绩
-                if (b4Scores.isNotEmpty()) {
-                    scores.addAll(b4Scores)
-                    // break
-                } else if (count < beatmaps.size) {
-                    delay(2.seconds)
-                }
-            }
-        }
-
-        // 成绩筛选机制：取 pp x 星数 最好的
-        val best = scores.maxWithOrNull(
-            compareBy<LazerScore> {
-                it.pp * it.beatmap.starRating
-            }.thenBy {
-                it.beatmap.starRating
-            }
-        ) ?: throw NoSuchElementException.BeatmapScore(beatmapsets.joinToString(", ") { it.previewName })
-
-        // better 的 beatmap 可能和上面的不一样，并且没有 max combo
-        beatmapApiService.applyBeatmapExtend(best)
-
-        return ScoreData(user, best.beatmap, listOf(best), mode, mods)
-    }
-
-    private fun getFromBeatmapsetID(beatmapsetID: Long, user: OsuUser, mode: OsuMode, mods: List<LazerMod>?, event: MessageEvent): ScoreData {
-        val (passed, set) = runBlocking(Dispatchers.IO) {
-            val excludeConverts = mode.safeModeValue != 0.toByte()
-
-            val passedDeferred = async {
-                beatmapApiService.getBeatmapPassed(
-                    user.userID,
-                    listOf(beatmapsetID),
-                    mode,
-                    excludeConverts = excludeConverts,
-                    isLegacy = null,
-                    noDiffReductionMods = false
-                )
-            }
-
-            val setDeferred = async {
-                beatmapApiService.getBeatmapset(beatmapsetID)
-            }
-
-            passedDeferred.await() to setDeferred.await()
-        }
+        if (passed.isEmpty()) return null
 
         if (passed.size >= 16) {
-            val mixin2 = listOf(
-                listOf("检测到您在此谱面留有大量不同难度的成绩。", "这张谱面难度好多啊，你肯定刷了很久。"),
-                listOf("\n"),
-                listOf("因此，", "所以，", "为了避免鸿儒 ppy 老冯，"),
-                listOf("只会尝试在星数较高的 16 个成绩中查询。", "星数太低的成绩不会纳入考虑。")
+            event.replyAndRecallAsync(
+                listOf(
+                    listOf("检测到您在此谱面留有大量不同难度的成绩。", "这张谱面难度好多啊，你肯定刷了很久。"),
+                    listOf("\n"),
+                    listOf("因此，", "所以，", "为了避免鸿儒 ppy 老冯，"),
+                    listOf("只会尝试在星数较高的 16 个成绩中查询。", "星数太低的成绩不会纳入考虑。"),
+                ).joinToString("") { it.random() }
             )
-
-            event.replyAndRecallAsync(mixin2.joinToString("") { it.random() })
-        } else if (passed.isEmpty()) {
-            throw NoSuchElementException.BeatmapScore(set.previewName)
         }
 
-        val beatmaps = passed.sortedByDescending { it.starRating }
-            .take(16)
+        val candidates = passed.sortedByDescending { it.starRating }.take(16)
 
-        val scores = mutableListOf<LazerScore>()
-
-        var count = 0
-
-        runBlocking(Dispatchers.IO) {
-            val chunkedBeatmaps = beatmaps.chunked(4)
-
-            for ((_, b4) in chunkedBeatmaps.withIndex()) {
-                // 1. 并发请求当前批次的 4 个谱面成绩
-                val b4Scores = b4.map { beatmap ->
-                    async(Dispatchers.IO) {
-                        runCatching {
-                            scoreApiService.getBeatmapScore(beatmap.beatmapID, user.userID, mode, mods)
-                        }.getOrNull()?.score
-                    }
-                }.awaitAll().filterNotNull() // 等待全部完成并过滤掉失败/null
-
-                count += b4.size
-
-                // 2. 检查是否拿到成绩
-                if (b4Scores.isNotEmpty()) {
-                    scores.addAll(b4Scores)
-                    // break
-                } else if (count < beatmaps.size) {
-                    delay(2.seconds)
-                }
-            }
-        }
-
-        // 成绩筛选机制：取 pp x 星数 最好的
-        val best = scores.maxWithOrNull(
-            compareBy<LazerScore> {
-                it.pp * it.beatmap.starRating
-            }.thenBy {
-                it.beatmap.starRating
-            }
-        ) ?: throw NoSuchElementException.BeatmapScore(set.previewName)
+        val best = fetchScoresAtDifficulties(candidates, user.userID, mode, mods)
+            .maxWithOrNull(
+                compareBy<LazerScore> { it.pp * it.beatmap.starRating }
+                    .thenBy { it.beatmap.starRating }
+            ) ?: return null
 
         // better 的 beatmap 可能和上面的不一样，并且没有 max combo
         beatmapApiService.applyBeatmapExtend(best)
 
-        return ScoreData(user, best.beatmap, listOf(best), mode, mods)
+        return ScoreData(user, best.beatmap, listOf(best), mode)
     }
 
-    private fun getFromBeatmapset(user: OsuUser, map: Beatmap, mode: OsuMode, mods: List<LazerMod>?, event: MessageEvent): ScoreData {
-
-        val mixin = listOf(
-            listOf("没有获取到您在这个难度上的成绩。", "您的成绩可能在其他难度内。"),
-            listOf("正在查询此谱面中，其他难度上相比最好的成绩。", "正在搜寻所有难度。"),
-            listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。")
-        )
-
-        event.replyAndRecallAsync(mixin.joinToString("\n") { it.random() })
-
-        val (passed, set) = runBlocking(Dispatchers.IO) {
-            val includeConverts = map.mode.isConvertAble(mode)
-
-            val passedDeferred = async {
-                beatmapApiService.getBeatmapPassed(
-                    user.userID,
-                    listOf(map.beatmapsetID),
-                    mode,
-                    excludeConverts = !includeConverts,
-                    isLegacy = null,
-                    noDiffReductionMods = false
-                )
-            }
-
-            val setDeferred = async {
-                beatmapApiService.getBeatmapset(map.beatmapsetID)
-            }
-
-            passedDeferred.await() to setDeferred.await()
-        }
-
-        if (passed.size >= 16) {
-            val mixin2 = listOf(
-                listOf("检测到您在此谱面留有大量不同难度的成绩。", "这张谱面难度好多啊，你肯定刷了很久。"),
-                listOf("\n"),
-                listOf("因此，", "所以，", "为了避免鸿儒 ppy 老冯，"),
-                listOf("只会尝试在星数较高的 16 个成绩中查询。", "星数太低的成绩不会纳入考虑。")
-            )
-
-            event.replyAndRecallAsync(mixin2.joinToString("") { it.random() })
-        } else if (passed.isEmpty()) {
-            throw NoSuchElementException.BeatmapScore(set.previewName)
-        }
-
-        val beatmaps = passed.sortedByDescending { it.starRating }
-            .take(16)
-
+    /**
+     * 按 4 个一批查询每个难度上的最好成绩：批内并发，批间串行；
+     * 一批全空时退避 2 秒，避免被 ppy 限流。
+     */
+    private fun fetchScoresAtDifficulties(
+        beatmaps: List<Beatmap>,
+        userID: Long,
+        mode: OsuMode,
+        mods: List<LazerMod>,
+    ): List<LazerScore> = runBlocking(Dispatchers.IO) {
         val scores = mutableListOf<LazerScore>()
+        var checked = 0
 
-        var count = 0
-
-        runBlocking(Dispatchers.IO) {
-            val chunkedBeatmaps = beatmaps.chunked(4)
-
-            for ((_, b4) in chunkedBeatmaps.withIndex()) {
-                // 1. 并发请求当前批次的 4 个谱面成绩
-                val b4Scores = b4.map { beatmap ->
-                    async(Dispatchers.IO) {
-                        runCatching {
-                            scoreApiService.getBeatmapScore(beatmap.beatmapID, user.userID, mode, mods)
-                        }.getOrNull()?.score
-                    }
-                }.awaitAll().filterNotNull() // 等待全部完成并过滤掉失败/null
-
-                count += b4.size
-
-                // 2. 检查是否拿到成绩
-                if (b4Scores.isNotEmpty()) {
-                    scores.addAll(b4Scores)
-                    // break
-                } else if (count < beatmaps.size) {
-                    delay(2.seconds)
+        for (batch in beatmaps.chunked(4)) {
+            val found = batch.map { beatmap ->
+                async(Dispatchers.IO) {
+                    runCatching { getBestScoreOnBeatmap(beatmap.beatmapID, userID, mode, mods) }.getOrNull()
                 }
-            }
+            }.awaitAll().filterNotNull()
+
+            checked += batch.size
+            scores += found
+
+            if (found.isEmpty() && checked < beatmaps.size) delay(2.seconds)
         }
 
-        // 成绩筛选机制：取 pp x 星数 最好的
-        val best = scores.maxWithOrNull(
-            compareBy<LazerScore> {
-                it.pp * it.beatmap.starRating
-            }.thenBy {
-                it.beatmap.starRating
-            }
-        ) ?: throw NoSuchElementException.BeatmapScore(set.previewName)
-
-        // better 的 beatmap 可能和上面的不一样，并且没有 max combo
-        beatmapApiService.applyBeatmapExtend(best)
-
-        return ScoreData(user, best.beatmap, listOf(best), mode, mods)
+        scores
     }
 
-    private fun getFromDatabase(user: OsuUser, beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>, event: MessageEvent): ScoreData {
-
-        val mixin3 = listOf(
-            listOf("谱面 ${beatmap.previewName} 没有榜，", "这张谱面没有官网排行榜，"),
-            listOf("无法通过官网获取成绩。", "ppy 不会提供任何成绩。"),
-            listOf("\n"),
-            listOf("正在查询数据库中存储的成绩。", "我需要查一查资料。", "从历史记录中应该能找到一点蛛丝马迹。"),
-            listOf("这可能需要一段时间。", "请稍候...", "一会儿就好。")
-        )
-
-        event.replyAndRecallAsync(mixin3.joinToString("") { it.random() }, 10.seconds)
-
-        val scores = scoreDao.getBeatmapScores(user, beatmap, mode)
-
-        if (scores.isEmpty()) {
-            throw NoSuchElementException.DatabaseBeatmapScore(beatmap.previewName)
+    /**
+     * 没指定 mod 时走带 legacy 重试的三参版本，老玩家的 stable 成绩也能查到；
+     * 指定了 mod 就按 mod 筛。
+     */
+    private fun getBestScoreOnBeatmap(
+        beatmapID: Long,
+        userID: Long,
+        mode: OsuMode,
+        mods: List<LazerMod>,
+    ): LazerScore? {
+        val score = if (mods.isEmpty()) {
+            scoreApiService.getBeatmapScore(beatmapID, userID, mode)
+        } else {
+            scoreApiService.getBeatmapScore(beatmapID, userID, mode, mods)
         }
 
-        val filtered = scores.filterMod(mods) {
-            throw NoSuchElementException.DatabaseBeatmapScoreWithMod(beatmap.previewName)
-        }
-
-        beatmapApiService.applyBeatmapExtend(filtered)
-        beatmapApiService.applyVersion(filtered)
-
-        calculateApiService.applyStarToScores(filtered)
-        calculateApiService.applyPPToScores(filtered)
-
-        return ScoreData(user, beatmap, filtered, mode, mods)
+        return score?.score
     }
-
-
-//    private fun ScoreParam.asyncDownloadBackground() {
-//        scoreApiService.asyncDownloadBackgroundFromScores(map, listOf(CoverType.COVER, CoverType.LIST))
-//    }
 
     private fun ScoreParam.getMessageChain(): MessageChain {
         return try {
-            if (scores.size > 1 && isMultipleScore) {
-                beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
-                calculateApiService.applyStarToScores(scores)
-
-                // 必须在 extend 之后：extend 会替换 score.beatmapset，提前挂的别名会丢
-                beatmapApiService.applyAlias(scores)
-
-                // asyncDownloadBackground()
+            if (scores.size > 1 && isMultiple) {
 
                 val body = mapOf(
                     "user" to user,
@@ -814,11 +469,6 @@ import kotlin.time.Duration.Companion.seconds
                 MessageChain(imageService.getPanel(body, "A5"))
             } else {
                 val score = scores.first()
-                beatmapApiService.applyBeatmapExtendForSameScore(listOf(score), map)
-                calculateApiService.applyStarToScores(listOf(score))
-
-                // 同上，extend 之后再挂别名
-                beatmapApiService.applyAlias(score)
 
                 val e5Param = ScorePRService.getE5ParamForFilteredScore(user, null, score, "S", beatmapApiService, calculateApiService)
 

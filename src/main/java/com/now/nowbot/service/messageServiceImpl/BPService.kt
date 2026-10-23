@@ -7,6 +7,7 @@ import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
 import com.now.nowbot.model.filter.hasCondition
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.LazerScore.Companion.associateByOffset
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -167,7 +168,8 @@ import java.util.regex.Matcher
         val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
         val defaultLimit = when {
-            hasCondition -> 100
+            // BP 可以拿 200 的
+            hasCondition -> 200
             isMultiple -> 20
             else -> 1
         }
@@ -201,13 +203,11 @@ import java.util.regex.Matcher
         }
 
         calculateApiService.applyStarToScores(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
         beatmapApiService.applyBeatmapExtend(scores)
         beatmapApiService.applyAlias(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
-        val scoresByRank: Map<Int, LazerScore> = buildMap(scores.size) {
-            scores.forEachIndexed { index, score -> put(index + offset + 1, score) }
-        }
+        val scoresByRank = scores.associateByOffset(offset)
 
         val classified = scoresByRank.classify(context)
 
@@ -241,8 +241,7 @@ import java.util.regex.Matcher
 
                 MessageChain(imageService.getPanel(body, "A4"))
             } else {
-                val (ranking, score) = scores.entries.single()
-                score.ranking = ranking
+                val (_, score) = scores.entries.single()
 
                 val e5Param = ScorePRService.getE5ParamForFilteredScore(user, historyUser, score, "B", beatmapApiService, calculateApiService)
 

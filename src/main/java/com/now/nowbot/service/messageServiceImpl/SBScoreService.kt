@@ -281,7 +281,7 @@ class SBScoreService(
     }
     private fun ScoreParam.getMessageChain(): MessageChain {
         return try {
-            if (scores.size > 1 && isMultipleScore) {
+            if (scores.size > 1 && isMultiple) {
                 // 实际上 SB 服内的成绩只能拿谱面最近 100 个和最高 100 个，事实上 SS 功能是失效的
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                 // asyncDownloadBackground(param)

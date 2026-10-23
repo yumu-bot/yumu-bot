@@ -6,6 +6,9 @@ import com.now.nowbot.throwable.TipsRuntimeException
 
 open class NoSuchElementException(message: String?): TipsRuntimeException(message), BotException {
 
+    class AnyBeatmapScore(name: String):
+        NoSuchElementException("谱面 $name 有榜，但是奇异博士也没找到您的成绩。")
+
     class Audio:
         NoSuchElementException("""
             试听音频下载失败。
@@ -40,6 +43,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class BeatmapScoreFiltered(name: Any):
         NoSuchElementException("没有找到您在谱面 $name 内符合条件的成绩。")
 
+    class BeatmapScoreRange(name: Any):
+        NoSuchElementException("没有找到您在谱面 $name 内所属范围的成绩。")
+
     class BestScore(name: String):
         NoSuchElementException("无法获取玩家 $name 的最好成绩...")
 
@@ -69,12 +75,6 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
 
     class DatabaseBeatmapScore(name: String):
         NoSuchElementException("谱面 $name 没有榜，也没有找到您在数据库内的成绩。")
-
-    class DatabaseBeatmapScoreWithMod(name: String):
-        NoSuchElementException("""
-            谱面 $name 没有榜，虽然找到了您在数据库内的成绩，但是不符合您输入的模组要求。
-            您可以尝试不固定模组，来获取结果。
-            """.trimIndent())
 
     class GuestDiff:
         NoSuchElementException("你没有做过客串难度谱面，别人也没有给你赠送过客串难度谱面。")

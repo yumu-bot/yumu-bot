@@ -302,9 +302,9 @@ class ScorePRService(
         }
 
         calculateApiService.applyStarToScores(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
         beatmapApiService.applyBeatmapExtend(scores)
         beatmapApiService.applyAlias(scores)
+        BeatmapUtil.applyBeatmapChanges(scores)
 
         val scoresByRank: Map<Int, LazerScore> = buildMap(scores.size) {
             scores.forEachIndexed { index, score -> put(index + offset + 1, score) }

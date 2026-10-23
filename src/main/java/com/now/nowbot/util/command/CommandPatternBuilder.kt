@@ -367,6 +367,14 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
+    /**
+     * v0.8.6 新增
+     * 随意匹配，交给后面的 classifier 处理。
+     */
+    fun appendAny() {
+        appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING, MORE)
+    }
+
     fun appendMatchParam() {
         appendGroup(MAYBE) {
             appendSpace()

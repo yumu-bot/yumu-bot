@@ -522,5 +522,19 @@ data class LazerScore(
 
             return (hit / total).coerceIn(0.0..1.0)
         }
+
+        fun List<LazerScore>.putRank(offset: Int = 0): List<LazerScore> = this.onEachIndexed { index, score ->
+            val ranking = index + offset + 1
+            score.ranking = ranking
+        }
+
+        /**
+         * 也就是给 score 上 rank 和转换成 map 的方法
+         */
+        fun List<LazerScore>.associateByOffset(offset: Int = 0): Map<Int, LazerScore> = this.withIndex().associate { (index, score) ->
+            val ranking = index + offset + 1
+            score.ranking = ranking
+            ranking to score
+        }
     }
 }
