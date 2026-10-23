@@ -323,6 +323,7 @@ import kotlin.time.Duration.Companion.seconds
 
         beatmapApiService.applyAlias(scores)
         BeatmapUtil.applyBeatmapChanges(scores)
+        calculateApiService.applyStarToScores(scores)
 
         val scoresByRank = scores.putRank(offset)
 
