@@ -249,6 +249,7 @@ data class Beatmapset(
                     s.artistUnicode = this.artistUnicode
                     s.title = this.title
                     s.titleUnicode = this.titleUnicode
+                    s.aliases = this.aliases
 
                     s.ranked = this.ranked
                     s.relatedUsers = this.relatedUsers

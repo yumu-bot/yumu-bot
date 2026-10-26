@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 src/main/resources/*.yaml
 src/test/
+.mvn/
 
 ### STS ###
 .apt_generated

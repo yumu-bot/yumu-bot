@@ -210,6 +210,6 @@ interface OsuBeatmapApiService {
      * 批量给谱面挂别名。不能和 [applyAlias] 的 List 重载同名，否则擦除后签名冲突。
      */
     fun applyAliasForBeatmaps(beatmaps: Collection<Beatmap>) {
-        applyAlias(beatmaps.mapNotNull { it.beatmapset }.distinctBy { it.beatmapsetID })
+        applyAlias(beatmaps.mapNotNull { it.beatmapset })
     }
 }

@@ -383,11 +383,8 @@ class ScorePRService(
             score.ranking = ranking
 
             val cover = scoreApiService.getCover(score, CoverType.COVER)
-
-            AsyncMethodExecutor.awaitPair (
-                { beatmapApiService.applyBeatmapExtend(score) },
-                { calculateApiService.applyPPToScore(score) },
-            )
+            beatmapApiService.applyBeatmapExtend(score)
+            calculateApiService.applyPPToScore(score)
 
             getUUScore(user, score, cover)
         }

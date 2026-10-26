@@ -216,9 +216,15 @@ class CalculateApiImpl(
 
         rosu.let { r ->
             r.loadBeatmap(bytes).use { beatmap ->
-                val difficulty = customDifficultyRequest(mods, score.isLazer, score.mode)
-                val performance = score.buildPerformanceRequest(difficulty)
+                // 失败成绩要把难度截到「实际打到的位置」，否则会拿整图难度套一部分命中，pp 偏小
+                val performanceDifficulty = customDifficultyRequest(
+                    mods, score.isLazer, score.mode, passedObjects = score.passedObjectsForPerformance()
+                )
+                val performance = score.buildPerformanceRequest(performanceDifficulty)
                 result = r.calculatePerformance(beatmap, performance)
+
+                // 参考用的 SS / FC pp 仍然按整张图算
+                val difficulty = customDifficultyRequest(mods, score.isLazer, score.mode)
                 fullPP = r.calculatePerformance(beatmap, score.buildFullComboRequest(difficulty)).pp
                 perfectPP = r.calculatePerformance(beatmap, score.buildPerfectRequest(difficulty)).pp
             }
@@ -382,7 +388,7 @@ class CalculateApiImpl(
         return scores.associate { score ->
             val result = rosu.let { r ->
                 r.loadBeatmap(bytes).use { beatmap ->
-                    val difficulty = score.buildDifficultyRequest()
+                    val difficulty = score.buildDifficultyRequest(score.passedObjectsForPerformance())
                     val performance = score.buildPerformanceRequest(difficulty)
                     val result = r.calculatePerformance(beatmap, performance)
 
@@ -686,7 +692,7 @@ class CalculateApiImpl(
         return try {
             rosu.let { r ->
                 r.loadBeatmap(bytes).use { beatmap ->
-                    val difficulty = score.buildDifficultyRequest()
+                    val difficulty = score.buildDifficultyRequest(score.passedObjectsForPerformance())
                     val performance = score.buildPerformanceRequest(difficulty)
                     val result = r.calculatePerformance(beatmap, performance)
 
@@ -703,7 +709,13 @@ class CalculateApiImpl(
     companion object {
         private val log = LoggerFactory.getLogger(OsuCalculateApiService::class.java)
 
-        fun customDifficultyRequest(mods: List<LazerMod>, isLazer: Boolean? = null, mode: OsuMode = OsuMode.DEFAULT, clockRate: Double? = null): DifficultyRequest {
+        fun customDifficultyRequest(
+            mods: List<LazerMod>,
+            isLazer: Boolean? = null,
+            mode: OsuMode = OsuMode.DEFAULT,
+            clockRate: Double? = null,
+            passedObjects: Int? = null,
+        ): DifficultyRequest {
             val client = if (mode.isDefault) {
                 null
             } else {
@@ -724,11 +736,12 @@ class CalculateApiImpl(
                 .clockRate(clockRate ?: mods.getClockRate().toDouble())
 
             client?.let { builder.scoreMode(it) }
+            passedObjects?.takeIf { it > 0 }?.let { builder.passedObjects(it) }
 
             return builder.build()
         }
 
-        fun LazerScore.buildDifficultyRequest(): DifficultyRequest {
+        fun LazerScore.buildDifficultyRequest(passedObjects: Int? = null): DifficultyRequest {
             val client = if (this.mode.isDefault) {
                 null
             } else {
@@ -748,8 +761,27 @@ class CalculateApiImpl(
                 .clockRate(this.mods.getClockRate().toDouble())
 
             client?.let { builder.scoreMode(it) }
+            passedObjects?.takeIf { it > 0 }?.let { builder.passedObjects(it) }
 
             return builder.build()
+        }
+
+        /**
+         * 失败成绩在 rosu 里算 pp 时，应该把难度截到「实际打到的位置」（passed_objects）。
+         *
+         * 不截断的话，rosu 会用整张图的星数、整图的 max combo 当作分母，却只喂进去打到的那部分
+         * 命中数，算出来的 pp 既不是「死在这里的 pp」也不是「打完的 pp」，通常明显偏小。
+         *
+         * [LazerScore.scoreHit] 就是已经判定过的物件数（std 的 300+100+50+miss、taiko 的 great+ok+miss、
+         * catch 的果+大果、mania 的六种判定之和），单位与 rosu 的 object count 一致；
+         * 超过整图物量也没关系，rosu 内部会夹到整图（等价于不截断）。
+         *
+         * 已通过的成绩、以及一个物件都没打到的成绩返回 null，保持整图难度。
+         */
+        fun LazerScore.passedObjectsForPerformance(): Int? {
+            if (this.passed) return null
+
+            return this.scoreHit.takeIf { it > 0 }
         }
 
         fun DifficultyRequest.customPerformanceRequest(
