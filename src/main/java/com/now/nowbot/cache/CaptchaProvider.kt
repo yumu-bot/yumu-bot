@@ -27,6 +27,14 @@ class CaptchaProvider(
     fun verifyCaptcha(code: String): Long? {
         return cacheManager.getAndRemove(code)
     }
+
+    /**
+     * 验证码已经被使用过时，返回它当时对应的 userID。
+     * 用于区分「重复操作」和「验证码错误」。
+     */
+    fun getUsedCaptchaUserID(code: String): Long? {
+        return cacheManager.getUsedUserID(code)
+    }
 }
 
 @Component
@@ -46,6 +54,12 @@ class CaptchaCacheManager {
         }
         .build()
 
+    // 已经使用过的验证码，保留一段时间，用于识别重复输入
+    private val usedCache: Cache<String, Long> = Caffeine.newBuilder()
+        .expireAfterWrite(10, TimeUnit.MINUTES)
+        .maximumSize(10_000)
+        .build()
+
     fun save(code: String, userID: Long) {
         captchaCache.put(code, userID)
         indexCache[userID] = code
@@ -53,9 +67,15 @@ class CaptchaCacheManager {
 
     fun getAndRemove(code: String): Long? {
         return captchaCache.getIfPresent(code)?.also {
+            // 先记录为已使用，再让验证码失效，方便后续区分「重复操作」
+            usedCache.put(code, it)
             captchaCache.invalidate(code)
             indexCache.remove(it)
         }
+    }
+
+    fun getUsedUserID(code: String): Long? {
+        return usedCache.getIfPresent(code)
     }
 
     fun removeByUserID(userId: Long) {
@@ -63,6 +83,6 @@ class CaptchaCacheManager {
     }
 
     fun exists(code: String): Boolean {
-        return captchaCache.getIfPresent(code) != null
+        return captchaCache.getIfPresent(code) != null || usedCache.getIfPresent(code) != null
     }
 }

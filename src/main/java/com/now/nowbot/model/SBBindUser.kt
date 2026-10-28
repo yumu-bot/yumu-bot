@@ -1,5 +1,6 @@
 package com.now.nowbot.model
 
+import com.now.nowbot.entity.IDUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.ppysb.SBUser
 import tools.jackson.databind.PropertyNamingStrategies
@@ -10,16 +11,16 @@ import java.time.OffsetDateTime
 data class SBBindUser(
     var id: Long? = null,
 
-    var userID: Long,
+    override var userID: Long,
 
-    var username: String,
+    override var username: String,
 
     var mode: OsuMode,
 
     var time: Long = 0L,
 
     var joinDate: OffsetDateTime = OffsetDateTime.now(),
-) {
+): IDUser {
     constructor(sbUser: SBUser): this (null, sbUser.userID, sbUser.username, sbUser.mode)
     constructor(userID: Long, username: String): this (null, userID, username, OsuMode.DEFAULT, 0L)
     constructor(id: Long?, userID: Long, username: String, mode: OsuMode): this (id, userID, username, mode, 0L)

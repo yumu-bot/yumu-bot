@@ -145,9 +145,26 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
 
         class BindSuccessWithMode(mode: OsuMode, prefix: Char = '!'):
             BindResultException("""
-                已绑定成功！
+                已完成绑定！
                 当前绑定模式为：${mode.fullName}。
                 您可以输入 ${prefix}mode (mode) 来切换绑定的模式，输入 ${prefix}help 获取简洁的帮助信息。
+                """.trimIndent())
+
+        class BindSuccessWithCaptcha(id: Long, name: String, mode: OsuMode, prefix: Char = '!'):
+            BindResultException("""
+                已完成 oauth2 绑定！($id) $name 的令牌已经生效，并长期更新。
+                当前绑定模式为：${mode.fullName}
+                您可以输入 ${prefix}mode (mode) 来切换绑定的模式，输入 ${prefix}help 获取简洁的帮助信息。
+                """.trimIndent())
+
+        /**
+         * 验证码已经被使用过，且当前 QQ 已经绑定到该验证码对应的玩家。
+         * 属于重复操作，而不是一次新的绑定。
+         */
+        class BindRepeated(prefix: Char = '!'):
+            BindResultException("""
+                这个验证码已经使用过了，无需重复操作。
+                您已经完成过绑定，可以直接使用功能；如果需要改绑，请先输入 ${prefix}ub 解除绑定关系。
                 """.trimIndent())
     }
 }

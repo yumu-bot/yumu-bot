@@ -385,7 +385,7 @@ enum class SymbolHead(
     MODE(":", "：", type = ExtractType.MODE),
     RANGE("#", "＃", type = ExtractType.RANGE),
     MOD("+", "＋", type = ExtractType.MOD),
-    STAR("#", "＃", type = ExtractType.STARRY),
+    STAR("*", "＊" , "⁂", "☆", "✪", "★", "⋆", type = ExtractType.STARRY),
     ;
 
     /** 该头认的所有符号，按长度降序，长符号优先 */
@@ -685,6 +685,10 @@ val LazerModExtractor = CommandExtractor { ctx ->
 
 val RangeExtractor = CommandExtractor { ctx ->
     ctx.extractBySymbols(SymbolHead.RANGE)
+}
+
+val StarExtractor = CommandExtractor { ctx ->
+    ctx.extractBySymbols(SymbolHead.STAR)
 }
 
 val ScoreClassifierExtractor = CommandExtractor { ctx ->

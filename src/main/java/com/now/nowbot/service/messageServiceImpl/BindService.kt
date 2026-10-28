@@ -19,8 +19,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.REGEX_OSU_USERNAME
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service("BIND")
@@ -94,7 +92,8 @@ class BindService(
      * 处理带有 username 或 验证码 的绑定逻辑
      */
     private fun handleUsernameBinding(event: MessageEvent, targetID: Long, input: String) {
-        val userID = input.trim().toLongOrNull()
+        val value = input.trim()
+        val userID = value.toLongOrNull()
 
         val maybeUserID = userID != null && userID !in 100000L .. 999999L
 
@@ -113,21 +112,43 @@ class BindService(
 
         if (maybeCaptcha) {
             // 优先尝试作为验证码
-            val uid = captchaProvider.verifyCaptcha(input)
-            val bindUser = uid?.let { bindDao.getBindUserOrNull(it) }
+            val uid = captchaProvider.verifyCaptcha(value)
 
-            if (bindUser != null && bindUser.hasToken) {
-                // 验证码验证成功
-                executeBind(event, targetID, bindUser)
-                return
+            if (uid != null) {
+                // 验证码只会在 oauth2 授权完成后生成，正常情况下必然带有令牌
+                val bindUser = bindDao.getBindUserOrNull(uid)
+
+                if (bindUser != null && bindUser.hasToken) {
+                    // 验证码验证成功。
+                    // 注意：此时玩家可能已经通过 username 绑定过一次，
+                    // 必须用 fromCaptcha 区分「完成 oauth2 授权」和「重复绑定」。
+                    executeBind(event, targetID, bindUser, fromCaptcha = true)
+                    return
+                }
+
+                // 验证码存在，但对应账号没有 oauth2 令牌（可能已被降级或解绑）
+                throw BindException.BindIllegalArgumentException.IllegalVerification()
             }
 
-            if (bindUser != null) {
+            // 验证码已经被使用过：如果当前 QQ 绑定的正好是这个账号，说明是重复操作
+            val usedUID = captchaProvider.getUsedCaptchaUserID(value)
+            if (usedUID != null) {
+                val boundUID = bindDao.getQQLiteFromQQ(targetID)?.bindUser?.userID
+
+                if (boundUID == usedUID) {
+                    throw BindException.BindResultException.BindRepeated()
+                }
+
+                throw BindException.BindIllegalArgumentException.IllegalVerification()
+            }
+
+            // 已经绑定的 QQ 不允许再把 6 位数字当成 uid 来解析，避免误绑其他玩家
+            if (bindDao.getQQLiteFromQQ(targetID) != null) {
                 throw BindException.BindIllegalArgumentException.IllegalVerification()
             }
 
             // 验证码无效，尝试作为 Osu User ID 获取玩家
-            val user = runCatching { userApiService.getOsuUser(input) }
+            val user = runCatching { userApiService.getOsuUser(value) }
                 .recoverCatching { userApiService.getOsuUser(userID) }.getOrElse {
                     throw BindException.BindIllegalArgumentException.IllegalVerification()
                 }
@@ -150,7 +171,7 @@ class BindService(
                 }
             )
         } else {
-            val user = userApiService.getOsuUser(input)
+            val user = userApiService.getOsuUser(value)
             executeBind(event, targetID, BindUser(user))
         }
     }
@@ -182,12 +203,48 @@ class BindService(
 
     /**
      * 执行绑定入库逻辑（前置排查冲突）
+     *
+     * @param fromCaptcha 是否来自 oauth2 授权完成后的六位数验证码。
+     * 由于 oauth2 回调会先更新 osu_bind_user，此时 QQ 可能已经通过 username 绑定到同一个玩家，
+     * 不能简单判定为「已经绑定」，需要区分「确认完成绑定」和「重复操作」。
      */
-    private fun executeBind(event: MessageEvent, targetID: Long, bindUser: BindUser) {
+    private fun executeBind(
+        event: MessageEvent,
+        targetID: Long,
+        bindUser: BindUser,
+        fromCaptcha: Boolean = false
+    ) {
         val existQQ = bindDao.getQQLiteFromQQ(targetID)
         if (existQQ != null) {
-            if (existQQ.qq == event.sender.contactID) throw BindException.BoundException.YouBound()
-            else throw BindException.BoundException.UserBound(bindUser.username, existQQ.qq)
+            val boundUser = existQQ.bindUser
+
+            // 这个 QQ 已经绑定到同一个 osu! 玩家
+            if (boundUser != null && boundUser.userID == bindUser.userID) {
+                if (! fromCaptcha) {
+                    // 用户名 / uid 的重复绑定
+                    throw BindException.BoundException.YouBound()
+                }
+
+                // 验证码流程：oauth2 授权已经写入该玩家，说明本次绑定已经完成。
+                // 这里应当明确回复「确认完成绑定」，而不是误报成「您已绑定」。
+                bindDao.bindQQ(targetID, bindUser)
+
+                event.replyAsync(
+                    BindException.BindResultException.BindSuccessWithCaptcha(
+                        bindUser.userID, bindUser.username, bindUser.mode
+                    )
+                )
+                return
+            }
+
+            // 这个 QQ 已经绑定了其他的 osu! 玩家
+            if (existQQ.qq == event.sender.contactID) {
+                throw BindException.BoundException.YouBound()
+            } else {
+                throw BindException.BoundException.UserBound(
+                    boundUser?.username ?: bindUser.username, existQQ.qq
+                )
+            }
         }
 
         // 检查该 Osu 账号是否已被绑定
@@ -301,13 +358,5 @@ class BindService(
             },
             onFailure = {},
         )
-    }
-
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(BindService::class.java)
-
-        private val userIDRegex = Regex("\\d{7,10}|\\d{1,5}")
-
-        private val captchaRegex = Regex("\\d{6}")
     }
 }

@@ -134,9 +134,11 @@ class CommandUtil(
      *    可以继续读 `ctx[ExtractType.BEATMAPSET_ID]`；
      * 3. `scoreid=123` / `成绩编号=123`（[ScoreClassifier.SCORE_ID]）：按成绩 ID 取成绩，
      *    再按成绩的 BID 取谱面；
-     * 4. 剩余文本里**最左边**的数字 token（旧指令 `appendBID()` 的 `(?<bid>\d+)`，
-     *    例如 `osu 1234567 mre`）：小于 [SCORE_ID_THRESHOLD]（1 亿）的当谱面编号，
-     *    大于 1 亿的当成绩编号，和指令说明一致。
+     * 4. 剩余文本里的裸数字（旧指令 `appendBID()` 的 `(?<bid>\d+)`，例如 `osu 1234567 mre`）：
+     *    只有一个数字时仍然只认最左边那个；有两个及以上时取数值最大的，大小相同取最左，
+     *    所以 `osu 2 1234567` 和 `osu 1234567 2` 都会认成 1234567。
+     *    小于 [SCORE_ID_THRESHOLD]（1 亿）的当谱面编号，大于 1 亿的当成绩编号，
+     *    和指令说明一致。显式写了的 `b123` / `s123` / `scoreid=123` 仍然走前面三步。
      *    命中时会把它从 residual 里删掉，防止 [getUserID] 把它当成玩家名、[getRange]
      *    把它当成范围，**所以本方法必须在 [getUserID] 之前调用**；
      * 5. 都没有时按指令说明「默认获取之前查询记录的谱面编号」：读
@@ -534,9 +536,24 @@ class CommandUtil(
     }
 
     /**
-     * 剩余文本里最左边的纯数字 token。
+     * [getResidualID] 扫到的一个候选数字，[start] / [end] 是 [StripContext.text] 里的下标。
+     */
+    private data class ResidualID(val id: Long, val start: Int, val end: Int)
+
+    /**
+     * 从剩余文本里挑一个裸数字。
      *
-     * 这是旧指令 `appendBID()` 的语义：`(?<bid>\d+)` 紧跟在模式后面、玩家名前面。
+     * 旧指令 `appendBID()` 的语义是 `(?<bid>\d+)`：模式之后、玩家名之前的第一个数字。
+     * 现在分两种情况：
+     *
+     * - 只有一个数字：仍然只认最左边那一个，和旧语义一致；不在最左边就不提取，
+     *   留给 [getUserID] / [getRange]，免得把 `!s happy 2` 里的范围当成谱面编号；
+     * - 有两个及以上：取数值最大的那一个，大小相同取最左。
+     *   `!s 2 1234567` 和 `!s 1234567 2` 都会认成 1234567。
+     *
+     * 只认整段都是数字的 token：`happy2`、`3-5`、`#3-5`、`98.5`、`1234567,` 都不算，
+     * 避免把玩家名里的数字、范围、小数、带标点的数字当成编号。
+     *
      * 命中时把它从 residual 里删掉，[getUserID] 就不会再把它当成名字的一部分，
      * 也不会被 [getRange] 当成范围。
      *
@@ -545,12 +562,31 @@ class CommandUtil(
      * @return 数字；没有时返回 null（不删文本）
      */
     private fun getResidualID(ctx: StripContext): Long? {
-        val match = LEADING_NUMBER_REGEX.find(ctx.text) ?: return null
-        val id = match.groupValues[1].toLongOrNull()?.takeIf { it > 0 } ?: return null
+        val candidates = RESIDUAL_TOKEN_REGEX.findAll(ctx.text)
+            .mapNotNull { match ->
+                val id = match.value.toLongOrNull()?.takeIf { it > 0 } ?: return@mapNotNull null
 
-        ctx.removeResidual(match.range.first, match.range.last + 1)
+                ResidualID(id, match.range.first, match.range.last + 1)
+            }
+            .toList()
 
-        return id
+        if (candidates.isEmpty()) return null
+
+        val picked = if (candidates.size == 1) {
+            val only = candidates.first()
+
+            // 只有一个数字：必须排在最左边，否则它更可能是范围（或玩家名的一部分）
+            if (ctx.text.substring(0, only.start).isNotBlank()) return null
+
+            only
+        } else {
+            // 多个数字：数值大的优先，一样大时取最左
+            candidates.maxWith(compareBy({ it.id }, { -it.start }))
+        }
+
+        ctx.removeResidual(picked.start, picked.end)
+
+        return picked.id
     }
 
     /** 按成绩 ID 取成绩，再按成绩的 BID 取谱面。 */
@@ -770,13 +806,13 @@ class CommandUtil(
         private const val SCORE_ID_THRESHOLD = 100_000_000L
 
         /**
-         * 剩余文本里最左边的纯数字 token。
+         * 剩余文本里的一个 token（按空白切分）。
          *
          * 旧指令 `appendBID()` 用的是 `(?<bid>\d+)`：模式之后、玩家名之前的第一个数字。
-         * 这里额外要求它处在一个 token 的开头（前面只有空白、后面是空白或结尾），
-         * 避免把 `happy2` 这种名字里的数字当成 BID。
+         * 现在把整个 token 拿去 `toLongOrNull()`，只有整段都是数字才算候选，
+         * `happy2` / `3-5` / `#3-5` / `98.5` / `1234567,` 都会被排除。
          */
-        private val LEADING_NUMBER_REGEX = Regex("""^\s*(\d+)(?=\s|$)""")
+        private val RESIDUAL_TOKEN_REGEX = Regex("""\S+""")
 
         /**
          * 一个完整的范围 token，可以是 `2`、`3-5`、`#3-5`，也可以带全角横线。

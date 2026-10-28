@@ -60,7 +60,7 @@ class BindDao(
 
     @Throws(BindException::class)
     fun getBindFromQQ(qq: Long, isMyself: Boolean = false): BindUser {
-        return getBindFromQQOrNull(qq).throwIfNull(isMyself)
+        return getBindFromQQOrNull(qq).throwIfNotBind(isMyself)
     }
 
     fun getBindFromIDs(ids: Iterable<Long>): List<BindUser> {
@@ -237,7 +237,7 @@ class BindDao(
      */
     @Throws(BindException::class)
     fun getSBBindUser(userID: Long, isMyself: Boolean = true): SBBindUser {
-        return getSBBindUserOrNull(userID).throwIfNull(isMyself)
+        return getSBBindUserOrNull(userID).throwIfNotBind(isMyself)
     }
 
     /**
@@ -256,7 +256,7 @@ class BindDao(
      * 根据 QQ 查询 SB 绑定用户（找不到时抛出对应异常）
      */
     fun getSBBindFromQQ(qq: Long, isMyself: Boolean): SBBindUser {
-        return getSBBindFromQQOrNull(qq).throwIfNull(isMyself)
+        return getSBBindFromQQOrNull(qq).throwIfNotBind(isMyself)
     }
 
     fun saveBind(user: SBBindUser): SBBindUser? {
@@ -358,7 +358,7 @@ class BindDao(
      */
     @Throws(BindException::class)
     fun getQQ(userID: Long, isMyself: Boolean = true): Long {
-        return getQQOrNull(userID).throwIfNull(isMyself)
+        return getQQOrNull(userID).throwIfNotBind(isMyself)
     }
 
     /**
@@ -678,12 +678,10 @@ class BindDao(
 
     companion object {
 
-        fun <T: Any> T?.throwIfNull(isMyself: Boolean = true): T {
-            return this ?: if (isMyself) {
-                throw YouNotBind()
-            } else {
-                throw UserNotBind()
-            }
-        }
+        fun <T : IDUser> T?.throwIfNotBind(isMyself: Boolean = true): T =
+            this ?: if (isMyself) throw YouNotBind() else throw UserNotBind()
+
+        fun <T : Number> T?.throwIfNotBind(isMyself: Boolean = true): T =
+            this ?: if (isMyself) throw YouNotBind() else throw UserNotBind()
     }
 }

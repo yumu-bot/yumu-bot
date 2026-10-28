@@ -238,7 +238,7 @@ import kotlin.time.Duration.Companion.seconds
             context,
             defaultOffset = 0,
             defaultLimit = defaultLimit,
-            multiple = isMultiple,
+            multiple = false, // score 不展示前几条，而是指定某一条
             max = 100,
         )
 

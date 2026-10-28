@@ -90,7 +90,7 @@ class BindController @Autowired constructor(
             user.userID,
             user.username,
             user.mode.shortName,
-            "绑定成功!"
+            "完成绑定!"
         )
     }
 
@@ -175,12 +175,12 @@ class BindController @Autowired constructor(
                 .append("[mode]：0 osu(standard)，1 taiko，2 catch，3 mania")
         } catch (e: HttpClientErrorException.BadRequest) {
             log.error("绑定时异常：400", e)
-            sb.append("出现异常。但您大概已经绑定成功。这可能是回执的问题。")
+            sb.append("出现异常。但您大概已经完成绑定。这可能是回执的问题。")
                 .append('\n')
                 .append(e.localizedMessage)
         } catch (e: HttpClientErrorException.BadRequest) {
             log.error("绑定时异常：400", e)
-            sb.append("出现异常。但您大概已经绑定成功。这可能是回执的问题。")
+            sb.append("出现异常。但您大概已经完成绑定。这可能是回执的问题。")
                 .append('\n')
                 .append(e.localizedMessage)
         } catch (e: Exception) {
