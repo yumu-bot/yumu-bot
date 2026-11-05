@@ -240,23 +240,18 @@ class RestClientConfig(
             .build()
 
         fun proxyClient(config: NowbotConfig): CloseableHttpClient {
-            val proxy = HttpHost(
-                config.proxyHost,
-                config.proxyPort
-            )
-
-            return HttpClients.custom()
+            val clientBuilder = HttpClients.custom()
                 .setConnectionManager(otherConnectionPoolManager)
                 .setDefaultRequestConfig(otherRequestConfig)
-                .setProxy(proxy)
-//                .let {
-//                    if (USE_PROXY) {
-//                        it.setProxy(proxy)
-//                    } else {
-//                        it
-//                    }
-//                }
-                .build()
+            if (config.proxyPort != 0) {
+                val proxy = HttpHost(
+                    config.proxyHost,
+                    config.proxyPort
+                )
+                return clientBuilder.setProxy(proxy).build()
+            }
+
+            return clientBuilder.build()
         }
 
         val httpClients: CloseableHttpClient = HttpClients.custom()
