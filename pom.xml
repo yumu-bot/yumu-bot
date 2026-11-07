@@ -137,7 +137,13 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
+        <!--        web截图控制-->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.64.0</version>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>tools.jackson.module</groupId>
