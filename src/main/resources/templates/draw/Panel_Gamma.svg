@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 640 360">
+    <defs>
+        <clipPath id="clippath-PGamma-BG">
+            <rect x="240" width="400" height="360" rx="0" ry="0" style="fill: none;"/>
+        </clipPath>
+        <clipPath id="clippath-PGamma-MC">
+            <polygon points="370 126 440 82 510 126 510 194 440 238 370 194 370 126" style="fill: none;"/>
+        </clipPath>
+        <filter id="blur-PGamma-BG" height="110%" width="110%" x="-5%" y="-5%">
+            <feGaussianBlur in="userSpaceOnUse" stdDeviation="5" result="blur"/>
+        </filter>
+    </defs>
+    <g id="Banner">
+        <rect width="640" height="360" rx="0" ry="0" style="fill: #1c1719;"/>
+        <g style="clip-path: url(#clippath-PGamma-BG);" filter="url(#blur-PGamma-BG)">
+        </g>
+    </g>
+    <g id="Background">
+    </g>
+    <g id="Avatar">
+        <g style="clip-path: url(#clippath-PGamma-MC);">
+        </g>
+    </g>
+    <g id="HexagonChart">
+    </g>
+    <g id="Text">
+    </g>
+    <g id="Index">
+    </g>
+</svg>

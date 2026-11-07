@@ -32,7 +32,7 @@ internal class RenderSlot(
         var failure: Throwable? = null
 
         try {
-            val task = PageDiagnostics(activePage)
+            val task = PageDiagnostics(activePage, options.allowedResourceUrls)
             diagnostics = task
             task.install()
 
@@ -268,8 +268,12 @@ private class RenderDeadline(totalMillis: Long) {
     }
 }
 
-private class PageDiagnostics(private val page: Page) {
+private class PageDiagnostics(
+    private val page: Page,
+    allowedUrls: Set<String> = emptySet(),
+) {
     private val context = page.context()
+    private val allowedResourceUrls = RenderResourceAccessPolicy.normalizeAll(allowedUrls)
     private val pageErrors = CopyOnWriteArrayList<String>()
     private val consoleErrors = CopyOnWriteArrayList<String>()
     private val requestFailures = CopyOnWriteArrayList<String>()
@@ -294,7 +298,7 @@ private class PageDiagnostics(private val page: Page) {
     private val crashHandler = java.util.function.Consumer<Page> { crashes += "页面崩溃" }
     private val routeHandler = java.util.function.Consumer<Route> { route ->
         val url = route.request().url()
-        if (isAllowedScheme(url)) {
+        if (RenderResourceAccessPolicy.isAllowed(url, allowedResourceUrls)) {
             route.resume()
         } else {
             blockedRequests += url
@@ -356,19 +360,9 @@ private class PageDiagnostics(private val page: Page) {
         clean = runCatching { context.clearCookies() }.isSuccess && clean
         return clean
     }
-
-    private fun isAllowedScheme(url: String): Boolean {
-        val separator = url.indexOf(':')
-        if (separator <= 0) {
-            return false
-        }
-        val scheme = url.substring(0, separator).lowercase(Locale.ROOT)
-        return scheme in ALLOWED_RESOURCE_SCHEMES
-    }
 }
 
-private const val READY_SCRIPT = """
-async (timeoutMs) => {
+private const val READY_SCRIPT = """async (timeoutMs) => {
   const deadline = Date.now() + Math.max(0, timeoutMs);
   const remaining = () => Math.max(0, deadline - Date.now());
   const withDeadline = (promise, label) => new Promise((resolve, reject) => {
@@ -433,5 +427,3 @@ async (timeoutMs) => {
   return true;
 }
 """
-
-private val ALLOWED_RESOURCE_SCHEMES = setOf("data", "blob", "about")

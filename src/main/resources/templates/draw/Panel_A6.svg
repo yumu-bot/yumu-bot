@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="${panelheight}" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 ${panelheight}">
+    <defs>
+        <clipPath id="clippath-PP-1">
+            <rect width="1920" height="320" rx="20" ry="20" style="fill: none;"/>
+        </clipPath>
+    </defs>
+    <g id="Banner">
+        <rect width="1920" height="320" rx="20" ry="20" style="fill: #1c1719;"/>
+        <g style="clip-path: url(#clippath-PP-1);">
+        </g>
+    </g>
+    <g id="Background">
+        <rect y="290" width="1920" height="${cardheight}" rx="20" ry="20" style="fill: #2a2226;"/>
+    </g>
+    <g id="CardAlpha">
+    </g>
+    <g id="CardA1">
+    </g>
+    <g id="IndexBase">
+        <rect x="510" y="40" width="195" height="60" rx="15" ry="15" style="fill: #382e32;"/>
+    </g>
+    <g id="Index">
+    </g>
+</svg>

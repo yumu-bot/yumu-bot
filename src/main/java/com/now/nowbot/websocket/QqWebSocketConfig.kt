@@ -1,26 +1,17 @@
-package com.now.nowbot.config
+package com.now.nowbot.websocket
 
-import com.now.nowbot.controller.RenderWebSocketHandler
 import com.now.nowbot.util.KB
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.web.socket.config.annotation.EnableWebSocket
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean
 import kotlin.time.Duration.Companion.minutes
 
+/**
+ * 全局 JSR-356 容器参数。QQ 的 /qq-ws 由 ServerEndpointExporter（NowbotConfig）注册，
+ * 依赖这里的文本/二进制缓冲区与空闲超时设置。
+ */
 @Configuration
-@EnableWebSocket
-class RenderWebSocketConfig(
-    private val renderWebSocketHandler: RenderWebSocketHandler
-) : WebSocketConfigurer {
-
-    override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(renderWebSocketHandler, "/render-ws")
-            .setAllowedOrigins("*") // 允许跨域
-    }
-
+class QqWebSocketConfig {
     @Bean
     fun createWebSocketContainer(): ServletServerContainerFactoryBean {
         val container = ServletServerContainerFactoryBean()

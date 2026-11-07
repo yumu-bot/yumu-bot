@@ -1,0 +1,14 @@
+  <defs>
+    <clipPath id="clippath-CA2-1">
+      <rect width="430" height="210" rx="20" ry="20" style="fill: none;"/>
+    </clipPath>
+  </defs>
+  <g id="Background">
+    <rect width="430" height="210" rx="20" ry="20" style="fill: #1c1719;"/>
+    <g style="clip-path: url(#clippath-CA2-1);">
+    </g>
+  </g>
+  <g id="TopIcons">
+  </g>
+  <g id="Text">
+  </g>

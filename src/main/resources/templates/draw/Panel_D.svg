@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 1080">
+    <defs>
+        <clipPath id="clippath-PD-BR">
+            <rect width="1920" height="320" rx="20" ry="20" style="fill: none;"/>
+        </clipPath>
+        <clipPath id="clippath-PD-BG">
+        <rect y="290" width="1920" height="790" rx="30" ry="30" style="fill: none;"/>
+        </clipPath>
+    </defs>
+    <g id="BannerBase">
+        <rect width="1920" height="320" rx="20" ry="20" style="fill: #1c1719"/>
+    </g>
+    <g id="Banner">
+        <g style="clip-path: url(#clippath-PD-BR);">
+        </g>
+    </g>
+    <g id="Background">
+        <rect y="290" width="1920" height="790" rx="30" ry="30" style="fill: #2a2226;"/>
+        <g style="clip-path: url(#clippath-PD-BG);">
+        </g>
+    </g>
+    <g id="Card_F1">
+    </g>
+    <g id="Card_F2">
+    </g>
+    <g id="Card_F3">
+    </g>
+    <g id="Card_F4">
+    </g>
+    <g id="Card_F5">
+    </g>
+    <g id="Card_F6">
+    </g>
+    <g id="Card_F7">
+    </g>
+    <g id="Card_A1">
+    </g>
+    <g id="IndexBase">
+        <rect x="510" y="40" width="195" height="60" rx="15" ry="15" style="fill: #382e32;"/>
+    </g>
+    <g id="Index">
+    </g>
+</svg>

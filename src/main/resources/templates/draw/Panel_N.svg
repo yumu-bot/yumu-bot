@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 1080">
+    <defs>
+        <clipPath id="clippath-PN1-1">
+            <rect width="1920" height="320" rx="20" ry="20" style="fill: none;"/>
+        </clipPath>
+    </defs>
+    <g id="Banner_PN">
+        <rect width="1920" height="320" rx="20" ry="20" style="fill: #1c1719;"/>
+        <g style="clip-path: url(#clippath-PN1-1);">
+        </g>
+    </g>
+    <g id="Background_PN">
+        <rect y="290" width="1920" height="790" rx="20" ry="20" style="fill: #2a2226;"/>
+        <rect x="40" y="330" width="430" height="345" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="40" y="695" width="430" height="160" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="40" y="875" width="430" height="165" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="490" y="330" width="1380" height="260" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="490" y="610" width="1100" height="430" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="1610" y="610" width="270" height="260" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="1610" y="890" width="270" height="150" rx="20" ry="20" style="fill: #382e32;"/>
+    </g>
+    <g id="Me_PN">
+    </g>
+    <g id="Progress_PN">
+    </g>
+    <g id="Favorite_PN">
+    </g>
+    <g id="Tag_PN">
+    </g>
+    <g id="Discussion_PN">
+    </g>
+    <g id="Guest_PN">
+    </g>
+    <g id="Genre_PN">
+    </g>
+    <g id="BeatMap_A2">
+    </g>
+    <g id="IndexBase_PN">
+        <rect x="510" y="40" width="195" height="60" rx="15" ry="15" style="fill: #382e32;"/>
+    </g>
+    <g id="Index_PN">
+    </g>
+</svg>

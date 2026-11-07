@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="847.5" height="523.75"
+     viewBox="0 0 847.5 523.75">
+    <defs>
+<!--        avatar      -->
+        <filter id="avatar-shadow" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+            <feMorphology radius="6" operator="dilate" in="SourceAlpha" result="filter-out"/>
+            <feGaussianBlur stdDeviation="3"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0"/>
+            <feBlend mode="normal" in2="BackgroundImageFix" result="filter-out"/>
+            <feBlend mode="normal" in="SourceGraphic" in2="filter-out" result="shape"/>
+        </filter>
+        <clipPath id="avatar-clip">
+            <rect rx="10" ry="10" x="273.75" y="60" width="300" height="300"/>
+        </clipPath>
+        <pattern patternUnits="userSpaceOnUse" x="273.75" y="60" width="300" height="300" id="avatar-image">
+            <image href="${obj.avatar}" preserveAspectRatio="xMidYMin slice" width="300" height="300" opacity="1"/>
+        </pattern>
+<!--        banner      -->
+        <clipPath id="banner-clip">
+            <rect rx="20" ry="20" x="0" y="0" width="847.5" height="523.75"/>
+        </clipPath>
+        <filter id="banner-blur" width="1" height="1" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+            <feGaussianBlur stdDeviation="3"/>
+        </filter>
+        <pattern patternUnits="userSpaceOnUse" width="847.5" height="523.75" id="banner-image">
+            <image href="${obj.banner}" preserveAspectRatio="xMidYMid slice" width="847.5" height="523.75" opacity="1"/>
+        </pattern>
+
+        <radialGradient id="name-shadow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stop-color="#000000" stop-opacity="0.4"/>
+            <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+        <pattern patternUnits="userSpaceOnUse" x="13.5" y="390" width="820" height="215" id="name-shadow-pattern">
+                <rect width="820" height="215" style="fill:url(#name-shadow)"/>
+        </pattern>
+
+        <filter id="name-text-shadow" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+            <feMorphology radius="5" operator="dilate" in="SourceAlpha" result="filter-out"/>
+            <feGaussianBlur stdDeviation="2.5" in="shadow" result="blurredShadow"/>
+            <feColorMatrix in="blurredShadow" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/>
+            <feBlend mode="normal" in="SourceGraphic" result="shape"/>
+        </filter>
+    </defs>
+<!--    banner          -->
+    <g clip-path="url(#banner-clip)">
+        <rect width="1793" height="620" fill="url(#banner-image)" filter="url(#banner-blur)" />
+    </g>
+<!--    name shadow     -->
+    <ellipse cx="423" cy="497.5" rx="410" ry="107.5" fill="url(#name-shadow-pattern)"/>
+<!--    name text       -->
+    <g filter="url(#name-text-shadow)">
+        <text
+                x="423.75"
+                y="470"
+                dominant-baseline="ideographic"
+                text-anchor="middle"
+                lengthAdjust="spacingAndGlyphs"
+                style="font-family:'JetBrainsMono NF';font-weight:800;font-size:50px;fill:${obj.color};" filter="url(#filter-render-1065-0)"
+        >${obj.name}</text>
+    </g>
+<!--    avatar          -->
+    <g filter="url(#avatar-shadow)" >
+        <g clip-path="url(#avatar-clip)">
+        <rect x="273.75" y="60" width="300" height="300" fill="url(#avatar-image)"/>
+        <rect x="273.75" y="60" width="300" height="300" style="fill:#000000;fill-opacity:0.05"/>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>mark down</title>
+  <script type="module" crossorigin src="./assets/index.29dac38f.js"></script>
+  <link rel="stylesheet" href="./assets/index.3bc2ed74.css">
+  <style>
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: auto !important; /* 强制覆盖打包 CSS 里的 100% / 100vh */
+      min-height: auto !important;
+      overflow: hidden !important; /* 彻底去除滚动条 */
+      background: transparent !important;
+    }
+
+    /* 确保 Markdown 的根容器不会限制高度 */
+    #app, #root, article, main {
+      height: auto !important;
+      min-height: auto !important;
+      overflow: visible !important;
+      display: flow-root; /* 防止 margin 折叠导致的高度计算偏差 */
+    }
+  </style>
+</head>
+<body>
+</body>
+
+</html>

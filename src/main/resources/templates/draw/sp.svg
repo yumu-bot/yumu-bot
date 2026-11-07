@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="618" height="1000"
+     viewBox="0 0 618 1000">
+    <defs>
+        <linearGradient id="color-text" gradientTransform="rotate(25)">
+            <stop offset="0%" stop-color="#FFF6B7"/>
+            <stop offset="99%" stop-color="#F6416C"/>
+        </linearGradient>
+        <linearGradient id="color-text-stroke" gradientTransform="rotate(25)">
+            <stop offset="0%" stop-color="#736EFE"/>
+            <stop offset="99%" stop-color="#5EFCE8"/>
+        </linearGradient>
+        <linearGradient id="h" gradientTransform="rotate(25)">
+            <stop offset="5%" stop-color="#F2F2F2"/>
+            <stop offset="65%" stop-color="#DBDBDB"/>
+            <stop offset="100%" stop-color="#EAEAEA"/>
+        </linearGradient>
+        <linearGradient id="s" gradientTransform="rotate(25)">
+            <stop offset="5%" stop-color="#FFA8A8"/>
+            <stop offset="100%" stop-color="#FCFF00"/>
+        </linearGradient>
+        <linearGradient id="a" gradientTransform="rotate(25)">
+            <stop offset="5%" stop-color="#58D68D"/>
+            <stop offset="100%" stop-color="#229954"/>
+        </linearGradient>
+        <linearGradient id="b" gradientTransform="rotate(25)">
+            <stop offset="5%" stop-color="#F9E79F"/>
+            <stop offset="100%" stop-color="#F4D03F"/>
+        </linearGradient>
+        <linearGradient id="c" gradientTransform="rotate(25)">
+            <stop offset="5%" stop-color="#F1948A"/>
+            <stop offset="100%" stop-color="#D35400"/>
+        </linearGradient>
+        <linearGradient id="d" gradientTransform="rotate(25)">
+            <stop offset="5%" stop-color="#F9E79F"/>
+            <stop offset="100%" stop-color="#A93226"/>
+        </linearGradient>
+        <linearGradient id="f" gradientTransform="rotate(25)">
+            <stop offset="5%" stop-color="#000000"/>
+            <stop offset="100%" stop-color="#000000"/>
+        </linearGradient>
+        <pattern id="avatar" x="0" y="0" width="100%" height="100%">
+            <image width="300" height="300" preserveAspectRatio="xMidYMin slice"/>
+        </pattern>
+        <pattern id="bg" x="0" y="0" width="100%" height="100%">
+            <image width="618" height="1000" preserveAspectRatio="xMidYMin slice"/>
+        </pattern>
+    </defs>
+
+    <rect width="100%" height="100%" fill="url(#bg)"/>
+    <rect width="100%" height="100%" fill="#000" opacity="0.4"/>
+    <rect x="30" y="30" width="300" height="300" fill="url(#avatar)"/>
+    <text
+            id="text-bid"
+            x="0"
+            y="20"
+            font-family="JetBrains Mono ExtraBold"
+            font-size="20"
+            stroke="#444"
+            stroke-width="1"
+            fill="#fff"
+    />
+    <text id="text-info" x="0" y="480"
+          font-family="JetBrains Mono ExtraBold"
+          font-weight="900"
+          font-size="100"
+
+          stroke="url(#color-text-stroke)"
+          stroke-width="2"
+          fill="url(#color-text)">
+        <tspan id="title" x="0" dy="0" font-size="60"/>
+        <tspan id="time" x="0" dy="100"/>
+        <tspan id="star" x="0" dy="100"/>
+        <tspan id="acc" x="0" dy="100"/>
+        <tspan id="pp" x="0" dy="100"/>
+        <tspan id="combo" x="0" dy="100"/>
+    </text>
+    <text id="text-rank" x="430" y="230"
+          font-family="JetBrains Mono ExtraBold"
+          font-size="260"
+
+          stroke="#FFF"
+          stroke-width="5"
+          fill="url(#s)">
+        <tspan id="rank-r">S</tspan>
+        <tspan id="rank-l" x="360" opacity="0">S</tspan>
+    </text>
+
+    <svg id="mods" x="30" y="350" width="558" height="70">
+    </svg>
+
+    <svg id="pp-show" x="603">
+        <rect width="18" height="1000" fill="#FDFC47"/>
+        <rect id="pp-fc" width="18" height="900" fill="#B3315F"/>
+        <rect id="pp-now" width="18" height="600" fill="#FA742B"/>
+    </svg>
+</svg>

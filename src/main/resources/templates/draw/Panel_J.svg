@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 1080">
+  <defs>
+    <clipPath id="clippath-PJ-1">
+      <rect width="1920" height="320" rx="20" ry="20" style="fill: none;"/>
+    </clipPath>
+    <clipPath id="clippath-PJ-2">
+      <circle cx="842" cy="470" r="70" style="fill: none;"/>
+    </clipPath>
+    <clipPath id="clippath-PJ-3">
+      <circle cx="1630" cy="815" r="70" style="fill: none;"/>
+    </clipPath>
+    <clipPath id="clippath-PJ-BG">
+      <rect y="290" width="1920" height="790" rx="30" ry="30" style="fill: none;"/>
+    </clipPath>
+  </defs>
+  <g id="Banner">
+    <rect width="1920" height="320" rx="20" ry="20" style="fill: #1c1719;"/>
+    <g style="clip-path: url(#clippath-PJ-1);">
+    </g>
+  </g>
+  <g id="Background">
+    <rect y="290" width="1920" height="790" rx="20" ry="20" style="fill: #2a2226;"/>
+    <g style="clip-path: url(#clippath-PJ-BG);">
+    </g>
+  </g>
+  <g id="MainCard">
+  </g>
+  <g id="BPCard">
+    <rect x="40" y="330" width="665" height="525" rx="20" ry="20" style="fill: #382e32;"/>
+    <g id="TopBP">
+    </g>
+    <g id="LastBP">
+    </g>
+  </g>
+  <g id="ModCard">
+    <rect x="725" y="330" width="235" height="525" rx="20" ry="20" style="fill: #382e32;"/>
+    <g id="Label_J1">
+    </g>
+    <g id="ModsPan">
+      <circle cx="842" cy="470" r="70" style="fill: #46393f;"/>
+      <g style="clip-path: url(#clippath-PJ-2);">
+
+      </g>
+      <circle cx="842" cy="470" r="4" style="fill: #382e32;"/>
+    </g>
+  </g>
+  <g id="BPDCard">
+    <rect x="980" y="330" width="900" height="335" rx="20" ry="20" style="fill: #382e32;"/>
+    <g id="BPRanksR">
+    </g>
+    <g id="BPRankGraph">
+    </g>
+  </g>
+  <g id="StatusCard">
+    <rect x="40" y="875" width="920" height="165" rx="20" ry="20" style="fill: #382e32;"/>
+    <g id="Card_L">
+    </g>
+  </g>
+  <g id="MapperCard">
+    <rect x="980" y="685" width="540" height="355" rx="20" ry="20" style="fill: #382e32;"/>
+    <g id="Label_J2">
+    </g>
+  </g>
+  <g id="RankCard">
+    <rect x="1540" y="685" width="340" height="355" rx="20" ry="20" style="fill: #382e32;"/>
+    <g id="Label_J3">
+    </g>
+    <g id="RanksPan">
+      <circle cx="1630" cy="815" r="70" style="fill: #46393f;"/>
+      <g style="clip-path: url(#clippath-PJ-3);">
+
+      </g>
+      <circle cx="1630" cy="815" r="4" style="fill: #382e32;"/>
+    </g>
+  </g>
+  <g id="IndexBase">
+    <rect x="510" y="40" width="195" height="60" rx="15" ry="15" style="fill: #382e32;"/>
+  </g>
+  <g id="Index">
+
+  </g>
+</svg>

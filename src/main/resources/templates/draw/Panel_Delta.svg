@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 1080">
+    <defs>
+    <filter id="clippath-PDelta-SR" x="-50%" y="-200%" width="200%" height="500%">
+        <feFlood result="flood" flood-color="#FBCF5B" flood-opacity="0.5"/>
+        <feComposite in="flood" result="mask" in2="SourceGraphic" operator="in"/>
+        <feMorphology in="mask" result="dilated" operator="dilate" radius="5"/>
+        <feGaussianBlur in="dilated" result="blurred" stdDeviation="5"/>
+        <feMerge>
+            <feMergeNode in="blurred"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+    </filter>
+        <filter id="clippath-PDelta-CS" x="-50%" y="-200%" width="200%" height="500%">
+            <feFlood result="flood" flood-color="#C31542" flood-opacity="0.5"/>
+            <feComposite in="flood" result="mask" in2="SourceGraphic" operator="in"/>
+            <feMorphology in="mask" result="dilated" operator="dilate" radius="5"/>
+            <feGaussianBlur in="dilated" result="blurred" stdDeviation="5"/>
+            <feMerge>
+                <feMergeNode in="blurred"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+        <filter id="clippath-PDelta-AR" x="-50%" y="-200%" width="200%" height="500%">
+            <feFlood result="flood" flood-color="#40ABF7" flood-opacity="0.5"/>
+            <feComposite in="flood" result="mask" in2="SourceGraphic" operator="in"/>
+            <feMorphology in="mask" result="dilated" operator="dilate" radius="5"/>
+            <feGaussianBlur in="dilated" result="blurred" stdDeviation="5"/>
+            <feMerge>
+                <feMergeNode in="blurred"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+        <filter id="clippath-PDelta-OD" x="-50%" y="-200%" width="200%" height="500%">
+            <feFlood result="flood" flood-color="#FF82A0" flood-opacity="0.5"/>
+            <feComposite in="flood" result="mask" in2="SourceGraphic" operator="in"/>
+            <feMorphology in="mask" result="dilated" operator="dilate" radius="5"/>
+            <feGaussianBlur in="dilated" result="blurred" stdDeviation="5"/>
+            <feMerge>
+                <feMergeNode in="blurred"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+        <clipPath id="clippath-PDelta-LH">
+            <circle cx="1662.5" cy="797.5" r="97.5" style="fill: none;"/>
+        </clipPath>
+    </defs>
+    <g id="Background">
+    </g>
+    <g id="Base">
+    </g>
+    <g id="Length">
+    </g>
+    <g id="Stat">
+        <g id="LH" clip-path="url(#clippath-PDelta-LH)">
+        </g>
+        <g id="SR" filter="url(#clippath-PDelta-SR)">
+        </g>
+        <g id="CS" filter="url(#clippath-PDelta-CS)">
+        </g>
+        <g id="AR" filter="url(#clippath-PDelta-AR)">
+        </g>
+        <g id="OD" filter="url(#clippath-PDelta-OD)">
+        </g>
+    </g>
+    <g id="Index">
+    </g>
+    <g id="Text">
+    </g>
+</svg>

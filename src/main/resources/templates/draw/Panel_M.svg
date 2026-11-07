@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 1080">
+    <defs>
+        <clipPath id="clippath-PM1-1">
+            <rect width="1920" height="320" rx="20" ry="20" style="fill: none;"/>
+        </clipPath>
+        <clipPath id="clippath-PM1-2">
+            <circle cx="150" cy="825" r="70" style="fill: none;"/>
+        </clipPath>
+    </defs>
+    <g id="Banner_PM">
+        <rect width="1920" height="320" rx="20" ry="20" style="fill: #1c1719;"/>
+        <g style="clip-path: url(#clippath-PM1-1);">
+        </g>
+    </g>
+    <g id="Background_PM">
+        <rect y="290" width="1920" height="790" rx="20" ry="20" style="fill: #2a2226;"/>
+        <rect x="40" y="330" width="430" height="345" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="40" y="695" width="430" height="345" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="490" y="330" width="940" height="345" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="490" y="695" width="590" height="345" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="1100" y="695" width="330" height="345" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="1450" y="330" width="430" height="230" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="1450" y="580" width="430" height="230" rx="20" ry="20" style="fill: #382e32;"/>
+        <rect x="1450" y="830" width="430" height="210" rx="20" ry="20" style="fill: #382e32;"/>
+    </g>
+    <g id="Me_PM">
+    </g>
+    <g id="Popular_PM">
+    </g>
+    <g id="Difficulty_PM">
+    </g>
+    <g id="Genre_PM">
+        <g style="clip-path: url(#clippath-PM1-2);">
+        </g>
+    </g>
+    <g id="Activity_PM">
+    </g>
+    <g id="Recent_PM">
+    </g>
+    <g id="Length_PM">
+    </g>
+    <g id="Me_Card_A1">
+    </g>
+    <g id="IndexBase_PM">
+        <rect x="510" y="40" width="195" height="60" rx="15" ry="15" style="fill: #382e32;"/>
+    </g>
+    <g id="Index_PM">
+    </g>
+</svg>

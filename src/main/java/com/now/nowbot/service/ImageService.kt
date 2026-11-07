@@ -1,7 +1,8 @@
 package com.now.nowbot.service
 
-import com.now.nowbot.controller.RenderWebSocketHandler
+import com.now.nowbot.browser.RenderException
 import com.now.nowbot.entity.IDUser
+import com.now.nowbot.image.render.PanelRenderDispatcher
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
@@ -11,68 +12,26 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.command.REGEX_CRLF
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import java.util.concurrent.CancellationException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 @Service("NOWBOT_IMAGE")
 class ImageService(
-//    @field:Qualifier("imageRestClient")
-//    private val imageRestClient: RestClient,
-
-    @field:Qualifier("renderWebSocketHandler")
-    private val renderWebSocketHandler: RenderWebSocketHandler
+    private val dispatcher: PanelRenderDispatcher,
 ) {
     /**
      * @param name 面板的内部编号，并非功能编号
      */
     fun getPanel(body: Map<String, Any>, name: String): ByteArray {
-        val headers = defaultHeader
-        val httpEntity = HttpEntity(body, headers)
-        return doPost("panel_$name", httpEntity)
+        return dispatch(name) { dispatcher.render(name, body) }
     }
 
     /**
      * @param name 面板的内部编号，并非功能编号
      */
     fun getPanel(any: Any?, name: String): ByteArray {
-        val headers = defaultHeader
-        val httpEntity = HttpEntity(any, headers)
-        return doPost("panel_$name", httpEntity)
-    }
-
-    /**
-     * 获取 md 图片，现已经弃用，被 panel A6 代替
-     *
-     * @param markdown md 字符串
-     * @return 图片流
-     */
-    @Deprecated("") fun getMarkdownImage(markdown: String): ByteArray {
-        val headers = defaultHeader
-
-        val body: Map<String, Any> = mapOf("md" to markdown, "width" to 1500)
-        val httpEntity = HttpEntity(body, headers)
-        return doPost("md", httpEntity)
-    }
-
-    /***
-     * 获取 md 图片，现已经弃用，被 panel A6 代替
-     * 宽度是px,最好600以上
-     * @param markdown md 字符串
-     * @param width 宽度
-     * @return 图片流
-     */
-    @Deprecated("") fun getMarkdownImage(markdown: String, width: Int): ByteArray {
-        val headers = defaultHeader
-
-        val body: Map<String, Any> = mapOf("md" to markdown, "width" to width)
-        val httpEntity = HttpEntity(body, headers)
-        return doPost("md", httpEntity)
+        return dispatch(name) { dispatcher.render(name, any) }
     }
 
     /**
@@ -113,186 +72,87 @@ class ImageService(
      * @return 图片流
      */
     fun getPanelA6(user: OsuUser?, markdown: String, name: String, width: Int = 1840): ByteArray {
-        val headers = defaultHeader
-
-        val body = mutableMapOf<String, Any>(
-            "markdown" to markdown, "name" to name, "width" to width
-        )
-
-        if (user != null) {
-            body["user"] = user
-        }
-
-        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
-        return doPost("panel_A6", httpEntity)
+        return dispatch("A6") { dispatcher.renderA6(user, markdown, name, width) }
     }
 
     fun getPanelAlpha(vararg lines: String?): ByteArray {
-        val headers = defaultHeader
-        val body: MutableMap<String, Any> = HashMap()
-        body["strs"] = lines
-        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
-        return doPost("panel_Alpha", httpEntity)
+        return dispatch("Alpha") { dispatcher.renderAlpha(lines.toList()) }
     }
-
-    /*
-    fun getPanelBeta(s: LazerScore?): ByteArray {
-        val headers = defaultHeader
-        val httpEntity = HttpEntity(s, headers)
-        return doPost("panel_Beta", httpEntity)
-    }
-
-     */
 
     fun getPanelGamma(score: LazerScore): ByteArray {
-        val headers = defaultHeader
-        val body = mapOf(
-            "score" to score,
-            "panel" to "score"
-        )
-        val httpEntity = HttpEntity(body, headers)
-        return doPost("panel_Gamma", httpEntity)
+        return dispatch("Gamma") { dispatcher.renderGamma(score) }
     }
 
     fun getPanelGamma(user: IDUser): ByteArray {
-        val headers = defaultHeader
-        val body: MutableMap<String, Any> = HashMap()
-        body["user"] = user
-        body["panel"] = "info"
-        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
-        return doPost("panel_Gamma", httpEntity)
+        return dispatch("Gamma") { dispatcher.renderGamma(user) }
     }
 
     fun getPanelGamma(user: OsuUser?, mode: OsuMode, my: PPMinus?): ByteArray {
-        val cardA1 = if (user == null) emptyList() else listOf(user)
-
-        val cardB = if (my == null) emptyMap() else mapOf(
-            "ACC" to my.value1,
-            "PTT" to my.value2,
-            "STA" to my.value3,
-            (if (mode == OsuMode.MANIA) "PRE" else "STB") to my.value4,
-            "EFT" to my.value5,
-            "STH" to my.value6,
-            "OVA" to my.value7,
-            "SAN" to my.value8
-        )
-
-        val statistics: Map<String, Any> = mapOf("is_vs" to false, "mode_int" to mode.modeValue)
-
-        val headers = defaultHeader
-
-        val body = mapOf(
-            "users" to cardA1, "my" to cardB, "stat" to statistics, "panel" to "sanity"
-        )
-
-        val httpEntity = HttpEntity<Map<String, Any?>>(body, headers)
-        return doPost("panel_Gamma", httpEntity)
+        return dispatch("Gamma") { dispatcher.renderGamma(user, mode, my) }
     }
 
     fun getPanelDelta(beatmap: Beatmap, round: String, mod: String, position: Short, hasBG: Boolean): ByteArray {
-        val headers = defaultHeader
-        val body = mapOf(
-            "beatmap" to beatmap, "round" to round, "mod" to mod, "position" to position, "hasBG" to hasBG
-        )
-        val httpEntity = HttpEntity(body, headers)
-        return doPost("panel_Delta", httpEntity)
+        return dispatch("Delta") { dispatcher.renderDelta(beatmap, round, mod, position, hasBG) }
     }
 
     fun getPanelAlpha(sb: StringBuilder): ByteArray {
         return getPanelAlpha(*sb.toString().split(REGEX_CRLF).dropLastWhile { it.isEmpty() }.toTypedArray())
     }
 
-    private val defaultHeader: HttpHeaders
-        get() {
-            val headers = HttpHeaders()
-            headers.contentType = MediaType.APPLICATION_JSON
-            return headers
-        }
-
-    /*
-    private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
-
-        val request = imageRestClient
-            .post()
-            .uri(IMAGE_PATH + path)
-            .headers { it.addAll(entity.headers) }
-
-        if (entity.hasBody()) {
-            request.body(entity.body!!)
-        }
-
-        try {
-            val b = request.exchangeToBody<ByteArray>()
-
-            if (b.isEmpty()) {
-                throw NetworkException.RenderModuleException.NoContent()
-            }
-
-            return b
+    private inline fun dispatch(panel: String, block: () -> ByteArray): ByteArray {
+        val bytes = try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: NetworkException) {
+            throw e
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<HttpStatusCodeException>()
+            throw mapRenderFailure(panel, e)
+        }
+        if (bytes.isEmpty()) {
+            log.error("渲染模块：面板 {} 返回空数据", panel)
+            throw NetworkException.RenderModuleException.NoContent()
+        }
+        return bytes
+    }
 
-            when(ex?.statusCode?.value()) {
-                400 -> throw NetworkException.RenderModuleException.BadRequest()
-                404 -> throw NetworkException.RenderModuleException.NotFound()
-                408 -> throw NetworkException.RenderModuleException.ServiceUnavailable()
-                500 -> throw NetworkException.RenderModuleException.InternalServerError()
-                502 -> throw NetworkException.RenderModuleException.BadGateway()
-                504 -> throw NetworkException.RenderModuleException.GatewayTimeout()
+    private fun mapRenderFailure(panel: String, error: Throwable): NetworkException.RenderModuleException {
+        log.error("渲染模块：面板 {} 渲染失败", panel, error)
+        return when (error) {
+            is TimeoutException -> NetworkException.RenderModuleException.GatewayTimeout()
+            is InterruptedException -> NetworkException.RenderModuleException.GatewayTimeout()
+            is IllegalArgumentException,
+            is IllegalStateException,
+            is UnsupportedOperationException,
+            -> NetworkException.RenderModuleException.BadRequest()
 
-                else -> {
-                    if (e !is CancellationException) {
-                        log.error("渲染模块：未识别的错误", e)
-                        throw NetworkException.RenderModuleException.Undefined(e)
-                    } else {
-                        throw e
-                    }
-                }
+            is RenderException -> when {
+                isTimeout(error) -> NetworkException.RenderModuleException.GatewayTimeout()
+                error.cause is IllegalArgumentException || error.cause is IllegalStateException ->
+                    NetworkException.RenderModuleException.BadRequest()
+
+                else -> NetworkException.RenderModuleException.Undefined(error)
             }
 
+            else -> NetworkException.RenderModuleException.Undefined(error)
         }
     }
 
-     */
-
-    private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
-        try {
-            // 1. 发送 WebSocket 指令并拿到 Future
-            val future = renderWebSocketHandler.sendTask(path, entity.body)
-
-            val bytes = future.get(20, TimeUnit.SECONDS)
-
-            if (bytes.isEmpty()) {
-                throw NetworkException.RenderModuleException.NoContent()
+    private fun isTimeout(error: Throwable): Boolean {
+        var current: Throwable? = error
+        repeat(6) {
+            val cause = current ?: return false
+            if (cause is TimeoutException || cause is InterruptedException) return true
+            val message = cause.message
+            if (message != null && (message.contains("超时") || message.contains("timeout", ignoreCase = true))) {
+                return true
             }
-
-            return bytes
-
-        } catch (e: Throwable) {
-            when (e) {
-                is TimeoutException -> {
-                    log.error("渲染模块：WS 请求超时")
-                    throw NetworkException.RenderModuleException.GatewayTimeout()
-                }
-                is IllegalStateException -> {
-                    log.error("渲染模块：JS 客户端不在线")
-                    throw NetworkException.RenderModuleException.ServiceUnavailable()
-                }
-                else -> {
-                    val cause = e.cause
-                    if (cause !is CancellationException && cause !is NetworkException) {
-                        log.error("渲染模块：WS 内部错误", e)
-                        throw NetworkException.RenderModuleException.Undefined(cause ?: e)
-                    } else {
-                        throw e
-                    }
-                }
-            }
+            current = cause.cause
         }
+        return false
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ImageService::class.java)
     }
-
 }

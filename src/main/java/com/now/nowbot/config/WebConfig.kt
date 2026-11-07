@@ -17,6 +17,8 @@ class WebConfig : WebMvcConfigurer {
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(BotWebInterceptor())
+            // 浏览器会并发加载渲染资源，不纳入 Bot API 限流
+            .excludePathPatterns("/render-resource/**")
     }
 
     class BotWebInterceptor : HandlerInterceptor {
