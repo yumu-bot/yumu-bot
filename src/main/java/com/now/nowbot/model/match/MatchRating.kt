@@ -292,19 +292,19 @@ class MatchRating(
         val values = playerDataMap.values.toList()
         if (values.isEmpty()) return
 
-        val maxIndex = (values.size - 1).coerceAtLeast(1).toDouble()
+        val maxIndex = (values.size).coerceAtLeast(1).toDouble()
 
         values.sortedByDescending { it.era }.forEachIndexed { i, data ->
-            data.eraIndex = if (values.size > 1) i / maxIndex else 0.5
+            data.eraIndex = if (values.size > 1 && maxIndex > 1) (i - 1) / (maxIndex - 1) else 0.5
         }
 
         values.sortedByDescending { it.dra }.forEachIndexed { i, data ->
-            data.draIndex = if (values.size > 1) i / maxIndex else 0.5
+            data.draIndex = if (values.size > 1 && maxIndex > 1) (i - 1) / (maxIndex - 1) else 0.5
         }
 
         values.sortedWith(compareByDescending<PlayerData> { it.rws }.thenByDescending { it.dra })
             .forEachIndexed { i, data ->
-                data.rwsIndex = if (values.size > 1) i / maxIndex else 0.5
+                data.rwsIndex = if (values.size > 1 && maxIndex > 1) (i - 1) / (maxIndex - 1) else 0.5
             }
 
         values.sortedByDescending { it.mra }.forEachIndexed { i, data ->
