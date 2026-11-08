@@ -231,7 +231,8 @@ import kotlin.time.Duration.Companion.seconds
         val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
         val defaultLimit = when {
-            hasCondition -> 100
+            // `!ss` 带条件时要展示全部符合项，放宽到 100；`!ss` 本身默认 20
+            isMultiple && hasCondition -> 100
             isMultiple -> 20
             else -> 1
         }
@@ -240,7 +241,8 @@ import kotlin.time.Duration.Companion.seconds
             context,
             defaultOffset = 0,
             defaultLimit = defaultLimit,
-            multiple = false, // score 不展示前几条，而是指定某一条
+            // `!ss #2` 是「前两条」，`!s #3` 是「第 3 条」：单个数字的含义由指令本身决定
+            multiple = isMultiple,
             max = 100,
         )
 
@@ -356,7 +358,19 @@ import kotlin.time.Duration.Companion.seconds
             }
         }
 
-        val scores = if (hasCondition) classified.drop(offset).take(limit) else classified
+        val scores = when {
+            // `!s` 带筛选条件、且范围只取一条时：`#3` 这种按序号取第 3 个符合条件的；
+            // 没有指定序号时，多条命中只留 pp 最高的一条。`#1-5` 这类 limit > 1 的范围仍然保留多条。
+            hasCondition && !isMultiple && limit <= 1 -> {
+                if (offset > 0) {
+                    classified.drop(offset).take(limit)
+                } else {
+                    listOfNotNull(classified.maxByOrNull { it.pp })
+                }
+            }
+            hasCondition -> classified.drop(offset).take(limit)
+            else -> classified
+        }
 
         if (scores.isEmpty()) {
             throw NoSuchElementException.BeatmapScoreRange(data.map.previewName)

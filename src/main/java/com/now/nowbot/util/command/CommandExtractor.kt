@@ -663,16 +663,17 @@ val OsuModeExtractor = CommandExtractor { ctx ->
  *
  * [SymbolHead.MOD] 只把值写进 [StripContext.extracted]，而 [ScoreClassifier] 只看
  * [StripContext.syntaxes]；不桥接的话 `!bp +HR` 会把 `+HR` 从指令里剥掉却完全不筛成绩，
- * 等于这个参数被吞掉了。取 [ScoreClassifier.MOD] 的键、[Operator.EQ]，与手写 `mod=+HR` 等价。
+ * 等于这个参数被吞掉了。取 [ScoreClassifier.MOD] 的键、[Operator.XQ]：`+DT` 表示成绩的
+ * mod 在剔除 CL 这类不改变玩法的干扰型 mod 之后，与 `DT` 完全一致，而不是只要包含 DT。
  *
- * 多个 `+HR +DT` 合并成一条条件（`HRDT`），和 [com.now.nowbot.model.filter.fitMod] 一样
- * 要求列出的 mod 全部命中；同键已有 `mod=+HD` 时并列进去，语义不变。
+ * 多个 `+HR +DT` 合并成一条条件（`HRDT`），和 [com.now.nowbot.model.filter.fitMod] 的 XQ 分支一致，
+ * 要求列出的 mod 与成绩实际 mod 集合相等。
  */
 fun StripContext.addModsAsCondition() {
     val mods = this[ExtractType.MOD].filter(String::isNotBlank).distinct()
     if (mods.isEmpty()) return
 
-    val key = ScoreClassifier.MOD.name to Operator.EQ
+    val key = ScoreClassifier.MOD.name to Operator.XQ
     val merged = (syntaxes[key].orEmpty() + mods.joinToString("")).joinToString("")
 
     syntaxes[key] = mutableListOf(merged)
