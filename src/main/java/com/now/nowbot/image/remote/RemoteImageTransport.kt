@@ -34,10 +34,7 @@ internal class RemoteImageResponse(
 
 internal class OkHttpRemoteImageTransport(config: RemoteImageConfig) : RemoteImageTransport {
     private val client: OkHttpClient = OkHttpClient.Builder()
-        .dns(PublicOnlyDns())
-        // 固定直连，避免系统/环境代理绕过逐跳地址校验。
         .proxy(Proxy.NO_PROXY)
-        // 重定向由 SafeRemoteImageSource 手动逐跳校验。
         .followRedirects(false)
         .followSslRedirects(false)
         .retryOnConnectionFailure(false)

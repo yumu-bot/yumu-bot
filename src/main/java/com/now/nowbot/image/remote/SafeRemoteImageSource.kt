@@ -15,7 +15,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.time.Duration
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -36,7 +36,7 @@ class SafeRemoteImageSource internal constructor(
         Semaphore(config.maxConcurrentRequests),
     )
 
-    private val urlPolicy = RemoteImageUrlPolicy(config)
+    private val urlPolicy = RemoteImageUrlPolicy()
 
     private val cache: Cache<String, ByteArray> = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofMillis(config.cacheTtlMillis))
