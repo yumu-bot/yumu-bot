@@ -31,6 +31,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.command.BeatmapIDExtractor
 import com.now.nowbot.util.command.BeatmapsetIDExtractor
+import com.now.nowbot.util.command.ExtractType
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.LazerModExtractor
 import com.now.nowbot.util.command.OsuModeExtractor
@@ -243,6 +244,10 @@ import kotlin.time.Duration.Companion.seconds
             max = 100,
         )
 
+        // `!ss`、带筛选条件、`#范围`（`#1-5` 取多条，`#3` 取第 3 条）都要保留完整成绩列表：
+        // 否则会先塌缩成一条，条件筛不到，按序号取也会切空。
+        val multiple = isMultiple || hasCondition || context[ExtractType.RANGE].isNotEmpty()
+
         var isRecordCallStatistics = true
 
         val data = if (selectedScore != null) {
@@ -278,7 +283,9 @@ import kotlin.time.Duration.Companion.seconds
 
             if (onlineScores.isNotEmpty()) {
 
-                val ss = if (isMultiple) {
+                // 多条时不能先塌缩成一条：先取 pp 最高的那条会把符合条件的成绩挤掉，
+                // 后面的 classify 再筛就只剩空列表，`#1-5` 之类的范围也会切空。
+                val ss = if (multiple) {
                     onlineScores
                 } else {
                     listOf(onlineScores.maxBy { it.pp })
@@ -313,20 +320,32 @@ import kotlin.time.Duration.Companion.seconds
             throw NoSuchElementException.BeatmapScore(data.map.previewName)
         }
 
-        val scores = data.scores.drop(offset).take(limit)
+        // 名次要在筛选之前固定下来：先排好名，再按条件筛、按 `#范围` 切片，
+        // 这样留下来的成绩依然带着它在原始列表里的位置。
+        val ranked = data.scores.putRank()
 
-        if (scores.isEmpty()) {
-            throw NoSuchElementException.BeatmapScoreRange(data.map.previewName)
+        // 有条件时先补齐属性、筛完再按 `#范围` 切片：`pp>=600` 这类条件依赖 applyPPToScores 算出的 pp，
+        // 先切片会把符合条件的成绩切掉。没有条件时 classify 是恒等，先切片能少算一批 pp。
+        val candidates: List<LazerScore>
+        if (hasCondition) {
+            beatmapApiService.applyAlias(ranked)
+            BeatmapUtil.applyBeatmapChanges(ranked)
+            calculateApiService.applyStarToScores(ranked)
+            calculateApiService.applyPPToScores(ranked)
+            candidates = ranked
+        } else {
+            val sliced = ranked.drop(offset).take(limit)
+            if (sliced.isEmpty()) {
+                throw NoSuchElementException.BeatmapScoreRange(data.map.previewName)
+            }
+            beatmapApiService.applyAlias(sliced)
+            BeatmapUtil.applyBeatmapChanges(sliced)
+            calculateApiService.applyStarToScores(sliced)
+            calculateApiService.applyPPToScores(sliced)
+            candidates = sliced
         }
 
-        beatmapApiService.applyAlias(scores)
-        BeatmapUtil.applyBeatmapChanges(scores)
-        calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyPPToScores(scores)
-
-        val scoresByRank = scores.putRank(offset)
-
-        val classified = scoresByRank.classify(context)
+        val classified = candidates.classify(context)
 
         if (classified.isEmpty()) {
             val name = data.map.previewName
@@ -337,8 +356,14 @@ import kotlin.time.Duration.Companion.seconds
             }
         }
 
-        return ScoreParam(data.user, data.map, classified, data.mode, mods,
-            isMultiple, isShow, isCompact, isRecordCallStatistics)
+        val scores = if (hasCondition) classified.drop(offset).take(limit) else classified
+
+        if (scores.isEmpty()) {
+            throw NoSuchElementException.BeatmapScoreRange(data.map.previewName)
+        }
+
+        return ScoreParam(data.user, data.map, scores, data.mode, mods,
+            multiple, isShow, isCompact, isRecordCallStatistics)
     }
 
     private fun List<LazerScore>.applyFromLocal(beatmap: Beatmap) = apply {
