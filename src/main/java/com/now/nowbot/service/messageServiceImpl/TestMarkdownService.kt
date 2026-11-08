@@ -58,7 +58,7 @@ class TestMarkdownService : TencentMessageService<Unit> {
         return MessageChain
             .builder()
             .addMarkdown(md)
-            .addKyeboard(kb)
+            .addKeyboard(kb)
             .build()
     }
 }

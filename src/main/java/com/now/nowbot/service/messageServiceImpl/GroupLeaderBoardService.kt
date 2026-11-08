@@ -107,10 +107,14 @@ class GroupLeaderBoardService(
 
         event.replyAsync(image)
 
-        return ServiceCallStatistic.build(event, beatmapID = param.beatmap.beatmapID, mode = param.mode).apply {
-            this.setParam(mapOf(
-                "groups" to listOf(event.subject.contactID)
-            ))
+        return ServiceCallStatistic.building(event) {
+            setParam(
+                mapOf(
+                    "bids" to listOf(param.beatmap.beatmapID),
+                    "modes" to listOf(param.mode.modeValue),
+                    "groups" to listOf(event.subject.contactID)
+                )
+            )
         }
     }
 

@@ -54,7 +54,7 @@ class MessageChain {
             return this
         }
 
-        fun addKyeboard(keyboard: Keyboard): MessageChainBuilder {
+        fun addKeyboard(keyboard: Keyboard): MessageChainBuilder {
             msgChain.addMessage(KeyboardMessage(keyboard))
             return this
         }
