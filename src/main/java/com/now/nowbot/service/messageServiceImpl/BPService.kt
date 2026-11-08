@@ -167,9 +167,10 @@ import java.util.regex.Matcher
         // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、玩家名、范围不算；`+HR` 会被 LazerModExtractor 桥接成 mod 条件，算。
         val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
-        val defaultLimit = when {
-            // BP 可以拿 200 的
-            hasCondition -> 200
+        // 这里只是「最终展示多少条」，不是「抓多少条」：BP 最多能取 200 条，带条件时抓满 200 再筛。
+        // `!bp +DT` 必须从 1 条起，下面的「多条命中取 pp 最高」塌缩才会生效；`!bps +DT` 才放宽到 200。
+        val resultLimit = when {
+            isMultiple && hasCondition -> 200
             isMultiple -> 20
             else -> 1
         }
@@ -177,25 +178,30 @@ import java.util.regex.Matcher
         val (offset, limit) = commandUtil.getRange(
             context,
             defaultOffset = 0,
-            defaultLimit = defaultLimit,
+            defaultLimit = resultLimit,
             multiple = isMultiple,
             max = 200,
         )
 
+        // 有条件时 offset/limit 指的是「符合条件的第几个 / 前几个」，不能直接交给接口切片：
+        // 先抓满 200 条候选，筛完再按 offset/limit 取，否则条件筛不到几条第 N 个也对不上。
+        val fetchOffset = if (hasCondition) 0 else offset
+        val fetchLimit = if (hasCondition) 200 else limit
+
         val async = AsyncMethodExecutor.awaitPair(
             { userApiService.getMicroOsuUser(userID, mode) },
-            { scoreApiService.getBestScores(userID, mode, offset, limit) },
+            { scoreApiService.getBestScores(userID, mode, fetchOffset, fetchLimit) },
         )
 
         val user: OsuUser = async.first
         val scores: List<LazerScore> = async.second
 
         if (scores.isEmpty()) {
-            if (offset > 0) {
+            if (fetchOffset > 0) {
                 if (mode.isNotDefault) {
-                    throw NoSuchElementException.BestScoreWithModeAndOffset(user.username, mode, offset)
+                    throw NoSuchElementException.BestScoreWithModeAndOffset(user.username, mode, fetchOffset)
                 } else {
-                    throw NoSuchElementException.BestScoreWithOffset(user.username, offset)
+                    throw NoSuchElementException.BestScoreWithOffset(user.username, fetchOffset)
                 }
             } else {
                 throw NoSuchElementException.BestScoreWithMode(user.username, mode)
@@ -207,7 +213,7 @@ import java.util.regex.Matcher
         beatmapApiService.applyAlias(scores)
         BeatmapUtil.applyBeatmapChanges(scores)
 
-        val scoresByRank = scores.associateByOffset(offset)
+        val scoresByRank = scores.associateByOffset(fetchOffset)
 
         val classified = scoresByRank.classify(context)
 
@@ -219,9 +225,25 @@ import java.util.regex.Matcher
             }
         }
 
+        // `bp` 带条件时只展示一条：多条命中取 pp 最高的一条，`#3` 这类按序号取第 3 个符合条件的；
+        // `bps`、`#1-5` 这种 limit > 1 的范围仍然保留多条。
+        val selected: Map<Int, LazerScore> = when {
+            hasCondition && !isMultiple && limit <= 1 -> {
+                if (offset > 0) {
+                    classified.entries.drop(offset).take(limit)
+                } else {
+                    listOfNotNull(classified.entries.maxByOrNull { it.value.pp })
+                }.associate { it.key to it.value }
+            }
+            hasCondition -> classified.entries.drop(offset).take(limit).associate { it.key to it.value }
+            else -> classified
+        }
+
+        if (selected.isEmpty()) throw NoSuchElementException.BestScoreFiltered(user.username)
+
         val historyUser = infoDao.getHistoryUser(user)
 
-        return BPParam(user, historyUser, classified, isShow, isCompact)
+        return BPParam(user, historyUser, selected, isShow, isCompact)
     }
 
     private fun BPParam.getMessageChain(): MessageChain {

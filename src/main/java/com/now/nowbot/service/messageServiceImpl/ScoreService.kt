@@ -230,8 +230,9 @@ import kotlin.time.Duration.Companion.seconds
         // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、玩家名、范围不算；`+HR` 会被 LazerModExtractor 桥接成 mod 条件，算。
         val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
-        val defaultLimit = when {
-            // `!ss` 带条件时要展示全部符合项，放宽到 100；`!ss` 本身默认 20
+        // 这里只是「最终展示多少条」，不是「抓多少条」：带条件时候选窗口由后面的完整成绩列表决定。
+        // `!s +DT` 必须从 1 条起，下面的「多条命中取 pp 最高」塌缩才会生效；`!ss +DT` 才放宽到 100。
+        val resultLimit = when {
             isMultiple && hasCondition -> 100
             isMultiple -> 20
             else -> 1
@@ -240,7 +241,7 @@ import kotlin.time.Duration.Companion.seconds
         val (offset, limit) = commandUtil.getRange(
             context,
             defaultOffset = 0,
-            defaultLimit = defaultLimit,
+            defaultLimit = resultLimit,
             // `!ss #2` 是「前两条」，`!s #3` 是「第 3 条」：单个数字的含义由指令本身决定
             multiple = isMultiple,
             max = 100,

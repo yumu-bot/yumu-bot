@@ -263,8 +263,10 @@ class ScorePRService(
         // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、玩家名、范围不算；`+HR` 会被 LazerModExtractor 桥接成 mod 条件，算。
         val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
-        val defaultLimit = when {
-            hasCondition -> 100
+        // 这里只是「最终展示多少条」，不是「抓多少条」：抓取窗口由下面的 fetchLimit 决定。
+        // `!pr +DT` 必须从 1 条起，下面的「多条命中取 pp 最高」塌缩才会生效；`!prs +DT` 才放宽到 100。
+        val resultLimit = when {
+            isMultiple && hasCondition -> 100
             isMultiple -> 20
             else -> 1
         }
@@ -272,14 +274,19 @@ class ScorePRService(
         val (offset, limit) = commandUtil.getRange(
             context,
             defaultOffset = 0,
-            defaultLimit = defaultLimit,
+            defaultLimit = resultLimit,
             multiple = isMultiple,
             max = 100,
         )
 
+        // 有条件时 offset/limit 指的是「符合条件的第几个 / 前几个」，不能直接交给接口切片：
+        // 先多取一批候选，筛完再按 offset/limit 取，否则条件筛不到几条第 N 个也对不上。
+        val fetchOffset = if (hasCondition) 0 else offset
+        val fetchLimit = if (hasCondition) 100 else limit
+
         val async = AsyncMethodExecutor.awaitPair(
             { userApiService.getOsuUser(userID, mode) },
-            { scoreApiService.getScore(userID, mode, offset, limit, isPass) },
+            { scoreApiService.getScore(userID, mode, fetchOffset, fetchLimit, isPass) },
         )
 
         val user: OsuUser = async.first
@@ -307,7 +314,7 @@ class ScorePRService(
         BeatmapUtil.applyBeatmapChanges(scores)
 
         val scoresByRank: Map<Int, LazerScore> = buildMap(scores.size) {
-            scores.forEachIndexed { index, score -> put(index + offset + 1, score) }
+            scores.forEachIndexed { index, score -> put(index + fetchOffset + 1, score) }
         }
 
         val classified = scoresByRank.classify(context)
@@ -328,9 +335,31 @@ class ScorePRService(
             }
         }
 
+        // `!pr` 带条件时只展示一条：多条命中取 pp 最高的一条，`#3` 这类按序号取第 3 个符合条件的；
+        // `!prs`、`#1-5` 这种 limit > 1 的范围仍然保留多条。
+        val selected: List<Map.Entry<Int, LazerScore>> = when {
+            hasCondition && !isMultiple && limit <= 1 -> {
+                if (offset > 0) {
+                    classified.entries.drop(offset).take(limit)
+                } else {
+                    listOfNotNull(classified.entries.maxByOrNull { it.value.pp })
+                }
+            }
+            hasCondition -> classified.entries.drop(offset).take(limit)
+            else -> classified.entries.toList()
+        }
+
+        if (selected.isEmpty()) {
+            if (isPass) {
+                throw NoSuchElementException.PassedScoreWithOffset(user.username, mode, offset)
+            } else {
+                throw NoSuchElementException.RecentScoreWithOffset(user.username, mode, offset)
+            }
+        }
+
         val historyUser = infoDao.getHistoryUser(user)
 
-        return ScorePRParam(user, historyUser, classified, isPass, isShow, isCompact)
+        return ScorePRParam(user, historyUser, selected.associate { it.key to it.value }, isPass, isShow, isCompact)
     }
 
     private fun ScorePRParam.getMessageChain(): MessageChain {
