@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.takeIfConvertable
 import com.now.nowbot.model.filter.ScoreClassifier
 import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
 import com.now.nowbot.model.filter.hasCondition
@@ -265,7 +266,7 @@ import kotlin.time.Duration.Companion.seconds
                 },
             ) ?: throw NoSuchElementException.Player()
 
-            val mode = commandUtil.getMode(context, event, userID)
+            val mode = commandUtil.getMode(context, event, userID).takeIfConvertable(beatmap)
             val user = userApiService.getOsuUser(userID, mode)
 
             // 有榜时优先取在线分数

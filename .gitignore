@@ -41,3 +41,4 @@ data/
 config/
 .jpb
 log*.xml
+/.agents/
