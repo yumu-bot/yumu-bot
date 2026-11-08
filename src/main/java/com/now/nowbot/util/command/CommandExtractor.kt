@@ -419,8 +419,9 @@ fun StripContext.extractByHeads(heads: List<HeadSpec>) {
     val hits = ArrayList<TokenHit>()
     var i = 0
     while (i < text.length) {
-        // 参数头只能从词首开始，避免把单词内部的片段误认成参数名
-        if (i > 0 && text[i - 1].isLetterOrDigit()) {
+        // 名字类参数头只能从词首开始，避免把单词内部的片段误认成参数名；
+        // 符号头不受此限，`!s2274672+dt` 这种紧贴在谱面编号后面的模组也要能剥出来
+        if (i > 0 && text[i - 1].isLetterOrDigit() && text[i] !in RESERVED_SYMBOLS) {
             i++
             continue
         }
