@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.interactions.addKeyboard
 import com.now.nowbot.qq.tencent.TencentMessageService
-import com.yumu.qq.message.Keyboard
 import org.springframework.stereotype.Service
 
 @Service("TEST_MARKDOWN")
@@ -45,20 +45,16 @@ class TestMarkdownService : TencentMessageService<Unit> {
             ```
         """.trimIndent()
 
-        val buttons = listOf(
-            Keyboard.Button("上一页", "/up").action { enter = true },
-            Keyboard.Button("首页", "/home").action { enter = true },
-            Keyboard.Button("下一页", "/down").action { enter = true }
-        )
-
-        val kb = Keyboard(
-            keyboards = listOf(buttons)
-        )
-
         return MessageChain
             .builder()
             .addMarkdown(md)
-            .addKeyboard(kb)
+            .addKeyboard {
+                row {
+                    button("上一页", "/up", enter = true)
+                    button("首页", "/home", enter = true)
+                    button("下一页", "/down", enter = true)
+                }
+            }
             .build()
     }
 }

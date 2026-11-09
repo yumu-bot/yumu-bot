@@ -9,10 +9,13 @@ import com.now.nowbot.model.filter.ScoreClassifier.Companion.classify
 import com.now.nowbot.model.filter.hasCondition
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
+import com.now.nowbot.model.osu.LazerMod.Companion.toAcronyms
 import com.now.nowbot.model.osu.LazerScore.Companion.putRank
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.KeyboardMessage
+import com.now.nowbot.qq.interactions.ButtonActionType
+import com.now.nowbot.qq.interactions.ButtonStyle
 import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.interactions.keyboardMessage
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -40,7 +43,6 @@ import com.now.nowbot.util.command.RangeExtractor
 import com.now.nowbot.util.command.ScoreClassifierExtractor
 import com.now.nowbot.util.command.StripPipeline
 import com.now.nowbot.util.command.UserIDExtractor
-import com.yumu.qq.message.Keyboard
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -175,31 +177,42 @@ import kotlin.time.Duration.Companion.seconds
         return getParam(event, matcher, isMultipleScore, isShow, isCompact = true)
     }
 
-    override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
-        if (ContextUtil.isTestUser) {
-            log.warn(
-                "ContextUtil.getContext(ContextUtil.IS_TENCENT_MESSAGE, Boolean::class.java): ${
-                    ContextUtil.getContext(
-                        ContextUtil.IS_TENCENT_MESSAGE,
-                        Boolean::class.java
-                    ) == true
-                }"
-            )
-        }
-        if (ContextUtil.getContext(ContextUtil.IS_TENCENT_MESSAGE, Boolean::class.java) == true) {
-            val result = param.getMessageChain()
+    private fun ScoreParam.rebuildQuery(): String {
+        val sb = StringBuilder()
 
-            val buttonGroup = listOf(
-                listOf(Keyboard.Button("我也要查", "/s"))
-            )
-            val kb = KeyboardMessage(Keyboard(keyboards = buttonGroup))
-            result.addMessage(kb)
-            if (ContextUtil.isTestUser) {
-                log.warn("keyboard: $kb")
-            }
-            return result
+        sb.append(":${this.mode.safeModeValue}")
+        sb.append(' ').append(this.map.beatmapID)
+
+        if (this.mods.isNotEmpty()) {
+            sb.append(' ').append("+${this.mods.toAcronyms()}")
         }
-        return param.getMessageChain()
+        
+        return sb.toString()
+    }
+
+    override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
+        val result = param.getMessageChain()
+        
+        val query = param.rebuildQuery()
+
+        result.addMessage(keyboardMessage {
+            row {
+                button("查询信息", "/m $query", style = ButtonStyle.GREY, enter = true)
+                button("查询排行", "/l $query", style = ButtonStyle.GREY, enter = true)
+                button("访问页面",
+                    data = "https://osu.ppy.sh/b/${param.map.beatmapID}",
+                    actionType = ButtonActionType.LINK,
+                    tips = "当前客户端不支持打开链接"
+                )
+            }
+
+            row {
+                button("查询我的成绩", "/s $query", enter = true)
+                button("查询所有成绩", "/ss $query", enter = true)
+            }
+        })
+
+        return result
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isMultiple: Boolean, isShow: Boolean, isCompact: Boolean): ScoreParam {

@@ -263,10 +263,9 @@ class ScorePRService(
         // 只有 ScoreClassifier 真的会用来筛成绩的参数才算条件；模式、玩家名、范围不算；`+HR` 会被 LazerModExtractor 桥接成 mod 条件，算。
         val hasCondition = context.hasCondition(ScoreClassifier.entries)
 
-        // 这里只是「最终展示多少条」，不是「抓多少条」：抓取窗口由下面的 fetchLimit 决定。
-        // `!pr +DT` 必须从 1 条起，下面的「多条命中取 pp 最高」塌缩才会生效；`!prs +DT` 才放宽到 100。
+        // 这里只是「最终展示多少条」，不是「抓多少条」：带条件时抓满 100 条候选再筛，展示上仍是多条。
         val resultLimit = when {
-            isMultiple && hasCondition -> 100
+            hasCondition -> 100
             isMultiple -> 20
             else -> 1
         }
@@ -335,18 +334,12 @@ class ScorePRService(
             }
         }
 
-        // `!pr` 带条件时只展示一条：多条命中取 pp 最高的一条，`#3` 这类按序号取第 3 个符合条件的；
-        // `!prs`、`#1-5` 这种 limit > 1 的范围仍然保留多条。
-        val selected: List<Map.Entry<Int, LazerScore>> = when {
-            hasCondition && !isMultiple && limit <= 1 -> {
-                if (offset > 0) {
-                    classified.entries.drop(offset).take(limit)
-                } else {
-                    listOfNotNull(classified.entries.maxByOrNull { it.value.pp })
-                }
-            }
-            hasCondition -> classified.entries.drop(offset).take(limit)
-            else -> classified.entries.toList()
+        // 带条件时 offset/limit 指的是「符合条件的第几个 / 前几个」，筛完再切；
+        // 默认 limit 是 100，所以 `!p +DT` / `!r +DT` 依旧展示全部符合条件的成绩。
+        val selected: List<Map.Entry<Int, LazerScore>> = if (hasCondition) {
+            classified.entries.drop(offset).take(limit)
+        } else {
+            classified.entries.toList()
         }
 
         if (selected.isEmpty()) {
