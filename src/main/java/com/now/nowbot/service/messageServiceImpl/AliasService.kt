@@ -22,6 +22,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
+import com.now.nowbot.util.RestrictWordUtil
 import com.now.nowbot.util.StringUtil.formatted
 import com.now.nowbot.util.StringUtil.removeSongSuffix
 import com.now.nowbot.util.command.FLAG_DATA
@@ -381,6 +382,32 @@ class AliasService(
     }
 
     /**
+     * 展示用的别名：违禁词会被替换成 [RestrictWordUtil.WORD_MASK] / [RestrictWordUtil.CHAR_MASK]。
+     *
+     * 只影响展示，数据库里保存的仍然是原文；删除、重排等操作必须继续使用原始别名。
+     */
+    private fun displayAliases(aliases: List<String>): List<String> = aliases.map { RestrictWordUtil.harmonize(it) }
+
+    /**
+     * 别名列表里含有违禁词时的提示。
+     *
+     * @param aliases 原始别名，顺序和展示的编号一致
+     * @param numbered 为 true 时列出命中的编号（适合带编号的列表），否则只提示数量
+     * @return 没有命中时返回空串
+     */
+    private fun restrictHint(aliases: List<String>, numbered: Boolean = true): String {
+        val hits = aliases.indices.filter { RestrictWordUtil.contains(aliases[it]) }
+
+        if (hits.isEmpty()) return ""
+
+        return if (numbered) {
+            "注意：第 ${hits.joinToString("、") { (it + 1).toString() }} 个别名含有违禁词，已和谐显示。"
+        } else {
+            "注意：有 ${hits.size} 个别名含有违禁词，已和谐显示。"
+        }
+    }
+
+    /**
      * 添加别名。
      *
      * 管理员（含超级管理员）添加的别名默认通过审核，普通用户添加的需要等待审核。
@@ -452,7 +479,7 @@ class AliasService(
 
             if (added.isNotEmpty()) {
                 appendLine("回复 OK 或者 1 可以撤销本次保存。")
-                append("${ADD_TIMEOUT_SECONDS} 秒内不回复则视为确认，撤销任务会自动结束。")
+                append("$ADD_TIMEOUT_SECONDS 秒内不回复则视为确认，撤销任务会自动结束。")
             }
         }
 
@@ -599,7 +626,9 @@ class AliasService(
         }
         val unapprovedCount = if (isAdmin) 0 else aliasDao.countUnapprovedAliasesByTitle(title)
 
-        val aliasText = if (aliases.isEmpty()) "（空）" else aliases.joinToString("、")
+        val shownAliases = displayAliases(aliases)
+        val aliasText = if (aliases.isEmpty()) "（空）" else shownAliases.joinToString("、")
+        val restrictHintText = restrictHint(aliases, numbered = false)
         val unapprovedHint = if (!isAdmin && unapprovedCount > 0) {
             "（有${unapprovedCount}个未通过审核的别名）"
         } else {
@@ -615,6 +644,7 @@ class AliasService(
             appendLine()
             appendLine("将保存到别名库的标题：$title")
             appendLine("现有别名：$aliasText$unapprovedHint")
+            if (restrictHintText.isNotEmpty()) appendLine(restrictHintText)
             appendLine("发送「!am 别名」或直接回复别名，即可将其保存为该标题的别名。")
             appendLine("「!am 别名」里的别名不能是纯数字（纯数字会被当成 BID）。")
             appendLine("回复 OK 取消本次操作。")
@@ -826,12 +856,14 @@ class AliasService(
             return
         }
 
+        val restrictHintText = restrictHint(recent.flatMap { it.aliases }, numbered = false)
         val text = buildString {
             appendLine("最近新增别名的 ${recent.size} 个标题：")
             recent.forEachIndexed { index, item ->
-                val aliases = item.aliases.joinToString(", ", "[", "]")
+                val aliases = displayAliases(item.aliases).joinToString(", ", "[", "]")
                 appendLine("${index + 1}. ${item.title}: $aliases")
             }
+            if (restrictHintText.isNotEmpty()) appendLine(restrictHintText)
         }.trimEnd()
 
         event.replyAsync(text)
@@ -867,10 +899,12 @@ class AliasService(
 
         adjustSessions.put(key, session)
 
+        val restrictHintText = restrictHint(aliases)
         val prompt = buildString {
             appendLine("「$title」下的别名：")
-            aliases.forEachIndexed { index, alias -> appendLine("${index + 1}: $alias") }
+            displayAliases(aliases).forEachIndexed { index, alias -> appendLine("${index + 1}: $alias") }
             appendLine()
+            if (restrictHintText.isNotEmpty()) appendLine(restrictHintText)
             appendLine("请回复调整后的顺序（数字用逗号分隔，例如 2,1,3）。")
             appendLine("没有覆盖到的别名会按原来的顺序排在最后。")
             appendLine("回复 0 放弃本次修改。")
@@ -933,9 +967,11 @@ class AliasService(
             return
         }
 
+        val restrictHintText = restrictHint(ordered)
         val text = buildString {
             appendLine("「${session.title}」的别名顺序已更新：")
-            ordered.forEachIndexed { index, alias -> appendLine("${index + 1}: $alias") }
+            displayAliases(ordered).forEachIndexed { index, alias -> appendLine("${index + 1}: $alias") }
+            if (restrictHintText.isNotEmpty()) appendLine(restrictHintText)
         }.trimEnd()
 
         event.replyAsync(text)
@@ -1068,6 +1104,9 @@ class AliasService(
             throw NoSuchElementException.Alias(title)
         }
 
+        val shownAliases = displayAliases(aliases)
+        val restrictHintText = restrictHint(aliases)
+
         AsyncMessageUtil.doubleCheck(
             event = event,
             // 任意回复都交给下面解析，非数字由 parseDeleteSelection 判定为放弃
@@ -1075,8 +1114,9 @@ class AliasService(
             onCheck = {
                 event.reply(buildString {
                     appendLine("「$title」下的别名：")
-                    aliases.forEachIndexed { index, alias -> appendLine("${index + 1}. $alias") }
+                    shownAliases.forEachIndexed { index, alias -> appendLine("${index + 1}. $alias") }
                     appendLine()
+                    if (restrictHintText.isNotEmpty()) appendLine(restrictHintText)
                     append("请回复要删除的别名位置（从 1 开始，可用逗号分隔多个，也可以用 5-8 这样包含头尾的区间），回复 0 删除全部，回复其他内容放弃本次操作。")
                     append("\n60 秒内不回复同样视为放弃。")
                 })
@@ -1243,6 +1283,11 @@ class AliasService(
             return
         }
 
+        // 等回复期间展示的列表只做和谐，审核按编号处理，仍然使用原始别名
+        val pendingAliases = pending.map { it.value }
+        val shownAliases = displayAliases(pendingAliases)
+        val restrictHintText = restrictHint(pendingAliases)
+
         AsyncMessageUtil.doubleCheck(
             event = event,
             // 空列表表示任意回复都会进入 onSuccess，由我们自己解析数字序列
@@ -1255,8 +1300,9 @@ class AliasService(
                         appendLine("待审核的别名：")
                     }
                     pending.forEachIndexed { index, alias ->
-                        appendLine("${index + 1}. ${alias.titles.joinToString(" / ")} -> ${alias.value}（${alias.qq}）")
+                        appendLine("${index + 1}. ${alias.titles.joinToString(" / ")} -> ${shownAliases[index]}（${alias.qq}）")
                     }
+                    if (restrictHintText.isNotEmpty()) appendLine(restrictHintText)
                     append("请回复需要通过的编号（用逗号分隔，也可以用 5-10 这样包含头尾的区间），回复 0 本次全部通过，回复负数本次全部不通过，回复其他非数字取消操作。")
                     if (remaining > 0) {
                         append("\n处理完这 ${pending.size} 条后还有 $remaining 条待审核，请再次使用本指令。")

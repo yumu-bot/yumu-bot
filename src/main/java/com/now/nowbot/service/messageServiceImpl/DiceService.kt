@@ -11,6 +11,7 @@ import com.now.nowbot.service.messageServiceImpl.DiceService.Split.*
 import com.now.nowbot.throwable.botRuntimeException.DiceException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.RestrictWordUtil
 import com.now.nowbot.util.command.PATTERN_COLON
 import com.now.nowbot.util.command.PATTERN_NUMBER_DECIMAL
 import com.now.nowbot.util.command.REGEX_NUMBER_DECIMAL
@@ -179,10 +180,8 @@ import kotlin.time.Duration.Companion.seconds
             if (param.text.isNullOrBlank().not()) {
                 val message = compare(param.text)
 
-                // 用于匹配是否被和谐
-                val harmonised = "○|(\\[和谐])".toRegex()
-
-                val recall = if (message.contains(harmonised)) { // 被和谐就撤回
+                // 被和谐就撤回
+                val recall = if (RestrictWordUtil.isHarmonized(message)) {
                     60.seconds
                 } else {
                     Duration.ZERO
@@ -1104,12 +1103,7 @@ import kotlin.time.Duration.Companion.seconds
 
         private val PUNCTUATION_MARK = "[?？!！。.\\s]$".toRegex()
 
-        private val RESTRICT_WORD = "[习習]近平|[习習]?总书记|主席|国家|政治|反动|反?共(产党)?|[国國]民[党黨]|天安[門门]|极[左右](主义)?|革命|(社会)?主义|自由|解放|中[華华]民[国國]|情趣|迪克|高潮|色[诱情欲色]|擦边|露出|[蛇射受授吞]精|潮喷|成人|性交|小?男娘|小?南梁|做爱|后入|药娘|怀孕|生殖器|寄吧|几把|鸡[鸡巴]|[精卵]子|[精爱]液|子宫|阴[茎蒂唇囊道]|[逼Bb阴吊叼批肛]毛|搞基|出?脚本|[Rr]-?18|18\\s?禁|LGBT".toRegex()
-
-        private val RESTRICT_CHAR = "[黨党吊批逼操肏肛杀穴屁萎猥]".toRegex()
-
-        private val OTTO = "((电?[棍昆滚])|otto)\\s*的?\\s*((老?[木母]亲?)|([妈老]?妈)|(mom)|(mother))".toRegex()
-
+        // 违禁词相关的正则和和谐逻辑统一放在 RestrictWordUtil，这里只负责调用
         /**
          * 改变主宾格，删除语气助词，和谐违禁词
          *
@@ -1130,9 +1124,7 @@ import kotlin.time.Duration.Companion.seconds
                 .replace(MINE_EN, "yours")
                 .replace(AUXILIARY_WORD, "")
                 .replace(PUNCTUATION_MARK, "")
-                .replace(RESTRICT_WORD, "[和谐]")
-                .replace(RESTRICT_CHAR, "○")
-                .replace(OTTO, "    ")
+                .let(RestrictWordUtil::harmonize)
         }
 
         private val APOSTROPHE = "'".toRegex()
