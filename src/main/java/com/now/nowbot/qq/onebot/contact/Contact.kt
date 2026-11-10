@@ -9,7 +9,6 @@ import com.now.nowbot.qq.contact.Contact
 import com.now.nowbot.qq.message.*
 import com.now.nowbot.qq.message.Message.JsonMessage
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt
-import com.now.nowbot.util.QQMsgUtil
 
 open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
 
@@ -47,7 +46,7 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
                 d = bot.customRawRequest(
                     { "send_group_msg" }, mapOf<String, Any>(
                         "group_id" to contactID,
-                        "message" to getMsgJson(msg),
+                        "message" to msg.toJson(),
                         "auto_escape" to false
                     ), MsgId::class.java
                 )
@@ -59,7 +58,7 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
                     { "send_private_msg" }, mapOf<String, Any>(
                         "group_id" to this.groupID,
                         "user_id" to this.contactID,
-                        "message" to getMsgJson(msg),
+                        "message" to msg.toJson(),
                         "auto_escape" to false
                     ), MsgId::class.java
                 )
@@ -70,7 +69,7 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
                 d = bot.customRawRequest(
                     { "send_private_msg" }, mapOf<String, Any>(
                         "user_id" to contactID,
-                        "message" to getMsgJson(msg),
+                        "message" to msg.toJson(),
                         "auto_escape" to false
                     ), MsgId::class.java
                 )
@@ -92,7 +91,7 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
 
                 Contact.log.warn("发送消息：账号 ${bot.selfId} 在 $id 发送图片时获取回执失败。发送图片状态：$status")
             } else {
-                Contact.log.warn("发送消息：账号 ${bot.selfId} 在 $id 发送此消息时获取回执失败：\n${getMsg4Chain(msg).take(100)}")
+                Contact.log.warn("发送消息：账号 ${bot.selfId} 在 $id 发送此消息时获取回执失败：\n${msg.toLog().take(1000)}")
             }
 
             return OneBotMessageReceipt.create()
@@ -113,8 +112,8 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
     }
 
     companion object {
-        protected fun getMsg4Chain(messageChain: MessageChain): String {
-            val s = messageChain.messageList
+        protected fun MessageChain.toLog(): String {
+            val s = this.messageList
 
             if (s.isEmpty()) return ""
 
@@ -123,13 +122,13 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
                 when (message) {
                     is ImageMessage -> {
                         if (message.isByteArray) {
-                            builder.img("base64://${QQMsgUtil.byte2str(message.data)}")
+                            builder.text("[图片]")
                         } else {
                             builder.img(message.path)
                         }
                     }
 
-                    is VoiceMessage -> builder.voice("base64://${QQMsgUtil.byte2str(message.data)}")
+                    is VoiceMessage -> builder.text("[语音]")
 
                     is AtMessage -> {
                         if (!message.isAll) {
@@ -147,8 +146,8 @@ open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
             return builder.build()
         }
 
-        protected fun getMsgJson(chain: MessageChain): List<JsonMessage> {
-            return chain.messageList.mapNotNull { it.toJson() }
+        protected fun MessageChain.toJson(): List<JsonMessage> {
+            return this.messageList.mapNotNull { it.toJson() }
         }
     }
 }
