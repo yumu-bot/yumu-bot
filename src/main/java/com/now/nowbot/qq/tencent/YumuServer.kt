@@ -5,6 +5,7 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.TextMessage
 import com.now.nowbot.restrict.RestrictImplement
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.qqImageApiService.QQImageMarkdownConverter
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.QQMsgUtil
 import com.yumu.YumuService
@@ -17,6 +18,10 @@ import kotlin.time.Duration.Companion.seconds
 
 object YumuServer : YumuService {
     lateinit var userApiService: OsuUserApiService
+
+    /** 由 [QQImageMarkdownConverter] 初始化时注入, 用于把图文消息转成带图 Markdown */
+    @Volatile
+    var imageMarkdownConverter: QQImageMarkdownConverter? = null
 
     override suspend fun onCommand(param: Command.Request): Command.Response {
         val channel = Channel<Command.Response>(0, BufferOverflow.DROP_LATEST)
@@ -54,15 +59,33 @@ object YumuServer : YumuService {
         val (textList, imageList) = messageChain.messageList.filter { it is TextMessage || it is ImageMessage }
             .partition { it is TextMessage }
         val md = messageChain.markdown
-        var text: String
+        val keyboard: String? = messageChain.keyboard?.toString()
+
         // markdown 会覆盖普通消息
-        if (md == null) {
-            text = textList.joinToString { it.toString() }
-            if (text.contains("(!bi)")) {
-                text = BindException.TokenExpiredException.OfficialTokenExpired().message!!
-            }
-        } else {
-            text = md.toString()
+        if (md != null) {
+            return Command.Response(
+                md.toString(),
+                image = null,
+                isUrl = false,
+                isMarkdown = true,
+                keyboard = keyboard
+            )
+        }
+
+        // 图文消息优先转成带图 Markdown, 转不了再走下面的普通图文消息
+        imageMarkdownConverter?.convert(messageChain)?.let { converted ->
+            return Command.Response(
+                converted.markdown,
+                image = null,
+                isUrl = false,
+                isMarkdown = true,
+                keyboard = keyboard
+            )
+        }
+
+        var text = textList.joinToString { it.toString() }
+        if (text.contains("(!bi)")) {
+            text = BindException.TokenExpiredException.OfficialTokenExpired().message!!
         }
         var image: String? = null
         var isUrl = false
@@ -75,12 +98,11 @@ object YumuServer : YumuService {
                 image = QQMsgUtil.byte2str(imageData.data)
             }
         }
-        val keyboard: String? = messageChain.keyboard?.toString()
         val result = Command.Response(
             text,
             image,
             isUrl = isUrl,
-            isMarkdown = md != null,
+            isMarkdown = false,
             keyboard = keyboard
         )
         return result
