@@ -6,18 +6,16 @@ import com.now.nowbot.util.exchangeToBody
 import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 import java.security.MessageDigest
-import java.util.HexFormat
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.util.*
 
 /**
  * QQ 机器人素材上传接口。
@@ -45,7 +43,7 @@ import java.util.concurrent.TimeUnit
  */
 @Service
 class QQImageApiService(
-    private val restClient: RestClient,
+    @Qualifier("tencentApiRestClient") private val tencentApiRestClient: RestClient,
     private val config: QQImageApiConfig,
 ) {
     companion object {
@@ -94,117 +92,10 @@ class QQImageApiService(
     var isAvailable: Boolean = false
         private set
 
-    @Volatile
-    private var accessToken: String? = null
-
-    /** access_token 过期时间, 单位秒 */
-    @Volatile
-    private var tokenExpiresAt: Long = 0
-
-    private val tokenLock = Any()
-
-    private val startupScheduler = Executors.newSingleThreadScheduledExecutor(
-        Thread.ofVirtual().name("qq-image-bootstrap-", 0).factory()
-    )
-
     @PostConstruct
     fun init() {
         QQImageCleanup.bind(this)
-
-        if (config.hasFixedToken()) {
-            isAvailable = true
-            log.info("QQ 图片素材服务使用配置文件中的 access_token, 跳过换取流程")
-            return
-        }
-
-        if (!config.isConfigured()) {
-            log.warn("未配置 QQ 机器人凭证, 带图 Markdown 功能不可用; 可填写 yumu.qq-image.token 或 app-id / client-secret")
-            return
-        }
-
-        checkAtStartup(0)
-    }
-
-    /**
-     * 启动时换取一次 token，失败按错误类型决定重试还是放弃。
-     */
-    private fun checkAtStartup(attempt: Int) {
-        val delay = if (attempt == 0) 0L else STARTUP_RETRY_INTERVAL_SECONDS
-
-        startupScheduler.schedule({
-            try {
-                accessToken()
-                isAvailable = true
-                log.info("QQ 图片素材服务已就绪")
-            } catch (e: QQImageAuthException) {
-                isAvailable = false
-                log.error("QQ 凭证被拒绝, 图片素材服务不可用, 不再重试: {}", e.message)
-            } catch (e: Exception) {
-                if (attempt + 1 >= STARTUP_MAX_ATTEMPTS) {
-                    isAvailable = false
-                    log.error("QQ 图片素材服务启动检查连续失败 {} 次, 停止重试: {}", STARTUP_MAX_ATTEMPTS, e.message)
-                } else {
-                    log.warn(
-                        "QQ 图片素材服务启动检查失败 (第 {}/{} 次), {} 秒后重试: {}",
-                        attempt + 1, STARTUP_MAX_ATTEMPTS, STARTUP_RETRY_INTERVAL_SECONDS, e.message
-                    )
-                    checkAtStartup(attempt + 1)
-                }
-            }
-        }, delay, TimeUnit.SECONDS)
-    }
-
-    /**
-     * 获取 access_token, 带进程内缓存。
-     *
-     * 配置了固定 token 时直接返回它；否则调用 [QQImageApiConfig.tokenUrl] 换取。
-     * 官方在过期前 60 秒内再次获取会返回新 token, 老 token 在这 60 秒内仍有效,
-     * 所以提前 [TOKEN_REFRESH_AHEAD_SECONDS] 秒刷新即可。
-     */
-    fun accessToken(): String {
-        val fixed = config.accessToken
-        if (fixed.isNotBlank()) return fixed
-
-        requireConfigured()
-
-        val now = System.currentTimeMillis() / 1000
-        val cached = accessToken
-        if (cached != null && now < tokenExpiresAt) return cached
-
-        synchronized(tokenLock) {
-            val doubleChecked = accessToken
-            if (doubleChecked != null && now < tokenExpiresAt) return doubleChecked
-
-            val response = try {
-                restClient.post()
-                    .uri(config.tokenUrl)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(AccessTokenRequest(config.appId, config.clientSecret))
-                    .exchangeToBody<AccessTokenResponse>()
-            } catch (e: RestClientResponseException) {
-                val message = "获取 QQ access_token 失败: HTTP ${e.statusCode.value()} ${e.responseBodyAsString}"
-                if (e.statusCode.value() in PERMANENT_AUTH_STATUS) {
-                    throw QQImageAuthException(message, e)
-                }
-                throw IllegalStateException(message, e)
-            }
-
-            val token = response.accessToken
-            if (token.isNullOrBlank()) {
-                // 该接口失败时 HTTP 仍是 200, 错误在响应体的 code 里
-                val message = "获取 QQ access_token 失败: code=${response.code}, message=${response.message}"
-                if (response.code != null && response.code != 0) {
-                    throw QQImageAuthException(message)
-                }
-                throw IllegalStateException(message)
-            }
-
-            val expiresIn = response.expiresIn?.toLongOrNull() ?: 7200L
-            accessToken = token
-            tokenExpiresAt = now + (expiresIn - TOKEN_REFRESH_AHEAD_SECONDS).coerceAtLeast(0L)
-            log.debug("QQ access_token 已刷新, {} 秒后过期", expiresIn)
-            return token
-        }
+        isAvailable = config.accessToken.isNotBlank()
     }
 
     /**
@@ -240,10 +131,8 @@ class QQImageApiService(
         requireAvailable()
         requireImage(image, fileName, contentType)
 
-        val response = restClient.post()
-            .uri("${config.apiUrl}/v2/media-images/prepare")
-            .header(HttpHeaders.AUTHORIZATION, "QQBot ${accessToken()}")
-            .contentType(MediaType.APPLICATION_JSON)
+        val response = tencentApiRestClient.post()
+            .uri("/v2/media-images/prepare")
             .body(
                 PrepareRequest(
                     fileName = fileName,
@@ -268,7 +157,7 @@ class QQImageApiService(
      * Content-Type 必须与 [prepare] 时声明的一致, 否则 COS 返回 403。
      */
     fun uploadToPresignedUrl(presignedUrl: String, image: ByteArray, contentType: String): String {
-        return restClient.put()
+        return tencentApiRestClient.put()
             .uri(presignedUrl)
             .contentType(MediaType.parseMediaType(contentType))
             .body(image)
@@ -295,9 +184,8 @@ class QQImageApiService(
         requireConfigured()
         requireAvailable()
 
-        val response = restClient.post()
-            .uri("${config.apiUrl}/v2/media-images/complete")
-            .header(HttpHeaders.AUTHORIZATION, "QQBot ${accessToken()}")
+        val response = tencentApiRestClient.post()
+            .uri("/v2/media-images/complete")
             .contentType(MediaType.APPLICATION_JSON)
             .body(CompleteRequest(uploadId = uploadId, md5 = md5))
             .exchangeToBody<CompleteResponse>()
@@ -322,18 +210,17 @@ class QQImageApiService(
         requireAvailable()
 
         val uri = if (cursor.isNullOrBlank()) {
-            URI.create("${config.apiUrl}/v2/media-images")
+            URI.create("/v2/media-images")
         } else {
-            UriComponentsBuilder.fromUriString("${config.apiUrl}/v2/media-images")
+            UriComponentsBuilder.fromUriString("/v2/media-images")
                 .queryParam("cursor", cursor)
                 .build()
                 .encode()
                 .toUri()
         }
 
-        val response = restClient.get()
+        val response = tencentApiRestClient.get()
             .uri(uri)
-            .header(HttpHeaders.AUTHORIZATION, "QQBot ${accessToken()}")
             .exchangeToBody<QueryResponse>()
 
         return MediaImagePage(
@@ -360,9 +247,8 @@ class QQImageApiService(
     fun delete(imageId: String) {
         requireConfigured()
 
-        restClient.delete()
-            .uri("${config.apiUrl}/v2/media-images/$imageId/delete")
-            .header(HttpHeaders.AUTHORIZATION, "QQBot ${accessToken()}")
+        tencentApiRestClient.delete()
+            .uri("/v2/media-images/$imageId/delete")
             .exchange { _, response ->
                 if (!response.statusCode.is2xxSuccessful) {
                     throw HttpClientErrorException(
@@ -373,21 +259,6 @@ class QQImageApiService(
                     )
                 }
             }
-    }
-
-    /**
-     * 判断传输异常是不是凭证问题（区别于网络波动）。
-     */
-    fun isAuthFailure(t: Throwable): Boolean {
-        var cause: Throwable? = t
-        var depth = 0
-        while (cause != null && depth < 10) {
-            if (cause is QQImageAuthException) return true
-            if (cause is HttpClientErrorException && cause.statusCode.value() in PERMANENT_AUTH_STATUS) return true
-            cause = cause.cause
-            depth++
-        }
-        return false
     }
 
     private fun requireConfigured() {
@@ -466,18 +337,6 @@ class QQImageApiService(
         val images: List<MediaImageItem> = emptyList(),
         @field:JsonProperty("next_cursor") val nextCursor: String? = null,
         val total: Long = 0,
-    )
-
-    private data class AccessTokenRequest(
-        @field:JsonProperty("appId") val appId: String,
-        @field:JsonProperty("clientSecret") val clientSecret: String,
-    )
-
-    private data class AccessTokenResponse(
-        @field:JsonProperty("access_token") val accessToken: String? = null,
-        @field:JsonProperty("expires_in") val expiresIn: String? = null,
-        val code: Int? = null,
-        val message: String? = null,
     )
 
     private data class PrepareRequest(

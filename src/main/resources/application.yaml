@@ -62,14 +62,11 @@ yumu:
     # cosu（详见 yumubot/osuApiWrap 项目）
     priority: [LOCAL_DATABASE, OFFICIAL_API, R_OSU, C_OSU]
   qq-image: # 官方 Bot 素材上传, 用于把「文字 + 图片」的普通消息转成带图 Markdown 消息
-    # 二选一: 直接填 access_token, 或者填 app-id + client-secret 由程序现换
-    app-id: ""
-    client-secret: ""
+
     # token 有效期一般 2 小时, 填了它就不会再去换 token, 过期后素材接口会被拒绝
     access-token: ""
     # 接口地址, 一般不用改
     api-url: "https://api.bot.qq.com"
-    token-url: "https://api.bot.qq.com/app/getAppAccessToken"
     # 是否自动把图文消息转成 Markdown 消息
     auto-markdown: true
 

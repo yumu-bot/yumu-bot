@@ -209,6 +209,12 @@ class RestClientConfig(
         }
         .build()
 
+    @Bean("tencentApiRestClient")
+    fun tencentApiRestClient(config: QQImageApiConfig): RestClient = clientBuilder(httpClients)
+        .baseUrl(config.apiUrl)
+        .defaultHeader(HttpHeaders.AUTHORIZATION, config.accessToken)
+        .build()
+
     companion object {
 
         val otherConnectionPoolManager = PoolingHttpClientConnectionManager().apply {
@@ -257,7 +263,6 @@ class RestClientConfig(
         val httpClients: CloseableHttpClient = HttpClients.custom()
             .setConnectionManager(otherConnectionPoolManager)
             .setDefaultRequestConfig(otherRequestConfig)
-
             .build()
 
         /**
