@@ -91,7 +91,7 @@ class QQImageApiService(
      * 素材接口当前是否可用。调用方据此决定要不要把图片塞进 Markdown。
      */
     @Volatile
-    var isAvailable: Boolean = false
+    final var isAvailable: Boolean = false
         private set
 
     @Volatile
