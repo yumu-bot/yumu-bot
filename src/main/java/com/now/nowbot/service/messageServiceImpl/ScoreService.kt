@@ -192,6 +192,10 @@ import kotlin.time.Duration.Companion.seconds
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
         val result = param.getMessageChain()
+
+        return result
+
+        // TODO 即将启用
         
         val query = param.rebuildQuery()
 
