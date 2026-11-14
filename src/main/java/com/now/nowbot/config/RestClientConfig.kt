@@ -5,8 +5,12 @@ import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder
 import org.apache.hc.core5.http.HttpHost
 import org.apache.hc.core5.http.io.SocketConfig
+import org.apache.hc.core5.http.message.BasicHeader
+import org.apache.hc.core5.http.ssl.TLS
 import org.apache.hc.core5.util.Timeout
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -184,7 +188,7 @@ class RestClientConfig(
     @Qualifier("sbApiRestClient")
     fun sbApiRestClient(
         config: NowbotConfig
-    ): RestClient = clientBuilder(proxyClient(config))
+    ): RestClient = clientBuilder(sbHttpClient(config))
         .baseUrl("https://api.ppy.sb/")
         .configureMessageConverters { configurer ->
             configurer.registerDefaults()
@@ -252,6 +256,44 @@ class RestClientConfig(
             }
 
             return clientBuilder.build()
+        }
+
+        /**
+         * ppy.sb 专用客户端。
+         *
+         * sb 服务器在部分网络/代理环境下会卡在 TLS1.3 握手（ClientHello 发出后一直无响应），
+         * 所以强制使用 TLS1.2；同时不复用连接（每次请求结束后关闭），避免复用被中间设备
+         * 悄悄断开的隧道时，请求一直等待到超时。
+         */
+        fun sbHttpClient(config: NowbotConfig): CloseableHttpClient {
+            val tlsStrategy = ClientTlsStrategyBuilder.create()
+                .setTlsVersions(TLS.V_1_2)
+                .buildClassic()
+
+            val connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+                .setTlsSocketStrategy(tlsStrategy)
+                .setMaxConnTotal(200)
+                .setMaxConnPerRoute(50)
+                .setDefaultSocketConfig(
+                    SocketConfig.custom()
+                        .setSoTimeout(Timeout.ofSeconds(10))
+                        .setSoKeepAlive(false)
+                        .build()
+                )
+                .build()
+
+            val builder = HttpClients.custom()
+                .setConnectionManager(connectionManager)
+                .setDefaultRequestConfig(otherRequestConfig)
+                // 不使用长连接: 响应结束后即关闭
+                .setConnectionReuseStrategy { _, _, _ -> false }
+                .setDefaultHeaders(listOf(BasicHeader("Connection", "close")))
+
+            if (config.proxyPort != 0) {
+                builder.setProxy(HttpHost(config.proxyHost, config.proxyPort))
+            }
+
+            return builder.build()
         }
 
         val httpClients: CloseableHttpClient = HttpClients.custom()
