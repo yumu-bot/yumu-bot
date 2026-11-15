@@ -1,6 +1,7 @@
 package com.now.nowbot.qq.tencent
 
 import com.now.nowbot.qq.message.ImageMessage
+import com.now.nowbot.qq.message.KeyboardMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.TextMessage
 import com.now.nowbot.restrict.RestrictImplement
@@ -72,10 +73,17 @@ object YumuServer : YumuService {
             )
         }
 
-        // 图文消息优先转成带图 Markdown, 转不了再走下面的普通图文消息
-        imageMarkdownConverter?.convert(messageChain)?.let { converted ->
+        val api = TencentBotListener.safeOpenApi
+        val markdown = if (api != null) {
+            val canUpload = imageList.isNotEmpty() && (imageList.size > 1 || textList.isNotEmpty()) &&
+                    messageChain.messageList.all { it is TextMessage || it is ImageMessage || it is KeyboardMessage }
+            if (canUpload) runBlocking { TencentMarkdownUploader(api).upload(messageChain) } else null
+        } else {
+            imageMarkdownConverter?.convert(messageChain)?.markdown
+        }
+        markdown?.let {
             return Command.Response(
-                converted.markdown,
+                it,
                 image = null,
                 isUrl = false,
                 isMarkdown = true,

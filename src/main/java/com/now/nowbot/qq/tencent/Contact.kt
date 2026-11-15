@@ -10,13 +10,21 @@ import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.qq.message.ReplyMessage
 import com.yumu.model.packages.Command
 
-class Contact(val userID: Long, val send:(Command.Response) -> Unit) : Group, GroupContact, Stranger {
+class Contact(
+    val userID: Long,
+    private val sendChain: ((MessageChain) -> Unit)? = null,
+    val send: (Command.Response) -> Unit,
+) : Group, GroupContact, Stranger {
     override val contactID = -userID
 
     override val name = "QQ用户"
 
     override fun sendMessage(msg: MessageChain): MessageReceipt {
-        send(YumuServer.messageToResponse(msg))
+        if (sendChain != null) {
+            sendChain.invoke(msg)
+        } else {
+            send(YumuServer.messageToResponse(msg))
+        }
         return FakeReceipt
     }
 

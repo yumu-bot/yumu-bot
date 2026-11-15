@@ -1,11 +1,9 @@
 package com.now.nowbot.controller
 
 import com.now.nowbot.qq.tencent.TencentAdapter
-import com.now.nowbot.qq.tencent.YumuServer
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.yumu.Listener
 import com.yumu.WebsocketAdapter
-import com.yumu.Yumu
 import com.yumu.core.extensions.toJson
 import com.yumu.model.WebsocketPackage
 import jakarta.annotation.PostConstruct
@@ -31,7 +29,7 @@ class QQBotWebsocket {
 
     @PostConstruct
     fun init() {
-        Yumu.registerServer(TencentAdapter, YumuServer)
+        TencentAdapter.registerServer()
     }
 
     @OnOpen
