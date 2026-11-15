@@ -42,12 +42,12 @@ import java.util.*
  * - **必须在消息发送成功后再删除**：发送时平台才会转存副本，提前删除会让这条消息的引用失效。
  */
 @Service
-class QQImageApiService(
+class TencentTransitApiService(
     @Qualifier("tencentApiRestClient") private val tencentApiRestClient: RestClient,
     private val config: QQImageApiConfig,
 ) {
     companion object {
-        private val log: Logger = LoggerFactory.getLogger(QQImageApiService::class.java)
+        private val log: Logger = LoggerFactory.getLogger(TencentTransitApiService::class.java)
 
         /** 单张图片大小上限, 官方限制 10MB */
         const val MAX_IMAGE_SIZE: Long = 10L * 1024 * 1024

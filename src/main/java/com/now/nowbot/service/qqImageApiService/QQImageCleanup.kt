@@ -1,5 +1,6 @@
 package com.now.nowbot.service.qqImageApiService
 
+import com.now.nowbot.service.qqImageApiService.QQImageCleanup.DELETE_DELAY_SECONDS
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -22,10 +23,10 @@ object QQImageCleanup {
     )
 
     @Volatile
-    private var api: QQImageApiService? = null
+    private var api: TencentTransitApiService? = null
 
-    /** 由 [QQImageApiService] 在初始化时绑定 */
-    fun bind(service: QQImageApiService) {
+    /** 由 [TencentTransitApiService] 在初始化时绑定 */
+    fun bind(service: TencentTransitApiService) {
         api = service
     }
 

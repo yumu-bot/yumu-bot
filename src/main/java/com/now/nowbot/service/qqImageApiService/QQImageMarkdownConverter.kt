@@ -10,19 +10,19 @@ import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.net.URI
-import java.util.Base64
+import java.util.*
 
 /**
  * 把「文字 + 图片」的普通富文本消息转成带图的 Markdown 消息。
  *
  * 原来 [YumuServer] 只能把一条消息表达成「一段文字 + 一张图片」，
- * 现在借助 QQ 的 Markdown 能力和素材上传接口（[QQImageApiService]），
+ * 现在借助 QQ 的 Markdown 能力和素材上传接口（[TencentTransitApiService]），
  * 可以把消息里的每张图都上传成 `qqbot-media://` 引用，再按原顺序插进 Markdown 文本里，
  * 于是图文混排、多图消息都能完整保留。
  *
  * 触发条件（任一不满足就返回 null，让 [YumuServer] 走原来的普通消息逻辑）：
  * - `yumu.qq-image.auto-markdown` 为 true；
- * - 素材接口可用（[QQImageApiService.isAvailable]）；
+ * - 素材接口可用（[TencentTransitApiService.isAvailable]）；
  * - 消息里至少有一张图片和一段文字（纯图片消息保持原样，避免影响出图命令）；
  * - 没有 Markdown / At / 语音 / 文件等 Markdown 表达不了的元素；
  * - 所有图片都能读出来并上传成功。
@@ -31,7 +31,7 @@ import java.util.Base64
  */
 @Service
 class QQImageMarkdownConverter(
-    private val api: QQImageApiService,
+    private val api: TencentTransitApiService,
     private val config: QQImageApiConfig,
 ) {
     companion object {
@@ -119,8 +119,8 @@ class QQImageMarkdownConverter(
         }
     }
 
-    private fun upload(bytes: ByteArray): QQImageApiService.MediaImage? {
-        if (bytes.size > QQImageApiService.MAX_IMAGE_SIZE) {
+    private fun upload(bytes: ByteArray): TencentTransitApiService.MediaImage? {
+        if (bytes.size > TencentTransitApiService.MAX_IMAGE_SIZE) {
             log.warn("图片大小 {} 字节超过素材上传上限, 回退到普通图文消息", bytes.size)
             return null
         }

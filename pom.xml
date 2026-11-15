@@ -219,13 +219,20 @@
         <dependency>
             <groupId>xyz.365246692.mvn</groupId>
             <artifactId>yumu-client</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.5</version>
         </dependency>
+
         <dependency>
             <groupId>xyz.365246692.mvn</groupId>
             <artifactId>yumu-tencent-bot</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.5</version>
         </dependency>
+        <dependency>
+            <groupId>xyz.365246692.mvn</groupId>
+            <artifactId>yumu-tencent-bot-spring</artifactId>
+            <version>0.1.5</version>
+        </dependency>
+
         <!--        腾讯的桥接接口-->
 
         <dependency>
