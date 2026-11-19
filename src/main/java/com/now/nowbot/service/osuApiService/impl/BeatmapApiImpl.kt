@@ -221,24 +221,20 @@ class BeatmapApiImpl(
         }
     }
 
+    // 刷新谱面文件: 先把新内容拿到手, 成功之后再覆盖本地文件。
+    // 不能先删再下 —— 下载失败(网络抖动/源站异常)时会把本来还能用的本地缓存也删掉。
     override fun refreshBeatmapFileFromDirectory(beatmapID: Long): Boolean {
-        val path = osuDir.resolve("$beatmapID.osu")
+        val content = getBeatmapFileStringFromOutside(beatmapID)?.takeIf { it.isNotBlank() }
 
-        if (hasBeatmapFileFromDirectory(beatmapID)) {
-            try {
-                Files.deleteIfExists(path)
-            } catch (e: IOException) {
-                log.error("osu 谱面 API：删除本地谱面文件失败: ", e)
-                return false
-            } finally {
-                beatmapPathCacheProvider.remove(beatmapID)
-                beatmapFileCacheProvider.remove(beatmapID)
-            }
+        if (content == null) {
+            log.warn("osu 谱面 API：刷新谱面文件失败, 保留原有本地文件: {}", beatmapID)
+            return false
         }
 
-        val content = getBeatmapFileString(beatmapID)
+        beatmapPathCacheProvider.remove(beatmapID)
+        beatmapFileCacheProvider.remove(beatmapID)
 
-        return !content.isNullOrBlank()
+        return writeBeatmapFileToDirectory(content, beatmapID)
     }
 
     private fun writeBeatmapFileToDirectory(str: String?, beatmapID: Long): Boolean {

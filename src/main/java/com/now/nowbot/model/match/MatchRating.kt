@@ -10,6 +10,7 @@ import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.BeatmapUtil
+import org.slf4j.LoggerFactory
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import kotlin.math.exp
@@ -124,7 +125,15 @@ class MatchRating(
         rs.forEach { round ->
             round.beatmap?.let {
                 val b = beatmapApiService.getBeatmapFromDatabase(round.beatmapID)
-                calculateApiService.applyStarToBeatmap(b, round.mode, round.mods.toLazerMods())
+
+                // 星数计算失败 (谱面文件损坏 / 接口异常) 只应影响 starRating 是否更新,
+                // 不能让整个 MatchRating 构造失败, 否则这一局的图片和后续监听都会丢
+                runCatching {
+                    calculateApiService.applyStarToBeatmap(b, round.mode, round.mods.toLazerMods())
+                }.onFailure { e ->
+                    log.warn("谱面 {} 星数计算失败, 沿用数据库中的星数", round.beatmapID, e)
+                }
+
                 round.beatmap = b
             }
         }
@@ -393,6 +402,8 @@ class MatchRating(
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(MatchRating::class.java)
+
         fun MatchRating.insertMicroUserToScores() {
             this.match.events
                 .mapNotNull { it.round }

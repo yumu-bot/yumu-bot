@@ -59,6 +59,12 @@ class CalculateApiImpl(
         listOf(CalculateStrategy.LOCAL_DATABASE, CalculateStrategy.OFFICIAL_API)
     }
 
+    /**
+     * rosu 判定为可疑/损坏的谱面文件。RosuPpException 对同一份谱面是稳定复现的，
+     * 记录下来避免每个对局都重复解析一次、重复抛异常与刷日志。
+     */
+    private val suspiciousBeatmapIds = ConcurrentHashMap.newKeySet<Long>()
+
     override fun getScorePerfectPP(
         score: LazerScore
     ): CalculatePerformance {
@@ -539,26 +545,32 @@ class CalculateApiImpl(
             if (input.isEmpty()) continue
 
             // 3. 执行获取逻辑
-            val found: Map<BeatmapDetails, Double> = when (strategy) {
-                CalculateStrategy.LOCAL_DATABASE -> {
-                    input.mapNotNull { d ->
-                        scoreDao.getStarRatingCache(d.beatmapID, d.mode, d.mods)?.let {
-                            d to it.toDouble()
-                        }
-                    }.toMap()
-                }
+            // 单个策略整体失败(网络/数据库/原生库异常)时, 记录后继续尝试下一个策略, 不要中断整批计算
+            val found: Map<BeatmapDetails, Double> = try {
+                when (strategy) {
+                    CalculateStrategy.LOCAL_DATABASE -> {
+                        input.mapNotNull { d ->
+                            scoreDao.getStarRatingCache(d.beatmapID, d.mode, d.mods)?.let {
+                                d to it.toDouble()
+                            }
+                        }.toMap()
+                    }
 
-                CalculateStrategy.R_OSU -> {
-                    getBeatmapStarFromRosu(input)
-                }
+                    CalculateStrategy.R_OSU -> {
+                        getBeatmapStarFromRosu(input)
+                    }
 
-                CalculateStrategy.OFFICIAL_API -> {
-                    getBeatmapStarFromOfficial(input)
-                }
+                    CalculateStrategy.OFFICIAL_API -> {
+                        getBeatmapStarFromOfficial(input)
+                    }
 
-                CalculateStrategy.C_OSU -> {
-                    getBeatmapStarFromCosu(input)
+                    CalculateStrategy.C_OSU -> {
+                        getBeatmapStarFromCosu(input)
+                    }
                 }
+            } catch (e: Exception) {
+                log.warn("星数计算策略 {} 执行失败, 继续尝试下一个策略", strategy, e)
+                emptyMap()
             }
 
             // 4. 合并结果并从“待办清单”中移除
@@ -579,32 +591,76 @@ class CalculateApiImpl(
         val starMap = mutableMapOf<BeatmapDetails, Double>()
 
         details.forEach { nd ->
-            val bytes = beatmapApiService.getBeatmapFileByte(nd.beatmapID)
+            // 已经确认过「刷新后仍然无法解析」, 不再重复下载与解析, 交给后续策略兜底
+            if (nd.beatmapID in suspiciousBeatmapIds) return@forEach
 
-            if (bytes != null) {
-                rosu.let { r ->
-                    r.loadBeatmap(bytes).use { beatmap ->
-                        val difficulty = customDifficultyRequest(nd.mods.filterByMode(nd.mode), null, nd.mode)
-                        val result = r.calculateDifficulty(beatmap, difficulty)
+            // 单张谱面的解析/计算失败不能影响整批谱面
+            val star = try {
+                calculateStarFromRosu(nd)
+            } catch (first: Exception) {
+                // 首次失败先不急着拉黑: 本地缓存的 .osu 可能损坏/下载不完整, 重新下载一次再试
+                log.warn(
+                    "Rosu 谱面解析失败, 尝试刷新谱面文件后重试: beatmapID={}, mode={}, error={}",
+                    nd.beatmapID, nd.mode, first.message
+                )
 
-                        val star = result.stars
+                retryStarFromRosu(nd)
+            }
 
-                        if (star > 1e-4) {
-                            scoreDao.saveStarRatingCacheAsync(
-                                nd.beatmapID,
-                                nd.mode,
-                                nd.mods,
-                                star.toFloat(),
-                                nd.hasLeaderBoard
-                            )
-                            starMap[nd] = star
-                        }
-                    }
-                }
+            if (star != null && star > 1e-4) {
+                scoreDao.saveStarRatingCacheAsync(
+                    nd.beatmapID,
+                    nd.mode,
+                    nd.mods,
+                    star.toFloat(),
+                    nd.hasLeaderBoard
+                )
+                starMap[nd] = star
             }
         }
 
         return starMap
+    }
+
+    /**
+     * 谱面文件解析失败后的唯一一次重试: 删掉本地缓存并重新下载 .osu。
+     * 只有刷新后依然失败才把谱面拉黑, 避免把「只是缓存烂了」的谱面永久跳过。
+     */
+    private fun retryStarFromRosu(nd: BeatmapDetails): Double? {
+        val refreshed = try {
+            beatmapApiService.refreshBeatmapFileFromDirectory(nd.beatmapID)
+        } catch (e: Exception) {
+            log.warn("刷新谱面文件失败: beatmapID={}", nd.beatmapID, e)
+            false
+        }
+
+        if (!refreshed) {
+            // 连文件都拿不到(源站异常), 记入黑名单避免每个对局都重复下载
+            suspiciousBeatmapIds.add(nd.beatmapID)
+            log.warn("刷新谱面文件失败, 跳过这张图的 Rosu 计算: beatmapID={}, mode={}", nd.beatmapID, nd.mode)
+            return null
+        }
+
+        return try {
+            calculateStarFromRosu(nd)
+        } catch (e: Exception) {
+            suspiciousBeatmapIds.add(nd.beatmapID)
+            log.warn(
+                "刷新 .osu 文件后 Rosu 仍无法解析, 跳过该谱面: beatmapID={}, mode={}",
+                nd.beatmapID, nd.mode, e
+            )
+            null
+        }
+    }
+
+    private fun calculateStarFromRosu(nd: BeatmapDetails): Double? {
+        val r = rosu ?: return null
+        val bytes = beatmapApiService.getBeatmapFileByte(nd.beatmapID) ?: return null
+
+        return r.loadBeatmap(bytes).use { beatmap ->
+            val difficulty = customDifficultyRequest(nd.mods.filterByMode(nd.mode), null, nd.mode)
+            r.calculateDifficulty(beatmap, difficulty).stars
+        }
     }
 
     private fun getBeatmapStarFromOfficial(details: Collection<BeatmapDetails>): Map<BeatmapDetails, Double> {

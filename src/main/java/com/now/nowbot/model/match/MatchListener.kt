@@ -36,18 +36,15 @@ class MatchListener(
             val gameEvent = match.events.last { it.round != null }
             nowGameID = match.currentGameID
             nowEventID = gameEvent.eventID - 1
-            try {
-                onEvent(gameEvent)
-            } catch (e: Exception) {
-                onError(e)
-            }
+            // onEvent 内部已经做了逐对局 / 逐适配器的异常隔离
+            onEvent(gameEvent)
         }
     }
 
     private fun listen() {
         val newMatch = try {
             matchApiService.getMatchAfter(matchId, nowEventID)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             log.error("ml: $matchId 查询失败: ", e)
             return
         }
@@ -83,8 +80,12 @@ class MatchListener(
 
             onAllEvent(newMatch.events)
             if (newMatch.isMatchEnd) stop(StopType.MATCH_END)
-        } catch (e: Exception) {
-            onError(e)
+        } catch (e: Throwable) {
+            // 这里是 ScheduledExecutorService.scheduleAtFixedRate 的任务:
+            // 任何逃逸的异常(包括 Error)都会让 future 被取消, 监听从此静默死掉。
+            // 所以兜底必须捕获 Throwable, 并保证 onError 自身也不会再抛。
+            log.error("ml: $matchId 监听轮询失败: ", e)
+            safeOnError(e)
         }
     }
 
@@ -144,7 +145,7 @@ class MatchListener(
                 if (game.endTime != null) { // 正常结束但是中间没有获取到 (因为请求延迟导致)
                     onEvent(it)
                 } else { // abort
-                    eventListener.forEach { l -> l.onGameAbort(game.beatmapID) }
+                    notifyAdapters { l -> l.onGameAbort(game.beatmapID) }
                 }
             }
         }
@@ -153,11 +154,29 @@ class MatchListener(
     }
 
     /**
-     * 针对单个对局处理
+     * 针对单个对局处理。
+     * 单个对局(或单个适配器)出错只影响它自己, 不能影响同一批里的其他对局, 更不能让监听线程退出。
      */
     private fun onEvent(event: Match.MatchEvent) {
+        try {
+            dispatchEvent(event)
+        } catch (e: Throwable) {
+            log.error("ml: $matchId 处理对局事件失败: ", e)
+            safeOnError(e)
+        }
+    }
+
+    private fun dispatchEvent(event: Match.MatchEvent) {
         val game = event.round ?: return
-        beforeGame(event, this)
+
+        try {
+            beforeGame(event, this)
+        } catch (e: Throwable) {
+            // 补全谱面/用户信息失败不应该阻断这一局的通知: 结束局仍可用数据库里的谱面渲染
+            log.error("ml: $matchId 补全对局信息失败: ", e)
+            safeOnError(e)
+        }
+
         val isEnd = game.endTime != null
         if (isEnd) {
             // 对局结束
@@ -166,38 +185,65 @@ class MatchListener(
                 event.eventID,
                 userMap,
             )
-            eventListener.forEach { l -> l.onGameEnd(listenerEvent) }
+            notifyAdapters { l -> l.onGameEnd(listenerEvent) }
         } else {
-            // 对局开始
-            val user = usersIDSet.mapNotNull { id -> userMap[id] }
-            val listenerEvent = with(game) {
-                MatchAdapter.GameStartEvent(
-                    event.eventID,
-                    match.name,
-                    beatmapID,
-                    beatmap!!,
-                    startTime,
-                    mode,
-                    mods.toLazerMods(),
-                    isTeamVS,
-                    teamType,
-                    user
-                )
+            // 对局开始: 没有谱面信息时无法构造事件, 跳过这一局的开始通知
+            val startBeatmap = game.beatmap
+            if (startBeatmap == null) {
+                log.warn("ml: $matchId 对局 ${game.roundID} 缺少谱面信息, 跳过开始事件")
+                return
             }
-            eventListener.forEach { l -> l.onGameStart(listenerEvent) }
+
+            val user = usersIDSet.mapNotNull { id -> userMap[id] }
+            val listenerEvent = MatchAdapter.GameStartEvent(
+                id = event.eventID,
+                matchName = match.name,
+                beatmapID = game.beatmapID,
+                beatmap = startBeatmap,
+                start = game.startTime,
+                mode = game.mode,
+                mods = game.mods.toLazerMods(),
+                isTeamVS = game.isTeamVS,
+                teamType = game.teamType,
+                users = user,
+            )
+            notifyAdapters { l -> l.onGameStart(listenerEvent) }
         }
     }
 
-    private fun onError(e: Throwable) {
-        eventListener.forEach { it.onError(e) }
+    /**
+     * 逐个通知适配器: 某个适配器抛异常时只回调它自己的 onError, 其他适配器照常收到事件。
+     */
+    private fun notifyAdapters(action: (MatchAdapter) -> Unit) {
+        eventListener.forEach { adapter ->
+            try {
+                action(adapter)
+            } catch (e: Throwable) {
+                log.error("ml: $matchId 适配器处理事件失败: ", e)
+                notifyError(adapter, e)
+            }
+        }
+    }
+
+    private fun safeOnError(e: Throwable) {
+        eventListener.forEach { notifyError(it, e) }
+    }
+
+    private fun notifyError(adapter: MatchAdapter, e: Throwable) {
+        try {
+            adapter.onError(e)
+        } catch (t: Throwable) {
+            // 错误通知本身也可能失败(例如消息发送异常), 不能让它冒泡到定时任务
+            log.error("ml: $matchId 适配器错误回调失败: ", t)
+        }
     }
 
     private fun onStart() {
-        eventListener.forEach { it.onStart() }
+        notifyAdapters { it.onStart() }
     }
 
     private fun onStop(type: StopType) {
-        eventListener.forEach { it.onMatchEnd(type) }
+        notifyAdapters { it.onMatchEnd(type) }
     }
 
     private fun isStart(): Boolean {
