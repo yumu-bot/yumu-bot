@@ -2,14 +2,18 @@ package com.now.nowbot.config
 
 
 import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.config.TlsConfig
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder
 import org.apache.hc.core5.http.HttpHost
 import org.apache.hc.core5.http.io.SocketConfig
+import org.apache.hc.core5.http2.HttpVersionPolicy
 import org.apache.hc.core5.util.Timeout
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
@@ -30,43 +34,64 @@ import kotlin.math.pow
 @Component
 @Configuration
 class RestClientConfig(
-    osuConfig: OsuConfig
+    osuConfig: OsuConfig,
+    httpConfig: HttpConfig
 ) {
 
     val useProxy = osuConfig.useProxy != false
+
+    /**
+     * `yumu.http.version` 的全局默认值，作用于除 ppy.sb / eliteronix 之外的 RestClient。
+     */
+    private val defaultHttpVersion: HttpVersion = httpConfig.resolvedVersion.also {
+        require(it != HttpVersion.HTTP_2) {
+            "yumu.http.version=http2 暂不支持：RestClient 基于 Apache HttpClient 5 同步传输，只能使用 HTTP/1.1，" +
+                    "请改为 auto 或 http1.1"
+        }
+    }
+
+    private val otherConnectionPoolManager = createConnectionManager(
+        defaultHttpVersion,
+        Timeout.ofSeconds(5),
+        soKeepAlive = true,
+        tcpNoDelay = false
+    )
+    private val imageConnectionPoolManager = createConnectionManager(
+        defaultHttpVersion,
+        Timeout.ofSeconds(30),
+        soKeepAlive = true,
+        tcpNoDelay = true
+    )
+
+    private val otherRequestConfig: RequestConfig =
+        createRequestConfig(defaultHttpVersion, Timeout.ofSeconds(10))
+
+    private val imageRequestConfig: RequestConfig =
+        createRequestConfig(defaultHttpVersion, Timeout.ofSeconds(20))
+
+    private val httpClients: CloseableHttpClient = HttpClients.custom()
+        .setConnectionManager(otherConnectionPoolManager)
+        .setDefaultRequestConfig(otherRequestConfig)
+        .build()
 
     @Bean("osuApiRestClient")
     @Qualifier("osuApiRestClient")
     fun osuApiRestClient(config: NowbotConfig): RestClient {
         val hasProxy = config.proxyHost != null && config.proxyPort != 0
-        val connectionManager = PoolingHttpClientConnectionManager()
-
-        connectionManager.apply {
-            maxTotal = 50
-            defaultMaxPerRoute = 30
-            defaultSocketConfig = SocketConfig.custom()
-                .setSoTimeout(Timeout.ofMilliseconds(500))
-                .setSoKeepAlive(true)
-                .setTcpNoDelay(false) // 禁用 Nagle 算法
-                .build()
-        }
-        val requestConfig = RequestConfig.custom()
-            .setResponseTimeout(Timeout.ofSeconds(30))
-            .build()
-
-        val httpClientBuilder = HttpClients.custom()
-            .setConnectionManager(connectionManager)
-            .setDefaultRequestConfig(requestConfig)
-
-        if (hasProxy && useProxy) {
-            val proxy = HttpHost(
-                config.proxyHost,
-                config.proxyPort
-            )
-            httpClientBuilder.setProxy(proxy)
-        }
-
-        val httpClient = httpClientBuilder.build()
+        val connectionManager = createConnectionManager(
+            defaultHttpVersion,
+            Timeout.ofMilliseconds(500),
+            soKeepAlive = true,
+            tcpNoDelay = false,
+            maxTotal = 50,
+            maxPerRoute = 30
+        )
+        val httpClient = buildClient(
+            config,
+            connectionManager,
+            createRequestConfig(defaultHttpVersion, Timeout.ofSeconds(30)),
+            proxy = hasProxy && useProxy
+        )
 
         val requestFactory = HttpComponentsClientHttpRequestFactory(httpClient)
 
@@ -92,34 +117,20 @@ class RestClientConfig(
     @Bean("noRetryRestClient")
     fun noRetryRestClient(config: NowbotConfig): RestClient {
         val hasProxy = config.proxyHost != null
-        val connectionManager = PoolingHttpClientConnectionManager()
-
-        connectionManager.apply {
-            maxTotal = 50
-            defaultMaxPerRoute = 30
-            defaultSocketConfig = SocketConfig.custom()
-                .setSoTimeout(Timeout.ofMilliseconds(500))
-                .setSoKeepAlive(true)
-                .setTcpNoDelay(false) // 禁用 Nagle 算法
-                .build()
-        }
-        val requestConfig = RequestConfig.custom()
-            .setResponseTimeout(Timeout.ofSeconds(30))
-            .build()
-
-        val httpClientBuilder = HttpClients.custom()
-            .setConnectionManager(connectionManager)
-            .setDefaultRequestConfig(requestConfig)
-
-        if (hasProxy && useProxy) {
-            val proxy = HttpHost(
-                config.proxyHost,
-                config.proxyPort
-            )
-            httpClientBuilder.setProxy(proxy)
-        }
-
-        val httpClient = httpClientBuilder.build()
+        val connectionManager = createConnectionManager(
+            defaultHttpVersion,
+            Timeout.ofMilliseconds(500),
+            soKeepAlive = true,
+            tcpNoDelay = false,
+            maxTotal = 50,
+            maxPerRoute = 30
+        )
+        val httpClient = buildClient(
+            config,
+            connectionManager,
+            createRequestConfig(defaultHttpVersion, Timeout.ofSeconds(30)),
+            proxy = hasProxy && useProxy
+        )
 
         val requestFactory = HttpComponentsClientHttpRequestFactory(httpClient)
 
@@ -180,12 +191,32 @@ class RestClientConfig(
         }
         .build()
 
+    /**
+     * ppy.sb 固定使用 HTTP/1.1。
+     */
     @Bean("sbApiRestClient")
     @Qualifier("sbApiRestClient")
     fun sbApiRestClient(
         config: NowbotConfig
-    ): RestClient = clientBuilder(proxyClient(config))
+    ): RestClient = clientBuilder(fixedHttp11Client(config, Timeout.ofSeconds(10), proxy = config.proxyPort != 0))
         .baseUrl("https://api.ppy.sb/")
+        .configureMessageConverters { configurer ->
+            configurer.registerDefaults()
+                .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
+        }
+        .build()
+
+    /**
+     * eliteronix（ETX 对决分）固定使用 HTTP/1.1。
+     */
+    @Bean("etxApiRestClient")
+    @Qualifier("etxApiRestClient")
+    fun etxApiRestClient(
+        config: NowbotConfig
+    ): RestClient = clientBuilder(
+        fixedHttp11Client(config, Timeout.ofSeconds(30), proxy = config.proxyPort != 0 && useProxy)
+    )
+        .baseUrl("https://www.eliteronix.de/")
         .configureMessageConverters { configurer ->
             configurer.registerDefaults()
                 .withJsonConverter(JacksonJsonHttpMessageConverter(config.objectMapper()))
@@ -209,56 +240,83 @@ class RestClientConfig(
         }
         .build()
 
+    private fun proxyClient(config: NowbotConfig): CloseableHttpClient = buildClient(
+        config,
+        otherConnectionPoolManager,
+        otherRequestConfig,
+        proxy = config.proxyPort != 0
+    )
+
+    /**
+     * 固定 HTTP/1.1 的客户端，不受 `yumu.http.version` 影响。
+     */
+    private fun fixedHttp11Client(
+        config: NowbotConfig,
+        responseTimeout: Timeout,
+        proxy: Boolean
+    ): CloseableHttpClient = buildClient(
+        config,
+        createConnectionManager(
+            HttpVersion.HTTP_1_1,
+            Timeout.ofSeconds(5),
+            soKeepAlive = true,
+            tcpNoDelay = false
+        ),
+        createRequestConfig(HttpVersion.HTTP_1_1, responseTimeout),
+        proxy
+    )
+
+    private fun buildClient(
+        config: NowbotConfig,
+        connectionManager: PoolingHttpClientConnectionManager,
+        requestConfig: RequestConfig,
+        proxy: Boolean
+    ): CloseableHttpClient {
+        val clientBuilder = HttpClients.custom()
+            .setConnectionManager(connectionManager)
+            .setDefaultRequestConfig(requestConfig)
+
+        if (proxy) {
+            clientBuilder.setProxy(HttpHost(config.proxyHost, config.proxyPort))
+        }
+
+        return clientBuilder.build()
+    }
+
     companion object {
 
-        val otherConnectionPoolManager = PoolingHttpClientConnectionManager().apply {
-            maxTotal = 1000
-            defaultMaxPerRoute = 200
-            defaultSocketConfig = SocketConfig.custom()
-                .setSoTimeout(Timeout.ofSeconds(5))
-                .setSoKeepAlive(true)
-                .setTcpNoDelay(false)
-                .build()
-        }
-
-        val otherRequestConfig: RequestConfig = RequestConfig.custom()
-            .setResponseTimeout(Timeout.ofSeconds(10))
-            .build()
-
-        val imageConnectionPoolManager = PoolingHttpClientConnectionManager().apply {
-            maxTotal = 1000
-            defaultMaxPerRoute = 200
-            defaultSocketConfig = SocketConfig.custom()
-                .setSoTimeout(Timeout.ofSeconds(30))
-                .setSoKeepAlive(true)
-                .setTcpNoDelay(true)
-                .build()
-        }
-
-        val imageRequestConfig: RequestConfig = RequestConfig.custom()
-            .setResponseTimeout(Timeout.ofSeconds(20))
-            .build()
-
-        fun proxyClient(config: NowbotConfig): CloseableHttpClient {
-            val clientBuilder = HttpClients.custom()
-                .setConnectionManager(otherConnectionPoolManager)
-                .setDefaultRequestConfig(otherRequestConfig)
-            if (config.proxyPort != 0) {
-                val proxy = HttpHost(
-                    config.proxyHost,
-                    config.proxyPort
+        private fun createConnectionManager(
+            version: HttpVersion,
+            socketTimeout: Timeout,
+            tcpNoDelay: Boolean = false,
+            soKeepAlive: Boolean = true,
+            maxTotal: Int = 1000,
+            maxPerRoute: Int = 200
+        ): PoolingHttpClientConnectionManager =
+            PoolingHttpClientConnectionManagerBuilder.create()
+                // FORCE_HTTP_1 会把 TLS ALPN 限制为 http/1.1，避免服务端协商到 h2
+                .setDefaultTlsConfig(
+                    TlsConfig.custom()
+                        .setVersionPolicy(version.toVersionPolicy())
+                        .build()
                 )
-                return clientBuilder.setProxy(proxy).build()
-            }
+                .setMaxConnTotal(maxTotal)
+                .setMaxConnPerRoute(maxPerRoute)
+                .setDefaultSocketConfig(
+                    SocketConfig.custom()
+                        .setSoTimeout(socketTimeout)
+                        .setSoKeepAlive(soKeepAlive)
+                        .setTcpNoDelay(tcpNoDelay)
+                        .build()
+                )
+                .build()
 
-            return clientBuilder.build()
-        }
-
-        val httpClients: CloseableHttpClient = HttpClients.custom()
-            .setConnectionManager(otherConnectionPoolManager)
-            .setDefaultRequestConfig(otherRequestConfig)
-
-            .build()
+        private fun createRequestConfig(version: HttpVersion, responseTimeout: Timeout): RequestConfig =
+            RequestConfig.custom()
+                .setResponseTimeout(responseTimeout)
+                // 关闭 h2c 明文升级；HTTPS 的 ALPN 由 connectionManager 的 TlsConfig 控制
+                .setProtocolUpgradeEnabled(version != HttpVersion.HTTP_1_1)
+                .build()
 
         /**
          * 使用默认参数预先构造好的请求
@@ -336,6 +394,67 @@ class RestClientConfig(
             val sleepTime = backoff + ThreadLocalRandom.current().nextLong(-jitter, jitter)
 
             Thread.sleep(maxOf(0, sleepTime))
+        }
+    }
+}
+
+/**
+ * HTTP 客户端版本配置，对应 `yumu.http.version`。
+ *
+ * 当前 RestClient 使用 Apache HttpClient 5 的同步（classic）传输，只能处理 HTTP/1.1。
+ * 强制 HTTP/1.1 会同时做两件事：
+ * 1. 关闭 h2c 明文协议升级（不再发送 `Upgrade: h2c`）；
+ * 2. 把 TLS ALPN 的提议限制为 `http/1.1`，避免服务端选中 `h2` 后客户端仍按 HTTP/1.1 发送数据。
+ */
+@ConfigurationProperties(prefix = "yumu.http", ignoreInvalidFields = true)
+class HttpConfig {
+    /**
+     * 全局默认 HTTP 版本，可选值：
+     * - `auto`：交给底层客户端协商（即 Apache 默认的 NEGOTIATE）
+     * - `http1.1`：强制 HTTP/1.1
+     * - `http2`：强制 HTTP/2（当前同步客户端不支持，启动时会报错）
+     *
+     * ppy.sb 与 eliteronix 的 RestClient 固定使用 HTTP/1.1，不受这里影响。
+     */
+    var version: String = "auto"
+
+    val resolvedVersion: HttpVersion
+        get() = HttpVersion.parse(version)
+}
+
+enum class HttpVersion {
+    AUTO,
+    HTTP_1_1,
+    HTTP_2;
+
+    fun toVersionPolicy(): HttpVersionPolicy = when (this) {
+        AUTO -> HttpVersionPolicy.NEGOTIATE
+        HTTP_1_1 -> HttpVersionPolicy.FORCE_HTTP_1
+        HTTP_2 -> HttpVersionPolicy.FORCE_HTTP_2
+    }
+
+    companion object {
+        /**
+         * 兼容 `http1.1` / `http/1.1` / `http-1-1` / `h2` / `auto` 等写法。
+         */
+        fun parse(value: String?): HttpVersion {
+            val normalized = value.orEmpty()
+                .trim()
+                .lowercase()
+                .replace("-", "")
+                .replace("_", "")
+                .replace("/", "")
+                .replace(".", "")
+                .replace(" ", "")
+
+            return when (normalized) {
+                "", "auto", "negotiate" -> AUTO
+                "http1", "http11", "1", "11" -> HTTP_1_1
+                "http2", "http20", "h2", "2", "20" -> HTTP_2
+                else -> throw IllegalArgumentException(
+                    "无法识别的 yumu.http.version: '$value'，可选值: auto / http1.1 / http2"
+                )
+            }
         }
     }
 }

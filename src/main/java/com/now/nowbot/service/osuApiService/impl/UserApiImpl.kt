@@ -26,6 +26,7 @@ import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.exchangeToBody
 import com.now.nowbot.util.exchangeToBodies
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpStatusCodeException
@@ -40,7 +41,10 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 
 @Service class UserApiImpl(
-    private val base: OsuApiBaseService, private val bindDao: BindDao, private val userInfoDao: OsuUserInfoDao
+    private val base: OsuApiBaseService,
+    private val bindDao: BindDao,
+    private val userInfoDao: OsuUserInfoDao,
+    @param:Qualifier("etxApiRestClient") private val etxApiRestClient: RestClient
 ) : OsuUserApiService {
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
@@ -261,7 +265,7 @@ import java.util.concurrent.CancellationException
      * @param isVariant 是否获取玩家的多模式信息
      */
     private fun <T : Number> getMicroUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean, isAsyncSave: Boolean = true): List<MicroUser> {
-        val data = request(isBackground) { client ->
+        val data = request(isBackground = isBackground) { client ->
             client.get().uri {
                 val ids = users.map { u -> u.toLong() }.toList()
                     it.path("users")
@@ -391,12 +395,11 @@ import java.util.concurrent.CancellationException
     }
 
     override fun getEliteronixDuelRating(userID: Long): ETXDuelRating {
-        val response = request { client ->
+        // eliteronix 是第三方站点，不携带 osu 的 Authorization 头
+        val response = request(etxApiRestClient) { client ->
             client.get()
-                .uri("https://www.eliteronix.de/elitebotix/api/player-duelrating?u=${userID}")
-                .headers { headers ->
-                base.insertHeader(headers)
-            }.exchangeToBody<String>()
+                .uri("https://www.eliteronix.de/elitebotix/api/player-duelrating?u={userID}", userID)
+                .exchangeToBody<String>()
         }
 
         if (response.isBlank() || !response.trimStart().startsWith("{")) {
@@ -419,12 +422,16 @@ import java.util.concurrent.CancellationException
     /**
      * 错误包装
      */
-    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
+    private fun <T: Any> request(
+        client: RestClient = base.osuApiRestClient,
+        isBackground: Boolean = false,
+        request: (RestClient) -> T
+    ): T {
         return try {
             if (isBackground) {
                 base.request(isBackground = true, request)
             } else {
-                request(base.osuApiRestClient)
+                request(client)
             }
         } catch (e: Throwable) {
             val ex = e.findCauseOfType<HttpStatusCodeException>()

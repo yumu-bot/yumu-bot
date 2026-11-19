@@ -220,6 +220,14 @@ spring:
 | `token` | osu! OAuth 应用 Token |
 | `callbackPath` | OAuth 回调接口端点（默认 `/oauth`） |
 
+#### HTTP 客户端设置 (`yumu.http`)
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `version` | 全局默认 HTTP 版本。`auto` 交给客户端协商；`http1.1` 强制 HTTP/1.1（关闭 h2c 升级并把 TLS ALPN 限制为 `http/1.1`）；`http2` 当前同步客户端不支持 | `auto` |
+
+> ppy.sb 与 eliteronix（ETX 对决分）的 RestClient 固定使用 HTTP/1.1，不受 `version` 影响。
+
 #### 服务端口 (`server.port`)
 
 | 环境 | 推荐端口 |
