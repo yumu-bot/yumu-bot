@@ -16,6 +16,7 @@ import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMessageUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.REGEX_OSU_USERNAME
@@ -33,14 +34,35 @@ class BindService(
     data class BindParam(
         val targetID: Long?,
         val nameOrCaptcha: String?,
-        val isUnbind: Boolean
+        val isUnbind: Boolean,
+        /** 来自 !oauth / !auth：参数只允许是验证码，绝不退化成用户名 / uid 绑定 */
+        val captchaOnly: Boolean = false
     )
 
     override fun isHandle(
         event: MessageEvent, messageText: String, data: DataValue<BindParam>
     ): Boolean {
         val m = Instruction.BIND.matcher(messageText)
-        if (!m.find()) return false
+
+        if (!m.find()) {
+            // !oauth <anything> / !auth <anything>
+            // 六位数字视为验证码，其余参数一律忽略，效果与不带参数的 !bi 完全一致。
+            // 这样可以避免玩家把用户名写在 !oauth 后面，结果意外走了名称绑定而不是 OAuth2 绑定。
+            val om = Instruction.OAUTH.matcher(messageText)
+            if (!om.find()) return false
+
+            val captcha = om.group(FLAG_ANY)?.trim()?.toLongOrNull()
+                ?.takeIf { it in 100000L .. 999999L }
+                ?.toString()
+
+            data.value = BindParam(
+                targetID = if (event.hasAt()) event.target else null,
+                nameOrCaptcha = captcha,
+                isUnbind = false,
+                captchaOnly = true
+            )
+            return true
+        }
 
         // 获取可能的 @ 或 指定 QQ
         val targetID = if (event.hasAt()) {
@@ -71,7 +93,7 @@ class BindService(
 
         // 3. 绑定流程
         if (param.nameOrCaptcha != null) {
-            handleUsernameBinding(event, targetID, param.nameOrCaptcha)
+            handleUsernameBinding(event, targetID, param.nameOrCaptcha, param.captchaOnly)
         } else {
             handleEmptyBinding(event, targetID)
         }
@@ -90,14 +112,24 @@ class BindService(
 
     /**
      * 处理带有 username 或 验证码 的绑定逻辑
+     *
+     * @param captchaOnly 来自 !oauth / !auth 时置真：参数只作为验证码处理，
+     * 验证失败也不会退化成 uid 绑定，避免玩家以为自己完成了 OAuth2 绑定。
      */
-    private fun handleUsernameBinding(event: MessageEvent, targetID: Long, input: String) {
+    private fun handleUsernameBinding(
+        event: MessageEvent, targetID: Long, input: String, captchaOnly: Boolean = false
+    ) {
         val value = input.trim()
         val userID = value.toLongOrNull()
 
         val maybeUserID = userID != null && userID !in 100000L .. 999999L
 
         val maybeCaptcha = userID != null && userID in 100000L .. 999999L
+
+        // !oauth / !auth 只接受六位验证码
+        if (captchaOnly && !maybeCaptcha) {
+            throw BindException.BindIllegalArgumentException.IllegalVerification()
+        }
 
         if (maybeUserID) {
             val user = runCatching {
@@ -139,6 +171,11 @@ class BindService(
                     throw BindException.BindResultException.BindRepeated()
                 }
 
+                throw BindException.BindIllegalArgumentException.IllegalVerification()
+            }
+
+            // !oauth / !auth 只接受验证码，绝不把六位数字当成 uid 去绑定
+            if (captchaOnly) {
                 throw BindException.BindIllegalArgumentException.IllegalVerification()
             }
 

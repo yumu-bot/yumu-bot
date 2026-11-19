@@ -6,6 +6,7 @@ import com.now.nowbot.qq.message.KeyboardMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.TextMessage
 import com.now.nowbot.qq.tencent.YumuServer
+import com.now.nowbot.throwable.botRuntimeException.OAUTH_BIND_TIP
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -77,8 +78,8 @@ class QQImageMarkdownConverter(
         val text = messages.filterIsInstance<TextMessage>()
             .joinToString("\n") { it.message.trim() }
             .trim()
-        // 纯图片消息保持原样; "(!bi)" 是绑定过期的占位符, 交给上层替换成提示
-        if (text.isEmpty() || text.contains("(!bi)")) return null
+        // 纯图片消息保持原样; OAUTH_BIND_TIP 是绑定过期的占位符, 交给上层替换成提示
+        if (text.isEmpty() || text.contains(OAUTH_BIND_TIP)) return null
 
         val parts = mutableListOf<String>()
         val imageIds = mutableListOf<String>()

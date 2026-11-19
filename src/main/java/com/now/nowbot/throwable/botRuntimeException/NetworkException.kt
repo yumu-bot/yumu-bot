@@ -162,7 +162,7 @@ open class NetworkException(message: String?
         class TokenExpired:
             UserException("""
                 498 Token Expired/Invalid
-                玩家的令牌已过期，请重新尝试 !bi 绑定。
+                玩家的令牌已过期，请重新尝试 !oauth (不要加任何参数) 绑定。
             """.trimIndent()) {
             override val code = 498
         }

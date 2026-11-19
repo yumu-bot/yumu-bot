@@ -39,9 +39,17 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SB_BIND(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("(?<ub>ub|解绑|解除绑定)", "(?<bi>bi|绑定)", "(?<un>un)?(?<bind>bind)")
+        // SB 服没有 oauth, 因此 oauth / auth 直接作为绑定的别名
+        appendSBCommandsIgnoreAll("(?<ub>ub|解绑|解除绑定)", "(?<bi>bi|绑定|oauth|auth)", "(?<un>un)?(?<bind>bind)")
         appendQQ()
         appendSBName()
+    }),
+
+    // 仅用于显式发起 OAuth2 绑定: !oauth <anything> / !auth <anything>
+    // 不带参数或参数不是六位验证码时, 效果与不带任何参数的 !bi 完全一致
+    OAUTH(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("oauth", "auth")
+        appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING, ANY)
     }),
 
     SERVICE_SWITCH_ON(CommandPatternBuilder.create {

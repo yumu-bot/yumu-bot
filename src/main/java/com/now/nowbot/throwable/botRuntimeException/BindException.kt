@@ -4,13 +4,20 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
+/**
+ * OAuth2 绑定的统一提示语。
+ * 注意：QQ 图文消息会被识别到这句话，并特殊处理成「请重新授权」的提示（见 QQImageMarkdownConverter、YumuServer），
+ * 修改文案时需要保证这两处的判断仍然有效。
+ */
+const val OAUTH_BIND_TIP: String = "(!oauth (不要加任何参数))"
+
 open class BindException(message: String) : TipsRuntimeException(message), BotException {
 
     open class TokenExpiredException(message: String): BindException(message) {
         class YourTokenExpired:
-            TokenExpiredException("你的令牌失效或是没有绑定。请授权。(!bi)")
+            TokenExpiredException("你的令牌失效或是没有绑定。请授权。$OAUTH_BIND_TIP")
         class UserTokenExpired:
-            TokenExpiredException("该玩家的令牌失效或是没有绑定。请提醒对方授权。(!bi)")
+            TokenExpiredException("该玩家的令牌失效或是没有绑定。请提醒对方授权。$OAUTH_BIND_TIP")
         class SBYourTokenExpired:
             TokenExpiredException("你没有绑定偏偏要上班。请授权。(?bi)")
         class SBUserTokenExpired:

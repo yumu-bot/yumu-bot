@@ -47,7 +47,7 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
     class ExpiredOauthBind:
         UnsupportedOperationException("""
             您的 Oauth2 绑定已经过期。
-            如果要使用这个功能，您需要重新使用 Oauth2 绑定 (!bi)。
+            如果要使用这个功能，您需要重新使用 Oauth2 绑定 $OAUTH_BIND_TIP。
         """.trimIndent())
 
     class InvalidFuture:
@@ -63,7 +63,7 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
         UnsupportedOperationException("如果要使用这个功能，您需要成为 osu!supporter。")
 
     class NoOauthBind:
-        UnsupportedOperationException("如果要使用这个功能，您需要使用 Oauth2 绑定 (!bi)。")
+        UnsupportedOperationException("如果要使用这个功能，您需要使用 Oauth2 绑定 $OAUTH_BIND_TIP。")
 
     class OnlyStandard:
         UnsupportedOperationException("抱歉，本功能暂不支持除 Standard 模式以外的谱面！")

@@ -7,6 +7,7 @@ import com.now.nowbot.restrict.RestrictImplement
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.qqImageApiService.QQImageMarkdownConverter
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.OAUTH_BIND_TIP
 import com.now.nowbot.util.QQMsgUtil
 import com.yumu.YumuService
 import com.yumu.model.packages.Command
@@ -84,7 +85,7 @@ object YumuServer : YumuService {
         }
 
         var text = textList.joinToString { it.toString() }
-        if (text.contains("(!bi)")) {
+        if (text.contains(OAUTH_BIND_TIP)) {
             text = BindException.TokenExpiredException.OfficialTokenExpired().message!!
         }
         var image: String? = null
