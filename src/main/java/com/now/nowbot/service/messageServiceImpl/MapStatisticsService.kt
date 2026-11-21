@@ -237,14 +237,25 @@ class MapStatisticsService(
 
             val centerIndex = sortedList.indexOfFirst { it.beatmapID == beatmap.beatmapID }
 
-            if (centerIndex != -1) {
+            if (centerIndex == -1) {
+                sortedList
+            } else {
+                // 最多展示 9 个难度，但目标难度必须落在 1-7 号位：
+                // 目标不能出现在第 8、9 位，否则渲染时会贴到面板底部（甚至被裁掉）。
                 var start = (centerIndex - 4).coerceAtLeast(0)
 
                 // 2. 敲定终点：从起点往后取8个跨度（保证总数为9），最大不能超过列表尾部
-                val end = (start + 8).coerceAtMost(sortedList.lastIndex)
+                var end = (start + 8).coerceAtMost(sortedList.lastIndex)
 
                 // 3. 最终修正起点：从终点往前倒推8个跨度（处理“后面不足向前面借”的情况）
                 start = (end - 8).coerceAtLeast(0)
+
+                // 4. 如果目标被挤到第 8/9 位，把窗口再往左挪，最多只取到目标之后 2 个难度，
+                //    保证目标最多位于第 7 位；目标本身就在列表尾部时窗口会相应缩短。
+                if (centerIndex - start > 6) {
+                    start = (centerIndex - 6).coerceAtLeast(0)
+                    end = (start + 8).coerceAtMost(sortedList.lastIndex)
+                }
 
                 val views = sortedList.subList(start, end + 1)
 
@@ -261,9 +272,11 @@ class MapStatisticsService(
                 )
 
                 // 插入标签 beatmapApiService.extendBeatmapTag(view)
-            }
 
-            sortedList
+                // 只把窗口内的难度交给渲染器，避免渲染器按完整列表重新计算窗口后
+                // 又把目标放回第 8/9 位。
+                views.toList()
+            }
         }
 
         // BeatmapUtil.applyBeatmapChanges(beatmap, expected.mods)

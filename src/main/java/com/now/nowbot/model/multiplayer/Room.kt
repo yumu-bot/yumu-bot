@@ -1,6 +1,5 @@
 package com.now.nowbot.model.multiplayer
 
-import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.Beatmap
