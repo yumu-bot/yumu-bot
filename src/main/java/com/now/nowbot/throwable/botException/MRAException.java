@@ -24,12 +24,17 @@ public class MRAException extends TipsException {
 
         RATING_Series_Instructions("""
         欢迎使用 Yumu Series Rating 功能！食用方法：
-        !ymseries / !sa [[matchid] (warmup) (delete)] (r?) (f?)
+        !ymseries / !sa [编号 热手 表演赛 [剔除场次]] (:r?) (:f?)
+        每组写「编号 热手 表演赛」，可以连写多组，例如 !sa 12345 1 0 23456 2 1。
         matchid：这场比赛的房间号，可按组多次输入。
         warmup：需要抛弃的前面场次（热手）数量，默认为0，可按组多次输入。
         delete：需要抛弃的后面场次（表演赛）数量，默认为0，可按组多次输入。
-        r?：清除重赛场次？
-        f?：不计失败成绩？
+        [2,4]：可选，剔除这一组的第 2、4 场；每组后面都可以写。
+        #系列名#：可选的系列名，例如 !sa #我的系列# 12345 1 0。
+        e1.5：Easy 倍率。
+        :r：清除重赛场次（冒号必须写）。
+        :f：不计失败成绩（冒号必须写）。
+        #系列名#、e1.5、:r、:f 的位置随意；数据串仍按「编号 热手 表演赛 [剔除场次]」的顺序写。
         """),//参数_无参数
 
         RATING_Permission_OnlyGroupAdmin("只有群聊管理员或群主可以使用此功能！"),

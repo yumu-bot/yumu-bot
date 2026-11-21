@@ -39,6 +39,9 @@ enum class ExtractType {
 
     /** 比赛参数：不计失败成绩（带冒号的 `:f`）。 */
     FAILED,
+
+    /** 系列赛名，`#我的系列#`。 */
+    SERIES_NAME,
 }
 
 /**
@@ -811,6 +814,29 @@ val MatchParamExtractor = CommandExtractor { ctx ->
     ctx.extractPattern(ExtractType.REMOVE, matchRemoveOnlyRegex)
     ctx.extractPattern(ExtractType.SKIP, matchSkipRegex)
     ctx.extractPattern(ExtractType.IGNORE, matchIgnoreRegex)
+    ctx.extractPattern(ExtractType.REMATCH, matchRematchRegex)
+    ctx.extractPattern(ExtractType.FAILED, matchFailedRegex)
+}
+
+/// === 系列赛 ===
+
+/**
+ * 系列赛名：`#我的系列#`。
+ *
+ * 贪婪匹配到最后一个 `#`，和旧版 `#(?<name>...)#` 的行为一致。
+ */
+private val seriesNameRegex = Regex("#([\\s\\S]+)#")
+
+/**
+ * 系列赛（`!sa`）的参数：`#系列名#`、`e1.5`、`:r`、`:f`。
+ *
+ * 和 [MatchParamExtractor] 的区别是**不剥数字和方括号**：`12345 1 0 [2,4]` 是
+ * 「比赛编号 + 热手 + 表演赛 + 剔除场次」，属于数据串，要原样留给
+ * `SeriesRatingService.parseDataString` 按位置解释。名字先剥，名字里的 `e1.5`、`:r` 不会被当成参数。
+ */
+val SeriesRatingExtractor = CommandExtractor { ctx ->
+    ctx.extractPattern(ExtractType.SERIES_NAME, seriesNameRegex)
+    ctx.extractPattern(ExtractType.EASY, matchEasyRegex)
     ctx.extractPattern(ExtractType.REMATCH, matchRematchRegex)
     ctx.extractPattern(ExtractType.FAILED, matchFailedRegex)
 }

@@ -16,7 +16,11 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.ExtractType
+import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.REGEX_SEPARATOR
+import com.now.nowbot.util.command.SeriesRatingExtractor
+import com.now.nowbot.util.command.StripPipeline
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -49,30 +53,34 @@ class SeriesRatingService(
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
-        val dataStr = param.group("data")
-        val nameStr = param.group("name")
+        // 指令只把 `!sa` 之后的整段文本收进 any：`#系列名#`、easy、`:r`、`:f` 交给剥离器，
+        // 剩下的就是数据串，仍然由 parseDataString 按位置解释（编号、热手、表演赛、[剔除]）。
+        val context = StripPipeline(param.group(FLAG_ANY).orEmpty())
+            .apply(SeriesRatingExtractor)
+            .trim()
+            .context
 
-        if (dataStr.isNullOrBlank()) {
-            try {
-                val md = getMarkdownFile("Help/series.md")
-                val image = imageService.getPanelA6(md, "help")
-                event.replyAsync(image)
-                return null
-            } catch (_: Exception) {
-                throw MRAException(MRAException.Type.RATING_Series_Instructions)
-            }
+        val nameStr = context[ExtractType.SERIES_NAME].lastOrNull()?.takeIf { it.isNotBlank() }
+        val dataStr = context.text.trim()
+
+        if (dataStr.isBlank()) {
+            replyHelp(event)
+            return null
         }
 
-        val rematch =
-            param.group("rematch") == null ||
-                !param.group("rematch").equals("r", ignoreCase = true)
-        val failed =
-            param.group("failed") == null ||
-                !param.group("failed").equals("f", ignoreCase = true)
-        val easy = getEasyMultiplier(param)
+        val rematch = !context.exists(ExtractType.REMATCH)
+        val failed = !context.exists(ExtractType.FAILED)
+        val easy = getEasyMultiplier(context[ExtractType.EASY].lastOrNull())
 
         val params = parseDataString(dataStr, easy, failed, rematch)
-        val matchIDs = params!!.matchIDs
+
+        // 只剩分隔符（例如 `!sa ,`）时 parseDataString 会返回 null，这时也回用法
+        if (params == null) {
+            replyHelp(event)
+            return null
+        }
+
+        val matchIDs = params.matchIDs
 
         if (param.group("csv") != null) {
             event.replyAsync(MRAException.Type.RATING_Series_Progressing.message)
@@ -139,6 +147,19 @@ class SeriesRatingService(
                 "sids" to sr.rounds.mapNotNull { it.beatmap?.beatmapsetID }.distinct(),
                 "modes" to sr.rounds.map { it.mode.modeValue }.distinct()
             ))
+        }
+    }
+
+    /**
+     * 没有参数时回用法：优先发 `Help/series.md` 的图片，取不到就回文字说明。
+     */
+    private fun replyHelp(event: MessageEvent) {
+        try {
+            val md = getMarkdownFile("Help/series.md")
+            val image = imageService.getPanelA6(md, "help")
+            event.replyAsync(image)
+        } catch (_: Exception) {
+            throw MRAException(MRAException.Type.RATING_Series_Instructions)
         }
     }
 
@@ -257,17 +278,20 @@ class SeriesRatingService(
         return sb.toString()
     }
 
-    enum class Status {
-        ID,
-        SKIP,
-        IGNORE,
-        REMOVE_RECEIVED,
-        REMOVE_FINISHED,
-        OK,
-    }
-
     @JvmRecord data class SRAPanelParam(val matchIDs: List<Long>, val params: List<MatchRating.RatingParam>)
 
+    /**
+     * 解析系列赛的数据串。
+     *
+     * 每场比赛一组，按位置写 `编号 热手 表演赛 [剔除场次]`，可以连写多组：
+     * `12345 1 0 [2,4] 23456 2 1`。编号不小于 1000，热手 / 表演赛 / 剔除场次都是更小的数字。
+     *
+     * 方括号里的剔除场次可以用逗号或空格分开（`[2,4]`、`[ 2, 4 ]`），每一组后面都可以写；
+     * 旧实现只认最后一组的方括号，中间的方括号会把解析状态搞乱，抛出「漏了一场比赛」。
+     *
+     * @return 没有任何数据时返回 null
+     * @throws MRAException 数字无法解析、漏了编号、方括号没有闭合
+     */
     @Throws(MRAException::class)
     fun parseDataString(
         dataStr: String,
@@ -275,169 +299,126 @@ class SeriesRatingService(
         failed: Boolean,
         rematch: Boolean,
     ): SRAPanelParam? {
-        val dataStrArray =
-            dataStr
-                .trim { it <= ' ' }
-                .split(REGEX_SEPARATOR)
-                .dropLastWhile { it.isEmpty() }
-                .toTypedArray()
-        if (dataStr.isBlank() || dataStrArray.isEmpty()) return null
+        // 先把方括号和数字拆开，`12345[2,4]` 和 `12345 [2,4]` 等价
+        val tokens = dataStr
+            .replace("[", " [ ")
+            .replace("]", " ] ")
+            .trim()
+            .split(REGEX_SEPARATOR)
+            .filter { it.isNotBlank() }
 
-        val matchIDs: MutableList<Int> = ArrayList()
-        val skips: MutableList<Int> = ArrayList()
-        val ignores: MutableList<Int> = ArrayList()
-        val removes: MutableList<List<Int>> = ArrayList()
+        if (tokens.isEmpty()) return null
 
-        var status = Status.ID // 0：收取 matchID 状态，1：收取 skip 状态，2：收取 ignore 状态。3：收取 remove 状态。 4：无需收取，直接输出。
-        var matchID = 0
+        val matchIDs = ArrayList<Int>()
+        val skips = ArrayList<Int>()
+        val ignores = ArrayList<Int>()
+        val removes = ArrayList<List<Int>>()
+
+        var matchID: Int? = null
         var skip = 0
         var ignore = 0
-        val remove: MutableList<Int> = ArrayList()
+        var skipSeen = false
+        var ignoreSeen = false
 
-        for (i in dataStrArray.indices) {
-            var v: Int
-            var s = dataStrArray[i]
-            if (s.isBlank()) continue
+        // 当前组的剔除场次；null 表示这一组还没写过方括号
+        var remove: MutableList<Int>? = null
 
-            if (s.contains("[")) {
-                status = Status.REMOVE_RECEIVED
-                s = s.replace("\\[".toRegex(), "")
-            }
+        // 是否正在方括号里，以及最近一次剔除场次，用来报「没闭合」的位置
+        var inRemove = false
+        var removeToken = "["
+        var removeTokenIndex = 0
 
-            if (s.contains("]") && status == Status.REMOVE_RECEIVED) {
-                status = Status.REMOVE_FINISHED
-                s = s.replace("]".toRegex(), "")
-            }
+        /** 结算当前这一组；还没有编号（空数据）时什么都不做。 */
+        fun commit() {
+            val id = matchID ?: return
 
-            v = s.toIntOrNull() ?: throw MRAException(MRAException.Type.RATING_Parse_ParameterError, s, i.toString())
+            matchIDs.add(id)
+            skips.add(skip)
+            ignores.add(ignore)
+            removes.add(remove?.let { ArrayList(it) } ?: emptyList())
 
-            if (status == Status.REMOVE_RECEIVED) {
-                remove.add(v)
-            }
+            matchID = null
+            skip = 0
+            ignore = 0
+            skipSeen = false
+            ignoreSeen = false
+            remove = null
+        }
 
-            if (status == Status.REMOVE_FINISHED) {
-                remove.add(v)
-                status = Status.OK
-            }
-
-            // 如果最后一个参数是场比赛，需要重复 parse（结算）
-            if (i == dataStrArray.size - 1) {
-                if (v < 1000) {
-                    when (status) {
-                        Status.SKIP -> {
-                            matchIDs.add(matchID)
-                            skips.add(v)
-                            ignores.add(0)
-
-                            removes.addLast(ArrayList(remove))
-                            remove.clear()
-                        }
-                        Status.IGNORE -> {
-                            matchIDs.add(matchID)
-                            skips.add(skip)
-                            ignores.add(v)
-                            removes.addLast(ArrayList(remove))
-                            remove.clear()
-                        }
-                        Status.REMOVE_RECEIVED ->
-                            throw MRAException(
-                                MRAException.Type.RATING_Parse_MissingRemove,
-                                v.toString(),
-                                i.toString(),
-                            )
-                        Status.OK -> {
-                            matchIDs.add(matchID)
-                            skips.add(skip)
-                            ignores.add(ignore)
-                            removes.addLast(ArrayList(remove))
-                            remove.clear()
-                        }
-                        else ->
-                            throw MRAException(
-                                MRAException.Type.RATING_Parse_MissingMatch,
-                                v.toString(),
-                                i.toString(),
-                            )
+        for ((index, token) in tokens.withIndex()) {
+            when (token) {
+                "[" -> {
+                    if (inRemove) {
+                        throw MRAException(MRAException.Type.RATING_Parse_MissingRemove, token, index.toString())
                     }
-                    status = Status.OK
-                } else {
-                    when (status) {
-                        Status.SKIP -> {
-                            matchIDs.add(matchID)
-                            skips.add(0)
-                            ignores.add(0)
-                            removes.addLast(ArrayList(remove))
-                            remove.clear()
-                        }
-                        Status.IGNORE -> {
-                            matchIDs.add(matchID)
-                            skips.add(skip)
-                            ignores.add(0)
-                            removes.addLast(ArrayList(remove))
-                            remove.clear()
-                        }
-                        Status.OK -> {
-                            matchIDs.add(matchID)
-                            skips.add(skip)
-                            ignores.add(ignore)
-                            removes.addLast(ArrayList(remove))
-                            remove.clear()
-                        }
-                        else -> {}
-                    }
-                    matchIDs.add(v)
-                    skips.add(0)
-                    ignores.add(0)
-                    removes.addLast(arrayListOf())
 
-                    status = Status.OK
+                    remove = remove ?: ArrayList()
+                    inRemove = true
                 }
-            } else {
-                // 正常 parse
-                if (v < 1000) {
-                    when (status) {
-                        Status.SKIP -> {
-                            skip = v
-                            status = Status.IGNORE
-                        }
-                        Status.IGNORE -> {
-                            ignore = v
-                            status = Status.OK
-                        }
-                        Status.ID,
-                        Status.OK ->
-                            throw MRAException(
-                                MRAException.Type.RATING_Parse_MissingMatch,
-                                v.toString(),
-                                i.toString(),
-                            )
-                        else -> {}
-                    }
-                } else {
-                    when (status) {
-                        Status.ID -> {
-                            matchID = v
-                            status = Status.SKIP
-                        }
-                        Status.SKIP,
-                        Status.IGNORE,
-                        Status.OK -> {
-                            matchIDs.add(matchID)
-                            skips.add(skip)
-                            ignores.add(ignore)
-                            removes.addLast(ArrayList(remove))
 
-                            matchID = v
-                            skip = 0
-                            ignore = 0
-                            remove.clear()
-                            status = Status.SKIP
+                "]" -> {
+                    if (!inRemove) {
+                        throw MRAException(MRAException.Type.RATING_Parse_ParameterError, token, index.toString())
+                    }
+
+                    inRemove = false
+                }
+
+                else -> {
+                    val v = token.toIntOrNull()
+                        ?: throw MRAException(MRAException.Type.RATING_Parse_ParameterError, token, index.toString())
+
+                    if (inRemove) {
+                        // 方括号属于前一场比赛：没有编号就不知道要剔除哪一场
+                        if (matchID == null) {
+                            throw MRAException(MRAException.Type.RATING_Parse_MissingMatch, token, index.toString())
                         }
-                        else -> {}
+
+                        remove?.add(v)
+                        removeToken = token
+                        removeTokenIndex = index
+                    } else if (v >= 1000) {
+                        // 新的一场：先把上一场结算掉
+                        commit()
+                        matchID = v
+                    } else {
+                        // 小数字：热手 / 表演赛
+                        if (matchID == null) {
+                            throw MRAException(MRAException.Type.RATING_Parse_MissingMatch, token, index.toString())
+                        }
+
+                        when {
+                            !skipSeen -> {
+                                skip = v
+                                skipSeen = true
+                            }
+
+                            !ignoreSeen -> {
+                                ignore = v
+                                ignoreSeen = true
+                            }
+
+                            // 一组只有「编号 热手 表演赛」三个位置，多出来的数字没有含义
+                            else -> throw MRAException(
+                                MRAException.Type.RATING_Parse_MissingMatch,
+                                token,
+                                index.toString(),
+                            )
+                        }
                     }
                 }
             }
         }
+
+        if (inRemove) {
+            throw MRAException(
+                MRAException.Type.RATING_Parse_MissingRemove,
+                removeToken,
+                removeTokenIndex.toString(),
+            )
+        }
+
+        commit()
 
         val params: List<MatchRating.RatingParam> =
             List(matchIDs.size) { i ->
@@ -511,18 +492,19 @@ class SeriesRatingService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(SeriesRatingService::class.java)
 
+        /**
+         * Easy 倍率。没写就是 1.0，写了就必须落在 0 ~ 10 之间。
+         */
         @Throws(MRAException::class)
-        private fun getEasyMultiplier(matcher: Matcher): Double {
-            val easyStr = matcher.group("easy") ?: ""
+        private fun getEasyMultiplier(raw: String?): Double {
+            if (raw.isNullOrBlank()) return 1.0
 
-            val easy: Double = if (easyStr.isNotBlank()) {
-                easyStr.toDoubleOrNull() ?: throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
-            } else {
-                1.0
-            }
+            val easy = raw.toDoubleOrNull()
+                ?: throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
 
             if (easy > 10.0) throw MRAException(MRAException.Type.RATING_Parameter_EasyTooLarge)
             if (easy < 0.0) throw MRAException(MRAException.Type.RATING_Parameter_EasyTooSmall)
+
             return easy
         }
     }

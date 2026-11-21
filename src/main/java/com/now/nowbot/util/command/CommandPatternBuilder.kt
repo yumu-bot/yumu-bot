@@ -375,31 +375,6 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendCaptureGroup(FLAG_ANY, PATTERN_ANYTHING, MORE)
     }
 
-    fun appendMatchParam() {
-        appendGroup(MAYBE) {
-            appendSpace()
-            append("e(z|a[sz]y)?")
-            appendSpace()
-            appendCaptureGroup("easy", PATTERN_NUMBER_DECIMAL)
-            append("[×xX]?")
-        }
-
-        appendSpace()
-        appendCaptureGroup("skip", "-?\\d+")
-        appendSpace()
-        appendCaptureGroup("ignore", "-?\\d+")
-        appendSpace()
-        appendGroup(MAYBE) {
-            append("\\[")
-            appendCaptureGroup("remove", PATTERN_NUMBER_SEPARATOR, MORE)
-            append("]")
-        }
-        appendSpace()
-        appendCaptureGroup("rematch", "r")
-        appendSpace()
-        appendCaptureGroup("failed", "f")
-    }
-
     /**
      * 添加一个复合匹配组, 包括 mode, qq, uid
      */

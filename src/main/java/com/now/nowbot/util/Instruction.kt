@@ -697,15 +697,10 @@ enum class Instruction(val pattern: Pattern) {
             "(?<uu>(u{1,2})(seriesrating|series|sra|sa))|((ym)?(?<main>(seriesrating|series|sa|sra)))|((ym)?(?<csv>(csvseriesrating|csvseries|csa|cs)))"
         )
         appendSpace()
-        appendGroup(MAYBE) {
-            append(PATTERN_HASH)
-            appendCaptureGroup("name", PATTERN_ANYTHING, MORE)
-            append(PATTERN_HASH)
-        }
-        appendSpace()
-        appendCaptureGroup(FLAG_DATA, "[\\d\\[\\]\\s,，|\\-]", MORE)
-        appendSpace()
-        appendMatchParam()
+
+        // `#系列名#`、数据串（比赛编号 + 热手 + 表演赛 + [剔除]）、easy、:r、:f 全部交给剥离器。
+        // 数据串本身仍由 SeriesRatingService.parseDataString 按位置解释，格式不变。
+        appendAny()
     }),
 
     CSV_MATCH(CommandPatternBuilder.create {
