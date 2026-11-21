@@ -7,63 +7,67 @@ enum class PlayerClass(
     val english: String,
     val chinese: String,
     val color: String,
+    /**
+     * 渐变色组，顺序为左 -> 右。
+     */
+    val colors: List<String>,
     val category: String = ""
 ) {
-    BC("Big Carry", "大爹", "#FFF100", "BC"),
-    CA("Carry", "大哥", "#FF9800", "CA"),
-    MF("Main Force", "主力", "#22AC38", "MF"),
-    SP("Specialized", "专精", "#B3D465", "SP"),
-    WF("Work Force", "打工", "#0068B7", "WF"),
-    GE("General", "普通", "#BDBDBD", "GE"),
-    GU("Guest", "客串", "#00A0E9", "GU"),
-    SU("Support", "抗压", "#9922EE", "SU"),
-    SG("Scapegoat", "背锅", "#E4007F", "SG"),
-    NO("Noob", "小弟", "#EB6877", "NO"),
-    FU("Futile", "炮灰", "#D32F2F", "FU"),
+    BC("Big Carry", "大爹", "#FFF100", listOf("#FFFF00", "#FFC86B"), "BC"),
+    CA("Carry", "大哥", "#FF9800", listOf("#FF9800", "#EC6841"), "CA"),
+    MF("Main Force", "主力", "#22AC38", listOf("#12B4B1", "#31B16C"), "MF"),
+    SP("Specialized", "专精", "#B3D465", listOf("#CAF881", "#5EDC5B"), "SP"),
+    WR("Worker", "打工", "#0068B7", listOf("#0068B7", "#1D2088"), "WR"),
+    OR("Ordinary", "普通", "#BDBDBD", listOf("#CCC", "#999"), "OR"),
+    CO("Cameo", "客串", "#00A0E9", listOf("#4FACFE", "#7776FF"), "CO"),
+    SU("Support", "抗压", "#9922EE", listOf("#F772D1", "#9922EE"), "SU"),
+    LI("Liability", "累赘", "#8D5524", listOf("#BC7A43", "#633816"), "LI"),
+    NO("Noob", "小弟", "#F48FB1", listOf("#F6A5C0", "#D84374"), "NO"),
+    EB("Ember", "炮灰", "#D32F2F", listOf("#FF6868", "#B71C1C"), "EB"),
 
-    SMA("Strongest Marshal", "最强元帅", BC.color, BC.category),
-    CMA("Competent Marshal", "称职元帅", BC.color, BC.category),
-    IMA("Indomitable Marshal", "不屈元帅", BC.color, BC.category),
+    SMA("Strongest Marshal", "最强元帅", BC.color, BC.colors, BC.category),
+    CMA("Competent Marshal", "称职元帅", BC.color, BC.colors, BC.category),
+    IMA("Indomitable Marshal", "不屈元帅", BC.color, BC.colors, BC.category),
 
-    EGE("Ever-Victorious General", "常胜将军", CA.color, CA.category),
-    AGE("Assiduous General", "勤奋将军", CA.color, CA.category),
-    SGE("Striven General", "尽力将军", CA.color, CA.category),
+    EGE("Ever-Victorious General", "常胜将军", CA.color, CA.colors, CA.category),
+    AGE("Assiduous General", "勤奋将军", CA.color, CA.colors, CA.category),
+    DGE("Dutiful General", "尽职将军", CA.color, CA.colors, CA.category),
 
-    BMF("Breakthrough Main Force", "突破主力", MF.color, MF.category),
-    RMF("Reliable Main Force", "可靠主力", MF.color, MF.category),
-    SMF("Staunch Main Force", "坚守主力", MF.color, MF.category),
+    BMF("Breakthrough Main Force", "突破主力", MF.color, MF.colors, MF.category),
+    RMF("Reliable Main Force", "可靠主力", MF.color, MF.colors, MF.category),
+    SMF("Staunch Main Force", "坚守主力", MF.color, MF.colors, MF.category),
 
-    EAS("Elite Assassin", "精锐刺客", SP.color, SP.category),
-    NAS("Normal Assassin", "普通刺客", SP.color, SP.category),
-    FAS("Fake Assassin", "冒牌刺客", SP.color, SP.category),
+    EAS("Elite Assassin", "精锐刺客", SP.color, SP.colors, SP.category),
+    AAS("Adept Assassin", "熟练刺客", SP.color, SP.colors, SP.category),
+    FAS("Fake Assassin", "冒牌刺客", SP.color, SP.colors, SP.category),
 
-    GCW("Gold Collar Worker", "金领工人", WF.color, WF.category),
-    WCW("White Collar Worker", "白领工人", WF.color, WF.category),
-    BCW("Blue Collar Worker", "蓝领工人", WF.color, WF.category),
+    GCW("Gold Collar Worker", "金领工人", WR.color, WR.colors, WR.category),
+    WCW("White Collar Worker", "白领工人", WR.color, WR.colors, WR.category),
+    BCW("Blue Collar Worker", "蓝领工人", WR.color, WR.colors, WR.category),
 
-    KPS("Key Person", "关键人", GE.color, GE.category),
-    CMN("Common Man", "普通人", GE.color, GE.category),
-    PSB("Passer-by", "路人甲", GE.color, GE.category),
+    KPS("Key Person", "关键人", OR.color, OR.colors, OR.category),
+    CMN("Common Man", "普通人", OR.color, OR.colors, OR.category),
+    PSB("Passer-by", "路人甲", OR.color, OR.colors, OR.category),
 
-    MAC("Major Character", "主要角色", GU.color, GU.category),
-    MIC("Minor Character", "次要角色", GU.color, GU.category),
-    FIG("Figurant", "群众演员", GU.color, GU.category),
+    MAC("Major Character", "主要角色", CO.color, CO.colors, CO.category),
+    MIC("Minor Character", "次要角色", CO.color, CO.colors, CO.category),
+    CRA("Crowd Actor", "群众演员", CO.color, CO.colors, CO.category),
 
-    SAM("Stable as Mountain", "稳如泰山", SU.color, SU.category),
-    HAS("Hard as Stone", "坚若磐石", SU.color, SU.category),
-    SIN("Seriously Injured", "伤痕累累", SU.color, SU.category),
+    SAM("Stable as Mountain", "稳如泰山", SU.color, SU.colors, SU.category),
+    HAS("Hard as Stone", "坚若磐石", SU.color, SU.colors, SU.category),
+    SES("Seriously Scarred", "伤痕累累", SU.color, SU.colors, SU.category),
 
-    ANI("Advanced Ninja", "上等忍者", SG.color, SG.category),
-    MNI("Mediocre Ninja", "普通忍者", SG.color, SG.category),
-    LCS("Lower-class", "不入流", SG.color, SG.category),
+    PCR("Pacemaker", "陪跑者", LI.color, LI.colors, LI.category),
+    FRD("Free Rider", "搭便车", LI.color, LI.colors, LI.category),
+    DWT("Deadweight", "拖油瓶", LI.color, LI.colors, LI.category),
 
-    LKD("Lucky Dog", "幸运儿", NO.color, NO.category),
-    QAP("Qualified Apprentice", "合格学徒", NO.color, NO.category),
-    BGN("Beginner", "初学者", NO.color, NO.category),
+    LKD("Lucky Dog", "幸运儿", NO.color, NO.colors, NO.category),
+    SKK("Sidekick", "小跟班", NO.color, NO.colors, NO.category),
+    GRH("Greenhorn", "愣头青", NO.color, NO.colors, NO.category),
 
-    LSS("Life-saving Straw", "救命稻草", FU.color, FU.category),
-    LSP("Little Spark", "点点星火", FU.color, FU.category),
-    BDT("Burnt Dust", "湮灭尘埃", FU.color, FU.category),
+    LSH("Last Hope", "救命稻草", EB.color, EB.colors, EB.category),
+    LTS("Little Spark", "点点星火", EB.color, EB.colors, EB.category),
+    SCD("Scorched Dust", "湮灭尘埃", EB.color, EB.colors, EB.category),
 
     ;
 
@@ -85,20 +89,20 @@ enum class PlayerClass(
                     else -> SP
                 }
                 eraIndex < 4.0 / 6 -> when {
-                    draIndex < 2.0 / 6 -> WF
-                    draIndex < 4.0 / 6 -> GE
-                    else -> GU
+                    draIndex < 2.0 / 6 -> WR
+                    draIndex < 4.0 / 6 -> OR
+                    else -> CO
                 }
                 eraIndex < 5.0 / 6 -> when {
                     draIndex < 2.0 / 6 -> SU
-                    draIndex < 4.0 / 6 -> SG
+                    draIndex < 4.0 / 6 -> LI
                     else -> NO
                 }
                 else -> when {
                     draIndex < 2.0 / 6 -> SU
-                    draIndex < 4.0 / 6 -> SG
+                    draIndex < 4.0 / 6 -> LI
                     draIndex < 5.0 / 6 -> NO
-                    else -> FU
+                    else -> EB
                 }
             }
         }
@@ -115,15 +119,15 @@ enum class PlayerClass(
                     rwsIndex < 3.0 / 9 -> CMA
                     else -> IMA
                 }
-                FU -> when {
-                    rwsIndex < 6.0 / 9 -> LSS
-                    rwsIndex < 8.0 / 9 -> LSP
-                    else -> BDT
+                EB -> when {
+                    rwsIndex < 6.0 / 9 -> LSH
+                    rwsIndex < 8.0 / 9 -> LTS
+                    else -> SCD
                 }
                 CA -> when {
                     rwsIndex < 2.0 / 9 -> EGE
                     rwsIndex < 4.0 / 9 -> AGE
-                    else -> SGE
+                    else -> DGE
                 }
                 MF -> when {
                     rwsIndex < 2.0 / 9 -> BMF
@@ -132,38 +136,38 @@ enum class PlayerClass(
                 }
                 SP -> when {
                     rwsIndex < 3.0 / 9 -> EAS
-                    rwsIndex < 6.0 / 9 -> NAS
+                    rwsIndex < 6.0 / 9 -> AAS
                     else -> FAS
                 }
-                WF -> when {
+                WR -> when {
                     rwsIndex < 2.0 / 9 -> GCW
                     rwsIndex < 5.0 / 9 -> WCW
                     else -> BCW
                 }
-                GE -> when {
+                OR -> when {
                     rwsIndex < 3.0 / 9 -> KPS
                     rwsIndex < 6.0 / 9 -> CMN
                     else -> PSB
                 }
-                GU -> when {
+                CO -> when {
                     rwsIndex < 4.0 / 9 -> MAC
                     rwsIndex < 7.0 / 9 -> MIC
-                    else -> FIG
+                    else -> CRA
                 }
                 SU -> when {
                     rwsIndex < 3.0 / 9 -> SAM
                     rwsIndex < 6.0 / 9 -> HAS
-                    else -> SIN
+                    else -> SES
                 }
-                SG -> when {
-                    rwsIndex < 4.0 / 9 -> ANI
-                    rwsIndex < 7.0 / 9 -> MNI
-                    else -> LCS
+                LI -> when {
+                    rwsIndex < 4.0 / 9 -> PCR
+                    rwsIndex < 7.0 / 9 -> FRD
+                    else -> DWT
                 }
                 NO -> when {
                     rwsIndex < 5.0 / 9 -> LKD
-                    rwsIndex < 7.0 / 9 -> QAP
-                    else -> BGN
+                    rwsIndex < 7.0 / 9 -> SKK
+                    else -> GRH
                 }
                 else -> CMN
             }
