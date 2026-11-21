@@ -155,6 +155,10 @@ class BeatmapDao(
         return beatmapRepository.findById(id).getOrNull()
     }
 
+    fun getBeatmapLites(ids: Collection<Long>): List<BeatmapLite> {
+        return beatmapRepository.findAllById(ids)
+    }
+
     fun getBeatmapsetLite(id: Long): BeatmapsetLite? {
         return beatmapRepository.getBeatmapsetByBid(id)
     }

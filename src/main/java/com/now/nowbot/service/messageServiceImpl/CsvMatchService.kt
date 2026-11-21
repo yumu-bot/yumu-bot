@@ -6,7 +6,6 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.Match.MatchRound
 import com.now.nowbot.model.match.MatchRating
-import com.now.nowbot.model.match.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.model.match.MatchRating.RatingParam
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -58,7 +57,7 @@ import java.util.regex.Matcher
                 parseCRAs(sb, ids, matchApiService, beatmapApiService, calculateApiService)
             } catch (e: MRAException) {
                 throw e
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 log.error("CSV-Series 获取失败")
                 throw MRAException(MRAException.Type.RATING_Parameter_MatchIDError)
             }
@@ -67,7 +66,7 @@ import java.util.regex.Matcher
                 id = param.group("data").toLong()
                 event.replyAsync("正在处理$id")
                 parseCRA(sb, id, matchApiService, beatmapApiService, calculateApiService)
-            } catch (e: NullPointerException) {
+            } catch (_: NullPointerException) {
                 throw MRAException(MRAException.Type.RATING_Match_NotFound)
             } catch (e: MRAException) {
                 throw e
@@ -108,7 +107,7 @@ import java.util.regex.Matcher
 
                 try {
                     match = matchApiService.getMatch(matchID, 10)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     throw MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString())
                 }
 
@@ -140,7 +139,7 @@ import java.util.regex.Matcher
 
             try {
                 match = matchApiService.getMatch(matchID, 10)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw MRAException(MRAException.Type.RATING_Match_NotFound)
             }
 
@@ -180,7 +179,7 @@ import java.util.regex.Matcher
                 try {
                     id = s.toLong()
                     matches.add(id)
-                } catch (e: NumberFormatException) {
+                } catch (_: NumberFormatException) {
                     throw MRAException(MRAException.Type.RATING_Series_NotFound, s)
                 }
             }

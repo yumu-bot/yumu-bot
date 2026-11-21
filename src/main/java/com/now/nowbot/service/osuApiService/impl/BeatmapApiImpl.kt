@@ -589,6 +589,31 @@ class BeatmapApiImpl(
         }
     }
 
+    override fun getBeatmapsFromDatabase(beatmapIDs: Collection<Long>): List<Beatmap> {
+        val ids = beatmapIDs.filter { it > 0L }.distinct()
+        if (ids.isEmpty()) return emptyList()
+
+        val result = HashMap<Long, Beatmap>(ids.size * 4 / 3 + 1)
+
+        // 一次查库，避免每个 round 单独查一次
+        runCatching { beatmapDao.getBeatmapLites(ids) }
+            .getOrNull()
+            ?.forEach { lite ->
+                runCatching { lite.toModel() }
+                    .onSuccess { result[lite.beatmapID] = it }
+            }
+
+        // 数据库缺失的谱面再逐张走网络；这一步通常只会命中极少数
+        for (id in ids) {
+            if (result.containsKey(id)) continue
+
+            runCatching { getBeatmap(id) }
+                .onSuccess { result[id] = it }
+        }
+
+        return ids.mapNotNull { result[it] }
+    }
+
     override fun getBeatmapsetFromDatabase(beatmapsetID: Long): Beatmapset {
         try {
             val lite = beatmapDao.getBeatmapsetLite(beatmapsetID)

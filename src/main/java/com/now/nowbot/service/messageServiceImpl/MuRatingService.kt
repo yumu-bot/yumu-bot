@@ -4,7 +4,6 @@ import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
-import com.now.nowbot.model.match.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder

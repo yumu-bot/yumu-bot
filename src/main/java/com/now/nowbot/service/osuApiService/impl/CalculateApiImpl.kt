@@ -273,20 +273,46 @@ class CalculateApiImpl(
         mode: OsuMode,
         mods: List<LazerMod>
     ) {
-        if (beatmap == null || beatmap.mode.isNotConvertAble(mode)) return
+        if (beatmap == null) return
 
-        if (beatmap.starRating > 1e-4 && mode.isEqualOrDefault(beatmap.mode) && mods.isNotAffectStarRating()) return
+        applyStarToBeatmaps(listOf(OsuCalculateApiService.BeatmapStarRequest(beatmap, mode, mods)))
+    }
 
-        val map = getBeatmapStars(
-            listOf(
-                BeatmapDetails(
-                    beatmap.beatmapID, mode, mods, beatmap.hasLeaderBoard
-                )
+    override fun applyStarToBeatmaps(requests: Collection<OsuCalculateApiService.BeatmapStarRequest>) {
+        if (requests.isEmpty()) return
+
+        // 过滤掉不需要重算的谱面：模式不可转换，或已有星数且 mods 不影响星数
+        val needApply = requests.filter { request ->
+            val beatmap = request.beatmap
+
+            !beatmap.mode.isNotConvertAble(request.mode) &&
+                !(beatmap.starRating > 1e-4 &&
+                    request.mode.isEqualOrDefault(beatmap.mode) &&
+                    request.mods.isNotAffectStarRating())
+        }
+
+        if (needApply.isEmpty()) return
+
+        val details = needApply.map { request ->
+            BeatmapDetails(
+                request.beatmap.beatmapID,
+                request.mode,
+                request.mods,
+                request.beatmap.hasLeaderBoard
             )
-        )
+        }.distinct()
 
-        map.values.firstOrNull()?.let {
-            beatmap.starRating = it
+        val result = getBeatmapStars(details)
+
+        for (request in needApply) {
+            val key = BeatmapDetails(
+                request.beatmap.beatmapID,
+                request.mode,
+                request.mods,
+                request.beatmap.hasLeaderBoard
+            )
+
+            result[key]?.let { request.beatmap.starRating = it }
         }
     }
 

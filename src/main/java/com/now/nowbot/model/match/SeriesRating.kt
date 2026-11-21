@@ -2,318 +2,171 @@ package com.now.nowbot.model.match
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import tools.jackson.databind.PropertyNamingStrategies
-import tools.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.match.MatchRating.PlayerData
 import com.now.nowbot.model.match.MatchRating.RatingParam
+import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.math.exp
-import kotlin.math.min
+import com.now.nowbot.util.BeatmapUtil
+import org.slf4j.LoggerFactory
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
+import java.time.OffsetDateTime
 
+/**
+ * 系列赛评分面板数据。
+ *
+ * 结构和 [MatchRating] 一一对应，同样只做两件事：
+ * 1. 持有对局过滤后的 round / score / player 视图（由 [SeriesRatingPreparer] 负责准备）；
+ * 2. 把计算委托给 [RatingCalculator]，暴露面板需要的 JSON 字段。
+ *
+ * 和 [MatchRating] 的唯一区别是入参：这里接受多场比赛，以及每场各自的一份 [RatingParam]
+ * （skip / ignore / remove 等按场生效）。所有比赛会合并成一个计算范围，
+ * 因此系列赛里的 RRA 也是按谱面汇总的平均分计算的，而不是每局各算各的。
+ */
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class SeriesRating(
     val matches: List<Match>,
-    private val ratingParams: List<RatingParam>,
-    private val beatmapApiService: OsuBeatmapApiService,
+    ratingParams: List<RatingParam>,
+    beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) {
     @JsonIgnore
-    private val ratings: List<MatchRating> = matches.mapIndexed { i, it ->
-        MatchRating(it, ratingParams[i], beatmapApiService, calculateApiService)
-    }
+    private val prepared: PreparedSeries =
+        SeriesRatingPreparer(beatmapApiService, calculateApiService).prepare(matches, ratingParams)
+
+    @get:JsonIgnore
+    val rounds: List<Match.MatchRound> = prepared.rounds
+
+    @get:JsonIgnore
+    val scores: List<LazerScore> = prepared.scores
+
+    @get:JsonIgnore
+    val players: Map<Long, MicroUser> = prepared.players
 
     @get:JsonProperty("match_count")
-    val matchCount: Int
-        get() = this.matches.size
-
-    @get:JsonIgnore
-    val players = ratings.flatMap { it.players.toList() }.toMap()
-
-    @get:JsonProperty("player_count")
-    val playerCount: Int = this.players.size
-
-    @get:JsonIgnore
-    val rounds = ratings.flatMap { it.rounds }
+    val matchCount: Int = matches.size
 
     @get:JsonProperty("round_count")
-    val roundCount: Int = this.rounds.size
+    val roundCount: Int = rounds.size
 
+    @get:JsonProperty("score_count")
+    val scoreCount: Int = scores.size
+
+    @get:JsonProperty("player_count")
+    val playerCount: Int = players.size
+
+    @get:JsonProperty("is_team_vs")
+    val isTeamVs: Boolean
+        get() = rounds.firstOrNull()?.isTeamVS
+            ?: matches.lastOrNull()?.events?.mapNotNull { it.round }?.lastOrNull()?.isTeamVS
+            ?: false
+
+    @get:JsonProperty("average_star")
+    val averageStarRating: Double
+        get() = if (rounds.isNotEmpty()) rounds.sumOf { it.beatmap?.starRating ?: 0.0 } / rounds.size else 0.0
+
+    @get:JsonProperty("first_map_bid")
+    val firstMapBID: Long
+        get() = rounds.firstOrNull()?.beatmapID ?: 0L
+
+    @get:JsonProperty("first_map_sid")
+    val firstMapSID: Long
+        get() = rounds.firstOrNull()?.beatmap?.beatmapsetID ?: 0L
+
+    /**
+     * 每个胜方（非 team-vs 为 "none"）拿到的 round 数。由 calculate() 一次性写入。
+     */
+    @get:JsonProperty("team_point_map")
+    var teamPointMap: Map<String, Int> = emptyMap()
+        private set
+
+    @JsonProperty("player_data_list")
+    var playerDataList: List<PlayerData> = emptyList()
+
+    /**
+     * 以「谱面 + 计分方式 + 地图池 mod」为 key 的统计表。
+     *
+     * scorev2 使用 averageScore 计算 RRA；score / accuracy / combo 使用 guidanceScore。
+     */
     @get:JsonIgnore
-    val scores = ratings.flatMap { it.scores }
+    var beatmapScoreStats: Map<BeatmapScoreKey, BeatmapScoreStat> = emptyMap()
+        private set
 
     @JsonIgnore
     var name: String? = null
 
-    @get:JsonProperty("score_count")
-    val scoreCount: Int = this.scores.size
-
-    /*
-    @JsonIgnore
-    private var totalHR: Triple<Long, Int, Int> = Triple(0, 0, 0)
-    @JsonIgnore
-    private var totalHD: Triple<Long, Int, Int> = Triple(0, 0, 0)
-    @JsonIgnore
-    private var totalDT: Triple<Long, Int, Int> = Triple(0, 0, 0)
-    @JsonIgnore
-    private var totalEZ: Triple<Long, Int, Int> = Triple(0, 0, 0)
-
-     */
-
-    // 以前的 SeriesStat
+    /** 以前的 SeriesStat：系列赛整体起止时间与展示名，由最早和最晚的一场比赛推出来。 */
     val statistics: Match.MatchStat
         get() {
-            val firstMatch = matches.minBy { it.startTime.toEpochSecond() }
+            val firstMatch = matches.minByOrNull { it.startTime.toEpochSecond() }
+                ?: return Match.MatchStat(0L, OffsetDateTime.MIN, null, name ?: "")
 
             val startTime = firstMatch.startTime
-            val endTime = matches.map { it.endTime }.maxBy { it?.toEpochSecond() ?: 0L }
-            val name = name ?: (firstMatch.name + "...")
-            return Match.MatchStat(firstMatch.id, startTime, endTime, name)
+            val endTime = matches.mapNotNull { it.endTime }.maxByOrNull { it.toEpochSecond() }
+            val matchName = name ?: (firstMatch.name + "...")
+
+            return Match.MatchStat(firstMatch.id, startTime, endTime, matchName)
         }
 
-    @get:JsonProperty("is_team_vs")
-    val isTeamVs: Boolean
-        get() {
-            return if (rounds.isNotEmpty()) {
-                rounds.first().teamType == "team-vs"
-            } else {
-                false
-            }
-        }
-
-    @get:JsonProperty("average_star")
-    val averageStarRating: Double
-        get() {
-            return if (rounds.isNotEmpty()) {
-                1.0 * rounds.sumOf { it.beatmap?.starRating ?: 0.0 } / rounds.size
-            } else {
-                0.0
-            }
-        }
-
-    @get:JsonProperty("first_map_bid")
-    val firstMapBID: Long
-        get() {
-            return if (rounds.isNotEmpty()) {
-                rounds.first().beatmapID
-            } else {
-                0L
-            }
-        }
-
-    @get:JsonProperty("first_map_sid")
-    val firstMapSID: Long
-        get() {
-            return if (rounds.isNotEmpty()) {
-                rounds.first().beatmap?.beatmapsetID ?: 0L
-            } else {
-                0L
-            }
-        }
-
-    @JsonIgnore
-    private var playerDataMap: Map<Long, PlayerData> = players.mapValues { PlayerData(it.value) }
-
-    @JsonProperty("player_data_list")
-    var playerDataList: List<PlayerData> = listOf()
-
-    // 用于计算 mra
-    @JsonIgnore
-    private var roundAMG: Double = 0.0
-
-    // 最小的 MQ，用来计算平均和最差的差值
-    @JsonIgnore
-    private var minMQ: Double = 100.0
-
-    // 缩放因子
-    @get:JsonIgnore
-    private val scalingFactor: Double
-        get() = if (players.size <= 2) {
-            0.0
-        } else {
-            2.0 / (1.0 + exp(0.5 - 0.25 * players.size)) - 1.0
-        }
-    // 主计算
+    /**
+     * 主计算。可以重复调用，每次都会基于当前 rounds 重新生成玩家数据。
+     */
     fun calculate() {
-        //挨个成绩赋予 RRA
-        calculateRawRating()
+        val result = RatingCalculator(
+            rounds = rounds,
+            players = players,
+            associatedRoundCounts = prepared.associatedRoundCounts,
+        ).calculate()
 
-        //挨个成绩赋予 RWS
-        calculateAverageRoundWinShare()
-
-        //这里必须分两次获取。TotalScore 是需要遍历第一遍然后算得的一个最终值
-        calculateTotalScore()
-
-        //挨个用户计算 AMG，并记录总 AMG，顺便赋予有关联的对局数量
-        calculateAverageMuPoint()
-
-        //计算玩家的 arc，对顺序要求不高
-        calculateAssociatedRoundCounts()
-
-        //挨个计算 MQ，并记录最小
-        calculateNormalizedMuPoint()
-
-        //根据 minMQ 计算出 ERA，DRA，MRA
-        calculateMRA()
-
-        //计算 E、D、M 的序号并排序
-        calculateIndex()
-
-        //计算玩家分类
-        calculateClass()
-
-        calculateData()
+        playerDataList = result.playerDataList
+        beatmapScoreStats = result.beatmapScoreStats
+        teamPointMap = result.teamPointMap
     }
 
-    // RRA
-    private fun calculateRawRating() {
-        for (r in rounds) {
-            val roundScoreSum = r.scores.sumOf { it.score }
-            val roundScoreCount = r.scores.size
+    /**
+     * 给所有成绩挂上玩家。系列赛面板会直接拿 score.user 渲染。
+     */
+    fun insertMicroUserToScores() {
+        matches
+            .asSequence()
+            .flatMap { it.events.asSequence() }
+            .mapNotNull { it.round }
+            .flatMap { it.scores.asSequence() }
+            .forEach { score -> score.user = players[score.userID] ?: MicroUser() }
+    }
 
-            if (roundScoreSum == 0L || roundScoreCount == 0) continue
+    /**
+     * 应用 DT 等 mod 对谱面四维的改动，并补齐尚未拿到星数的谱面。
+     *
+     * 星数在准备阶段已经批量算过，这里只处理遗漏的谱面，避免重复一次全量计算。
+     */
+    fun applyDTMod() {
+        val requests = ArrayList<OsuCalculateApiService.BeatmapStarRequest>(rounds.size)
 
-            for (s in r.scores) {
-                val data = playerDataMap[s.userID]
-                if (data == null || s.score == 0L) continue
+        for (round in rounds) {
+            val beatmap = round.beatmap ?: continue
+            val mods = round.mods.toLazerMods()
 
-                data.rawRatings.add(1.0 * s.score * roundScoreCount / roundScoreSum)
-                data.scores.add(s.score)
+            BeatmapUtil.applyBeatmapChanges(beatmap, mods)
 
-                if (data.team == null) {
-                    data.team = s.playerStat!!.team
+            if (beatmap.starRating <= 1e-4) {
+                runCatching { round.mode }.getOrNull()?.let { mode ->
+                    requests.add(OsuCalculateApiService.BeatmapStarRequest(beatmap, mode, mods))
                 }
             }
         }
-    }
 
-    // RWS
-    private fun calculateAverageRoundWinShare() {
-        for (r in rounds) {
-            if (r.winningTeamScore == 0L) return
-
-            for (s in r.scores) {
-                val data = playerDataMap[s.userID]
-                if (data == null || s.score == 0L) continue
-
-                val rws: Double
-
-                if (r.isTeamVS) {
-                    val team = s.playerStat?.team
-
-                    if (team == r.winningTeam) {
-                        rws = 1.0 * s.score / r.winningTeamScore
-                        data.win += 1
-                    } else if (r.winningTeam.isNullOrEmpty() || team.isNullOrEmpty()) {
-                        rws = 1.0 * s.score / r.winningTeamScore
-                    } else {
-                        rws = 0.0
-                        data.lose += 1
-                    }
-                } else {
-                    if (s.score >= r.maxScore) {
-                        rws = 1.0 * s.score / r.winningTeamScore
-                        data.win += 1
-                    } else {
-                        rws = 0.0
-                        data.lose += 1
-                    }
-                }
-
-                data.roundWinShares.add(rws)
-            }
+        if (requests.isNotEmpty()) {
+            runCatching { calculateApiService.applyStarToBeatmaps(requests) }
+                .onFailure { e -> log.warn("批量补齐 {} 张谱面的星数失败", requests.size, e) }
         }
     }
 
-    // TTS
-    private fun calculateTotalScore() {
-        playerDataMap.values
-            .forEach { it.calculateTotalScore() }
-    }
-
-    // AMG
-    private fun calculateAverageMuPoint() {
-        playerDataMap.values.forEach {
-            it.calculateRWS()
-            it.calculateTMG()
-            it.calculateAverageScore()
-            roundAMG += it.averageMuPoint
-        }
-    }
-
-    private fun calculateAssociatedRoundCounts() {
-        val roundCountByUserID = HashMap.newHashMap<Long, Int>(playerDataMap.size * 4 / 3 + 1)
-
-        for ((_, events, players) in matches) {
-            val roundsInMatch = events.count { it.round != null }
-            if (roundsInMatch == 0) continue
-
-            // 该场比赛中出现的所有玩家 ID
-            for (player in players) {
-                roundCountByUserID[player.userID] =
-                    (roundCountByUserID[player.userID] ?: 0) + roundsInMatch
-            }
-        }
-
-        playerDataMap.values.forEach { data ->
-            data.associatedRoundCount = roundCountByUserID[data.player.userID] ?: 0
-        }
-    }
-
-    // MQ
-    private fun calculateNormalizedMuPoint() {
-        playerDataMap.values.forEach{
-            it.calculateMQ(roundAMG / players.size)
-            //除以的是所有玩家数
-            minMQ = min(minMQ, it.normalizedMuPoint)
-        }
-    }
-
-    private fun calculateMRA() {
-        playerDataMap.values.forEach{
-            it.calculateERA(minMQ, scalingFactor)
-            it.calculateDRA(players.size, scores.size)
-            it.calculateMRA()
-        }
-    }
-
-    private fun calculateIndex() {
-        if (players.isEmpty()) return
-
-        val ai1 = AtomicInteger(0)
-        val ai2 = AtomicInteger(0)
-        val ai3 = AtomicInteger(0)
-        val ai4 = AtomicInteger(1)
-
-        val v = playerDataMap.values.asSequence()
-
-        v.sortedByDescending { it.era }.forEach {
-            it.eraIndex = if (playerDataMap.size > 1) (1.0 * ai1.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
-        }
-        v.sortedByDescending { it.dra }.forEach {
-            it.draIndex = if (playerDataMap.size > 1) (1.0 * ai2.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
-        }
-        v.sortedByDescending { it.dra }.sortedByDescending { it.rws }.forEach {
-            it.rwsIndex = if (playerDataMap.size > 1) (1.0 * ai3.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
-        }
-        v.sortedByDescending { it.mra }.forEach {
-            it.ranking = (ai4.getAndIncrement())
-        }
-    }
-
-    private fun calculateClass() {
-        playerDataMap.values
-            .forEach { it.calculateClass() }
-    }
-
-    private fun calculateData() {
-        // 根据 MRA 高低排序，重新写图
-        val l = playerDataMap.values.toMutableList()
-
-        l.sortByDescending { it.mra }
-
-        playerDataList = l
+    companion object {
+        private val log = LoggerFactory.getLogger(SeriesRating::class.java)
     }
 }

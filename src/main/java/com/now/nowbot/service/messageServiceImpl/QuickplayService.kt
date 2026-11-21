@@ -4,8 +4,6 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode.Companion.toOsuMode
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
-import com.now.nowbot.model.match.MatchRating.Companion.applyDTMod
-import com.now.nowbot.model.match.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.model.multiplayer.Room
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore

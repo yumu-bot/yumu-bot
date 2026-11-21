@@ -24,6 +24,23 @@ interface OsuCalculateApiService {
 
     fun applyStarToBeatmap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>)
 
+    /**
+     * 一次批量计算星数的入参。每张谱面的模式和 mods 都可能不同，所以不能只传 beatmap。
+     */
+    data class BeatmapStarRequest(
+        val beatmap: Beatmap,
+        val mode: OsuMode,
+        val mods: List<LazerMod> = emptyList(),
+    )
+
+    /**
+     * 批量给谱面应用星数。
+     *
+     * 和逐张调用 [applyStarToBeatmap] 相比，内部只会走一次批量星数计算（本地缓存 / Rosu / 官方接口），
+     * 适合一场比赛里几十张谱面的场景。
+     */
+    fun applyStarToBeatmaps(requests: Collection<BeatmapStarRequest>)
+
     fun applyPPToScore(score: LazerScore)
 
     fun applyPPToScores(scores: Collection<LazerScore>)

@@ -2,8 +2,6 @@ package com.now.nowbot.model.match
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.LazerMod.Companion.contains
 import com.now.nowbot.model.osu.LazerMod.Companion.toLazerMods
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.MicroUser
@@ -13,142 +11,48 @@ import com.now.nowbot.util.BeatmapUtil
 import org.slf4j.LoggerFactory
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
-import kotlin.math.exp
-import kotlin.math.min
-import kotlin.math.roundToLong
 
+/**
+ * 一场对局的评分面板数据。
+ *
+ * 这个类现在只做两件事：
+ * 1. 持有对局过滤后的 round / score / player 视图（由 [MatchRatingPreparer] 负责准备）；
+ * 2. 把计算委托给 [RatingCalculator]，暴露面板需要的 JSON 字段。
+ *
+ * beatmapApiService / calculateApiService 仍然是构造参数，因为准备阶段需要直接批量取谱面、
+ * 批量算星数和挂别名；两者由 [MatchRatingPreparer] 直接使用，不再散落在 companion 扩展里。
+ */
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class MatchRating(
     val match: Match,
     private val ratingParam: RatingParam,
-    private val beatmapApiService: OsuBeatmapApiService,
+    beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
 
     @field:JsonProperty("is_skipping")
     val skipping: Boolean = false
 ) {
     @JsonIgnore
-    private val fullRounds: List<Match.MatchRound> = match.events
-        .mapNotNull { it.round }
-        .filter { it.scores.isNotEmpty() && it.endTime != null }
-        .distinctBy { it.roundID }
+    private val prepared: PreparedMatch =
+        MatchRatingPreparer(beatmapApiService, calculateApiService).prepare(match, ratingParam)
 
     @get:JsonIgnore
-    val rounds: List<Match.MatchRound>
+    val rounds: List<Match.MatchRound> = prepared.rounds
 
     @get:JsonIgnore
-    val scores: List<LazerScore>
+    val scores: List<LazerScore> = prepared.scores
 
     @get:JsonIgnore
-    val players: Map<Long, MicroUser>
-
-    @JsonIgnore
-    private val fullPlayers: Map<Long, MicroUser> = match.players.associateBy { it.userID }
-
-    init {
-        rounds = applyParams(fullRounds, ratingParam)
-        scores = rounds.flatMap { it.scores }
-
-        // 比赛类面板会直接渲染 round.beatmap / score，别名要提前挂到谱面集上
-        beatmapApiService.applyAlias(scores)
-        beatmapApiService.applyAliasForBeatmaps(rounds.mapNotNull { it.beatmap })
-
-        // 有可用成绩的才能进这个分组
-        val hasScoreSet = scores.map { it.userID }.toSet()
-        players = fullPlayers.filterKeys { it in hasScoreSet }
-    }
+    val players: Map<Long, MicroUser> = prepared.players
 
     @get:JsonProperty("round_count")
-    val roundCount: Int = this.rounds.size
+    val roundCount: Int = rounds.size
 
     @get:JsonProperty("score_count")
-    val scoreCount: Int = this.scores.size
+    val scoreCount: Int = scores.size
 
     @get:JsonProperty("player_count")
-    val playerCount: Int = this.players.size
-
-    private fun applyParams(rounds: List<Match.MatchRound>, param: RatingParam): List<Match.MatchRound> {
-        var rs = rounds.toList()
-
-        if (param.delete) {
-            rs = rs.map { round ->
-                if (round.scores.isNotEmpty()) {
-                    round.apply { scores = scores.filter { it.score > 10000L } }
-                } else round
-            }
-        }
-
-        if (!param.rematch) {
-            // 保留最后出现的元素
-            rs = rs.reversed().distinctBy { it.beatmapID }.reversed()
-        }
-
-        // skip and limit limits
-        val size = rs.size
-        val skip = param.skip.coerceIn(0, size)
-        val limit = (size - param.ignore).coerceIn(skip, size)
-
-        if (skip != 0 || limit != size) {
-            rs = rs.subList(skip, limit)
-        }
-
-        // remove specific indices
-        if (!param.remove.isNullOrEmpty()) {
-            val removeSet = param.remove
-                .map { it - skip }
-                .filter { it in 1 until (limit - skip) }
-                .toSet()
-
-            if (removeSet.isNotEmpty()) {
-                rs = rs.filterIndexed { index, _ -> index !in removeSet }
-            }
-        }
-
-        // easy multiplier and ranking
-        rs.forEach { round ->
-            round.scores.forEach { s ->
-                if (param.easy != 1.0 && s.mods.contains(LazerMod.Easy)) {
-                    s.score = (s.score * param.easy).roundToLong()
-                }
-            }
-
-            // 重新排序并赋 rank
-            round.scores = round.scores.sortedByDescending { it.score }.onEachIndexed { index, s ->
-                s.ranking = index + 1
-            }
-        }
-
-        // add user
-        rs.flatMap { it.scores }.forEach { s -> fullPlayers[s.userID]?.let { s.user = it } }
-
-        // apply sr change
-        rs.forEach { round ->
-            round.beatmap?.let {
-                val b = beatmapApiService.getBeatmapFromDatabase(round.beatmapID)
-
-                // 星数计算失败 (谱面文件损坏 / 接口异常) 只应影响 starRating 是否更新,
-                // 不能让整个 MatchRating 构造失败, 否则这一局的图片和后续监听都会丢
-                runCatching {
-                    calculateApiService.applyStarToBeatmap(b, round.mode, round.mods.toLazerMods())
-                }.onFailure { e ->
-                    log.warn("谱面 {} 星数计算失败, 沿用数据库中的星数", round.beatmapID, e)
-                }
-
-                round.beatmap = b
-            }
-        }
-
-        return rs
-    }
-
-    data class RatingParam(
-        val skip: Int = 0,
-        val ignore: Int = 0,
-        val remove: List<Int>? = null,
-        val easy: Double = 1.0,
-        val delete: Boolean = true,
-        val rematch: Boolean = true,
-    )
+    val playerCount: Int = players.size
 
     constructor(
         match: Match, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService
@@ -172,9 +76,6 @@ class MatchRating(
     val firstMapSID: Long
         get() = rounds.firstOrNull()?.beatmap?.beatmapsetID ?: 0L
 
-    @JsonIgnore
-    private var playerDataMap: Map<Long, PlayerData> = players.mapValues { PlayerData(it.value) }
-
     @get:JsonProperty("skip_ignore_map")
     val skipIgnoreMap: Map<String, Number>
         get() = mapOf(
@@ -183,151 +84,86 @@ class MatchRating(
             "easy" to ratingParam.easy
         )
 
+    /**
+     * 每个胜方（非 team-vs 为 "none"）拿到的 round 数。由 calculate() 一次性写入。
+     */
     @get:JsonProperty("team_point_map")
-    val teamPointMap: Map<String, Int>
-        get() = rounds.mapNotNull { it.winningTeam }
-            .groupingBy { it }
-            .eachCount()
+    var teamPointMap: Map<String, Int> = emptyMap()
+        private set
 
     @JsonProperty("player_data_list")
     var playerDataList: List<PlayerData> = emptyList()
 
-    @JsonIgnore
-    private var roundAMG: Double = 0.0
-
-    @JsonIgnore
-    private var minMQ: Double = 100.0
-
+    /**
+     * 以「谱面 + 计分方式 + 地图池 mod」为 key 的统计表。
+     *
+     * scorev2 使用 averageScore 计算 RRA；score / accuracy / combo 使用 guidanceScore。
+     */
     @get:JsonIgnore
-    private val scalingFactor: Double
-        get() = if (players.size <= 2) 0.0 else 2.0 / (1.0 + exp(0.5 - 0.25 * players.size)) - 1.0
+    var beatmapScoreStats: Map<BeatmapScoreKey, BeatmapScoreStat> = emptyMap()
+        private set
 
-    // 主计算
+    /**
+     * 主计算。可以重复调用，每次都会基于当前 rounds 重新生成玩家数据。
+     */
     fun calculate() {
-        calculateRawRating()
-        calculateAverageRoundWinShare()
-        calculateTotalScore()
-        calculateAverageMuPoint()
-        calculateNormalizedMuPoint()
-        calculateMuRating()
-        calculateIndex()
-        calculateClass()
-        calculateData()
+        val result = RatingCalculator(
+            rounds = rounds,
+            players = players,
+            associatedRoundCounts = players.keys.associateWith { rounds.size },
+        ).calculate()
+
+        playerDataList = result.playerDataList
+        beatmapScoreStats = result.beatmapScoreStats
+        teamPointMap = result.teamPointMap
     }
 
-    private fun calculateRawRating() {
-        for (r in rounds) {
-            val roundScoreSum = r.scores.sumOf { it.score }
-            val roundScoreCount = r.scores.size
+    /**
+     * 给所有成绩挂上玩家。对局面板会直接拿 score.user 渲染。
+     */
+    fun insertMicroUserToScores() {
+        match.events
+            .asSequence()
+            .mapNotNull { it.round }
+            .flatMap { it.scores.asSequence() }
+            .forEach { score -> score.user = players[score.userID] ?: MicroUser() }
+    }
 
-            if (roundScoreSum == 0L || roundScoreCount == 0) continue
+    /**
+     * 应用 DT 等 mod 对谱面四维的改动，并补齐尚未拿到星数的谱面。
+     *
+     * 星数在构造时已经批量算过，这里只处理遗漏的谱面，避免重复一次全量计算。
+     */
+    fun applyDTMod() {
+        val requests = ArrayList<OsuCalculateApiService.BeatmapStarRequest>(rounds.size)
 
-            for (s in r.scores) {
-                if (s.score == 0L) continue
-                playerDataMap[s.userID]?.let { data ->
-                    data.rawRatings.add(s.score.toDouble() * roundScoreCount / roundScoreSum)
-                    data.scores.add(s.score)
-                    if (data.team == null) {
-                        data.team = s.playerStat?.team
-                    }
+        for (round in rounds) {
+            val beatmap = round.beatmap ?: continue
+            val mods = round.mods.toLazerMods()
+
+            BeatmapUtil.applyBeatmapChanges(beatmap, mods)
+
+            if (beatmap.starRating <= 1e-4) {
+                runCatching { round.mode }.getOrNull()?.let { mode ->
+                    requests.add(OsuCalculateApiService.BeatmapStarRequest(beatmap, mode, mods))
                 }
             }
         }
-    }
 
-    private fun calculateAverageRoundWinShare() {
-        for (r in rounds) {
-            if (r.winningTeamScore == 0L) continue
-
-            for (s in r.scores) {
-                if (s.score == 0L) continue
-                val data = playerDataMap[s.userID] ?: continue
-
-                var rws = 0.0
-                if (r.isTeamVS) {
-                    val team = s.playerStat?.team
-                    if (team == r.winningTeam) {
-                        rws = s.score.toDouble() / r.winningTeamScore
-                        data.win++
-                    } else if (r.winningTeam.isNullOrEmpty() || team.isNullOrEmpty()) {
-                        rws = s.score.toDouble() / r.winningTeamScore
-                    } else {
-                        data.lose++
-                    }
-                } else {
-                    if (s.score >= r.maxScore) {
-                        rws = s.score.toDouble() / r.winningTeamScore
-                        data.win++
-                    } else {
-                        data.lose++
-                    }
-                }
-                data.roundWinShares.add(rws)
-            }
+        if (requests.isNotEmpty()) {
+            runCatching { calculateApiService.applyStarToBeatmaps(requests) }
+                .onFailure { e -> log.warn("批量补齐 {} 张谱面的星数失败", requests.size, e) }
         }
     }
 
-    private fun calculateTotalScore() {
-        playerDataMap.values.forEach { it.calculateTotalScore() }
-    }
-
-    private fun calculateAverageMuPoint() {
-        playerDataMap.values.forEach {
-            it.calculateRWS()
-            it.calculateTMG()
-            it.calculateAverageScore()
-            it.associatedRoundCount = rounds.size
-            roundAMG += it.averageMuPoint
-        }
-    }
-
-    private fun calculateNormalizedMuPoint() {
-        val aAMG = roundAMG / players.size
-        playerDataMap.values.forEach {
-            it.calculateMQ(aAMG)
-            minMQ = min(minMQ, it.normalizedMuPoint)
-        }
-    }
-
-    private fun calculateMuRating() {
-        playerDataMap.values.forEach {
-            it.calculateERA(minMQ, scalingFactor)
-            it.calculateDRA(playerCount, scoreCount)
-            it.calculateMRA()
-        }
-    }
-
-    private fun calculateIndex() {
-        val values = playerDataMap.values.toList()
-        if (values.isEmpty()) return
-
-        val maxIndex = (values.size).coerceAtLeast(1).toDouble()
-
-        values.sortedByDescending { it.era }.forEachIndexed { i, data ->
-            data.eraIndex = if (values.size > 1 && maxIndex > 1) (i - 1) / (maxIndex - 1) else 0.5
-        }
-
-        values.sortedByDescending { it.dra }.forEachIndexed { i, data ->
-            data.draIndex = if (values.size > 1 && maxIndex > 1) (i - 1) / (maxIndex - 1) else 0.5
-        }
-
-        values.sortedWith(compareByDescending<PlayerData> { it.rws }.thenByDescending { it.dra })
-            .forEachIndexed { i, data ->
-                data.rwsIndex = if (values.size > 1 && maxIndex > 1) (i - 1) / (maxIndex - 1) else 0.5
-            }
-
-        values.sortedByDescending { it.mra }.forEachIndexed { i, data ->
-            data.ranking = i + 1
-        }
-    }
-
-    private fun calculateClass() {
-        playerDataMap.values.forEach { it.calculateClass() }
-    }
-
-    private fun calculateData() {
-        playerDataList = playerDataMap.values.sortedByDescending { it.mra }
-    }
+    data class RatingParam(
+        val skip: Int = 0,
+        val ignore: Int = 0,
+        val remove: List<Int>? = null,
+        val easy: Double = 1.0,
+        val delete: Boolean = true,
+        val rematch: Boolean = true,
+    )
 
     class PlayerData(val player: MicroUser) {
         var team: String? = null
@@ -357,13 +193,15 @@ class MatchRating(
         var mra: Double = 0.0
         var rws: Double = 0.0
 
-        @JsonProperty("player_class")
+        @get:JsonProperty("player_class")
         var playerClass: PlayerClass? = null
 
         @JsonIgnore
         var eraIndex: Double = 0.0
+
         @JsonIgnore
         var draIndex: Double = 0.0
+
         @JsonIgnore
         var rwsIndex: Double = 0.0
 
@@ -371,55 +209,11 @@ class MatchRating(
         var win: Int = 0
         var lose: Int = 0
 
-        @JsonProperty("arc")
+        @get:JsonProperty("arc")
         var associatedRoundCount: Int = 0
-
-        fun calculateTotalScore() { total = scores.sum() }
-
-        fun calculateTMG() { totalMuPoint = rawRatings.sum() }
-
-        fun calculateAverageScore() {
-            if (rawRatings.isNotEmpty()) {
-                averageMuPoint = totalMuPoint / rawRatings.size
-            }
-        }
-
-        fun calculateMQ(aAMG: Double) { normalizedMuPoint = averageMuPoint / aAMG }
-
-        fun calculateERA(minMQ: Double, scalingFactor: Double) {
-            era = (normalizedMuPoint - minMQ * scalingFactor) / (1 - minMQ * scalingFactor)
-        }
-
-        fun calculateDRA(playerCount: Int, scoreCount: Int) {
-            dra = (totalMuPoint / scoreCount) * playerCount
-        }
-
-        fun calculateMRA() { mra = 0.7 * era + 0.3 * dra }
-
-        fun calculateRWS() { rws = roundWinShares.average().takeIf { !it.isNaN() } ?: 0.0 }
-
-        fun calculateClass() { playerClass = PlayerClass.getV2(eraIndex, draIndex, rwsIndex) }
     }
 
     companion object {
         private val log = LoggerFactory.getLogger(MatchRating::class.java)
-
-        fun MatchRating.insertMicroUserToScores() {
-            this.match.events
-                .mapNotNull { it.round }
-                .flatMap { it.scores }
-                .forEach { s -> s.user = this.players[s.userID] ?: MicroUser() }
-        }
-
-        fun MatchRating.applyDTMod() {
-            this.match.events
-                .mapNotNull { it.round }
-                .filter { it.beatmap != null }
-                .forEach { round ->
-                    val mods = round.mods.toLazerMods()
-                    BeatmapUtil.applyBeatmapChanges(round.beatmap, mods)
-                    calculateApiService.applyStarToBeatmap(round.beatmap, round.mode, mods)
-                }
-        }
     }
 }

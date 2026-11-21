@@ -71,6 +71,13 @@ interface OsuBeatmapApiService {
 
     fun getBeatmapFromDatabase(beatmapID: Long): Beatmap
 
+    /**
+     * 批量从数据库读取谱面。数据库里没有的谱面会退回 [getBeatmap] 走网络获取。
+     *
+     * 返回顺序和 [beatmapIDs] 的首次出现顺序一致，缺失的谱面会被跳过。
+     */
+    fun getBeatmapsFromDatabase(beatmapIDs: Collection<Long>): List<Beatmap>
+
     fun getBeatmapsetFromDatabase(beatmapsetID: Long): Beatmapset
 
     fun isNotOverRating(beatmapID: Long): Boolean
