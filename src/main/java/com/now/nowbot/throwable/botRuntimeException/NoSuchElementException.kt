@@ -133,8 +133,26 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class MaiVersion:
         NoSuchElementException("没有找到这个游戏版本。")
 
-    class Match:
-        NoSuchElementException("没有找到比赛。")
+    class Match(id: Any? = null):
+        NoSuchElementException(
+            if (id == null) "没有找到比赛。"
+            else "没有找到比赛 $id。\n请检查比赛编号是否正确、比赛记录是否过期！"
+        )
+
+    class Room(id: Any? = null):
+        NoSuchElementException(
+            if (id == null) "没有找到房间。"
+            else "没有找到房间 $id。\n请检查房间编号是否正确、房间记录是否过期！"
+        )
+
+    /**
+     * 纯数字的编号在旧版比赛和新版房间两边都没查到。
+     */
+    class MatchOrRoom(id: Any):
+        NoSuchElementException("""
+            没有找到编号为 $id 的比赛，也没有找到同编号的房间。
+            请检查编号是否正确、记录是否已经过期！
+        """.trimIndent())
 
     class MatchRound:
         NoSuchElementException("没有找到比赛里的对局。")

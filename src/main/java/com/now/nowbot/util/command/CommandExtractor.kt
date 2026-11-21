@@ -14,7 +14,31 @@ enum class ExtractType {
     USER_ID,
     BEATMAP_ID,
     BEATMAPSET_ID,
-    STARRY
+    STARRY,
+
+    /** 旧版比赛编号，`m123` / `mid=123` / `match=123`。 */
+    MATCH_ID,
+
+    /** 新版房间编号，`r123` / `rid=123` / `room=123`。 */
+    ROOM_ID,
+
+    /** 比赛参数：丢弃开头的场次（热手）。 */
+    SKIP,
+
+    /** 比赛参数：丢弃结尾的场次（表演赛）。 */
+    IGNORE,
+
+    /** 比赛参数：剔除指定场次，值形如 `1,2,3`。 */
+    REMOVE,
+
+    /** 比赛参数：Easy 倍率。 */
+    EASY,
+
+    /** 比赛参数：剔除重赛（带冒号的 `:r`）。 */
+    REMATCH,
+
+    /** 比赛参数：不计失败成绩（带冒号的 `:f`）。 */
+    FAILED,
 }
 
 /**
@@ -695,6 +719,100 @@ val StarExtractor = CommandExtractor { ctx ->
 
 val ScoreClassifierExtractor = CommandExtractor { ctx ->
     ctx.extractByClassifier<ScoreClassifier>()
+}
+
+/// === 比赛 / 房间 ===
+
+/**
+ * 前缀的左边不能紧贴字母、数字、下划线或小数点。
+ *
+ * 和 `\b` 的区别是它同时挡住 `e1.5` 里的小数点、`r123` 里的数字，
+ * 避免把别的参数尾巴当成新的参数头。
+ */
+private const val HEAD_START: String = "(?<![\\w.])"
+
+/** 旧版比赛编号的简写：`m123` / `m=123`。**单字母必须紧贴数字**，`m 123` 不算。 */
+private val matchIDShortRegex = Regex("(?i)$HEAD_START" + "m=?(\\d+)")
+
+/** 旧版比赛编号的完整写法：`mid=123` / `match=123` / `match 123`。 */
+private val matchIDNameRegex = Regex("(?i)$HEAD_START" + "(?:match|mid)=?\\s*(\\d+)")
+
+/**
+ * 新版房间编号的简写：`r123` / `r=123`。
+ *
+ * 同样必须紧贴数字：单独的 `r` 是「剔除重赛」开关，`r 123` 会被拆成开关 + 纯数字编号。
+ */
+private val roomIDShortRegex = Regex("(?i)$HEAD_START" + "r=?(\\d+)")
+
+/** 新版房间编号的完整写法：`rid=123` / `room=123` / `room 123`。 */
+private val roomIDNameRegex = Regex("(?i)$HEAD_START" + "(?:room|rid)=?\\s*(\\d+)")
+
+/** Easy 倍率：`e1.5`、`e 1.5`、`easy=1.5`、`ez1.5×`。 */
+private val matchEasyRegex = Regex("(?i)$HEAD_START" + "(?:easy|ez|e)=?\\s*(-?${PATTERN_NUMBER_DECIMAL})\\s*[×xX]?")
+
+/** 丢弃开头场次：`skip=1`、`warmup 1`、`热手1`。 */
+private val matchSkipRegex = Regex("(?i)$HEAD_START" + "(?:skip|warmup|热手)\\s*[=＝:：]?\\s*(-?\\d+)")
+
+/** 丢弃结尾场次：`ignore=1`、`表演 1`。 */
+private val matchIgnoreRegex = Regex("(?i)$HEAD_START" + "(?:ignore|ig|表演[赛]?)\\s*[=＝:：]?\\s*(-?\\d+)")
+
+/** 剔除指定场次（方括号里可以带空格）：`remove=[1, 2]`、`rm=【1，2】`。 */
+private val matchRemoveBracketRegex =
+    Regex("(?i)$HEAD_START" + "(?:remove|rm|移除|剔除)\\s*[=＝:：]?\\s*[\\[【［]([\\d\\s,，、]+)[]】］]")
+
+/** 剔除指定场次（逗号分隔，不带空格）：`remove=1,2`、`rm=1、2`。 */
+private val matchRemoveListRegex =
+    Regex("(?i)$HEAD_START" + "(?:remove|rm|移除|剔除)\\s*[=＝:：]?\\s*(\\d+(?:[,，、]\\d+)*)")
+
+/** 剔除指定场次（只写方括号）：`[1,2]`、`【1，2】`。 */
+private val matchRemoveOnlyRegex = Regex("[\\[【［]([\\d\\s,，、]+?)[]】］]")
+
+/**
+ * 剔除重赛：`:` 开头的 `:r` / `:rematch` / `:重赛`。
+ *
+ * 冒号是必须的：没有冒号的 `r` 不再当开关，`r123` 依然是房间编号。
+ * 冒号后面不能再跟字母或数字，避免把 `:rematch` 拆成 `:r` + `ematch`。
+ */
+private val matchRematchRegex = Regex("(?i)" + "[:：]\\s*(?:rematch|重赛|r)(?![\\w.])")
+
+/** 不计失败成绩：`:` 开头的 `:f` / `:failed` / `:delete`。冒号和 [matchRematchRegex] 一样是必须的。 */
+private val matchFailedRegex = Regex("(?i)" + "[:：]\\s*(?:failed|fail|delete|f)(?![\\w.])")
+
+/**
+ * 旧版比赛编号 `m123` / `mid=123` / `match=123`。
+ *
+ * 纯数字不在这里剥离：同一个数字既可能是比赛也可能是房间，要由服务两个接口都查一次再决定。
+ */
+val MatchIDExtractor = CommandExtractor { ctx ->
+    ctx.extractPattern(ExtractType.MATCH_ID, matchIDNameRegex)
+    ctx.extractPattern(ExtractType.MATCH_ID, matchIDShortRegex)
+}
+
+/**
+ * 新版房间编号 `r123` / `rid=123` / `room=123`。
+ *
+ * 写在 [MatchIDExtractor] 后面，`rid` 不会被 `r=?(\d+)` 的短写抢先吃掉。
+ */
+val RoomIDExtractor = CommandExtractor { ctx ->
+    ctx.extractPattern(ExtractType.ROOM_ID, roomIDNameRegex)
+    ctx.extractPattern(ExtractType.ROOM_ID, roomIDShortRegex)
+}
+
+/**
+ * 比赛指令的附加参数：`e1.5`、`skip=1`、`ignore=0`、`remove=1,2`、`:r`、`:f`。
+ *
+ * 开关类参数必须带冒号（`:r` / `:f`），这样不会和 `r123` 这种房间编号、以及剩下的纯数字混在一起。
+ * 参数之间没有先后要求，都可以写在编号前面或后面；剩下的纯数字交给服务按位置解释。
+ */
+val MatchParamExtractor = CommandExtractor { ctx ->
+    ctx.extractPattern(ExtractType.EASY, matchEasyRegex)
+    ctx.extractPattern(ExtractType.REMOVE, matchRemoveBracketRegex)
+    ctx.extractPattern(ExtractType.REMOVE, matchRemoveListRegex)
+    ctx.extractPattern(ExtractType.REMOVE, matchRemoveOnlyRegex)
+    ctx.extractPattern(ExtractType.SKIP, matchSkipRegex)
+    ctx.extractPattern(ExtractType.IGNORE, matchIgnoreRegex)
+    ctx.extractPattern(ExtractType.REMATCH, matchRematchRegex)
+    ctx.extractPattern(ExtractType.FAILED, matchFailedRegex)
 }
 
 fun main() {

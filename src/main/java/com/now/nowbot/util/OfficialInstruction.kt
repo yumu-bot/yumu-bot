@@ -375,15 +375,13 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     MU_RATING(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("(?<main>(ra))")
-        appendMatchID()
-        appendMatchParam()
+        appendAny()
     }),
 
     MATCH_NOW(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("mn", "match\\s*now")
 
-        appendMatchID()
-        appendMatchParam()
+        appendAny()
     }),
 
     // #6 聊天指令

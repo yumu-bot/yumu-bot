@@ -6,12 +6,20 @@ public class MRAException extends TipsException {
     public enum Type {
         RATING_Instructions("""
         欢迎使用 Yumu Rating 功能！食用方法：
-        !ymrating / !ra [matchid] (warmup) (delete) (r?) (f?)
-        matchid：这场比赛的房间号。
-        warmup：需要抛弃的前面场次（热手）数量，默认为0。
-        delete：需要抛弃的后面场次（表演赛）数量，默认为0。
-        r?：清除重赛场次？
-        f?：不计失败成绩？
+        !ymrating / !ra [编号] (附加参数)
+        编号：
+          m123 / mid=123 / match=123：旧版比赛 (mp)。
+          r123 / rid=123 / room=123：新版房间。
+          123：两个都查。只有一个存在时直接用；两个都存在时会问一次，回复 1 查比赛、2 查房间，30 秒不回复默认房间。
+          小于 100 的数字不算编号，按位置当热手 / 表演赛数量（编号走群记录）；要查小号比赛请写 m42。
+        附加参数（位置随意）：
+          skip=1 / 热手1：需要抛弃的前面场次（热手）数量，默认为0。
+          ignore=1 / 表演1：需要抛弃的后面场次（表演赛）数量，默认为0。
+          remove=1,2 / [1,2]：剔除指定场次。
+          e1.5 / easy=1.5：Easy 倍率。
+          :r / :rematch：剔除重赛场次（冒号必须写）。
+          :f / :failed：不计失败成绩（冒号必须写）。
+        也可以不带参数名按位置写：!ra 12345 1 0 表示比赛 12345、热手 1 场、表演赛 0 场；!ra 1 0 表示上一场比赛、热手 1 场。
         """),//参数_无参数
 
         RATING_Series_Instructions("""

@@ -91,6 +91,19 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class MatchID:
             WrongException("请输入正确的比赛编号 (MID)！")
 
+        class MatchAndRoom:
+            WrongException("""
+                不能同时指定比赛编号（m / mid）和房间编号（r / rid）。
+                请只保留一个，或直接写纯数字让 bot 自己判断。
+            """.trimIndent())
+
+        class MatchParam(param: Any):
+            WrongException("""
+                无法识别的比赛参数：$param
+                编号可以写 m123、r123、mid=123、rid=123，或直接写数字。
+                其他参数可以写 skip=1、ignore=0、remove=1,2、e1.5；剔除重赛 / 失败成绩写成 :r、:f。
+            """.trimIndent())
+
         class MaiVersionPlate:
             NoSuchElementException("""
                 请输入正确的游戏版本与牌子种类组合！

@@ -77,7 +77,8 @@ import org.springframework.stereotype.Service
             return null
         }
 
-        return MuRatingService.getMuRatingParam(event, m, matchApiService, dao)
+        // 官方 bot 的消息没有一问一答的通道，编号有歧义时直接按房间处理
+        return MuRatingService.getMuRatingParam(event, m, matchApiService, dao, allowAsk = false)
     }
 
     override fun reply(event: MessageEvent, param: MuRatingPanelParam): MessageChain? {

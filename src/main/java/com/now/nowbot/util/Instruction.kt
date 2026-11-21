@@ -684,8 +684,9 @@ enum class Instruction(val pattern: Pattern) {
         appendIgnore()
         appendSpace()
 
-        appendMatchID()
-        appendMatchParam()
+        // 编号（m123 / r123 / 纯数字）和 skip / ignore / easy / remove / :r / :f 全部交给剥离器，
+        // 顺序随意，纯数字由服务再判断是比赛还是房间。
+        appendAny()
     }),
 
     SERIES_RATING(CommandPatternBuilder.create {
@@ -725,8 +726,7 @@ enum class Instruction(val pattern: Pattern) {
 
     MATCH_NOW(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("monitor\\s*now", "match\\s*now", "mn")
-        appendMatchID()
-        appendMatchParam()
+        appendAny()
     }),
 
     MATCH_RECENT(CommandPatternBuilder.create {
