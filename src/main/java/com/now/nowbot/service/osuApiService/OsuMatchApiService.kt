@@ -20,7 +20,13 @@ interface OsuMatchApiService {
 
     fun getMatchAfter(matchID: Long, eventID: Long): Match
 
-    fun getRoom(roomID: Long): Room
+    /**
+     * 获取房间数据。
+     *
+     * [fetchAllEvents] 为 true 时会把 `before` 翻页全部走完。`room/xxx/events` 默认只返回最近 100 条事件，
+     * 长时间的房间会把开头的对局挤出去，算木斗力时必须取全。
+     */
+    fun getRoom(roomID: Long, fetchAllEvents: Boolean = false): Room
 
     fun getRoomInfo(roomID: Long): RoomInfo
 

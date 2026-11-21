@@ -75,14 +75,70 @@ class MatchApiImpl(
         return getMatchFromAPI(matchID, 0, eventID)
     }
 
-    override fun getRoom(roomID: Long): Room {
+    override fun getRoom(roomID: Long, fetchAllEvents: Boolean): Room {
+        val latest = getRoomEvents(roomID)
+
+        if (!fetchAllEvents) return latest
+
+        var room = latest
+        var before = room.events.firstOrNull()?.eventID ?: return room
+        var pages = 0
+
+        // events 接口一次最多返回 100 条，且默认只给最近的一页；
+        // 用 before 往前翻，才能把长时间房间里早期进行的对局也取回来。
+        while (before > room.firstEventID && pages < MAX_ROOM_EVENT_PAGES) {
+            val older = getRoomEvents(roomID, before)
+
+            if (older.events.isEmpty()) break
+
+            room = mergeOlder(room, older)
+
+            val next = older.events.firstOrNull()?.eventID ?: break
+
+            if (next >= before) break
+
+            before = next
+            pages++
+        }
+
+        if (before > room.firstEventID) {
+            log.warn(
+                "房间 {} 的事件超过 {} 页，只取了最近的 {} 条；更早的轮次可能缺失",
+                roomID, MAX_ROOM_EVENT_PAGES + 1, room.events.size
+            )
+        }
+
+        return room
+    }
+
+    private fun getRoomEvents(roomID: Long, before: Long? = null): Room {
         return request { client ->
             client.get()
-                .uri("rooms/${roomID}/events")
+                .uri {
+                    it.path("rooms/${roomID}/events")
+                    if (before != null) it.queryParam("before", before)
+                    it.queryParam("limit", ROOM_EVENT_PAGE_SIZE)
+                    it.build()
+                }
                 .headers(base::insertHeader)
                 .exchangeToBody<Room>()
         }
     }
+
+    /**
+     * 把更早的一页合并进房间数据。
+     *
+     * 只有 [Room.events] 需要拼到前面；谱面、playlist、用户取并集，房间信息保留最新一页的。
+     */
+    private fun mergeOlder(latest: Room, older: Room): Room = latest.copy(
+        beatmaps = (latest.beatmaps + older.beatmaps).distinctBy { it.beatmapID },
+        beatmapsets = (latest.beatmapsets + older.beatmapsets).distinctBy { it.beatmapsetID },
+        events = (older.events + latest.events).distinctBy { it.eventID }.sortedBy { it.eventID },
+        items = (latest.items + older.items).distinctBy { it.listID },
+        users = (latest.users + older.users).distinctBy { it.userID },
+        firstEventID = minOf(latest.firstEventID, older.firstEventID),
+        lastEventID = maxOf(latest.lastEventID, older.lastEventID),
+    )
 
     override fun getRoomInfo(roomID: Long): RoomInfo {
         return request { client ->
@@ -179,5 +235,11 @@ class MatchApiImpl(
 
     companion object {
         private val log = LoggerFactory.getLogger(MatchApiImpl::class.java)
+
+        /** events 接口允许的最大 limit 是 101，这里用 100 保持常规分页。 */
+        private const val ROOM_EVENT_PAGE_SIZE = 100
+
+        /** 最多往前翻 20 页（约 2000 条事件），避免异常房间把请求数撑爆。 */
+        private const val MAX_ROOM_EVENT_PAGES = 20
     }
 }

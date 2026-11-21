@@ -1,5 +1,7 @@
 package com.now.nowbot.model.multiplayer
 
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Beatmapset
@@ -8,6 +10,7 @@ import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class Room(
     @field:JsonProperty("beatmaps")
@@ -23,10 +26,10 @@ data class Room(
     val events: List<RoomEvent>,
 
     @field:JsonProperty("first_event_id")
-    val firstEventID: Long,
+    val firstEventID: Long = 0,
 
-    @field:JsonProperty("latest_event_id")
-    val latestEventID: Long,
+    @field:JsonProperty("last_event_id")
+    val lastEventID: Long = 0,
 
     @field:JsonProperty("playlist_items")
     val items: List<Playlist>,
@@ -125,7 +128,7 @@ data class Room(
             currentEventID = later.currentEventID,
             events = (earlier.events + later.events).distinctBy { it.eventID },
             firstEventID = earlier.firstEventID,
-            latestEventID = later.latestEventID,
+            lastEventID = later.lastEventID,
             items = (earlier.items + later.items).distinctBy { it.listID },
             roomInfo = later.roomInfo,
             users = (earlier.users + later.users).distinctBy { it.userID }

@@ -1,5 +1,6 @@
 package com.now.nowbot.model.multiplayer
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
@@ -11,6 +12,7 @@ import java.time.OffsetDateTime
 /**
  * 等于 MatchRound
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class Playlist(
     @field:JsonProperty("id")
@@ -64,8 +66,19 @@ data class Playlist(
     ) {
 
     data class PlaylistDetail(
+        /**
+         * 用户 ID 到红/蓝队伍的映射，只有 team_versus 房间才有。
+         *
+         * room/xxx/events 返回的是对象（`{"123": "red"}`），不是字符串。
+         */
         @field:JsonProperty("teams")
-        val teams: String?,
+        val teams: Map<Long, String>? = null,
+
+        /**
+         * 用户 ID 到房间槽位的映射，只有限制参与人数的房间才有。
+         */
+        @field:JsonProperty("slots")
+        val slots: Map<Long, Int>? = null,
 
         @field:JsonProperty("room_type")
         val roomType: String,

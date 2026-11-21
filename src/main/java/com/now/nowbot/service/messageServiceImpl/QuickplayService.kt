@@ -112,7 +112,7 @@ class QuickplayService(
             u
         }
 
-        val match = matchApiService.getRoom(selectedRoomID).toMatch()
+        val match = matchApiService.getRoom(selectedRoomID, fetchAllEvents = true).toMatch()
 
         if (match.events.isEmpty()) {
             throw NoSuchElementException.QuickplayEvent()

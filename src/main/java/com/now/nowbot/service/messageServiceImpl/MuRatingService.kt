@@ -373,7 +373,7 @@ import kotlin.time.Duration.Companion.seconds
                 }
 
                 MatchTarget.ROOM -> return try {
-                    matchApiService.getRoom(id).toMatch()
+                    matchApiService.getRoom(id, fetchAllEvents = true).toMatch()
                 } catch (_: NetworkException.MatchException.NotFound) {
                     throw NoSuchElementException.Room(id)
                 }
@@ -400,7 +400,7 @@ import kotlin.time.Duration.Companion.seconds
             return try {
                 when (chosen) {
                     MatchTarget.MATCH -> matchApiService.getMatch(id, 10)
-                    MatchTarget.ROOM -> matchApiService.getRoom(id).toMatch()
+                    MatchTarget.ROOM -> matchApiService.getRoom(id, fetchAllEvents = true).toMatch()
                 }
             } catch (_: NetworkException.MatchException.NotFound) {
                 // 探测和取数据之间比赛刚好过期

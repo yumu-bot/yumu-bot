@@ -15,7 +15,7 @@ enum class PlayerClass(
 ) {
     BC("Big Carry", "大爹", "#FFF100", listOf("#FFFF00", "#FFC86B"), "BC"),
     CA("Carry", "大哥", "#FF9800", listOf("#FF9800", "#EC6841"), "CA"),
-    MF("Main Force", "主力", "#22AC38", listOf("#12B4B1", "#31B16C"), "MF"),
+    MF("Main Force", "主力", "#22AC38", listOf("#12B4B1", "#1F7A49"), "MF"),
     SP("Specialized", "专精", "#B3D465", listOf("#CAF881", "#29B126"), "SP"),
     WR("Worker", "打工", "#0068B7", listOf("#4FACFE", "#1D2088"), "WR"),
     OR("Ordinary", "普通", "#BDBDBD", listOf("#DDD", "#888"), "OR"),
