@@ -634,7 +634,6 @@ internal class RatingCalculator(
         if ("HD" in acronyms) bonus *= 1.04
         if ("DT" in acronyms || "NC" in acronyms) bonus *= 1.23
         if ("HR" in acronyms) bonus *= 1.09
-        if ("EZ" in acronyms) bonus *= 0.75
         if ("FL" in acronyms) bonus *= 1.2
 
         return bonus
